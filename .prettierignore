@@ -1,0 +1,13 @@
+# Ignore artifacts:
+build
+coverage
+node_modules
+dist
+build
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+trace
+tsconfig.vitest-temp.json
+android
+ios
