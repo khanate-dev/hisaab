@@ -1,0 +1,35 @@
+{
+	"ignorePaths": [
+		".git",
+		".vscode",
+		".vscode-insiders",
+		"**/(urdu|arabic|sinhala).content.json",
+		"**/*.apk",
+		"**/*.mp3",
+		"**/expo-module.config.json",
+		"**/pm2/pm2.types.cts",
+		"android",
+		"apps/app-needle-detector/modules",
+		"build",
+		"dist",
+		"ios",
+		"node_modules",
+		"package-lock.json",
+		"pnpm-lock.yaml",
+		"public",
+		"trace",
+		"tsconfig.vitest-temp.json",
+		"vscode-extension",
+		"yarn.lock"
+	],
+	"words": [
+		"datetime",
+		"textbox",
+		"vite",
+		"vitejs",
+		"vitest",
+		"xlink",
+		"zustand",
+		"اردو"
+	]
+}
