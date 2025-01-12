@@ -7,8 +7,8 @@ export const meta: MetaFunction = () => {
 	];
 };
 
-const Index = () => {
+const Home = () => {
 	return <div></div>;
 };
 
-export default Index;
+export default Home;
