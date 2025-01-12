@@ -6,10 +6,11 @@
 		"build": "react-router build",
 		"dev": "react-router dev",
 		"gen:routes": "react-router typegen",
-		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+		"lint": "eslint . --max-warnings=0 --fix",
 		"start": "react-router-serve ./build/server/index.js",
-		"typecheck": "react-router typegen && tsc",
-		"format": "prettier --write --log-level silent ."
+		"tsc": "react-router typegen && tsc",
+		"format": "prettier --write --log-level silent .",
+		"spellcheck": "cspell --quiet ."
 	},
 	"dependencies": {
 		"@mantine/charts": "^7.15.3",
