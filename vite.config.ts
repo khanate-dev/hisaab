@@ -1,24 +1,25 @@
 import { reactRouter } from "@react-router/dev/vite";
+import presetMantine from "postcss-preset-mantine";
+import simpleVars from "postcss-simple-vars";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-declare module "@remix-run/node" {
-	interface Future {
-		v3_singleFetch: true;
-	}
-}
-
 export default defineConfig({
-	plugins: [
-		reactRouter({
-			future: {
-				v3_fetcherPersist: true,
-				v3_relativeSplatPath: true,
-				v3_throwAbortReason: true,
-				v3_singleFetch: true,
-				v3_lazyRouteDiscovery: true,
-			},
-		}),
-		tsconfigPaths(),
-	],
+	css: {
+		postcss: {
+			plugins: [
+				presetMantine(),
+				simpleVars({
+					variables: {
+						"mantine-breakpoint-xs": "36em",
+						"mantine-breakpoint-sm": "48em",
+						"mantine-breakpoint-md": "62em",
+						"mantine-breakpoint-lg": "75em",
+						"mantine-breakpoint-xl": "88em",
+					},
+				}),
+			],
+		},
+	},
+	plugins: [reactRouter(), tsconfigPaths()],
 });

@@ -1,11 +1,11 @@
 {
 	"name": "hisaab",
 	"private": true,
-	"sideEffects": false,
 	"type": "module",
 	"scripts": {
 		"build": "react-router build",
 		"dev": "react-router dev",
+		"gen:routes": "react-router typegen",
 		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
 		"start": "react-router-serve ./build/server/index.js",
 		"typecheck": "react-router typegen && tsc",
@@ -21,19 +21,20 @@
 		"@mantine/notifications": "^7.15.3",
 		"@mantine/nprogress": "^7.15.3",
 		"@mantine/spotlight": "^7.15.3",
-		"@react-router/node": "^7.0.0",
-		"@react-router/serve": "^7.0.0",
+		"@react-router/node": "^7.1.1",
+		"@react-router/serve": "^7.1.1",
 		"dayjs": "^1.11.13",
-		"isbot": "^4.1.0",
+		"isbot": "^5.1.17",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"react-router": "^7.0.0",
+		"react-router": "^7.1.1",
 		"recharts": "2"
 	},
 	"devDependencies": {
-		"@react-router/dev": "^7.0.0",
-		"@types/react": "^18.2.20",
-		"@types/react-dom": "^18.2.7",
+		"@react-router/dev": "^7.1.1",
+		"@types/node": "^20",
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
 		"@typescript-eslint/eslint-plugin": "^6.7.4",
 		"@typescript-eslint/parser": "^6.7.4",
 		"eslint": "^8.38.0",
@@ -45,9 +46,9 @@
 		"postcss": "^8.4.49",
 		"postcss-preset-mantine": "^1.17.0",
 		"postcss-simple-vars": "^7.0.1",
-		"typescript": "^5.1.6",
-		"vite": "^5.1.0",
-		"vite-tsconfig-paths": "^4.2.1"
+		"typescript": "^5.7.2",
+		"vite": "^5.4.11",
+		"vite-tsconfig-paths": "^5.1.4"
 	},
 	"engines": {
 		"node": ">=20.0.0"
