@@ -356,7 +356,7 @@ const config = {
 			},
 		},
 		{
-			files: ["app/routes.ts", "app/root.tsx", "**/*.route.tsx"],
+			files: ["./*", "app/routes.ts", "app/root.tsx", "**/*.route.tsx"],
 			rules: {
 				"import/no-default-export": "off",
 			},
