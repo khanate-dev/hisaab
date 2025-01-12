@@ -1,5 +1,5 @@
 /** @type {import('eslint').Linter.Config} */
-module.exports = {
+const config = {
 	root: true,
 	reportUnusedDisableDirectives: true,
 	env: { browser: true, es2021: true },
@@ -384,3 +384,5 @@ module.exports = {
 		},
 	],
 };
+
+module.exports = config;
