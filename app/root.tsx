@@ -3,6 +3,7 @@ import {
 	mantineHtmlProps,
 	MantineProvider,
 } from "@mantine/core";
+import mantineCss from "@mantine/core/styles.css?url";
 import {
 	isRouteErrorResponse,
 	Links,
@@ -11,11 +12,11 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from "react-router";
-import { theme } from "./theme/theme";
 
-import mantineCss from "@mantine/core/styles.css?url";
-import type { Route } from "./+types/root";
+import { theme } from "./theme/theme";
 import themeCss from "./theme/theme.css?url";
+
+import type { Route } from "./+types/root";
 
 export const links: Route.LinksFunction = () => [
 	{
@@ -85,7 +86,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 		<main>
 			<h1>{message}</h1>
 			<p>{details}</p>
-			{stack && (
+			{Boolean(stack) && (
 				<pre>
 					<code>{stack}</code>
 				</pre>
