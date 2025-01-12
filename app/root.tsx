@@ -1,8 +1,34 @@
 import "@mantine/core/styles.css";
 
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import {
+	Links,
+	LinksFunction,
+	Meta,
+	Outlet,
+	Scripts,
+	ScrollRestoration,
+} from "react-router";
 import { theme } from "./theme/theme";
+
+export const links: LinksFunction = () => {
+	return [
+		{
+			rel: "icon",
+			href: "/favicon.ico",
+			sizes: "32x32",
+		},
+		{
+			rel: "icon",
+			href: "/favicon.svg",
+			type: "image/svg+xml",
+		},
+		{
+			rel: "apple-touch-icon",
+			href: "/apple-touch-icon.png",
+		},
+	];
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
 	return (
