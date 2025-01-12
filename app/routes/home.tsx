@@ -7,6 +7,8 @@ export function meta(_args: Route.MetaArgs) {
 	];
 }
 
-export default function Home() {
-	return <div>Hisaab</div>;
-}
+const Home = () => {
+	return <div></div>;
+};
+
+export default Home;
