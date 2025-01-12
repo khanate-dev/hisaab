@@ -1,0 +1,6 @@
+@font-face {
+	font-family: "Lexend";
+	font-weight: 100 1000;
+	src: url(./lexend-variable.ttf) format("truetype-variations");
+	src: url(./lexend-variable.ttf) format("truetype") tech("variable");
+}
