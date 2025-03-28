@@ -3,7 +3,7 @@
 		".git",
 		".vscode",
 		".vscode-insiders",
-		"**/(urdu|arabic|sinhala).content.json",
+		"**/(urdu|english).content.json",
 		"**/*.apk",
 		"**/*.mp3",
 		"**/expo-module.config.json",
