@@ -8,6 +8,7 @@ export default defineConfig({
 	css: {
 		postcss: {
 			plugins: [
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				presetMantine(),
 				simpleVars({
 					variables: {
