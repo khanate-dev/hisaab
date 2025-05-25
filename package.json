@@ -24,6 +24,7 @@
 		"@mantine/spotlight": "^7.17.3",
 		"@react-router/node": "^7.4.0",
 		"@react-router/serve": "^7.4.0",
+		"@tabler/icons-react": "^3.33.0",
 		"dayjs": "^1.11.13",
 		"isbot": "^5.1.25",
 		"react": "^19.0.0",
