@@ -105,7 +105,7 @@ export const loans = t.sqliteTable("loans", {
 		.references(() => wallets.id),
 	lender: t.text(),
 	borrower: t.text(),
-	payback_date: t.int({ mode: "timestamp" }).notNull(),
+	payback_date: t.int({ mode: "timestamp" }),
 	paid_back_at: t.int({ mode: "timestamp" }),
 	...metaColumns,
 });
