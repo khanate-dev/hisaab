@@ -62,6 +62,7 @@
 		"app/**/*",
 		"**/.server/**/*",
 		"**/.client/**/*",
-		".react-router/types/**/*"
+		".react-router/types/**/*",
+		"db"
 	]
 }
