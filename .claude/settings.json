@@ -1,0 +1,6 @@
+{
+	"enableAllProjectMcpServers": true,
+	"enabledPlugins": {
+		"modern-web-guidance@googlechrome": true
+	}
+}
