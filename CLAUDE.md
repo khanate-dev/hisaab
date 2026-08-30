@@ -41,7 +41,7 @@ Caveman skill (`/caveman` skill) always active.
 
 ### Issue tracker
 
-GitHub Issues (WiMetrixDev/sooperwizer) via `gh` CLI; external PRs are not a triage surface. See `.claude/docs/agents/issue-tracker.md`.
+GitHub Issues (khanate-dev/hisaab) via `gh` CLI; external PRs are not a triage surface. See `.claude/docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
