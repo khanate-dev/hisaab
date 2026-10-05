@@ -59,6 +59,18 @@ A Household's default currency for new Wallets.
 Any record that changes a Wallet's Balance: Expense, Income, Transfer, Loan principal, Repayment or Balance adjustment.
 _Avoid_: Transaction, movement, record
 
+**Expense**:
+An Entry for money leaving a Wallet, with a date, a description and a Category, optionally broken into Items.
+_Avoid_: Spend, payment, purchase
+
+**Income**:
+An Entry for money arriving in a Wallet, with a date, a description and a Category. Never itemized.
+_Avoid_: Earning, receipt
+
+**Item**:
+One line of an Expense: a description, an amount and an optional informational quantity, optionally in its own Category. Once an Expense has Items, its total is their sum.
+_Avoid_: Line item, split
+
 **Transfer**:
 An Entry moving money between two Wallets of the same Household.
 
@@ -80,3 +92,40 @@ _Avoid_: Debt, IOU
 
 **Repayment**:
 An Entry paying down part of a Loan, to or from any Wallet.
+
+### Categories & budgets
+
+**Category**:
+A household's label for Expenses or Incomes, which are two separate lists. It has an icon and a colour, and can be archived but not deleted while in use.
+_Avoid_: Tag, label, bucket
+
+**Subcategory**:
+A Category under a parent Category, one level deep only. A parent's totals include its Subcategories.
+
+**Budget month**:
+A Household's monthly period, starting on the household-chosen day (the 1st by default).
+_Avoid_: Calendar month (when the start day differs), cycle
+
+**Budget**:
+A standing amount per Budget month for an expense Category, valid from a given month onward until changed.
+_Avoid_: Limit, allowance
+
+**Budget override**:
+A replacement Budget amount for one specific Budget month.
+
+**Expected income**:
+A Budget for an income Category: how much income is expected per Budget month.
+_Avoid_: Income budget
+
+### Recurring
+
+**Recurring rule**:
+A template Entry plus a schedule that produces Occurrences. Each rule is either **Auto-record** (an Occurrence becomes an Entry on its due date) or **Confirm** (the default: an Occurrence waits as Pending).
+_Avoid_: Subscription, scheduled transaction, repeat
+
+**Occurrence**:
+One due instance of a Recurring rule, identified by the rule plus its due date.
+
+**Pending**:
+The state of an Occurrence awaiting confirmation, edit, skip or snooze. A Pending Occurrence affects no Balance or Budget.
+_Avoid_: Draft, unconfirmed entry
