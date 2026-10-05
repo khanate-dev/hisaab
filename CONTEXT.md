@@ -129,3 +129,19 @@ One due instance of a Recurring rule, identified by the rule plus its due date.
 **Pending**:
 The state of an Occurrence awaiting confirmation, edit, skip or snooze. A Pending Occurrence affects no Balance or Budget.
 _Avoid_: Draft, unconfirmed entry
+
+### Reports & notifications
+
+**Pace**:
+How much of a Budget is used compared with how far through the Budget month we are (e.g. "day 12 of 30, 58% spent").
+
+**My overview**:
+A User's own combined view of net worth and income vs expense across every Household they belong to. Cross-household transfers cancel out. Seen only by that User.
+_Avoid_: Global dashboard, all-households report
+
+**Notification**:
+A notice raised by a trigger (recurring due, auto-recorded, budget threshold, loan due, activity digest, membership, monthly summary) for chosen recipients in a Household.
+_Avoid_: Alert, reminder (as separate concepts)
+
+**Notification inbox**:
+The in-app list that always receives every Notification for a User, whatever other delivery channels are on.
