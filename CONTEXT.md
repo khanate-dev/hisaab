@@ -30,7 +30,7 @@ _Avoid_: User (as a role name), super-admin, owner
 A User holding a Membership in a given Household.
 
 **Former member**:
-How entries are attributed after their author has deleted their account. Entries remain in the Household.
+The anonymous stand-in, without a name or email, that replaces a User in a Household once they delete their account. Their Entries and Activity log stay attributed to it. Each deleted User gets a separate one per Household ("Former member 1", "Former member 2").
 
 **Invite**:
 A link created by a Household Admin that lets someone join that Household with a preset Role. It expires and can be revoked, and may be tied to one email address.

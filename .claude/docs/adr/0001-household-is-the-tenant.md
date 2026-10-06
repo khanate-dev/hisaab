@@ -28,3 +28,15 @@ Under the Supabase + PowerSync stack (ADR-0007), two layers enforce isolation:
 RLS remains the single **source of truth**, and Sync Streams must be a strict **subset** of what RLS allows. A deploy-blocking test enforces this. It seeds users in every Role across several households and asserts that every row a stream would send that user is also readable under RLS for that user. Both rule sets key off the same membership table (`household_id` + Role).
 
 Amended in [Backend & data-layer architecture](https://github.com/khanate-dev/hisaab/issues/7).
+
+## Amendment: account deletion
+
+Account deletion is immediate and server-side. It needs a connection, a fresh email OTP and a typed confirmation, and it first offers a Full backup of the Personal household. There is no grace period.
+
+- **Sole Admin of a shared household with other Members:** deletion is blocked until they promote another Admin or delete that household. A shared household with no other Members is deleted along with the account, like the Personal household.
+- **Attribution:** each deleted User becomes a separate, anonymous Former member per Household, with no name or email kept. Entries, the Activity log (before/after values untouched) and Recurring rules stay, attributed to it. Generated labels such as "Contribution from …" are rendered from the author reference and never stored as text. Free text that members typed is never rewritten.
+- **Kept:** Attachments on shared-household Entries, and Recurring rules (which keep running).
+- **Deleted:** the Personal household and its Attachments, Saved filters, notification preferences and inbox, device and session rows (devices wipe their local replica on next contact), and the Auth user (so the email is free to sign up again). Pending Invites the User created are revoked.
+- **Backups:** the nightly off-site dumps expire within 30 days and are never edited, and the privacy policy says so. A deletion ledger (only the opaque user id and deletion time) is re-applied after any disaster-recovery restore. Full backups an Admin made earlier are that household's own copy and are out of scope.
+
+Amended in [Account deletion semantics](https://github.com/khanate-dev/hisaab/issues/12).
