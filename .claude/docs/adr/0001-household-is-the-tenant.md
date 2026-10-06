@@ -17,3 +17,14 @@ Hisaab opens self-service sign-up from day one, so strangers share one deploymen
 - Abuse and rate-limiting hardening for open sign-up remains out of scope for the current spec effort.
 
 Decided in [Multi-tenancy scope](https://github.com/khanate-dev/hisaab/issues/4).
+
+## Amendment: one authority, two enforcement paths
+
+Under the Supabase + PowerSync stack (ADR-0007), two layers enforce isolation:
+
+- **Postgres RLS** governs every direct access: uploads, Storage, Edge Functions and API reads.
+- **PowerSync Sync Streams** decide what each device downloads. PowerSync replicates with a privileged role, so RLS does not apply to downloads.
+
+RLS remains the single **source of truth**, and Sync Streams must be a strict **subset** of what RLS allows. A deploy-blocking test enforces this. It seeds users in every Role across several households and asserts that every row a stream would send that user is also readable under RLS for that user. Both rule sets key off the same membership table (`household_id` + Role).
+
+Amended in [Backend & data-layer architecture](https://github.com/khanate-dev/hisaab/issues/7).
