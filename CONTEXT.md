@@ -154,6 +154,10 @@ _Avoid_: Alert, reminder (as separate concepts)
 **Notification inbox**:
 The in-app list that always receives every Notification for a User, whatever other delivery channels are on.
 
+**Delivery channel**:
+A way a Notification reaches a User outside the Notification inbox: mobile push, web push, or email (Monthly summary only). Push text never contains amounts.
+_Avoid_: Notification type (that is the trigger)
+
 ### Data
 
 **Spreadsheet export**:
