@@ -53,7 +53,11 @@ The kind of a Wallet: **Cash**, **Bank**, **Mobile wallet** or **Credit card**. 
 A Wallet's opening balance plus all Entries touching it. Always derived, never stored as the truth.
 
 **Base currency**:
-A Household's default currency for new Wallets.
+A Household's default currency for new Wallets, and the currency its Budgets and reports are in. It is fixed once the Household has any Entry.
+
+**Base amount**:
+An Entry's value in the Household's Base currency. It is fixed when the Entry is recorded in a non-base Wallet, and editable. Budgets and reports of money flow add up Base amounts. Balances and net worth convert at the latest rate instead.
+_Avoid_: Converted amount, home amount
 
 **Entry**:
 Any record that changes a Wallet's Balance: Expense, Income, Transfer, Loan principal, Repayment or Balance adjustment.
@@ -70,6 +74,10 @@ _Avoid_: Earning, receipt
 **Item**:
 One line of an Expense: a description, an amount and an optional informational quantity, optionally in its own Category. Once an Expense has Items, its total is their sum.
 _Avoid_: Line item, split
+
+**Attachment**:
+An image or PDF kept on an Entry as evidence, such as a receipt, bill, transfer screenshot or loan agreement. An Entry has at most five.
+_Avoid_: Receipt (as the general term), file, document
 
 **Transfer**:
 An Entry moving money between two Wallets of the same Household.
@@ -136,7 +144,7 @@ _Avoid_: Draft, unconfirmed entry
 How much of a Budget is used compared with how far through the Budget month we are (e.g. "day 12 of 30, 58% spent").
 
 **My overview**:
-A User's own combined view of net worth and income vs expense across every Household they belong to. Cross-household transfers cancel out. Seen only by that User.
+A User's own combined view of net worth and income vs expense across every Household they belong to. Cross-household transfers cancel out. Shown in the User's own display currency, converted at the latest rates, so it is approximate when currencies mix. Seen only by that User.
 _Avoid_: Global dashboard, all-households report
 
 **Notification**:
@@ -145,3 +153,19 @@ _Avoid_: Alert, reminder (as separate concepts)
 
 **Notification inbox**:
 The in-app list that always receives every Notification for a User, whatever other delivery channels are on.
+
+### Data
+
+**Spreadsheet export**:
+A CSV of a Household's Entries, filtered by date range and the usual filters, for use outside the app. Admins only.
+
+**Full backup**:
+A complete copy of one Household (every record plus Attachment files) that can be imported into a new Household to restore or move it. Admins only.
+_Avoid_: Export (unqualified), dump
+
+**CSV import**:
+Loading rows from a statement or another app into one Wallet as ordinary Entries, with columns mapped by the user and likely duplicates flagged before confirming.
+
+**Saved filter**:
+A named set of search and filter criteria over a Household's Entries, private to the User who saved it.
+_Avoid_: View, smart list
