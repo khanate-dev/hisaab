@@ -195,7 +195,11 @@ describe("sync scenarios", () => {
 	it("a too-old build still downloads, and its writes wait out the 426s until the app is updated", async () => {
 		const { users, household } = await seedHousehold({ alice: "admin" });
 		const alice = await connectClient(users.alice, { contractVersion: 0 });
-		expect(await localName(alice, household)).toBe("Family");
+		// Downloads aren't gated; the seeded row may land just after the first sync, so wait for it.
+		await vi.waitFor(
+			async () => expect(await localName(alice, household)).toBe("Family"),
+			{ timeout: 10_000 },
+		);
 
 		await rename(alice, household, "Renamed by an old build", 0);
 		await vi.waitFor(
