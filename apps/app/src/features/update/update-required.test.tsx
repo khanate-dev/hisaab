@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { UpdateRequired } from "./update-required";
+import { render } from "@/test/render";
 
 describe("UpdateRequired", () => {
 	it("blocks the app with an explanation that nothing is lost, and offers the update", async () => {

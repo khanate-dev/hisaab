@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import pluginLingui from "eslint-plugin-lingui";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
@@ -15,6 +16,7 @@ const DEVICE_CODE = [
 
 export default defineConfig(
 	globalIgnores([
+		"apps/app/src/locales/**/*.ts",
 		"**/node_modules",
 		"**/dist",
 		"**/.expo",
@@ -31,6 +33,57 @@ export default defineConfig(
 			"@typescript-eslint/no-unused-vars": [
 				"error",
 				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+			],
+		},
+	},
+	{
+		// ADR-0008: every user-facing string goes through Lingui. Identifiers, routes, class names and test files aren't copy.
+		files: ["apps/app/src/**/*.tsx"],
+		ignores: ["**/*.test.tsx", "apps/app/src/test/**"],
+		// The plugin's typings predate ESLint 10's Plugin type; the runtime shape is fine.
+		plugins: {
+			lingui: /** @type {import("eslint").ESLint.Plugin} */ (
+				/** @type {unknown} */ (pluginLingui)
+			),
+		},
+		rules: {
+			...pluginLingui.configs["flat/recommended"].rules,
+			"lingui/no-unlocalized-strings": [
+				"error",
+				{
+					ignore: [
+						// No letters, a kebab or dotted identifier, a route
+						"^[^A-Za-z]*$",
+						"^[a-z0-9]+([-_./:@][a-z0-9]+)+$",
+						"^/",
+						// A single lowercase identifier ("light", "dark")
+						"^[a-z]+$",
+						// A Tailwind class list: lowercase tokens, at least one of them hyphenated
+						"^(?=.*[a-z0-9]-)[a-z0-9:\\[\\]/%.#\\-\\s]+$",
+					],
+					ignoreNames: [
+						{
+							regex: {
+								pattern:
+									"className|ClassName|^(role|name|href|route|variant|inputMode|autoComplete|autoCapitalize|accessibilityRole|testID|key|type|target)$",
+							},
+						},
+					],
+					ignoreFunctions: [
+						"Error",
+						"console.*",
+						"require",
+						"*.addEventListener",
+						"useQuickAdd",
+						"router.push",
+						"router.navigate",
+						"navigation.emit",
+						"navigation.navigate",
+						"usePressIn",
+						"hardShadow",
+						"pressInStyle",
+					],
+				},
 			],
 		},
 	},

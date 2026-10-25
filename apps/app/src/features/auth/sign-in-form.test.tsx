@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { SignInForm } from "./sign-in-form";
+import { render } from "@/test/render";
 
 const setup = async (
 	overrides: Partial<Parameters<typeof SignInForm>[0]> = {},

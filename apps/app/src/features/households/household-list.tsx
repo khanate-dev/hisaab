@@ -1,4 +1,7 @@
 import type { Role } from "@hisaab/client-schema";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
 import { Card } from "@/components/ui/card";
@@ -6,10 +9,10 @@ import { Text } from "@/components/ui/text";
 
 import type { HouseholdSummary } from "./use-households";
 
-const ROLE_LABELS: Record<Role, string> = {
-	admin: "Admin",
-	member: "Member",
-	viewer: "Viewer",
+const ROLE_LABELS: Record<Role, MessageDescriptor> = {
+	admin: msg`Admin`,
+	member: msg`Member`,
+	viewer: msg`Viewer`,
 };
 
 /** The Personal household comes first, presented as "Personal"; shared households follow by name. */
@@ -25,13 +28,14 @@ export const HouseholdList = ({
 }: {
 	households: HouseholdSummary[];
 }) => {
+	const { t, i18n } = useLingui();
 	if (households.length === 0) {
 		return (
 			<Text
 				role="status"
 				variant="muted"
 			>
-				Syncing your households…
+				<Trans>Syncing your households…</Trans>
 			</Text>
 		);
 	}
@@ -48,10 +52,10 @@ export const HouseholdList = ({
 					role="listitem"
 				>
 					<Text variant="title">
-						{household.isPersonal ? "Personal" : household.name}
+						{household.isPersonal ? t`Personal` : household.name}
 					</Text>
 					{!household.isPersonal && (
-						<Text variant="muted">{ROLE_LABELS[household.role]}</Text>
+						<Text variant="muted">{i18n._(ROLE_LABELS[household.role])}</Text>
 					)}
 				</Card>
 			))}

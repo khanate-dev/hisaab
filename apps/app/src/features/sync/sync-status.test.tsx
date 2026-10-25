@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { SyncStatus } from "./sync-status";
+import { render } from "@/test/render";
 
 const rejectedChange = {
 	id: "1:1",

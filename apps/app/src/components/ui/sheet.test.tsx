@@ -1,9 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import { PortalHost } from "@rn-primitives/portal";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "./sheet";
+import { render } from "@/test/render";
 
 describe("Sheet", () => {
 	it("opens from its trigger with a close button of its own", async () => {

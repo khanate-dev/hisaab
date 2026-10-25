@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -11,11 +12,9 @@ type Props = {
 	verifyCode: (email: string, code: string) => Promise<void>;
 };
 
-const messageOf = (error: unknown) =>
-	error instanceof Error ? error.message : "Something went wrong";
-
 /** Email OTP sign-in: the only way in (ADR-0007). */
 export const SignInForm = ({ sendCode, verifyCode }: Props) => {
+	const { t } = useLingui();
 	const [email, setEmail] = useState("");
 	const [code, setCode] = useState("");
 	const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
@@ -28,7 +27,9 @@ export const SignInForm = ({ sendCode, verifyCode }: Props) => {
 		try {
 			await action();
 		} catch (caught) {
-			setError(messageOf(caught));
+			setError(
+				caught instanceof Error ? caught.message : t`Something went wrong`,
+			);
 		} finally {
 			setBusy(false);
 		}
@@ -54,26 +55,28 @@ export const SignInForm = ({ sendCode, verifyCode }: Props) => {
 						autoCapitalize="none"
 						autoComplete="email"
 						inputMode="email"
-						label="Email"
+						label={t`Email`}
 						onChangeText={setEmail}
 						onSubmitEditing={submitEmail}
-						placeholder="you@example.com"
+						placeholder={t`you@example.com`}
 						value={email}
 					/>
 					<Button
 						disabled={busy || email.trim() === ""}
 						onPress={submitEmail}
 					>
-						Send code
+						{t`Send code`}
 					</Button>
 				</>
 			) : (
 				<>
-					<Text>We emailed a code to {codeSentTo}.</Text>
+					<Text>
+						<Trans>We emailed a code to {codeSentTo}.</Trans>
+					</Text>
 					<Input
 						autoComplete="one-time-code"
 						inputMode="numeric"
-						label="Code"
+						label={t`Code`}
 						onChangeText={setCode}
 						onSubmitEditing={submitCode}
 						value={code}
@@ -82,7 +85,7 @@ export const SignInForm = ({ sendCode, verifyCode }: Props) => {
 						disabled={busy || code.trim() === ""}
 						onPress={submitCode}
 					>
-						Sign in
+						{t`Sign in`}
 					</Button>
 				</>
 			)}

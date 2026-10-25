@@ -11,7 +11,9 @@
 		"android": "expo run:android",
 		"prepare:web": "powersync-web copy-assets --output public",
 		"typecheck": "tsc -p tsconfig.json",
-		"test": "jest"
+		"test": "jest",
+		"i18n:extract": "lingui extract --clean",
+		"i18n:compile": "lingui compile --typescript"
 	},
 	"dependencies": {
 		"@azure/core-asynciterator-polyfill": "catalog:",
@@ -20,6 +22,8 @@
 		"@expo/metro-runtime": "catalog:",
 		"@hisaab/client-schema": "workspace:*",
 		"@hisaab/domain": "workspace:*",
+		"@lingui/core": "catalog:",
+		"@lingui/react": "catalog:",
 		"@op-engineering/op-sqlite": "catalog:",
 		"@powersync/common": "catalog:",
 		"@powersync/drizzle-driver": "catalog:",
@@ -54,6 +58,8 @@
 	},
 	"devDependencies": {
 		"@jest/globals": "catalog:",
+		"@lingui/babel-plugin-lingui-macro": "catalog:",
+		"@lingui/cli": "catalog:",
 		"@react-native/metro-config": "catalog:",
 		"@testing-library/react-native": "catalog:",
 		"@types/react": "catalog:",
@@ -71,24 +77,30 @@
 				"displayName": "ios",
 				"preset": "jest-expo/ios",
 				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg))",
+					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg|@lingui|@messageformat))",
 					"/node_modules/react-native-reanimated/plugin/",
 					"/node_modules/@react-native/babel-preset/"
 				],
 				"moduleNameMapper": {
 					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
+				},
+				"transform": {
+					"\\.mjs$": "babel-jest"
 				}
 			},
 			{
 				"displayName": "android",
 				"preset": "jest-expo/android",
 				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg))",
+					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg|@lingui|@messageformat))",
 					"/node_modules/react-native-reanimated/plugin/",
 					"/node_modules/@react-native/babel-preset/"
 				],
 				"moduleNameMapper": {
 					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
+				},
+				"transform": {
+					"\\.mjs$": "babel-jest"
 				}
 			}
 		]
