@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { View } from "react-native";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 
 type Props = {
 	/** Emails a one-time code to the address, creating the User on first sign-in. */
@@ -43,51 +47,53 @@ export const SignInForm = ({ sendCode, verifyCode }: Props) => {
 			: run(() => verifyCode(codeSentTo, code.trim()));
 
 	return (
-		<View style={styles.form}>
+		<View className="gap-4 p-6">
 			{codeSentTo === null ? (
 				<>
-					<TextInput
-						accessibilityLabel="Email"
+					<Input
 						autoCapitalize="none"
 						autoComplete="email"
 						inputMode="email"
+						label="Email"
 						onChangeText={setEmail}
 						onSubmitEditing={submitEmail}
 						placeholder="you@example.com"
-						style={styles.input}
 						value={email}
 					/>
 					<Button
 						disabled={busy || email.trim() === ""}
 						onPress={submitEmail}
-						title="Send code"
-					/>
+					>
+						Send code
+					</Button>
 				</>
 			) : (
 				<>
 					<Text>We emailed a code to {codeSentTo}.</Text>
-					<TextInput
-						accessibilityLabel="Code"
+					<Input
 						autoComplete="one-time-code"
 						inputMode="numeric"
+						label="Code"
 						onChangeText={setCode}
 						onSubmitEditing={submitCode}
-						style={styles.input}
 						value={code}
 					/>
 					<Button
 						disabled={busy || code.trim() === ""}
 						onPress={submitCode}
-						title="Sign in"
-					/>
+					>
+						Sign in
+					</Button>
 				</>
 			)}
-			{error !== null && <Text role="alert">{error}</Text>}
+			{error !== null && (
+				<Text
+					className="text-bad"
+					role="alert"
+				>
+					{error}
+				</Text>
+			)}
 		</View>
 	);
 };
-
-const styles = StyleSheet.create({
-	form: { gap: 12, padding: 24 },
-	input: { borderWidth: 1, paddingBlock: 8, paddingInline: 12 },
-});

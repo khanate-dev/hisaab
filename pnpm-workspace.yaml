@@ -33,6 +33,20 @@ catalog:
   react-native-web: 0.21.4
   "@react-native/metro-config": 0.86.3
   "@types/react": 19.2.18
+
+  # UI (ADR-0008): NativeWind 4 runs on Tailwind 3; react-native-svg and expo-font match SDK 57
+  "@expo-google-fonts/archivo-black": 0.4.1
+  "@expo-google-fonts/space-grotesk": 0.4.1
+  "@rn-primitives/dialog": 1.5.2
+  "@rn-primitives/portal": 1.5.3
+  "@rn-primitives/slot": 1.5.2
+  expo-font: 57.0.4
+  lucide-react-native: 1.54.0
+  nativewind: 4.2.7
+  # nativewind 4.2.7 pins it; its JSX runtime resolves from the app, so the app depends on it directly
+  react-native-css-interop: 0.2.7
+  react-native-svg: 15.15.4
+  tailwindcss: 3.4.19
   babel-preset-expo: 57.0.16
 
   # Sync and local data. drizzle-orm stays below 1.0: @powersync/drizzle-driver's peer range is <1.0.0.

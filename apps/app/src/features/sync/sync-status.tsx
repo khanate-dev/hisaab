@@ -1,5 +1,8 @@
 import { NO_ROWS, UNMAPPABLE, type uploadErrors } from "@hisaab/client-schema";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { View } from "react-native";
+
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 /** A local change the server rejected (CONTEXT.md: Rejected change). */
 export type RejectedChange = typeof uploadErrors.$inferSelect;
@@ -31,47 +34,40 @@ type Props = {
 	onDismiss: (id: string) => void;
 };
 
-/** The Sync status sheet: whether the device is online, and every change that couldn't sync. */
+/** The Sync status sheet's body: whether the device is online, and every change that couldn't sync. */
 export const SyncStatus = ({
 	connected,
 	rejectedChanges,
 	onDismiss,
 }: Props) => (
-	<View style={styles.sheet}>
+	<View className="gap-4">
 		<Text role="status">
 			{connected ? "Online." : "Offline. Changes sync when you're back online."}
 			{rejectedChanges.length === 0 && " Every change synced."}
 		</Text>
 		{rejectedChanges.length > 0 && (
 			<View
+				className="gap-3"
 				role="list"
-				style={styles.list}
 			>
 				{rejectedChanges.map((change) => (
 					<View
+						className="gap-2 rounded-card border-3 border-border bg-surface-2 p-3"
 						key={change.id}
 						role="listitem"
-						style={styles.item}
 					>
-						<Text style={styles.change}>
-							{describeChange(change)} couldn't sync
-						</Text>
-						<Text>{describeReason(change)}</Text>
+						<Text variant="label">{describeChange(change)} couldn't sync</Text>
+						<Text variant="muted">{describeReason(change)}</Text>
 						<Button
 							accessibilityLabel={`Dismiss: ${describeChange(change)}`}
 							onPress={() => onDismiss(change.id)}
-							title="Dismiss"
-						/>
+							variant="secondary"
+						>
+							Dismiss
+						</Button>
 					</View>
 				))}
 			</View>
 		)}
 	</View>
 );
-
-const styles = StyleSheet.create({
-	sheet: { gap: 16, padding: 24 },
-	list: { gap: 8 },
-	item: { borderWidth: 1, gap: 4, padding: 12 },
-	change: { fontWeight: "bold" },
-});
