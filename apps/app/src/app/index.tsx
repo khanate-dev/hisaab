@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { Button, StyleSheet, View } from "react-native";
 
 import { HouseholdList } from "@/features/households/household-list";
@@ -15,6 +16,12 @@ export default function Home() {
 	return (
 		<View style={styles.screen}>
 			{session && <Households userId={session.user.id} />}
+			<Link
+				asChild
+				href="/sync-status"
+			>
+				<Button title="Sync status" />
+			</Link>
 			<Button
 				onPress={() => void supabase.auth.signOut()}
 				title="Sign out"

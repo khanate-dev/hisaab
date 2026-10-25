@@ -2,6 +2,7 @@ import { DrizzleAppSchema } from "@powersync/drizzle-driver";
 
 import * as tables from "./tables";
 
+export * from "./rejected-changes";
 export * from "./roles";
 export * from "./tables";
 
@@ -9,5 +10,12 @@ export * from "./tables";
 export const drizzleSchema = tables;
 
 // Hand-written PowerSync schema (the synced subset plus local-only tables), derived from the Drizzle tables.
-// Never generated from Postgres.
-export const schema = new DrizzleAppSchema(drizzleSchema);
+// Keys are the SQLite table names. Never generated from Postgres.
+export const schema = new DrizzleAppSchema({
+	households: tables.households,
+	memberships: tables.memberships,
+	upload_errors: {
+		tableDefinition: tables.uploadErrors,
+		options: { localOnly: true },
+	},
+});

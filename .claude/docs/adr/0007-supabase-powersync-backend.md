@@ -39,3 +39,15 @@ A throwaway app tested the stack on Expo web, on a Cloudflare deploy and on an A
 - **drizzle-orm stays below 1.0.** That is the PowerSync driver's peer range.
 
 Amended in [Spike: Expo web + PowerSync offline round-trip](https://github.com/khanate-dev/hisaab/issues/14).
+
+## Amendment: what counts as a rejected write
+
+The upload connector (`apps/app/src/lib/powersync/connector.ts`, also driven by `tests/sync`) settles each queued write as one of three outcomes:
+
+- **Rejected,** so it becomes a Rejected change ("couldn't sync"). These are `42501` (RLS or privileges), `23xxx` (constraints), `22xxx` (bad values), and an UPDATE or DELETE that matched no rows. A DELETE that matched no rows counts as rejected only while the User can still read the row. If the row is already gone, the delete is done.
+- **Retried later,** with the transaction kept in the queue. This covers network failures, an unreachable database or pool (`PGRST0xx`), an expired token (`PGRST3xx`), and schema mismatches from a client ahead of the server (`42703`, `42P01`, `PGRST2xx`). The contract version gate (ADR-0009) is what turns the last group into "Update required".
+- **Applied.**
+
+**A delete wins over a later update.** An update that arrives after another device deleted the row matches nothing, so it becomes a Rejected change on the updating device, and the row disappears there at the next sync.
+
+Amended in [Upload connector with "couldn't sync" items](https://github.com/khanate-dev/hisaab/issues/25).

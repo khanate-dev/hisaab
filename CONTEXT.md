@@ -170,6 +170,10 @@ _Avoid_: Export (unqualified), dump
 **CSV import**:
 Loading rows from a statement or another app into one Wallet as ordinary Entries, with columns mapped by the user and likely duplicates flagged before confirming.
 
+**Rejected change**:
+A change made on a device that the server refused, for example because the User lacked the Role for it or someone else had deleted the row. It is kept on that device and shown as "couldn't sync" in the Sync status sheet until dismissed; the server's version of the row comes back.
+_Avoid_: Failed sync, sync error (for the refused change itself)
+
 **Saved filter**:
 A named set of search and filter criteria over a Household's Entries, private to the User who saved it.
 _Avoid_: View, smart list

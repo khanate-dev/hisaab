@@ -1,6 +1,7 @@
+import type { Role } from "@hisaab/client-schema";
 import { v7 as uuidv7 } from "uuid";
 
-import { adminClient, signInNewUser } from "./users";
+import { adminClient, type SignedInUser, signInNewUser } from "./users";
 
 /**
  * A fixed adversarial seed: every Role in a shared household, a User in two shared households, and an outsider.
@@ -33,4 +34,33 @@ export const seedHouseholds = async () => {
 	if (memberships.error) throw memberships.error;
 
 	return { users: { alice, bob, carol, dave }, households: { family, side } };
+};
+
+/** A fresh shared household with one new User per entry, in the given Role. */
+export const seedHousehold = async <Name extends string>(
+	roles: Record<Name, Role>,
+) => {
+	const names = Object.keys(roles) as Name[];
+	const signedIn = await Promise.all(names.map(() => signInNewUser()));
+	const users = Object.fromEntries(
+		names.map((name, i) => [name, signedIn[i]]),
+	) as Record<Name, SignedInUser>;
+	const household = uuidv7();
+
+	const admin = adminClient();
+	const inserted = await admin
+		.from("households")
+		.insert({ id: household, name: "Family" });
+	if (inserted.error) throw inserted.error;
+	const memberships = await admin.from("memberships").insert(
+		names.map((name) => ({
+			id: uuidv7(),
+			household_id: household,
+			user_id: users[name].id,
+			role: roles[name],
+		})),
+	);
+	if (memberships.error) throw memberships.error;
+
+	return { users, household };
 };

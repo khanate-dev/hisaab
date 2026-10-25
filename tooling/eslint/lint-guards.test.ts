@@ -64,6 +64,17 @@ describe("domain package stays framework-free", () => {
 	});
 });
 
+describe("the upload connector stays framework-free", () => {
+	it("rejects React Native imports in the connector", async () => {
+		expect(
+			await errorsFor(
+				"apps/app/src/lib/powersync/connector.ts",
+				"import { Platform } from 'react-native';\nexport { Platform };\n",
+			),
+		).toContain("no-restricted-imports");
+	});
+});
+
 describe("device code never aggregates money in SQL", () => {
 	it.each([
 		[
