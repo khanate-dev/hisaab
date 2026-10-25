@@ -7,12 +7,14 @@ const DRIZZLE_AGGREGATES = new Set([
 	"avg",
 	"avgDistinct",
 ]);
-// Plain strings need the call paren attached, so UI copy like "Total (PKR)" stays legal.
-const IN_STRING = /\b(?:sum|avg|total)\(/i;
-const IN_SQL_TEMPLATE = /\b(?:sum|avg|total)\s*\(/i;
+// TOTAL needs its paren attached, so UI copy like "Total (PKR)" stays legal.
+const SQL_AGGREGATE = /\b(?:sum|avg)\s*\(|\btotal\(/i;
 
 const message =
 	"Do not aggregate money in SQL on the device; sum Money values in TypeScript.";
+
+/** @param {unknown} source */
+const isDrizzle = (source) => String(source).startsWith("drizzle-orm");
 
 /** @type {import('eslint').Rule.RuleModule} */
 export const noSqlMoneyAggregates = {
@@ -25,12 +27,16 @@ export const noSqlMoneyAggregates = {
 	create(context) {
 		/** @param {import('estree').Node} node */
 		const report = (node) => context.report({ node, messageId: "aggregate" });
+		/** Local names bound by `import * as x from 'drizzle-orm'`. */
+		const drizzleNamespaces = new Set();
 
 		return {
 			ImportDeclaration(node) {
-				if (!String(node.source.value).startsWith("drizzle-orm")) return;
+				if (!isDrizzle(node.source.value)) return;
 				for (const specifier of node.specifiers) {
-					if (
+					if (specifier.type === "ImportNamespaceSpecifier") {
+						drizzleNamespaces.add(specifier.local.name);
+					} else if (
 						specifier.type === "ImportSpecifier" &&
 						specifier.imported.type === "Identifier" &&
 						DRIZZLE_AGGREGATES.has(specifier.imported.name)
@@ -39,16 +45,24 @@ export const noSqlMoneyAggregates = {
 					}
 				}
 			},
+			MemberExpression(node) {
+				if (
+					node.object.type === "Identifier" &&
+					drizzleNamespaces.has(node.object.name) &&
+					node.property.type === "Identifier" &&
+					DRIZZLE_AGGREGATES.has(node.property.name)
+				) {
+					report(node);
+				}
+			},
 			Literal(node) {
-				if (typeof node.value === "string" && IN_STRING.test(node.value))
+				if (typeof node.value === "string" && SQL_AGGREGATE.test(node.value))
 					report(node);
 			},
 			TemplateLiteral(node) {
-				const tagged = node.parent.type === "TaggedTemplateExpression";
-				const pattern = tagged ? IN_SQL_TEMPLATE : IN_STRING;
 				if (
 					node.quasis.some((quasi) =>
-						pattern.test(quasi.value.cooked ?? quasi.value.raw),
+						SQL_AGGREGATE.test(quasi.value.cooked ?? quasi.value.raw),
 					)
 				) {
 					report(node);

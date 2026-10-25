@@ -41,8 +41,20 @@ export default defineConfig(
 	{
 		// The domain core is framework-free and does no I/O; adapters are injected.
 		files: ["packages/domain/**/*.ts"],
-		languageOptions: { globals: { ...globals.es2023 } },
 		rules: {
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "ImportExpression",
+					message:
+						"packages/domain imports statically; inject an adapter instead.",
+				},
+				{
+					selector: "CallExpression[callee.name='require']",
+					message:
+						"packages/domain imports statically; inject an adapter instead.",
+				},
+			],
 			"no-restricted-imports": [
 				"error",
 				{
@@ -62,6 +74,7 @@ export default defineConfig(
 								"expo-*",
 								"@expo/*",
 								"@supabase/*",
+								"@tanstack/*",
 								"@powersync/*",
 								"drizzle-orm",
 								"drizzle-orm/*",

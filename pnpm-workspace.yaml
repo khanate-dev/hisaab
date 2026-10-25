@@ -3,6 +3,9 @@ packages:
   - packages/*
   - tests/*
 
+# `pnpm add` must go through the catalog.
+catalogMode: strict
+
 # Every dependency version lives here, exact. package.json files reference `catalog:` only.
 catalog:
   # Expo SDK 57 set (seeded from the Spike, #14; matches expo@57.0.31's bundledNativeModules.json)
@@ -24,7 +27,16 @@ catalog:
 
   # Sync and local data. drizzle-orm stays below 1.0: @powersync/drizzle-driver's peer range is <1.0.0.
   "@powersync/common": 2.3.1
+  "@powersync/drizzle-driver": 0.8.0
+  "@powersync/react": 2.0.2
+  "@powersync/react-native": 2.3.1
+  "@powersync/web": 2.4.2
+  "@supabase/supabase-js": 2.117.2
   drizzle-orm: 0.45.3
+
+  # Domain
+  decimal.js: 10.6.0
+  fast-check: 4.10.2
 
   # Tooling
   "@eslint/js": 10.0.1

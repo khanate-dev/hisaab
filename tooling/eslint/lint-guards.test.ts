@@ -26,10 +26,20 @@ describe("domain package stays framework-free", () => {
 		["import { createClient } from '@supabase/supabase-js';"],
 		["import { Schema } from '@powersync/common';"],
 		["import { eq } from 'drizzle-orm';"],
+		["import { useQuery } from '@tanstack/react-query';"],
 	])("rejects %s", async (code) => {
 		expect(await errorsFor(file, `${code}\nexport {};\n`)).toContain(
 			"no-restricted-imports",
 		);
+	});
+
+	it("rejects dynamic imports", async () => {
+		expect(
+			await errorsFor(
+				file,
+				"export const load = () => import('react-native');\n",
+			),
+		).toContain("no-restricted-syntax");
 	});
 
 	it("rejects network and storage globals", async () => {
@@ -74,7 +84,15 @@ describe("device code never aggregates money in SQL", () => {
 		],
 		[
 			"apps/app/src/sample.ts",
+			"export const q = 'SELECT SUM (amount) FROM entries';\n",
+		],
+		[
+			"apps/app/src/sample.ts",
 			"import { sum } from 'drizzle-orm';\nexport { sum };\n",
+		],
+		[
+			"apps/app/src/sample.ts",
+			"import * as d from 'drizzle-orm';\nexport const s = d.sum;\n",
 		],
 		[
 			"apps/app/src/sample.ts",
