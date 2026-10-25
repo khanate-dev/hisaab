@@ -78,7 +78,7 @@ export default defineConfig(
 						{
 							regex: {
 								pattern:
-									"className|ClassName|^(role|name|type|href|route|variant|inputMode|autoComplete|autoCapitalize|accessibilityRole|testID|key)$",
+									"className|ClassName|^(role|name|type|kind|href|route|variant|inputMode|autoComplete|autoCapitalize|accessibilityRole|testID|key)$",
 							},
 						},
 						// UPPER_SNAKE constants hold class tables and keys, never copy; copy uses msg``.

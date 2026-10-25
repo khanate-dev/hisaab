@@ -14,6 +14,11 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 
+import {
+	ONBOARDING_STEP,
+	useOnboardingStep,
+} from "@/features/onboarding/use-onboarding";
+import { Syncing } from "@/features/shell/syncing";
 import { UpdateRequired } from "@/features/update/update-required";
 import { useUpdateRequired } from "@/features/update/use-update-required";
 import { i18n } from "@/lib/i18n";
@@ -22,22 +27,14 @@ import { SessionProvider, useSession } from "@/lib/session";
 import { ThemeProvider, useColors } from "@/theme/theme";
 import { FONTS } from "@/theme/tokens";
 
-const Routes = () => {
-	const session = useSession();
-	const updateRequired = useUpdateRequired();
+/** The navigator, with each group behind its guard: signed out, onboarding, or the app (Core flows ticket, #19). */
+const AppStack = ({ userId }: { userId: string | null }) => {
 	const colors = useColors();
 	const { t } = useLingui();
-	if (session === undefined) return null;
-	// A hard block with nothing behind it; sync keeps running, so the queue survives until the update.
-	if (updateRequired) {
-		return (
-			<UpdateRequired
-				onUpdate={
-					Platform.OS === "web" ? () => window.location.reload() : undefined
-				}
-			/>
-		);
-	}
+	const step = useOnboardingStep(userId ?? "");
+	const signedIn = userId !== null;
+	if (signedIn && step === ONBOARDING_STEP.WAITING) return <Syncing />;
+	const onboarded = signedIn && step === ONBOARDING_STEP.DONE;
 
 	return (
 		<Stack
@@ -49,7 +46,7 @@ const Routes = () => {
 				headerShadowVisible: false,
 			}}
 		>
-			<Stack.Protected guard={session !== null}>
+			<Stack.Protected guard={onboarded}>
 				<Stack.Screen
 					name="(tabs)"
 					options={{ headerShown: false }}
@@ -63,7 +60,13 @@ const Routes = () => {
 					options={{ title: t`Notifications` }}
 				/>
 			</Stack.Protected>
-			<Stack.Protected guard={session === null}>
+			<Stack.Protected guard={signedIn && !onboarded}>
+				<Stack.Screen
+					name="onboarding"
+					options={{ headerShown: false }}
+				/>
+			</Stack.Protected>
+			<Stack.Protected guard={!signedIn}>
 				<Stack.Screen
 					name="sign-in"
 					options={{ title: t`Sign in` }}
@@ -71,6 +74,23 @@ const Routes = () => {
 			</Stack.Protected>
 		</Stack>
 	);
+};
+
+const Routes = () => {
+	const session = useSession();
+	const updateRequired = useUpdateRequired();
+	if (session === undefined) return null;
+	// A hard block with nothing behind it; sync keeps running, so the queue survives until the update.
+	if (updateRequired) {
+		return (
+			<UpdateRequired
+				onUpdate={
+					Platform.OS === "web" ? () => window.location.reload() : undefined
+				}
+			/>
+		);
+	}
+	return <AppStack userId={session?.user.id ?? null} />;
 };
 
 export default function RootLayout() {

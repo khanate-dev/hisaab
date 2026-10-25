@@ -223,6 +223,7 @@ describe("upload connector", () => {
 				values: {
 					name: "Home",
 					personal_user_id: null,
+					base_currency: null,
 					created_at: expect.any(String),
 				},
 			},
@@ -316,6 +317,7 @@ describe("upload connector", () => {
 					values: {
 						name: "Home",
 						personal_user_id: null,
+						base_currency: null,
 						created_at: "2026-01-01",
 					},
 				},

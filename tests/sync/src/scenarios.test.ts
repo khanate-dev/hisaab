@@ -11,7 +11,7 @@ import {
 	waitForUploads,
 } from "./powersync";
 import { seedHousehold } from "./seed";
-import { adminClient } from "./users";
+import { adminClient, signInNewUser } from "./users";
 
 // Offline and conflict scenarios (ADR-0010), driven through the upload connector the app ships.
 
@@ -266,5 +266,53 @@ describe("sync scenarios", () => {
 				code: "unmappable",
 			},
 		]);
+	});
+
+	it("First Wallet onboarding uploads the Base currency, the Wallet and an exact opening balance", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		// The trigger-made Personal household may land just after the first sync.
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const stamp = stamped({})._metadata;
+		const walletId = uuidv7();
+		const now = new Date().toISOString();
+
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"UPDATE households SET base_currency = 'PKR', _metadata = ? WHERE id = ?",
+				[stamp, personal.id],
+			);
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'balance_adjustment', '12345678901234.5678', '2026-10-26', ?, ?, ?)`,
+				[uuidv7(), personal.id, walletId, user.id, now, stamp],
+			);
+		});
+		await waitForUploads(device);
+
+		expect(await uploadErrors(device)).toEqual([]);
+		const { data, error } = await adminClient()
+			.from("entries")
+			.select("amount::text")
+			.eq("wallet_id", walletId);
+		if (error) throw error;
+		expect(data).toEqual([{ amount: "12345678901234.5678" }]);
+		const household = await adminClient()
+			.from("households")
+			.select("base_currency")
+			.eq("id", personal.id)
+			.single();
+		expect(household.data?.base_currency).toBe("PKR");
 	});
 });

@@ -33,7 +33,33 @@ export const seedHouseholds = async () => {
 	]);
 	if (memberships.error) throw memberships.error;
 
-	return { users: { alice, bob, carol, dave }, households: { family, side } };
+	// Every User gets a name and a Personal Wallet with an opening Balance adjustment; each shared household one too.
+	const users = { alice, bob, carol, dave };
+	const personal = await admin
+		.from("households")
+		.select("id, personal_user_id")
+		.in(
+			"personal_user_id",
+			Object.values(users).map((user) => user.id),
+		);
+	if (personal.error) throw personal.error;
+	const profiles = await admin.from("profiles").insert(
+		Object.entries(users).map(([name, user]) => ({
+			id: user.id,
+			display_name: name,
+		})),
+	);
+	if (profiles.error) throw profiles.error;
+	await seedWallets([
+		...personal.data.map((row) => ({
+			household: row.id,
+			author: row.personal_user_id as string,
+		})),
+		{ household: family, author: alice.id },
+		{ household: side, author: bob.id },
+	]);
+
+	return { users, households: { family, side } };
 };
 
 /** A fresh shared household with one new User per entry, in the given Role. */
@@ -63,4 +89,38 @@ export const seedHousehold = async <Name extends string>(
 	if (memberships.error) throw memberships.error;
 
 	return { users, household };
+};
+
+/** A Cash Wallet with an opening Balance adjustment in each household. */
+const seedWallets = async (
+	households: { household: string; author: string }[],
+) => {
+	const admin = adminClient();
+	const wallets = households.map(({ household, author }) => ({
+		id: uuidv7(),
+		household_id: household,
+		author,
+	}));
+	const inserted = await admin.from("wallets").insert(
+		wallets.map(({ id, household_id }) => ({
+			id,
+			household_id,
+			name: "Cash",
+			type: "cash",
+			currency: "PKR",
+		})),
+	);
+	if (inserted.error) throw inserted.error;
+	const entries = await admin.from("entries").insert(
+		wallets.map(({ id, household_id, author }) => ({
+			id: uuidv7(),
+			household_id,
+			wallet_id: id,
+			kind: "balance_adjustment",
+			amount: "1000.50",
+			occurred_on: "2026-10-26",
+			created_by: author,
+		})),
+	);
+	if (entries.error) throw entries.error;
 };

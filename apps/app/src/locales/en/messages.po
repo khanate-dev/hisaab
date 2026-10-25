@@ -31,6 +31,10 @@ msgstr "A new membership couldn't sync"
 msgid "Admin"
 msgstr "Admin"
 
+#: src/features/wallets/wallet-list.tsx
+msgid "Bank"
+msgstr "Bank"
+
 #: src/app/(tabs)/budgets.tsx
 msgid "Budget months and Pace arrive with Budgets."
 msgstr "Budget months and Pace arrive with Budgets."
@@ -40,6 +44,15 @@ msgstr "Budget months and Pace arrive with Budgets."
 msgid "Budgets"
 msgstr "Budgets"
 
+#: src/app/onboarding.tsx
+#: src/features/wallets/wallet-list.tsx
+msgid "Cash"
+msgstr "Cash"
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Cash in hand"
+msgstr "Cash in hand"
+
 #: src/components/ui/sheet.tsx
 #: src/features/shell/quick-add.tsx
 msgid "Close"
@@ -48,6 +61,22 @@ msgstr "Close"
 #: src/features/auth/sign-in-form.tsx
 msgid "Code"
 msgstr "Code"
+
+#: src/features/onboarding/name-form.tsx
+msgid "Continue"
+msgstr "Continue"
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Create Cash wallet"
+msgstr "Create Cash wallet"
+
+#: src/features/wallets/wallet-list.tsx
+msgid "Credit card"
+msgstr "Credit card"
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Currency"
+msgstr "Currency"
 
 #: src/features/sync/sync-status.tsx
 msgid "Deleting a household couldn't sync"
@@ -93,6 +122,14 @@ msgstr "Dismiss: new membership"
 msgid "Email"
 msgstr "Email"
 
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Enter a three-letter currency code, like PKR or USD."
+msgstr "Enter a three-letter currency code, like PKR or USD."
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Enter an amount like 1500 or 1500.50."
+msgstr "Enter an amount like 1500 or 1500.50."
+
 #: src/app/(tabs)/entries.tsx
 #: src/features/shell/sections.ts
 msgid "Entries"
@@ -101,6 +138,10 @@ msgstr "Entries"
 #: src/app/(tabs)/entries.tsx
 msgid "Every Entry, searchable, arrives with recording Entries."
 msgstr "Every Entry, searchable, arrives with recording Entries."
+
+#: src/features/shell/syncing.tsx
+msgid "Getting your households ready…"
+msgstr "Getting your households ready…"
 
 #: src/app/(tabs)/index.tsx
 #: src/features/shell/sections.ts
@@ -114,6 +155,10 @@ msgstr "Household settings, Members, Wallets and your preferences arrive here."
 #: src/features/shell/household-pill.tsx
 msgid "Households"
 msgstr "Households"
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "How much cash do you have on you? Hisaab starts your Cash wallet there."
+msgstr "How much cash do you have on you? Hisaab starts your Cash wallet there."
 
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
@@ -129,6 +174,10 @@ msgstr "Me & household"
 #: src/features/households/household-list.tsx
 msgid "Member"
 msgstr "Member"
+
+#: src/features/wallets/wallet-list.tsx
+msgid "Mobile wallet"
+msgstr "Mobile wallet"
 
 #: src/features/shell/quick-add.tsx
 #: src/features/shell/sidebar.tsx
@@ -147,6 +196,10 @@ msgstr "No permission, or someone else deleted it."
 #: src/features/sync/sync-status.tsx
 msgid "No permission."
 msgstr "No permission."
+
+#: src/features/wallets/wallet-list.tsx
+msgid "No Wallets yet."
+msgstr "No Wallets yet."
 
 #: src/app/_layout.tsx
 #: src/app/inbox.tsx
@@ -202,6 +255,10 @@ msgstr "Sign in"
 msgid "Sign out"
 msgstr "Sign out"
 
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "Skip"
+msgstr "Skip"
+
 #: src/features/auth/sign-in-form.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
@@ -217,6 +274,14 @@ msgstr "Sync status"
 #: src/features/households/household-list.tsx
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
+
+#: src/features/onboarding/first-wallet-form.tsx
+msgid "This becomes your Base currency. It locks after your first Entry."
+msgstr "This becomes your Base currency. It locks after your first Entry."
+
+#: src/features/onboarding/name-form.tsx
+msgid "This is how the people you share a household with will see you."
+msgstr "This is how the people you share a household with will see you."
 
 #: src/features/update/update-required.tsx
 msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
@@ -238,14 +303,26 @@ msgstr "Update required"
 msgid "Viewer"
 msgstr "Viewer"
 
+#: src/app/(tabs)/index.tsx
+msgid "Wallets"
+msgstr "Wallets"
+
 #: src/features/auth/sign-in-form.tsx
 msgid "We emailed a code to {codeSentTo}."
 msgstr "We emailed a code to {codeSentTo}."
+
+#: src/app/onboarding.tsx
+msgid "What's your name?"
+msgstr "What's your name?"
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"
 msgstr "you@example.com"
 
-#: src/app/(tabs)/index.tsx
-msgid "Your balance, spending and budgets arrive with your first Wallet."
-msgstr "Your balance, spending and budgets arrive with your first Wallet."
+#: src/app/onboarding.tsx
+msgid "Your first Wallet"
+msgstr "Your first Wallet"
+
+#: src/features/onboarding/name-form.tsx
+msgid "Your name"
+msgstr "Your name"
