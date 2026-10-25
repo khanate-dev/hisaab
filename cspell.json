@@ -22,6 +22,7 @@
 		"Appflow",
 		"Archivo",
 		"beforeunload",
+		"btrim",
 		"Bubblewrap",
 		"Capawesome",
 		"capgo",
@@ -55,6 +56,7 @@
 		"PAYG",
 		"pglite",
 		"pgtap",
+		"plpgsql",
 		"PostgREST",
 		"powersync",
 		"prereqs",
@@ -83,6 +85,7 @@
 		"Turso",
 		"upcaster",
 		"upcasters",
+		"uuidv",
 		"vitest",
 		"Wayfinder",
 		"worklets"

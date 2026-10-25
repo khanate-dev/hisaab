@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { openSyncStream, signInNewUser } from "./local-stack";
+import { openSyncStream } from "./powersync";
+import { signInNewUser } from "./users";
 
 // An ES256 signature is 64 bytes: 86 base64url characters.
 const FORGED_SIGNATURE = "A".repeat(86);
@@ -12,17 +13,19 @@ const jwtHeader = (jwt: string) =>
 
 describe("local stack auth", () => {
 	it("issues ES256 access tokens", async () => {
-		expect(jwtHeader(await signInNewUser()).alg).toBe("ES256");
+		expect(jwtHeader((await signInNewUser()).accessToken).alg).toBe("ES256");
 	});
 
 	it("lets PowerSync verify a local Supabase token through JWKS", async () => {
-		const { status, body } = await openSyncStream(await signInNewUser());
+		const { status, body } = await openSyncStream(
+			(await signInNewUser()).accessToken,
+		);
 		expect(body).not.toContain("PSYNC_S2101");
 		expect(status).toBe(200);
 	});
 
 	it("rejects a token with a forged signature", async () => {
-		const [head, payload] = (await signInNewUser()).split(".");
+		const [head, payload] = (await signInNewUser()).accessToken.split(".");
 		const { status, body } = await openSyncStream(
 			`${head}.${payload}.${FORGED_SIGNATURE}`,
 		);
