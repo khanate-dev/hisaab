@@ -7,7 +7,12 @@ type HistoryEntry = {
 	created_at: string;
 };
 
-export type BalanceStep = { entryId: string; balance: Money };
+/** One Entry, its amount as Money and the Wallet's Balance just after it. */
+export type BalanceStep<T extends HistoryEntry = HistoryEntry> = {
+	entry: T;
+	amount: Money;
+	balance: Money;
+};
 
 /** Ordinal, not locale-aware: ISO dates and timestamps sort correctly as plain strings. */
 const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
@@ -19,13 +24,14 @@ const chronological = (a: HistoryEntry, b: HistoryEntry) =>
 	compare(a.id, b.id);
 
 /** A Wallet's running Balance after each of its Entries, derived from them (ADR-0002). */
-export const balanceHistory = (
-	entries: readonly HistoryEntry[],
+export const balanceHistory = <T extends HistoryEntry>(
+	entries: readonly T[],
 	currency: string,
-): BalanceStep[] => {
+): BalanceStep<T>[] => {
 	let balance = zeroMoney(currency);
 	return entries.toSorted(chronological).map((entry) => {
-		balance = addMoney(balance, parseMoney(entry.amount, currency));
-		return { entryId: entry.id, balance };
+		const amount = parseMoney(entry.amount, currency);
+		balance = addMoney(balance, amount);
+		return { entry, amount, balance };
 	});
 };

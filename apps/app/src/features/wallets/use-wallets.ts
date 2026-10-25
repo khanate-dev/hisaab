@@ -1,10 +1,5 @@
-import {
-	entries,
-	memberships,
-	type Role,
-	wallets,
-} from "@hisaab/client-schema";
-import { balanceHistory, parseMoney, walletBalances } from "@hisaab/domain";
+import { entries, memberships, wallets } from "@hisaab/client-schema";
+import { balanceHistory, walletBalances, zeroMoney } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
@@ -12,8 +7,7 @@ import { useMemo } from "react";
 
 import { db } from "@/lib/powersync";
 
-import type { WalletSummary } from "./types";
-import type { HistoryRow } from "./wallet-detail";
+import type { HistoryRow, WalletSummary } from "./types";
 
 // Balances are derived from Entries in the domain package (ADR-0002); amounts are summed through Money, never with
 // SQL SUM (ADR-0007).
@@ -54,7 +48,15 @@ export const useWallets = (
 		return walletRows.flatMap((wallet) => {
 			const balance = balances.get(wallet.id);
 			return balance
-				? [{ id: wallet.id, name: wallet.name, type: wallet.type, balance }]
+				? [
+						{
+							id: wallet.id,
+							name: wallet.name,
+							type: wallet.type,
+							balance,
+							archived: wallet.archived_at !== null,
+						},
+					]
 				: [];
 		});
 	}, [walletRows, entryRows]);
@@ -85,28 +87,20 @@ export const useWallet = (walletId: string) => {
 	return useMemo(() => {
 		if (!wallet) return undefined;
 		const steps = balanceHistory(entryRows, wallet.currency);
-		const byId = new Map(entryRows.map((entry) => [entry.id, entry]));
-		const history: HistoryRow[] = steps.flatMap((step) => {
-			const entry = byId.get(step.entryId);
-			return entry
-				? [
-						{
-							entryId: entry.id,
-							occurredOn: entry.occurred_on,
-							kind: entry.kind,
-							amount: parseMoney(entry.amount, wallet.currency),
-							balance: step.balance,
-						},
-					]
-				: [];
-		});
+		const history: HistoryRow[] = steps.map(({ entry, amount, balance }) => ({
+			entryId: entry.id,
+			occurredOn: entry.occurred_on,
+			kind: entry.kind,
+			amount,
+			balance,
+		}));
 		return {
 			row: wallet,
 			summary: {
 				id: wallet.id,
 				name: wallet.name,
 				type: wallet.type,
-				balance: steps.at(-1)?.balance ?? parseMoney("0", wallet.currency),
+				balance: steps.at(-1)?.balance ?? zeroMoney(wallet.currency),
 				archived: wallet.archived_at !== null,
 			},
 			history,
@@ -115,12 +109,15 @@ export const useWallet = (walletId: string) => {
 	}, [wallet, entryRows]);
 };
 
-/** The signed-in User's Role in the household, once it has synced. */
-export const useMyRole = (
+/**
+ * Whether the signed-in User may add, edit and archive the household's Wallets: Admins and Members may, Viewers only
+ * look (RLS decides; this only hides what would be refused). Undefined until their Membership has synced.
+ */
+export const useCanManageWallets = (
 	householdId: string | undefined,
 	userId: string,
-): Role | undefined =>
-	useQuery(
+): boolean | undefined => {
+	const role = useQuery(
 		toCompilableQuery(
 			db
 				.select({ role: memberships.role })
@@ -133,3 +130,5 @@ export const useMyRole = (
 				),
 		),
 	).data[0]?.role;
+	return role === undefined ? undefined : role !== "viewer";
+};

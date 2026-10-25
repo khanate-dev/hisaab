@@ -76,11 +76,48 @@ describe("WalletDetail", () => {
 		expect(onArchive).toHaveBeenCalled();
 	});
 
+	it("reads a Credit card's history as what's owed, not as below zero", async () => {
+		await setup({
+			wallet: {
+				...wallet,
+				type: "credit_card",
+				balance: parseMoney("-250", "PKR"),
+			},
+			history: [
+				{
+					entryId: "e1",
+					occurredOn: "2026-10-01",
+					kind: "balance_adjustment",
+					amount: parseMoney("-250", "PKR"),
+					balance: parseMoney("-250", "PKR"),
+				},
+			],
+		});
+		const [row] = screen.getAllByRole("listitem");
+		expect(row).toHaveTextContent(/owed/i);
+		expect(row).not.toHaveTextContent(/below zero/i);
+	});
+
+	it("flags a history step that took a Cash Wallet below zero", async () => {
+		await setup({
+			history: [
+				{
+					entryId: "e1",
+					occurredOn: "2026-10-01",
+					kind: "balance_adjustment",
+					amount: parseMoney("-20", "PKR"),
+					balance: parseMoney("-20", "PKR"),
+				},
+			],
+		});
+		expect(screen.getByRole("listitem")).toHaveTextContent(/below zero/i);
+	});
+
 	it("brings an archived Wallet back", async () => {
 		const { user, onUnarchive } = await setup({
 			wallet: { ...wallet, archived: true },
 		});
-		expect(screen.getByText(/archived/i)).toBeOnTheScreen();
+		expect(screen.getByRole("note")).toHaveTextContent(/archived/i);
 		await user.press(screen.getByRole("button", { name: "Unarchive" }));
 		expect(onUnarchive).toHaveBeenCalled();
 	});

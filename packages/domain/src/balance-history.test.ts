@@ -22,7 +22,14 @@ const entries = fc.uniqueArray(
 		id: fc.uuid(),
 		amount: amountText,
 		occurred_on: day,
-		created_at: fc.date().map((d) => d.toISOString()),
+		// Valid and four-digit years only, as real timestamps are; ISO text then sorts in time order.
+		created_at: fc
+			.date({
+				noInvalidDate: true,
+				min: new Date("2000-01-01T00:00:00Z"),
+				max: new Date("2999-12-31T23:59:59Z"),
+			})
+			.map((d) => d.toISOString()),
 	}),
 	{ selector: (e) => e.id, maxLength: 30 },
 );
@@ -47,13 +54,11 @@ describe("balanceHistory", () => {
 			fc.property(entries, (list) => {
 				let previous = parseMoney("0", "PKR");
 				for (const step of balanceHistory(list, "PKR")) {
-					const entry = list.find((e) => e.id === step.entryId);
-					expect(entry).toBeDefined();
 					expect(
-						moneyEquals(
-							step.balance,
-							addMoney(previous, parseMoney(entry?.amount ?? "0", "PKR")),
-						),
+						moneyEquals(step.amount, parseMoney(step.entry.amount, "PKR")),
+					).toBe(true);
+					expect(
+						moneyEquals(step.balance, addMoney(previous, step.amount)),
 					).toBe(true);
 					previous = step.balance;
 				}
@@ -64,23 +69,23 @@ describe("balanceHistory", () => {
 	it("runs in date order, then by when each Entry was recorded", () => {
 		fc.assert(
 			fc.property(entries, (list) => {
-				const keys = balanceHistory(list, "PKR").map((step) => {
-					const entry = list.find((e) => e.id === step.entryId);
-					return `${entry?.occurred_on} ${entry?.created_at} ${entry?.id}`;
-				});
+				const keys = balanceHistory(list, "PKR").map(
+					({ entry }) => `${entry.occurred_on} ${entry.created_at} ${entry.id}`,
+				);
 				expect(keys).toEqual([...keys].sort());
 			}),
 		);
 	});
 
-	it("has one step per Entry", () => {
+	it("has one step per Entry, handing back the caller's own Entry", () => {
 		fc.assert(
 			fc.property(entries, (list) => {
-				expect(
-					balanceHistory(list, "PKR")
-						.map((s) => s.entryId)
-						.sort(),
-				).toEqual(list.map((e) => e.id).sort());
+				const steps = balanceHistory(list, "PKR");
+				expect(steps).toHaveLength(list.length);
+				for (const { entry } of steps) expect(list).toContain(entry);
+				expect(steps.map(({ entry }) => entry.id).sort()).toEqual(
+					list.map((e) => e.id).sort(),
+				);
 			}),
 		);
 	});

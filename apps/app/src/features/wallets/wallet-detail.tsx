@@ -1,5 +1,4 @@
 import type { EntryKind } from "@hisaab/client-schema";
-import type { Money } from "@hisaab/domain";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
@@ -20,23 +19,15 @@ import { Text } from "@/components/ui/text";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { Balance } from "./balance";
-import type { WalletSummary } from "./types";
-import { WALLET_TYPE_LABELS } from "./wallet-list";
-
-export type HistoryRow = {
-	entryId: string;
-	occurredOn: string;
-	kind: EntryKind;
-	amount: Money;
-	balance: Money;
-};
+import { WALLET_TYPE_LABELS } from "./labels";
+import type { HistoryRow, WalletSummary } from "./types";
 
 const KIND_LABELS: Record<EntryKind, MessageDescriptor> = {
 	balance_adjustment: msg`Balance adjustment`,
 };
 
 type Props = {
-	wallet: WalletSummary & { archived: boolean };
+	wallet: WalletSummary;
 	/** Oldest first, as balanceHistory returns it; shown newest first. */
 	history: HistoryRow[];
 	/** Admins and Members manage Wallets; Viewers only look. */
@@ -69,7 +60,12 @@ export const WalletDetail = ({
 					/>
 				</View>
 				{wallet.archived && (
-					<Text variant="label">{t`Archived: hidden from your Wallets, its Entries kept.`}</Text>
+					<Text
+						role="note"
+						variant="label"
+					>
+						{t`Archived: hidden from your Wallets, its Entries kept.`}
+					</Text>
 				)}
 			</Card>
 
@@ -140,7 +136,11 @@ export const WalletDetail = ({
 							</View>
 							<View className="items-end gap-1">
 								<Text variant="label">{formatMoney(row.amount)}</Text>
-								<Text variant="muted">{formatMoney(row.balance)}</Text>
+								<Balance
+									balance={row.balance}
+									compact
+									type={wallet.type}
+								/>
 							</View>
 						</View>
 					))}

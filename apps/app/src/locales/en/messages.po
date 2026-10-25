@@ -68,7 +68,7 @@ msgstr "Balance adjustment"
 msgid "Balance history"
 msgstr "Balance history"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Bank"
 msgstr "Bank"
 
@@ -90,7 +90,7 @@ msgid "Cancel"
 msgstr "Cancel"
 
 #: src/app/onboarding.tsx
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Cash"
 msgstr "Cash"
 
@@ -115,7 +115,7 @@ msgstr "Continue"
 msgid "Create Cash Wallet"
 msgstr "Create Cash Wallet"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Credit card"
 msgstr "Credit card"
 
@@ -240,7 +240,7 @@ msgstr "Me & household"
 msgid "Member"
 msgstr "Member"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
 

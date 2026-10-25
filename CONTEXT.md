@@ -43,7 +43,7 @@ _Avoid_: Logs, audit trail, history
 ### Money
 
 **Wallet**:
-A place where a Household's money sits, with one currency and a derived balance. It can be archived but never deleted while Entries reference it.
+A place where a Household's money sits, with one currency and a derived balance. Its currency is fixed once it has any Entry, because its Entries' amounts are in that currency; its name and Wallet type stay editable. It can be archived (and brought back) but never deleted while Entries reference it.
 _Avoid_: Account
 
 **Wallet type**:

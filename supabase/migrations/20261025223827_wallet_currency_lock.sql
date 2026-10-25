@@ -1,4 +1,4 @@
--- A Wallet's currency is fixed once it has Entries: its amounts are in that currency (spec §3.2). Expand-only.
+-- A Wallet's currency is fixed once it has Entries: its amounts are in that currency (CONTEXT.md, Wallet). Expand-only.
 
 create function private.lock_wallet_currency() returns trigger
 language plpgsql security definer
@@ -28,3 +28,9 @@ begin
 	return new;
 end;
 $$;
+
+-- An Entry moved to another Wallet holds that Wallet too, so the move and a currency change can't pass each other.
+drop trigger hold_household_for_entry on public.entries;
+create trigger hold_household_for_entry
+	before insert or update of household_id, wallet_id on public.entries
+	for each row execute function private.hold_household_for_entry();

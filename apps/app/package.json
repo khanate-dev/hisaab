@@ -33,6 +33,7 @@
 		"@react-native-async-storage/async-storage": "catalog:",
 		"@rn-primitives/dialog": "catalog:",
 		"@rn-primitives/portal": "catalog:",
+		"@rn-primitives/radio-group": "catalog:",
 		"@supabase/supabase-js": "catalog:",
 		"drizzle-orm": "catalog:",
 		"expo": "catalog:",

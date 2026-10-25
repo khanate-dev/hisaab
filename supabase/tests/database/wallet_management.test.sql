@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(11);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000001a1', 'member@example.com'),
@@ -54,6 +54,21 @@ select lives_ok(
 );
 select throws_ok($$ delete from public.wallets where id = '00000000-0000-7000-8000-0000000001c2' $$, '42501', null,
 	'Wallets are archived, never deleted');
+
+-- Moving an Entry to another Wallet holds that Wallet like recording one does, and its currency then locks.
+select ok(
+	exists (
+		select 1 from pg_trigger
+		where tgname = 'hold_household_for_entry' and tgrelid = 'public.entries'::regclass and tgtype & 16 <> 0
+	),
+	'an Entry moving Wallet holds the Wallet it moves to'
+);
+select is(pg_temp.affected($$ update public.entries set wallet_id = '00000000-0000-7000-8000-0000000001c2' where id = '00000000-0000-7000-8000-0000000001d1' $$), 1,
+	'a Member moves an Entry to another Wallet');
+select throws_ok(
+	$$ update public.wallets set currency = 'EUR' where id = '00000000-0000-7000-8000-0000000001c2' $$,
+	'23514', null, 'the Wallet an Entry moved to has its currency fixed'
+);
 
 select * from finish();
 rollback;

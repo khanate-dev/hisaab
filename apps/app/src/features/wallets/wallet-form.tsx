@@ -1,14 +1,15 @@
 import { WALLET_TYPES, type WalletType } from "@hisaab/client-schema";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
-import { isCurrencyCode } from "@/lib/currency";
+import { toCurrencyCode } from "@/lib/currency";
 
-import { WALLET_TYPE_LABELS } from "./wallet-list";
+import { WALLET_TYPE_LABELS } from "./labels";
 
 export type WalletDraft = { name: string; type: WalletType; currency: string };
 
@@ -40,8 +41,8 @@ export const WalletForm = ({
 	const [busy, setBusy] = useState(false);
 
 	const submit = async () => {
-		const code = currency.trim().toUpperCase();
-		if (!isCurrencyCode(code))
+		const code = toCurrencyCode(currency);
+		if (code === null)
 			return setError(t`Enter a three-letter currency code, like PKR or USD.`);
 		setError(null);
 		setBusy(true);
@@ -61,29 +62,15 @@ export const WalletForm = ({
 			/>
 			<View className="gap-2">
 				<Text variant="label">{t`Type`}</Text>
-				<View
-					accessibilityLabel={t`Type`}
-					className="flex-row flex-wrap gap-2"
-					role="radiogroup"
-				>
-					{WALLET_TYPES.map((option) => {
-						const selected = option === type;
-						return (
-							<Pressable
-								accessibilityLabel={i18n._(WALLET_TYPE_LABELS[option])}
-								aria-checked={selected}
-								className={`rounded-full border-2 border-border ps-4 pe-4 py-2 ${selected ? "bg-butter" : "bg-surface"}`}
-								key={option}
-								onPress={() => setType(option)}
-								role="radio"
-							>
-								<Text variant="label">
-									{i18n._(WALLET_TYPE_LABELS[option])}
-								</Text>
-							</Pressable>
-						);
-					})}
-				</View>
+				<RadioGroup
+					label={t`Type`}
+					onValueChange={setType}
+					options={WALLET_TYPES.map((option) => ({
+						value: option,
+						label: i18n._(WALLET_TYPE_LABELS[option]),
+					}))}
+					value={type}
+				/>
 			</View>
 			<Input
 				aria-disabled={currencyLocked}

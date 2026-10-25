@@ -6,7 +6,7 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { isCurrencyCode } from "@/lib/currency";
+import { toCurrencyCode } from "@/lib/currency";
 
 import type { FirstWallet } from "./types";
 
@@ -28,8 +28,8 @@ export const FirstWalletForm = ({ defaultCurrency, onSubmit }: Props) => {
 	const [busy, setBusy] = useState(false);
 
 	const save = async (amount: string) => {
-		const code = currency.trim().toUpperCase();
-		if (!isCurrencyCode(code))
+		const code = toCurrencyCode(currency);
+		if (code === null)
 			return setError(t`Enter a three-letter currency code, like PKR or USD.`);
 		if (!isDecimalAmount(amount))
 			return setError(t`Enter an amount like 1500 or 1500.50.`);

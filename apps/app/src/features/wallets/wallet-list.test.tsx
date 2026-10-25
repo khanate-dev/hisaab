@@ -16,12 +16,14 @@ describe("WalletList", () => {
 						name: "Cash",
 						type: "cash",
 						balance: parseMoney("1500.5", "PKR"),
+						archived: false,
 					},
 					{
 						id: "w2",
 						name: "Visa",
 						type: "credit_card",
 						balance: parseMoney("-250", "USD"),
+						archived: false,
 					},
 				]}
 			/>,
@@ -44,6 +46,7 @@ describe("WalletList", () => {
 						name: "Visa",
 						type: "credit_card",
 						balance: parseMoney("-250", "USD"),
+						archived: false,
 					},
 				]}
 			/>,
@@ -63,6 +66,7 @@ describe("WalletList", () => {
 						name: "Cash",
 						type: "cash",
 						balance: parseMoney("-5", "PKR"),
+						archived: false,
 					},
 				]}
 			/>,
@@ -81,6 +85,7 @@ describe("WalletList", () => {
 						name: "Cash",
 						type: "cash",
 						balance: parseMoney("5", "PKR"),
+						archived: false,
 					},
 				]}
 			/>,

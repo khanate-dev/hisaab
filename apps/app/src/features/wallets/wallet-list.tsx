@@ -1,6 +1,3 @@
-import type { WalletType } from "@hisaab/client-schema";
-import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -8,14 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
 import { Balance } from "./balance";
+import { WALLET_TYPE_LABELS } from "./labels";
 import type { WalletSummary } from "./types";
-
-export const WALLET_TYPE_LABELS: Record<WalletType, MessageDescriptor> = {
-	cash: msg`Cash`,
-	bank: msg`Bank`,
-	mobile_wallet: msg`Mobile wallet`,
-	credit_card: msg`Credit card`,
-};
 
 type Props = {
 	wallets: WalletSummary[];

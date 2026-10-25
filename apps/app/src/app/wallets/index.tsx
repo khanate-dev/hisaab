@@ -5,7 +5,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
-import { useMyRole, useWallets } from "@/features/wallets/use-wallets";
+import {
+	useCanManageWallets,
+	useWallets,
+} from "@/features/wallets/use-wallets";
 import { WalletList } from "@/features/wallets/wallet-list";
 import { useSignedInUserId } from "@/lib/session";
 
@@ -15,11 +18,11 @@ export default function Wallets() {
 	const household = usePersonalHousehold(userId);
 	const [showArchived, setShowArchived] = useState(false);
 	const list = useWallets(household?.id, { archived: showArchived });
-	const canEdit = useMyRole(household?.id, userId) !== "viewer";
+	const canManage = useCanManageWallets(household?.id, userId) === true;
 
 	return (
 		<Screen title={showArchived ? t`Archived Wallets` : t`Wallets`}>
-			{canEdit && !showArchived && (
+			{canManage && !showArchived && (
 				<Button
 					onPress={() => router.push("/wallets/new")}
 				>{t`Add Wallet`}</Button>
