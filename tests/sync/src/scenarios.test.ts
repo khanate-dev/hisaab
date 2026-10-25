@@ -315,4 +315,75 @@ describe("sync scenarios", () => {
 			.single();
 		expect(household.data?.base_currency).toBe("PKR");
 	});
+
+	it("an Expense and an Income upload with their Category, time and notes, and an edit and a delete follow", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		// The household's template Categories sync down with it.
+		const category = (name: string) =>
+			vi.waitFor(
+				() =>
+					device.get<{ id: string }>(
+						"SELECT id FROM categories WHERE household_id = ? AND name = ?",
+						[personal.id, name],
+					),
+				{ timeout: 10_000 },
+			);
+		const groceries = await category("Groceries");
+		const salary = await category("Salary");
+		const stamp = stamped({})._metadata;
+		const walletId = uuidv7();
+		const [expenseId, incomeId] = [uuidv7(), uuidv7()];
+		const now = new Date().toISOString();
+
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, occurred_time, description, notes, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'expense', '-450.50', ?, '2026-10-26', '18:30', 'Weekly shop', 'Two bags', ?, ?, ?)`,
+				[expenseId, personal.id, walletId, groceries.id, user.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'income', '90000', ?, '2026-10-25', ?, ?, ?)`,
+				[incomeId, personal.id, walletId, salary.id, user.id, now, stamp],
+			);
+		});
+		await device.execute(
+			"UPDATE entries SET amount = '-500', notes = NULL, _metadata = ? WHERE id = ?",
+			[stamp, expenseId],
+		);
+		await device.execute("DELETE FROM entries WHERE id = ?", [incomeId]);
+		await waitForUploads(device);
+
+		expect(await uploadErrors(device)).toEqual([]);
+		const { data, error } = await adminClient()
+			.from("entries")
+			.select(
+				"kind, amount::text, category_id, occurred_time, description, notes",
+			)
+			.eq("wallet_id", walletId);
+		if (error) throw error;
+		expect(data).toEqual([
+			{
+				kind: "expense",
+				amount: "-500",
+				category_id: groceries.id,
+				occurred_time: "18:30",
+				description: "Weekly shop",
+				notes: null,
+			},
+		]);
+	});
 });

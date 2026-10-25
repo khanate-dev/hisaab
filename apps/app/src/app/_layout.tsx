@@ -49,7 +49,7 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 			<Stack.Protected guard={onboarded}>
 				<Stack.Screen
 					name="(tabs)"
-					// Read as the back link's label on the screens above the tabs.
+					// Read as the back link's label on the screens above; the shell keeps it to the open section.
 					options={{ headerShown: false, title: t`Home` }}
 				/>
 				<Stack.Screen
@@ -87,6 +87,18 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 				<Stack.Screen
 					name="categories/[id]"
 					options={{ title: t`Category` }}
+				/>
+				<Stack.Screen
+					name="entries/new"
+					options={{ title: t`New Entry` }}
+				/>
+				<Stack.Screen
+					name="entries/[id]/index"
+					options={{ title: t`Entry` }}
+				/>
+				<Stack.Screen
+					name="entries/[id]/edit"
+					options={{ title: t`Edit Entry` }}
 				/>
 			</Stack.Protected>
 			<Stack.Protected guard={signedIn && !onboarded}>

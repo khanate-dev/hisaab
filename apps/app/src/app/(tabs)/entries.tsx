@@ -1,13 +1,43 @@
 import { useLingui } from "@lingui/react/macro";
+import { router } from "expo-router";
+import { View } from "react-native";
 
-import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { EntryList } from "@/features/entries/entry-list";
+import { useEntryViews } from "@/features/entries/use-entries";
+import { useCanWrite } from "@/features/households/use-can-write";
+import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
+import { useSignedInUserId } from "@/lib/session";
 
 export default function Entries() {
 	const { t } = useLingui();
+	const userId = useSignedInUserId();
+	const household = usePersonalHousehold(userId);
+	const views = useEntryViews(household?.id);
+	const canWrite = useCanWrite(household?.id, userId) === true;
+
 	return (
 		<Screen title={t`Entries`}>
-			<Text variant="muted">{t`Every Entry, searchable, arrives with recording Entries.`}</Text>
+			{canWrite && (
+				<View className="flex-row flex-wrap gap-3">
+					<Button onPress={() => router.push("/entries/new?kind=expense")}>
+						{t`Add Expense`}
+					</Button>
+					<Button
+						onPress={() => router.push("/entries/new?kind=income")}
+						variant="secondary"
+					>
+						{t`Add Income`}
+					</Button>
+				</View>
+			)}
+			{views !== undefined && (
+				<EntryList
+					items={views}
+					onOpen={(id) => router.push(`/entries/${id}`)}
+				/>
+			)}
 		</Screen>
 	);
 }

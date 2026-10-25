@@ -1,6 +1,3 @@
-import type { EntryKind } from "@hisaab/client-schema";
-import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -19,12 +16,10 @@ import { Text } from "@/components/ui/text";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { Balance } from "./balance";
+import { entryKindLabel } from "@/features/entries/labels";
+
 import { WALLET_TYPE_LABELS } from "./labels";
 import type { HistoryRow, WalletSummary } from "./types";
-
-const KIND_LABELS: Record<EntryKind, MessageDescriptor> = {
-	balance_adjustment: msg`Balance adjustment`,
-};
 
 type Props = {
 	wallet: WalletSummary;
@@ -131,7 +126,7 @@ export const WalletDetail = ({
 							role="listitem"
 						>
 							<View className="shrink gap-1">
-								<Text variant="label">{i18n._(KIND_LABELS[row.kind])}</Text>
+								<Text variant="label">{i18n._(entryKindLabel(row.kind))}</Text>
 								<Text variant="muted">{formatDate(row.occurredOn)}</Text>
 							</View>
 							<View className="items-end gap-1">

@@ -19,6 +19,8 @@ export const households = sqliteTable("households", {
 	personal_user_id: text("personal_user_id"),
 	/** ISO 4217; set by First Wallet onboarding and fixed once the household has an Entry (ADR-0005). */
 	base_currency: text("base_currency"),
+	/** IANA; Entry dates are in it. Set by onboarding from the device; null means "use the device's". */
+	timezone: text("timezone"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 });
@@ -76,7 +78,12 @@ export const entries = sqliteTable("entries", {
 	amount: text("amount").notNull(),
 	/** The date in the household's timezone, YYYY-MM-DD. */
 	occurred_on: text("occurred_on").notNull(),
+	/** Optional wall-clock time in the household's timezone, HH:MM. */
+	occurred_time: text("occurred_time"),
+	/** The Category of an Expense or Income, from its own list; null for a Balance adjustment. */
+	category_id: text("category_id"),
 	description: text("description"),
+	notes: text("notes"),
 	created_by: text("created_by").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),

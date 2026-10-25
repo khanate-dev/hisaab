@@ -108,3 +108,20 @@ export const useWallet = (walletId: string) => {
 		};
 	}, [wallet, entryRows]);
 };
+
+/**
+ * The household's Wallet rows, archived ones included: for pickers (active ones) and for naming any Entry's Wallet.
+ * Undefined until the first read lands, so a form doesn't start before its Wallets are known.
+ */
+export const useWalletRows = (householdId: string | undefined) => {
+	const { data, isLoading } = useQuery(
+		toCompilableQuery(
+			db
+				.select()
+				.from(wallets)
+				.where(eq(wallets.household_id, householdId ?? ""))
+				.orderBy(asc(wallets.created_at)),
+		),
+	);
+	return isLoading || householdId === undefined ? undefined : data;
+};

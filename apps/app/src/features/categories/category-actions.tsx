@@ -21,7 +21,7 @@ type Props = {
 	parent: Category | null;
 	/** It has Subcategories, which go with it when it's archived. */
 	hasSubcategories: boolean;
-	/** In use (Subcategories or, once Expenses land, Entries), so it's archived, never deleted. */
+	/** In use (it has Subcategories or Entries), so it's archived, never deleted. */
 	inUse: boolean;
 	onArchive: () => Promise<void>;
 	onUnarchive: () => Promise<void>;
