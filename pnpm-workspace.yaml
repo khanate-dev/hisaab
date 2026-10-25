@@ -3,6 +3,10 @@ packages:
   - packages/*
   - tests/*
 
+# The Supabase CLI package downloads its binary in a postinstall script.
+onlyBuiltDependencies:
+  - supabase
+
 # `pnpm add` must go through the catalog.
 catalogMode: strict
 
@@ -47,6 +51,7 @@ catalog:
   eslint-plugin-react-hooks: 7.1.1
   globals: 17.13.0
   prettier: 3.9.10
+  supabase: 2.120.0
   typescript: 6.0.3
   typescript-eslint: 8.72.0
   vitest: 4.1.12

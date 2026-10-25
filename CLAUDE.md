@@ -12,7 +12,7 @@ During review, scrutinize aggressively and flag potential violations of this str
 | `supabase/` | CLI migrations (`supabase/migrations`), Edge Functions, pgTAP tests, `config.toml`. |
 | `powersync/` | `sync-config.yaml` (Sync Streams) and the self-hosted service config for the local Docker stack. |
 | `tests/sync` | The Node (`@powersync/node`) harness: RLS ⊇ Sync Streams differential and offline/conflict scenarios. |
-| `tooling/` | Repo tooling with no package of its own: the custom ESLint rules (`tooling/eslint`) and their tests. |
+| `tooling/` | Repo tooling with no package of its own: the custom ESLint rules (`tooling/eslint`) and their tests, the local stack scripts (`tooling/stack`). |
 | `docs/` | Spec, research, `secrets.md`, `infra.md`, release smoke checklist. |
 
 ### Code practices
