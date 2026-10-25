@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(22);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000000a1', 'admin@example.com'),
@@ -82,6 +82,12 @@ select throws_ok(
 );
 select is_empty($$ select 1 from public.wallets $$, 'an outsider reads no Wallets');
 select is(pg_temp.wallet_count(), 2, 'only the Admin''s and Member''s Wallets landed');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000000a1');
+select throws_ok(
+	$$ update public.wallets set household_id = '00000000-0000-7000-8000-0000000000f9'
+		where id = '00000000-0000-7000-8000-0000000000a9' $$,
+	'42501', null, 'a Wallet cannot move to another household'
+);
 
 -- Entries
 select pg_temp.act_as('00000000-0000-4000-8000-0000000000b1');

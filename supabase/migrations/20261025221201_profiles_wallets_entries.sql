@@ -69,6 +69,25 @@ create policy "Admins and Members edit Wallets" on public.wallets
 revoke all on public.wallets from anon, authenticated;
 grant select, insert, update on public.wallets to authenticated;
 
+-- A Wallet stays in the household it was created in (ADR-0001); whole-row updates must leave its origin alone.
+create function private.keep_wallet_origin() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+	if new.id is distinct from old.id or new.household_id is distinct from old.household_id
+		or new.created_at is distinct from old.created_at then
+		raise exception 'id, household_id and created_at cannot change' using errcode = '42501';
+	end if;
+	return new;
+end;
+$$;
+revoke all on function private.keep_wallet_origin() from public;
+
+create trigger keep_wallet_origin
+	before update on public.wallets
+	for each row execute function private.keep_wallet_origin();
+
 -- An Entry changes one Wallet's Balance by `amount` (signed: its effect on the Balance). Balances are derived from
 -- Entries and never stored (ADR-0002). Kinds widen as features land: Expense, Income, Transfer and Loans next.
 create table public.entries (
@@ -117,8 +136,9 @@ create trigger keep_entry_origin
 	for each row execute function private.keep_entry_origin();
 
 -- ADR-0005: the Base currency is fixed once the household has any Entry.
+-- Security definer, so the check sees every Entry regardless of the caller's RLS.
 create function private.lock_base_currency() returns trigger
-language plpgsql
+language plpgsql security definer
 set search_path = ''
 as $$
 begin
@@ -134,3 +154,23 @@ revoke all on function private.lock_base_currency() from public;
 create trigger lock_base_currency
 	before update of base_currency on public.households
 	for each row execute function private.lock_base_currency();
+
+-- Recording an Entry holds a share lock on its household row until commit. A concurrent Base currency change waits
+-- for it, then its check sees the committed Entry; without this both could commit under READ COMMITTED.
+create function private.hold_household_for_entry() returns trigger
+language plpgsql security definer
+set search_path = ''
+as $$
+begin
+	perform 1 from public.households where id = new.household_id for share;
+	return new;
+end;
+$$;
+revoke all on function private.hold_household_for_entry() from public;
+
+create trigger hold_household_for_entry
+	before insert on public.entries
+	for each row execute function private.hold_household_for_entry();
+
+-- The household update policy now also covers the Base currency, not just the name.
+alter policy "Admins rename their households" on public.households rename to "Admins edit their households";

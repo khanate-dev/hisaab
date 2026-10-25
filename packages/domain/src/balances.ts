@@ -1,4 +1,4 @@
-import { addMoney, type Money, parseMoney, sumMoney } from "./money";
+import { addMoney, type Money, parseMoney, zeroMoney } from "./money";
 
 // ADR-0002: a Wallet's Balance is its opening Balance adjustment plus every Entry touching it. It is computed here,
 // from the Entries' signed amounts (their effect on the Wallet), and never stored as the truth.
@@ -12,7 +12,7 @@ export const walletBalances = (
 	entries: readonly WalletEntry[],
 ): Map<string, Money> => {
 	const balances = new Map(
-		wallets.map((wallet) => [wallet.id, sumMoney([], wallet.currency)]),
+		wallets.map((wallet) => [wallet.id, zeroMoney(wallet.currency)]),
 	);
 	for (const entry of entries) {
 		const balance = balances.get(entry.wallet_id);

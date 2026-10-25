@@ -40,3 +40,9 @@ Account deletion is immediate and server-side. It needs a connection, a fresh em
 - **Backups:** the nightly off-site dumps expire within 30 days and are never edited, and the privacy policy says so. A deletion ledger (only the opaque user id and deletion time) is re-applied after any disaster-recovery restore. Full backups an Admin made earlier are that household's own copy and are out of scope.
 
 Amended in [Account deletion semantics](https://github.com/khanate-dev/hisaab/issues/12).
+
+## Amendment: profiles are identity, not tenant data
+
+A User's `profiles` row (their display name) carries no `household_id`: it belongs to the User, not to any Household, and holds no financial data. RLS lets a User read their own profile and the profiles of everyone they share a Household with, and only the User writes it. Everything financial still lives in a Household.
+
+Amended in [First Wallet onboarding with derived Balance](https://github.com/khanate-dev/hisaab/issues/31).

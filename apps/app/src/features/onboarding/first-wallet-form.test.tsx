@@ -25,7 +25,7 @@ describe("FirstWalletForm", () => {
 		expect(screen.getByLabelText("Currency")).toHaveDisplayValue("PKR");
 		await user.type(screen.getByLabelText("Cash in hand"), "1500.50");
 		await user.press(
-			screen.getByRole("button", { name: "Create Cash wallet" }),
+			screen.getByRole("button", { name: "Create Cash Wallet" }),
 		);
 		expect(onSubmit).toHaveBeenCalledWith({
 			opening: "1500.50",
@@ -40,7 +40,7 @@ describe("FirstWalletForm", () => {
 		await user.type(screen.getByLabelText("Currency"), "aed");
 		await user.type(screen.getByLabelText("Cash in hand"), "20");
 		await user.press(
-			screen.getByRole("button", { name: "Create Cash wallet" }),
+			screen.getByRole("button", { name: "Create Cash Wallet" }),
 		);
 		expect(onSubmit).toHaveBeenCalledWith({ opening: "20", currency: "AED" });
 	});
@@ -50,7 +50,7 @@ describe("FirstWalletForm", () => {
 
 		await user.type(screen.getByLabelText("Cash in hand"), "12.3.4");
 		await user.press(
-			screen.getByRole("button", { name: "Create Cash wallet" }),
+			screen.getByRole("button", { name: "Create Cash Wallet" }),
 		);
 		expect(screen.getByRole("alert")).toHaveTextContent(/amount/i);
 		expect(onSubmit).not.toHaveBeenCalled();
@@ -75,6 +75,8 @@ describe("FirstWalletForm", () => {
 
 	it("says the Base currency locks after the first Entry", async () => {
 		await setup();
-		expect(screen.getByText(/locks after your first entry/i)).toBeOnTheScreen();
+		expect(screen.getByHintText(/locks after your first entry/i)).toBe(
+			screen.getByLabelText("Currency"),
+		);
 	});
 });

@@ -11,11 +11,11 @@ import {
 } from "@/features/onboarding/use-onboarding";
 import { Screen } from "@/features/shell/screen";
 import { deviceCurrency } from "@/lib/currency";
-import { useSession } from "@/lib/session";
+import { useSignedInUserId } from "@/lib/session";
 
 export default function Onboarding() {
 	const { t } = useLingui();
-	const userId = useSession()?.user.id ?? "";
+	const userId = useSignedInUserId();
 	const step = useOnboardingStep(userId);
 	const personal = usePersonalHousehold(userId);
 
@@ -31,8 +31,9 @@ export default function Onboarding() {
 			<FirstWalletForm
 				defaultCurrency={deviceCurrency()}
 				onSubmit={async (wallet) => {
-					if (personal)
-						await createFirstWallet(userId, personal.id, wallet, t`Cash`);
+					if (!personal)
+						throw new Error("The Personal household hasn't synced yet");
+					await createFirstWallet(userId, personal.id, wallet, t`Cash`);
 				}}
 			/>
 		</Screen>

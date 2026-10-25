@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	addMoney,
+	isNegative,
 	isZero,
 	Money,
 	moneyEquals,
@@ -111,6 +112,23 @@ describe("Money", () => {
 					).toBe(true);
 				},
 			),
+		);
+	});
+
+	it("treats negative zero as zero: not negative, printed as 0", () => {
+		const negativeZero = parseMoney("-0.00", "PKR");
+		expect(isZero(negativeZero)).toBe(true);
+		expect(isNegative(negativeZero)).toBe(false);
+		expect(negativeZero.toString()).toBe("0");
+	});
+
+	it("is negative exactly when below zero", () => {
+		fc.assert(
+			fc.property(decimalText, (text) => {
+				expect(isNegative(parseMoney(text, "PKR"))).toBe(
+					text.startsWith("-") && /[1-9]/.test(text),
+				);
+			}),
 		);
 	});
 

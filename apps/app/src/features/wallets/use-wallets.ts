@@ -7,7 +7,7 @@ import { useMemo } from "react";
 
 import { db } from "@/lib/powersync";
 
-import type { WalletSummary } from "./wallet-list";
+import type { WalletSummary } from "./types";
 
 /** The household's active Wallets with Balances derived from their Entries in the domain package (ADR-0002). */
 export const useWallets = (

@@ -1,8 +1,9 @@
+import { isCurrencyCode as hasCurrencyShape } from "@hisaab/domain";
 import { getLocales } from "expo-localization";
 
 /** An ISO 4217 code the platform knows, where it can say; otherwise any three capital letters. */
 export const isCurrencyCode = (code: string) => {
-	if (!/^[A-Z]{3}$/.test(code)) return false;
+	if (!hasCurrencyShape(code)) return false;
 	const known =
 		typeof Intl.supportedValuesOf === "function"
 			? Intl.supportedValuesOf("currency")

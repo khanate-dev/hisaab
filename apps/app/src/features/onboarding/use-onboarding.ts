@@ -5,6 +5,7 @@ import {
 	stamped,
 	wallets,
 } from "@hisaab/client-schema";
+import { isZero, parseMoney } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery, useStatus } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -14,7 +15,7 @@ import { localToday, nowIso } from "@/lib/dates";
 import { newId } from "@/lib/ids";
 import { db } from "@/lib/powersync";
 
-import type { FirstWallet } from "./first-wallet-form";
+import type { FirstWallet } from "./types";
 
 export const ONBOARDING_STEP = {
 	WAITING: "waiting",
@@ -64,14 +65,16 @@ export const saveName = async (userId: string, name: string) => {
  * The Personal household's Base currency, its Cash wallet, and the opening balance as that Wallet's first Balance
  * adjustment (ADR-0002), in one local transaction: the Base currency uploads before the Entry that would lock it.
  */
-export const createFirstWallet = (
+export const createFirstWallet = async (
 	userId: string,
 	householdId: string,
 	{ opening, currency }: FirstWallet,
 	/** The Cash wallet's name, in the User's language. */
 	cashName: string,
-) =>
-	db.transaction(async (tx) => {
+) => {
+	// Stored in Money's canonical form; a zero opening (however it was typed) records no Entry, as Skip does.
+	const amount = parseMoney(opening, currency);
+	await db.transaction(async (tx) => {
 		await tx
 			.update(households)
 			.set(stamped({ base_currency: currency }))
@@ -87,14 +90,14 @@ export const createFirstWallet = (
 				created_at: nowIso(),
 			}),
 		);
-		if (opening !== "0") {
+		if (!isZero(amount)) {
 			await tx.insert(entries).values(
 				stamped({
 					id: newId(),
 					household_id: householdId,
 					wallet_id: walletId,
 					kind: "balance_adjustment" as const,
-					amount: opening,
+					amount: amount.toString(),
 					occurred_on: localToday(),
 					created_by: userId,
 					created_at: nowIso(),
@@ -102,3 +105,4 @@ export const createFirstWallet = (
 			);
 		}
 	});
+};

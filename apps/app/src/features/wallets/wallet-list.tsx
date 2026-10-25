@@ -1,5 +1,5 @@
 import type { WalletType } from "@hisaab/client-schema";
-import { isNegative, type Money } from "@hisaab/domain";
+import { isNegative } from "@hisaab/domain";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
@@ -9,12 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { formatMoney } from "@/lib/format";
 
-export type WalletSummary = {
-	id: string;
-	name: string;
-	type: WalletType;
-	balance: Money;
-};
+import type { WalletSummary } from "./types";
 
 const TYPE_LABELS: Record<WalletType, MessageDescriptor> = {
 	cash: msg`Cash`,

@@ -3,7 +3,7 @@ import DecimalBase from "decimal.js";
 // ADR-0002: money is an exact decimal in the actual unit (not minor units, never a float), with an ISO 4217 currency.
 // It travels as text (Postgres numeric, SQLite TEXT) and is parsed here; arithmetic never touches a JS number.
 
-/** Generous precision so no realistic sum ever rounds; amounts are exact as long as they fit. */
+/** Exact up to 60 significant digits, far beyond any household amount; Postgres numeric holds whatever arrives. */
 const Decimal = DecimalBase.clone({
 	precision: 60,
 	rounding: DecimalBase.ROUND_HALF_EVEN,
@@ -16,63 +16,79 @@ type Decimal = InstanceType<typeof Decimal>;
 const DECIMAL_TEXT = /^-?\d+(\.\d+)?$/;
 const CURRENCY_CODE = /^[A-Z]{3}$/;
 
-export class Money {
-	private constructor(
-		private readonly amount: Decimal,
-		readonly currency: string,
-	) {}
-
-	/** @internal */
-	static of(amount: Decimal, currency: string) {
-		if (!CURRENCY_CODE.test(currency))
-			throw new Error(
-				`Not an ISO 4217 currency code: ${JSON.stringify(currency)}`,
-			);
-		return new Money(amount, currency);
-	}
-
-	/** The canonical text form: what Postgres and the local database store. */
-	toString() {
-		return this.amount.toFixed();
-	}
-
-	/** @internal */
-	get decimal() {
-		return this.amount;
-	}
-}
+/** Whether the code has the shape of an ISO 4217 currency code. */
+export const isCurrencyCode = (code: string) => CURRENCY_CODE.test(code);
 
 /** Whether the text is an amount parseMoney accepts. */
 export const isDecimalAmount = (text: string) => DECIMAL_TEXT.test(text);
 
-export const parseMoney = (text: string, currency: string): Money => {
-	if (!DECIMAL_TEXT.test(text))
-		throw new Error(`Not a decimal amount: ${JSON.stringify(text)}`);
-	return Money.of(new Decimal(text), currency);
-};
+/** An exact amount in one currency. The decimal library stays inside; nothing outside sees a number. */
+export class Money {
+	readonly #amount: Decimal;
+	readonly currency: string;
 
-const sameCurrency = (a: Money, b: Money) => {
-	if (a.currency !== b.currency)
-		throw new Error(
-			`Can't combine ${a.currency} and ${b.currency}: convert the currency first`,
+	private constructor(amount: Decimal, currency: string) {
+		if (!isCurrencyCode(currency))
+			throw new Error(
+				`Not an ISO 4217 currency code: ${JSON.stringify(currency)}`,
+			);
+		this.#amount = amount;
+		this.currency = currency;
+	}
+
+	static parse(text: string, currency: string) {
+		if (!isDecimalAmount(text))
+			throw new Error(`Not a decimal amount: ${JSON.stringify(text)}`);
+		return new Money(new Decimal(text), currency);
+	}
+
+	static zero(currency: string) {
+		return new Money(new Decimal(0), currency);
+	}
+
+	plus(other: Money) {
+		if (other.currency !== this.currency) {
+			throw new Error(
+				`Can't combine ${this.currency} and ${other.currency}: convert the currency first`,
+			);
+		}
+		return new Money(this.#amount.plus(other.#amount), this.currency);
+	}
+
+	negated() {
+		return new Money(this.#amount.negated(), this.currency);
+	}
+
+	isZero() {
+		return this.#amount.isZero();
+	}
+
+	/** Strictly below zero; negative zero is zero. */
+	isNegative() {
+		return this.#amount.isNegative() && !this.#amount.isZero();
+	}
+
+	equals(other: Money) {
+		return (
+			this.currency === other.currency && this.#amount.equals(other.#amount)
 		);
-};
+	}
 
-export const addMoney = (a: Money, b: Money): Money => {
-	sameCurrency(a, b);
-	return Money.of(a.decimal.plus(b.decimal), a.currency);
-};
+	/** The canonical text form: what Postgres and the local database store. Negative zero prints as "0". */
+	toString() {
+		return this.#amount.isZero() ? "0" : this.#amount.toFixed();
+	}
+}
 
-export const negateMoney = (a: Money): Money =>
-	Money.of(a.decimal.negated(), a.currency);
+export const parseMoney = (text: string, currency: string) =>
+	Money.parse(text, currency);
+export const zeroMoney = (currency: string) => Money.zero(currency);
+export const addMoney = (a: Money, b: Money) => a.plus(b);
+export const negateMoney = (a: Money) => a.negated();
+export const isZero = (a: Money) => a.isZero();
+export const isNegative = (a: Money) => a.isNegative();
+export const moneyEquals = (a: Money, b: Money) => a.equals(b);
 
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */
 export const sumMoney = (amounts: readonly Money[], currency: string): Money =>
-	amounts.reduce(addMoney, Money.of(new Decimal(0), currency));
-
-export const isZero = (a: Money) => a.decimal.isZero();
-export const isNegative = (a: Money) =>
-	a.decimal.isNegative() && !a.decimal.isZero();
-
-export const moneyEquals = (a: Money, b: Money) =>
-	a.currency === b.currency && a.decimal.equals(b.decimal);
+	amounts.reduce(addMoney, zeroMoney(currency));

@@ -67,8 +67,8 @@ msgid "Continue"
 msgstr "Continue"
 
 #: src/features/onboarding/first-wallet-form.tsx
-msgid "Create Cash wallet"
-msgstr "Create Cash wallet"
+msgid "Create Cash Wallet"
+msgstr "Create Cash Wallet"
 
 #: src/features/wallets/wallet-list.tsx
 msgid "Credit card"
@@ -157,8 +157,8 @@ msgid "Households"
 msgstr "Households"
 
 #: src/features/onboarding/first-wallet-form.tsx
-msgid "How much cash do you have on you? Hisaab starts your Cash wallet there."
-msgstr "How much cash do you have on you? Hisaab starts your Cash wallet there."
+msgid "How much cash do you have on you? Hisaab starts your Cash Wallet there."
+msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."

@@ -9,6 +9,14 @@ const SessionContext = createContext<Session | null | undefined>(undefined);
 
 export const useSession = () => use(SessionContext);
 
+/** The signed-in User's id, for screens that only render behind the signed-in guard. */
+export const useSignedInUserId = () => {
+	const id = useSession()?.user.id;
+	if (id === undefined)
+		throw new Error("useSignedInUserId used outside the signed-in routes");
+	return id;
+};
+
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
 	const [session, setSession] = useState<Session | null | undefined>(undefined);
 
