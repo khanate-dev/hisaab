@@ -49,7 +49,8 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 			<Stack.Protected guard={onboarded}>
 				<Stack.Screen
 					name="(tabs)"
-					options={{ headerShown: false }}
+					// Read as the back link's label on the screens above the tabs.
+					options={{ headerShown: false, title: t`Home` }}
 				/>
 				<Stack.Screen
 					name="me"
@@ -58,6 +59,22 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 				<Stack.Screen
 					name="inbox"
 					options={{ title: t`Notifications` }}
+				/>
+				<Stack.Screen
+					name="wallets/index"
+					options={{ title: t`Wallets` }}
+				/>
+				<Stack.Screen
+					name="wallets/new"
+					options={{ title: t`New Wallet` }}
+				/>
+				<Stack.Screen
+					name="wallets/[id]/index"
+					options={{ title: t`Wallet` }}
+				/>
+				<Stack.Screen
+					name="wallets/[id]/edit"
+					options={{ title: t`Edit Wallet` }}
 				/>
 			</Stack.Protected>
 			<Stack.Protected guard={signedIn && !onboarded}>

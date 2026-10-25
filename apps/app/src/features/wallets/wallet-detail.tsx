@@ -1,0 +1,151 @@
+import type { EntryKind } from "@hisaab/client-schema";
+import type { Money } from "@hisaab/domain";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
+import { View } from "react-native";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Text } from "@/components/ui/text";
+import { formatDate, formatMoney } from "@/lib/format";
+
+import { Balance } from "./balance";
+import type { WalletSummary } from "./types";
+import { WALLET_TYPE_LABELS } from "./wallet-list";
+
+export type HistoryRow = {
+	entryId: string;
+	occurredOn: string;
+	kind: EntryKind;
+	amount: Money;
+	balance: Money;
+};
+
+const KIND_LABELS: Record<EntryKind, MessageDescriptor> = {
+	balance_adjustment: msg`Balance adjustment`,
+};
+
+type Props = {
+	wallet: WalletSummary & { archived: boolean };
+	/** Oldest first, as balanceHistory returns it; shown newest first. */
+	history: HistoryRow[];
+	/** Admins and Members manage Wallets; Viewers only look. */
+	canEdit: boolean;
+	onEdit: () => void;
+	onArchive: () => Promise<void>;
+	onUnarchive: () => Promise<void>;
+};
+
+/** A Wallet and its balance history, derived from its Entries (ADR-0002). */
+export const WalletDetail = ({
+	wallet,
+	history,
+	canEdit,
+	onEdit,
+	onArchive,
+	onUnarchive,
+}: Props) => {
+	const { t, i18n } = useLingui();
+	const name = wallet.name;
+
+	return (
+		<View className="gap-4">
+			<Card>
+				<View className="flex-row flex-wrap items-end justify-between gap-3">
+					<Text variant="muted">{i18n._(WALLET_TYPE_LABELS[wallet.type])}</Text>
+					<Balance
+						balance={wallet.balance}
+						type={wallet.type}
+					/>
+				</View>
+				{wallet.archived && (
+					<Text variant="label">{t`Archived: hidden from your Wallets, its Entries kept.`}</Text>
+				)}
+			</Card>
+
+			{canEdit && (
+				<View className="flex-row flex-wrap gap-3">
+					<Button
+						onPress={onEdit}
+						variant="secondary"
+					>
+						{t`Edit`}
+					</Button>
+					{wallet.archived ? (
+						<Button
+							onPress={() => void onUnarchive()}
+							variant="secondary"
+						>
+							{t`Unarchive`}
+						</Button>
+					) : (
+						<Dialog>
+							<DialogTrigger asChild>
+								<Button variant="secondary">{t`Archive`}</Button>
+							</DialogTrigger>
+							<DialogContent>
+								<DialogTitle>{t`Archive ${name}?`}</DialogTitle>
+								<DialogDescription>
+									{t`It leaves your Wallets list. Its Entries and Balance stay, and you can bring it back any time.`}
+								</DialogDescription>
+								<DialogFooter>
+									<DialogClose asChild>
+										<Button variant="secondary">{t`Cancel`}</Button>
+									</DialogClose>
+									<DialogClose asChild>
+										<Button
+											onPress={() => void onArchive()}
+										>{t`Archive Wallet`}</Button>
+									</DialogClose>
+								</DialogFooter>
+							</DialogContent>
+						</Dialog>
+					)}
+				</View>
+			)}
+
+			<Text variant="title">{t`Balance history`}</Text>
+			{history.length === 0 ? (
+				<Text
+					role="status"
+					variant="muted"
+				>
+					{t`No Entries yet.`}
+				</Text>
+			) : (
+				<View
+					className="gap-2"
+					role="list"
+				>
+					{history.toReversed().map((row) => (
+						<View
+							accessible
+							className="flex-row items-center justify-between gap-3 border-b-2 border-border py-2"
+							key={row.entryId}
+							role="listitem"
+						>
+							<View className="shrink gap-1">
+								<Text variant="label">{i18n._(KIND_LABELS[row.kind])}</Text>
+								<Text variant="muted">{formatDate(row.occurredOn)}</Text>
+							</View>
+							<View className="items-end gap-1">
+								<Text variant="label">{formatMoney(row.amount)}</Text>
+								<Text variant="muted">{formatMoney(row.balance)}</Text>
+							</View>
+						</View>
+					))}
+				</View>
+			)}
+		</View>
+	);
+};
