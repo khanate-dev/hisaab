@@ -12,5 +12,8 @@
 		"fast-check": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
+	},
+	"dependencies": {
+		"decimal.js": "catalog:"
 	}
 }

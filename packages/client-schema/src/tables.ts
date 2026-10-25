@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { ENTRY_KINDS, WALLET_TYPES } from "./kinds";
 import { ROLES } from "./roles";
 import { STAMP_COLUMN } from "./stamp";
 
@@ -16,6 +17,8 @@ export const households = sqliteTable("households", {
 	name: text("name").notNull(),
 	/** Set only on a Personal household: the User it belongs to. */
 	personal_user_id: text("personal_user_id"),
+	/** ISO 4217; set by First Wallet onboarding and fixed once the household has an Entry (ADR-0005). */
+	base_currency: text("base_currency"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 });
@@ -25,6 +28,41 @@ export const memberships = sqliteTable("memberships", {
 	household_id: text("household_id").notNull(),
 	user_id: text("user_id").notNull(),
 	role: text("role", { enum: ROLES }).notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+});
+
+/** A User's name, shown to the people they share a household with. */
+export const profiles = sqliteTable("profiles", {
+	id: text("id").primaryKey(),
+	display_name: text("display_name").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+});
+
+export const wallets = sqliteTable("wallets", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	name: text("name").notNull(),
+	type: text("type", { enum: WALLET_TYPES }).notNull(),
+	/** ISO 4217. */
+	currency: text("currency").notNull(),
+	archived_at: text("archived_at"),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+});
+
+export const entries = sqliteTable("entries", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	wallet_id: text("wallet_id").notNull(),
+	kind: text("kind", { enum: ENTRY_KINDS }).notNull(),
+	/** Exact decimal text: the signed change to the Wallet's Balance. Parse with parseMoney; never SUM it in SQL. */
+	amount: text("amount").notNull(),
+	/** The date in the household's timezone, YYYY-MM-DD. */
+	occurred_on: text("occurred_on").notNull(),
+	description: text("description"),
+	created_by: text("created_by").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 });

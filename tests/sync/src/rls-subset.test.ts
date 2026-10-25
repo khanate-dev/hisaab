@@ -6,7 +6,14 @@ import { seedHouseholds } from "./seed";
 import { type SignedInUser, userClient } from "./users";
 
 // ADR-0001 amendment: every row a Sync Stream sends a User must also be readable by them under RLS.
-const SYNCED_TABLES = ["app_config", "households", "memberships"] as const;
+const SYNCED_TABLES = [
+	"app_config",
+	"households",
+	"memberships",
+	"profiles",
+	"wallets",
+	"entries",
+] as const;
 
 const syncedIds = async (
 	device: AbstractPowerSyncDatabase,
@@ -56,5 +63,21 @@ describe("RLS ⊇ Sync Streams", () => {
 		expect(await syncedIds(carol, "households")).not.toContain(side);
 		const dave = await connectClient(seed.users.dave);
 		expect(await syncedIds(dave, "households")).toHaveLength(1);
+	});
+
+	it("streams names and Wallets only within shared households", async () => {
+		const dave = await connectClient(seed.users.dave);
+		expect(await syncedIds(dave, "profiles")).toEqual([seed.users.dave.id]);
+
+		const carol = await connectClient(seed.users.carol);
+		await vi.waitFor(async () =>
+			expect(await syncedIds(carol, "profiles")).toContain(seed.users.alice.id),
+		);
+		const walletHouseholds = await carol.getAll<{ household_id: string }>(
+			"SELECT household_id FROM wallets",
+		);
+		expect(walletHouseholds.map((w) => w.household_id)).not.toContain(
+			seed.households.side,
+		);
 	});
 });
