@@ -1,5 +1,10 @@
-// Metro applies babel-preset-expo implicitly; Jest needs it spelled out.
+// Metro applies babel-preset-expo implicitly; Jest needs it spelled out. NativeWind compiles className.
 module.exports = (api) => {
 	api.cache(true);
-	return { presets: ["babel-preset-expo"] };
+	return {
+		presets: [
+			["babel-preset-expo", { jsxImportSource: "nativewind" }],
+			"nativewind/babel",
+		],
+	};
 };

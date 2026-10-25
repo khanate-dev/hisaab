@@ -1,4 +1,7 @@
-import { Button, StyleSheet, Text, View } from "react-native";
+import { View } from "react-native";
+
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 type Props = {
 	/** Loads the newer build when the app can do that itself (a reload on web). */
@@ -7,29 +10,18 @@ type Props = {
 
 /** The hard block for a build below the server's minimum contract version (ADR-0009). There is no read-only mode. */
 export const UpdateRequired = ({ onUpdate }: Props) => (
-	<View style={styles.screen}>
-		<Text
-			role="heading"
-			style={styles.title}
-		>
-			Update required
-		</Text>
+	<View className="flex-1 justify-center gap-4 bg-bg p-6">
+		<Text variant="heading">Update required</Text>
 		<Text>
 			This version of Hisaab is too old to sync. Your changes are safe on this
 			device and will sync after you update.
 		</Text>
 		{onUpdate ? (
-			<Button
-				onPress={onUpdate}
-				title="Update now"
-			/>
+			<Button onPress={onUpdate}>Update now</Button>
 		) : (
-			<Text>Update Hisaab from your app store, then open it again.</Text>
+			<Text variant="muted">
+				Update Hisaab from your app store, then open it again.
+			</Text>
 		)}
 	</View>
 );
-
-const styles = StyleSheet.create({
-	screen: { flex: 1, gap: 16, justifyContent: "center", padding: 24 },
-	title: { fontSize: 24, fontWeight: "bold" },
-});

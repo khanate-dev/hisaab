@@ -15,6 +15,8 @@
 	},
 	"dependencies": {
 		"@azure/core-asynciterator-polyfill": "catalog:",
+		"@expo-google-fonts/archivo-black": "catalog:",
+		"@expo-google-fonts/space-grotesk": "catalog:",
 		"@expo/metro-runtime": "catalog:",
 		"@hisaab/client-schema": "workspace:*",
 		"@hisaab/domain": "workspace:*",
@@ -25,20 +27,27 @@
 		"@powersync/react-native": "catalog:",
 		"@powersync/web": "catalog:",
 		"@react-native-async-storage/async-storage": "catalog:",
+		"@rn-primitives/dialog": "catalog:",
+		"@rn-primitives/portal": "catalog:",
 		"@supabase/supabase-js": "catalog:",
 		"drizzle-orm": "catalog:",
 		"expo": "catalog:",
 		"expo-constants": "catalog:",
 		"expo-dev-client": "catalog:",
+		"expo-font": "catalog:",
 		"expo-linking": "catalog:",
 		"expo-router": "catalog:",
 		"expo-status-bar": "catalog:",
+		"lucide-react-native": "catalog:",
+		"nativewind": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"react-native": "catalog:",
+		"react-native-css-interop": "catalog:",
 		"react-native-reanimated": "catalog:",
 		"react-native-safe-area-context": "catalog:",
 		"react-native-screens": "catalog:",
+		"react-native-svg": "catalog:",
 		"react-native-url-polyfill": "catalog:",
 		"react-native-web": "catalog:",
 		"react-native-worklets": "catalog:"
@@ -51,6 +60,7 @@
 		"babel-preset-expo": "catalog:",
 		"jest": "catalog:",
 		"jest-expo": "catalog:",
+		"tailwindcss": "catalog:",
 		"test-renderer": "catalog:",
 		"typescript": "catalog:"
 	},
@@ -61,19 +71,25 @@
 				"displayName": "ios",
 				"preset": "jest-expo/ios",
 				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm))",
+					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg))",
 					"/node_modules/react-native-reanimated/plugin/",
 					"/node_modules/@react-native/babel-preset/"
-				]
+				],
+				"moduleNameMapper": {
+					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
+				}
 			},
 			{
 				"displayName": "android",
 				"preset": "jest-expo/android",
 				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm))",
+					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg))",
 					"/node_modules/react-native-reanimated/plugin/",
 					"/node_modules/@react-native/babel-preset/"
-				]
+				],
+				"moduleNameMapper": {
+					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
+				}
 			}
 		]
 	}
