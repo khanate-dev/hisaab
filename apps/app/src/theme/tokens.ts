@@ -12,6 +12,7 @@ const shared = {
 	good: "#2BB673",
 	warn: "#FFB020",
 	bad: "#FF4D6D",
+	violet: "#A78BFA",
 };
 
 type Token =
@@ -63,3 +64,27 @@ export const FONTS = {
 	bodyMedium: "SpaceGrotesk_500Medium",
 	bodyBold: "SpaceGrotesk_700Bold",
 } as const;
+
+/**
+ * Category colours by stable Hisaab key (ADR-0008); the database stores the key, never a hex value, so the palette
+ * can be retuned without touching data. They're the shared accents, the same in light and dark, with on-accent ink
+ * reading on every one. Add keys; never rename or remove one.
+ */
+export const CATEGORY_COLORS = {
+	magenta: shared.primary,
+	lime: shared.lime,
+	butter: shared.butter,
+	cyan: shared.cyan,
+	green: shared.good,
+	orange: shared.warn,
+	red: shared.bad,
+	violet: shared.violet,
+} as const satisfies Record<string, string>;
+
+export type CategoryColorKey = keyof typeof CATEGORY_COLORS;
+
+/** The colour for a stored key; unknown keys (say, from a newer build) show as butter, the default. */
+export const categoryColor = (key: string): string =>
+	Object.hasOwn(CATEGORY_COLORS, key)
+		? CATEGORY_COLORS[key as CategoryColorKey]
+		: CATEGORY_COLORS.butter;

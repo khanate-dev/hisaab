@@ -1,4 +1,4 @@
-import { entries, memberships, wallets } from "@hisaab/client-schema";
+import { entries, wallets } from "@hisaab/client-schema";
 import { balanceHistory, walletBalances, zeroMoney } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
@@ -107,28 +107,4 @@ export const useWallet = (walletId: string) => {
 			hasEntries: entryRows.length > 0,
 		};
 	}, [wallet, entryRows]);
-};
-
-/**
- * Whether the signed-in User may add, edit and archive the household's Wallets: Admins and Members may, Viewers only
- * look (RLS decides; this only hides what would be refused). Undefined until their Membership has synced.
- */
-export const useCanManageWallets = (
-	householdId: string | undefined,
-	userId: string,
-): boolean | undefined => {
-	const role = useQuery(
-		toCompilableQuery(
-			db
-				.select({ role: memberships.role })
-				.from(memberships)
-				.where(
-					and(
-						eq(memberships.household_id, householdId ?? ""),
-						eq(memberships.user_id, userId),
-					),
-				),
-		),
-	).data[0]?.role;
-	return role === undefined ? undefined : role !== "viewer";
 };

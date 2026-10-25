@@ -76,6 +76,18 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					name="wallets/[id]/edit"
 					options={{ title: t`Edit Wallet` }}
 				/>
+				<Stack.Screen
+					name="categories/index"
+					options={{ title: t`Categories` }}
+				/>
+				<Stack.Screen
+					name="categories/new"
+					options={{ title: t`New Category` }}
+				/>
+				<Stack.Screen
+					name="categories/[id]"
+					options={{ title: t`Category` }}
+				/>
 			</Stack.Protected>
 			<Stack.Protected guard={signedIn && !onboarded}>
 				<Stack.Screen

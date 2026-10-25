@@ -1,4 +1,5 @@
 import * as RadioGroupPrimitive from "@rn-primitives/radio-group";
+import type { ReactNode } from "react";
 
 import { Text } from "./text";
 
@@ -6,7 +7,13 @@ type Props<T extends string> = {
 	label: string;
 	value: T;
 	onValueChange: (value: T) => void;
-	options: readonly { value: T; label: string }[];
+	options: readonly {
+		value: T;
+		/** The option's accessible name, and what it shows unless it has `content`. */
+		label: string;
+		/** Shown in place of the label, say an icon or a swatch; told whether it's the chosen one. */
+		content?: (selected: boolean) => ReactNode;
+	}[];
 };
 
 /** One choice from a few, shown as chips; the chosen one is filled. */
@@ -24,21 +31,28 @@ export const RadioGroup = <T extends string>({
 		onValueChange={(next) => onValueChange(next as T)}
 		value={value}
 	>
-		{options.map((option) => (
-			<RadioGroupPrimitive.Item
-				accessibilityLabel={option.label}
-				aria-label={option.label}
-				className={`rounded-full border-2 border-border ps-4 pe-4 py-2 ${option.value === value ? "bg-butter" : "bg-surface"}`}
-				key={option.value}
-				value={option.value}
-			>
-				<Text
-					className={option.value === value ? "text-on-accent" : ""}
-					variant="label"
+		{options.map((option) => {
+			const selected = option.value === value;
+			return (
+				<RadioGroupPrimitive.Item
+					accessibilityLabel={option.label}
+					aria-label={option.label}
+					className={`rounded-full border-2 border-border ${option.content ? "p-2" : "ps-4 pe-4 py-2"} ${selected ? "bg-butter" : "bg-surface"}`}
+					key={option.value}
+					value={option.value}
 				>
-					{option.label}
-				</Text>
-			</RadioGroupPrimitive.Item>
-		))}
+					{option.content ? (
+						option.content(selected)
+					) : (
+						<Text
+							className={selected ? "text-on-accent" : ""}
+							variant="label"
+						>
+							{option.label}
+						</Text>
+					)}
+				</RadioGroupPrimitive.Item>
+			);
+		})}
 	</RadioGroupPrimitive.Root>
 );

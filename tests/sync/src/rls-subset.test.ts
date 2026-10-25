@@ -12,6 +12,7 @@ const SYNCED_TABLES = [
 	"memberships",
 	"profiles",
 	"wallets",
+	"categories",
 	"entries",
 ] as const;
 
@@ -65,7 +66,7 @@ describe("RLS ⊇ Sync Streams", () => {
 		expect(await syncedIds(dave, "households")).toHaveLength(1);
 	});
 
-	it("streams names and Wallets only within shared households", async () => {
+	it("streams names, Wallets and Categories only within shared households", async () => {
 		const dave = await connectClient(seed.users.dave);
 		expect(await syncedIds(dave, "profiles")).toEqual([seed.users.dave.id]);
 
@@ -77,6 +78,13 @@ describe("RLS ⊇ Sync Streams", () => {
 			"SELECT household_id FROM wallets",
 		);
 		expect(walletHouseholds.map((w) => w.household_id)).not.toContain(
+			seed.households.side,
+		);
+		const categoryHouseholds = await carol.getAll<{ household_id: string }>(
+			"SELECT DISTINCT household_id FROM categories",
+		);
+		expect(categoryHouseholds.length).toBeGreaterThan(0);
+		expect(categoryHouseholds.map((c) => c.household_id)).not.toContain(
 			seed.households.side,
 		);
 	});
