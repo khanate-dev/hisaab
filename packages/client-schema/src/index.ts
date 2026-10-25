@@ -1,4 +1,6 @@
-import { Schema, toPowerSyncTable } from "./powersync-schema";
+import { Schema } from "@powersync/common";
+
+import { toPowerSyncTable } from "./powersync-schema";
 import * as tables from "./tables";
 
 export * from "./contract-version";

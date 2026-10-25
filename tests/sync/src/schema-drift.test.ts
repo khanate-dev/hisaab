@@ -52,6 +52,25 @@ describe("schema drift", () => {
 		}
 	});
 
+	it("every synced client-schema column is selected by a Sync Stream", () => {
+		for (const table of schema.tables.filter((t) => !t.localOnly)) {
+			for (const column of ["id", ...table.columns.map((c) => c.name)]) {
+				expect(
+					syncConfig,
+					`${table.name}.${column} in a stream's SELECT`,
+				).toContain(`${table.name}.${column}`);
+			}
+		}
+	});
+
+	it("no client-schema column uses PowerSync's underscore prefix, which the connector never uploads", () => {
+		for (const table of schema.tables) {
+			expect(
+				table.columns.map((c) => c.name).filter((name) => name.startsWith("_")),
+			).toEqual([]);
+		}
+	});
+
 	it("the Sync Streams reference only tables and columns that exist", () => {
 		const source = new StaticSchema([
 			{

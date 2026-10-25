@@ -75,6 +75,34 @@ describe("the upload connector stays framework-free", () => {
 	});
 });
 
+describe("app writes to synced tables carry their contract version", () => {
+	const file = "apps/app/src/sample.ts";
+
+	it.each([
+		["db.insert(households).values({ id, name });"],
+		["db.update(households).set({ name }).where(eq(households.id, id));"],
+		["db.insert(households).values([{ id, name }]);"],
+	])("rejects an unstamped write: %s", async (code) => {
+		expect(await errorsFor(file, `${code}\nexport {};\n`)).toContain(
+			"hisaab/stamp-local-writes",
+		);
+	});
+
+	it.each([
+		["db.insert(households).values(stamped({ id, name }));"],
+		[
+			"db.update(households).set(stamped({ name })).where(eq(households.id, id));",
+		],
+		["db.insert(households).values([stamped({ id, name })]);"],
+		["db.insert(uploadErrors).values({ id });"],
+		["new Set().values();"],
+	])("accepts %s", async (code) => {
+		expect(await errorsFor(file, `${code}\nexport {};\n`)).not.toContain(
+			"hisaab/stamp-local-writes",
+		);
+	});
+});
+
 describe("device code never aggregates money in SQL", () => {
 	it.each([
 		[

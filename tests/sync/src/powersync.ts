@@ -28,13 +28,10 @@ export const openSyncStream = async (token: string) => {
 	return { status: response.status, body: "" };
 };
 
-/**
- * Connects a @powersync/node client as the User, resolved once the first sync completes.
- */
-/** `contractVersion` plays an app build of that version; it defaults to this build. */
 /** An app build: the contract version it speaks and its upcasters. Defaults to this build. */
 export type Build = { contractVersion?: number; upcasters?: Upcasters };
 
+/** Connects a @powersync/node client as the User, running `build`, resolved once the first sync completes. */
 export const connectClient = async (user: SignedInUser, build: Build = {}) => {
 	const db = openLocalDatabase();
 	// The connector the app ships, writing through RLS as this User.

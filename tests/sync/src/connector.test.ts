@@ -29,16 +29,8 @@ type Build = {
 
 const scriptedServer = (
 	reply: (call: Call) => Reply,
-	build: Build | (() => void) = {},
+	{ onUpdateRequired, contractVersion, upcasters }: Build = {},
 ) => {
-	const { onUpdateRequired, contractVersion, upcasters } =
-		typeof build === "function"
-			? {
-					onUpdateRequired: build,
-					contractVersion: undefined,
-					upcasters: undefined,
-				}
-			: build;
 	const calls: Call[] = [];
 	const from = (table: string) => {
 		const call: Call = { table, action: "select" };
@@ -124,10 +116,9 @@ describe("upload connector", () => {
 		const db = openLocalDatabase();
 		await insertHousehold(db);
 		let updateRequired = 0;
-		const server = scriptedServer(
-			() => failure("PT426"),
-			() => (updateRequired += 1),
-		);
+		const server = scriptedServer(() => failure("PT426"), {
+			onUpdateRequired: () => (updateRequired += 1),
+		});
 
 		await expect(server.upload(db)).rejects.toMatchObject({ code: "PT426" });
 		expect(updateRequired).toBe(1);

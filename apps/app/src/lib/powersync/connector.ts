@@ -1,6 +1,10 @@
-import { NO_ROWS, readStamp, UNMAPPABLE } from "@hisaab/client-schema";
 import {
 	CONTRACT_VERSION,
+	NO_ROWS,
+	readStamp,
+	UNMAPPABLE,
+} from "@hisaab/client-schema";
+import {
 	type QueuedOp,
 	UPCASTERS,
 	type Upcasters,
@@ -85,7 +89,9 @@ const write = async (
 		}
 		case "PATCH": {
 			// Last writer wins per row (ADR-0007): send the whole local row, never PowerSync's changed fields.
-			// The op's own (upcast) values go on top, so an older build's change lands in this build's shape.
+			// The row is read from the local table in this build's schema, so it is already this build's shape; the op's
+			// own (upcast) values go on top, so an older build's change lands even when its column was renamed. Any
+			// later change to the same row is queued after this op and overwrites it when it uploads.
 			const row = await localRow(db, entry);
 			// Deleted locally since: the DELETE queued after this update speaks for the row.
 			if (row === null) return null;

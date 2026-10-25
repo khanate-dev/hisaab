@@ -11,7 +11,7 @@ During review, scrutinize aggressively and flag potential violations of this str
 | `packages/client-schema` | The hand-written PowerSync `Schema` + Drizzle tables (synced subset + local-only tables). Never generated from Postgres. |
 | `supabase/` | CLI migrations (`supabase/migrations`), Edge Functions, pgTAP tests, `config.toml`. |
 | `powersync/` | `sync-config.yaml` (Sync Streams) and the self-hosted service config for the local Docker stack. |
-| `tests/sync` | The Node (`@powersync/node`) harness: RLS ⊇ Sync Streams differential and offline/conflict scenarios. |
+| `tests/sync` | The Node (`@powersync/node`) harness: RLS ⊇ Sync Streams differential, offline/conflict scenarios, the upload connector's tests and the ADR-0009 schema drift checks. |
 | `tooling/` | Repo tooling with no package of its own: the custom ESLint rules (`tooling/eslint`) and their tests, the local stack scripts (`tooling/stack`). |
 | `docs/` | Spec, research, `secrets.md`, `infra.md`, release smoke checklist. |
 

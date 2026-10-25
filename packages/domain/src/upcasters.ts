@@ -14,10 +14,8 @@ export type Upcasters = Readonly<
 	Record<number, (op: QueuedOp) => QueuedOp | null>
 >;
 
-export const UPCASTERS: Upcasters = {
-	// Version 1 is the baseline contract: nothing comes before it.
-	1: (op) => op,
-};
+/** Empty while the contract is at version 1: then the chain is the identity. Each bump adds its step here. */
+export const UPCASTERS: Upcasters = {};
 
 /**
  * Maps an op written under contract version `from` to version `to`, step by step. Null means it can't be mapped
