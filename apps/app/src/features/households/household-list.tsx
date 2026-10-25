@@ -1,6 +1,7 @@
 import type { Role } from "@hisaab/client-schema";
 import { View } from "react-native";
 
+import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
 import type { HouseholdSummary } from "./use-households";
@@ -41,9 +42,8 @@ export const HouseholdList = ({
 			role="list"
 		>
 			{ordered(households).map((household) => (
-				<View
+				<Card
 					accessible
-					className="rounded-card border-3 border-border bg-surface p-4"
 					key={household.id}
 					role="listitem"
 				>
@@ -53,7 +53,7 @@ export const HouseholdList = ({
 					{!household.isPersonal && (
 						<Text variant="muted">{ROLE_LABELS[household.role]}</Text>
 					)}
-				</View>
+				</Card>
 			))}
 		</View>
 	);

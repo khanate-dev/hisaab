@@ -29,7 +29,6 @@
 		"@react-native-async-storage/async-storage": "catalog:",
 		"@rn-primitives/dialog": "catalog:",
 		"@rn-primitives/portal": "catalog:",
-		"@rn-primitives/slot": "catalog:",
 		"@supabase/supabase-js": "catalog:",
 		"drizzle-orm": "catalog:",
 		"expo": "catalog:",

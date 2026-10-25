@@ -2,6 +2,7 @@ import { NO_ROWS, UNMAPPABLE, type uploadErrors } from "@hisaab/client-schema";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
 /** A local change the server rejected (CONTEXT.md: Rejected change). */
@@ -51,8 +52,8 @@ export const SyncStatus = ({
 				role="list"
 			>
 				{rejectedChanges.map((change) => (
-					<View
-						className="gap-2 rounded-card border-3 border-border bg-surface-2 p-3"
+					<Card
+						className="bg-surface-2"
 						key={change.id}
 						role="listitem"
 					>
@@ -65,7 +66,7 @@ export const SyncStatus = ({
 						>
 							Dismiss
 						</Button>
-					</View>
+					</Card>
 				))}
 			</View>
 		)}

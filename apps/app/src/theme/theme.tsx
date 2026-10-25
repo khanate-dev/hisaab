@@ -26,8 +26,8 @@ const useThemeVariables = (scheme: ColorScheme) =>
 	);
 
 /**
- * Re-applies the theme's variables. Portalled content (Dialog, Sheet) renders outside the provider's View, so it
- * needs its own scope.
+ * Re-applies the theme's variables. On web the portal renders Dialog and Sheet content outside the provider's View
+ * (seen in Chrome: text without theme colours otherwise), so portalled content needs its own scope.
  */
 export const ThemeScope = ({
 	children,

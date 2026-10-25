@@ -29,7 +29,7 @@ export const Button = ({
 		<Pressable
 			accessibilityRole="button"
 			accessibilityState={{ disabled: Boolean(disabled) }}
-			className={`min-h-12 flex-row items-center justify-center gap-2 rounded-control border-3 border-border px-5 py-3 ${VARIANTS[variant]} ${disabled ? "opacity-50" : ""} ${className}`}
+			className={`min-h-12 flex-row items-center justify-center gap-2 rounded-control border-3 border-border ps-5 pe-5 py-3 ${VARIANTS[variant]} ${disabled ? "opacity-50" : ""} ${className}`}
 			disabled={disabled}
 			{...props}
 			{...pressIn}

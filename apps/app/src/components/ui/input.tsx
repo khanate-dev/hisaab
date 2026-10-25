@@ -10,19 +10,15 @@ type Props = Omit<TextInputProps, "accessibilityLabel"> & {
 	error?: string | undefined;
 };
 
-export const Input = ({
-	label,
-	error,
-	className = "",
-	...props
-}: Props & { className?: string }) => {
+export const Input = ({ label, error, className = "", ...props }: Props) => {
 	const colors = useColors();
 	return (
 		<View className="gap-1">
 			<Text variant="label">{label}</Text>
 			<TextInput
+				accessibilityHint={error}
 				accessibilityLabel={label}
-				className={`min-h-12 rounded-control border-2 bg-surface-2 px-3 py-2 font-body text-base text-ink ${error ? "border-bad" : "border-border"} ${className}`}
+				className={`min-h-12 rounded-control border-2 bg-surface-2 ps-3 pe-3 py-2 font-body text-base text-ink ${error ? "border-bad" : "border-border"} ${className}`}
 				placeholderTextColor={colors.muted}
 				{...props}
 			/>

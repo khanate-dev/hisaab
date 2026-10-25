@@ -46,7 +46,7 @@ export const Icon = ({
  * Category icons by stable Hisaab key (ADR-0008). The database stores the key, never a Lucide name, so a library
  * rename can't break stored data. Add keys; never rename or remove one.
  */
-export const CATEGORY_ICONS: Readonly<Record<string, LucideIcon>> = {
+export const CATEGORY_ICONS = {
 	groceries: ShoppingCart,
 	dining: Utensils,
 	coffee: Coffee,
@@ -64,10 +64,14 @@ export const CATEGORY_ICONS: Readonly<Record<string, LucideIcon>> = {
 	repairs: Wrench,
 	salary: Wallet,
 	income: CircleDollarSign,
-};
+} as const satisfies Record<string, LucideIcon>;
+
+export type CategoryIconKey = keyof typeof CATEGORY_ICONS;
 
 export const DEFAULT_CATEGORY_ICON: LucideIcon = Tag;
 
 /** The icon for a stored key; unknown keys (say, from a newer build) fall back to the default. */
 export const categoryIcon = (key: string): LucideIcon =>
-	CATEGORY_ICONS[key] ?? DEFAULT_CATEGORY_ICON;
+	Object.hasOwn(CATEGORY_ICONS, key)
+		? CATEGORY_ICONS[key as CategoryIconKey]
+		: DEFAULT_CATEGORY_ICON;

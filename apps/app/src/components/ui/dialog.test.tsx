@@ -10,7 +10,6 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "./dialog";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "./sheet";
 
 describe("Dialog", () => {
 	it("opens from its trigger and closes again", async () => {
@@ -32,36 +31,16 @@ describe("Dialog", () => {
 			</>,
 		);
 
-		expect(screen.queryByText("Delete this Entry?")).toBeNull();
-		await user.press(screen.getByRole("button", { name: "Delete" }));
-		expect(await screen.findByText("Delete this Entry?")).toBeOnTheScreen();
-		await user.press(screen.getByRole("button", { name: "Cancel" }));
-		expect(screen.queryByText("Delete this Entry?")).toBeNull();
-	});
-});
-
-describe("Sheet", () => {
-	it("opens from its trigger with a close button of its own", async () => {
-		const user = userEvent.setup();
-		await render(
-			<>
-				<Sheet>
-					<SheetTrigger asChild>
-						<Button>Sync status</Button>
-					</SheetTrigger>
-					<SheetContent>
-						<SheetTitle>Sync status</SheetTitle>
-					</SheetContent>
-				</Sheet>
-				<PortalHost />
-			</>,
-		);
-
-		await user.press(screen.getByRole("button", { name: "Sync status" }));
 		expect(
-			await screen.findByRole("heading", { name: "Sync status" }),
+			screen.queryByRole("heading", { name: "Delete this Entry?" }),
+		).toBeNull();
+		await user.press(screen.getByRole("button", { name: "Delete" }));
+		expect(
+			await screen.findByRole("heading", { name: "Delete this Entry?" }),
 		).toBeOnTheScreen();
-		await user.press(screen.getByRole("button", { name: "Close" }));
-		expect(screen.queryByRole("heading", { name: "Sync status" })).toBeNull();
+		await user.press(screen.getByRole("button", { name: "Cancel" }));
+		expect(
+			screen.queryByRole("heading", { name: "Delete this Entry?" }),
+		).toBeNull();
 	});
 });

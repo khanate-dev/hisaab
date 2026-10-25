@@ -18,17 +18,20 @@ const CARD = "gap-2 rounded-card border-3 border-border bg-surface p-4";
 export const Card = ({
 	children,
 	onPress,
+	disabled,
 	className = "",
 	...props
 }: Props) => {
 	const scheme = useColorSchemeName();
-	const pressIn = usePressIn("card", props);
+	const pressIn = usePressIn("card", { ...props, disabled });
 	const content =
 		typeof children === "string" ? <Text>{children}</Text> : children;
 	if (!onPress) {
 		return (
 			<View
 				className={`${CARD} ${className}`}
+				role={props.role}
+				accessible={props.accessible}
 				style={{ boxShadow: hardShadow(scheme, "card") }}
 			>
 				{content}
@@ -38,7 +41,9 @@ export const Card = ({
 	return (
 		<Pressable
 			accessibilityRole="button"
-			className={`${CARD} ${className}`}
+			accessibilityState={{ disabled: Boolean(disabled) }}
+			className={`${CARD} ${disabled ? "opacity-50" : ""} ${className}`}
+			disabled={disabled}
 			onPress={onPress}
 			{...props}
 			{...pressIn}

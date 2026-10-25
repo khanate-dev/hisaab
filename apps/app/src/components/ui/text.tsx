@@ -6,7 +6,10 @@ export const TEXT_VARIANTS = {
 	label: "font-body-medium text-sm text-ink",
 	heading: "font-heading text-2xl text-ink",
 	title: "font-heading text-lg text-ink",
-	/** Amounts and big numbers: the heading face with tabular figures, so digits line up. */
+	/**
+	 * Amounts and big numbers: the heading face with tabular figures, so digits line up. Archivo Black has no `tnum`
+	 * feature, but every digit is the same width (667 units), so its figures are tabular already.
+	 */
 	figure: "font-heading text-2xl text-ink tabular-nums",
 } as const;
 
