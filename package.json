@@ -14,7 +14,8 @@
 		"stack:down": "tooling/stack/down.sh",
 		"test:db": "supabase test db",
 		"test:functions": "tooling/stack/functions-smoke.sh",
-		"check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm spellcheck && pnpm test"
+		"check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm spellcheck && pnpm test && pnpm test:app",
+		"test:app": "pnpm --filter @hisaab/app test"
 	},
 	"devDependencies": {
 		"@eslint/js": "catalog:",

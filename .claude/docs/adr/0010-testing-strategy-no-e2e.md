@@ -21,3 +21,9 @@ Edge Functions keep their logic behind injected adapters, so it's tested in Vite
 What's knowingly left untested automatically: native-only transport (WebSocket sync on Android), web storage eviction and `persist()`, and real push and email delivery. The smoke checklist covers them.
 
 Decided in [Testing & QA strategy](https://github.com/khanate-dev/hisaab/issues/16).
+
+## Amendment: component tests run on the iOS and Android presets
+
+`@testing-library/react-native` renders React Native host components through its own test renderer. It can't render react-native-web's DOM output, so the web and node projects of `jest-expo/universal` fail on any component. Component tests therefore run on `jest-expo/ios` and `jest-expo/android` only. Web-only behaviour, if it ever needs a test, gets `@testing-library/react` on a separate web project.
+
+Amended in [Sign in with email OTP and see your synced Personal household](https://github.com/khanate-dev/hisaab/issues/24).

@@ -244,6 +244,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Email OTP is the only sign-in (ADR-0007): both emails carry the code, not a link.
+# A first sign-in sends the confirmation email; later ones send the magic link email.
+[auth.email.template.confirmation]
+subject = "Your Hisaab sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
+
+[auth.email.template.magic_link]
+subject = "Your Hisaab sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

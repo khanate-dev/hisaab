@@ -4,14 +4,29 @@
 	"main": "expo-router/entry",
 	"scripts": {
 		"start": "expo start",
-		"web": "expo start --web",
-		"typecheck": "tsc -p tsconfig.json"
+		"web": "pnpm prepare:web && expo start --web",
+		"android": "expo run:android",
+		"prepare:web": "powersync-web copy-assets --output public",
+		"typecheck": "tsc -p tsconfig.json",
+		"test": "jest"
 	},
 	"dependencies": {
+		"@azure/core-asynciterator-polyfill": "catalog:",
+		"@expo/metro-runtime": "catalog:",
 		"@hisaab/client-schema": "workspace:*",
 		"@hisaab/domain": "workspace:*",
+		"@op-engineering/op-sqlite": "catalog:",
+		"@powersync/common": "catalog:",
+		"@powersync/drizzle-driver": "catalog:",
+		"@powersync/react": "catalog:",
+		"@powersync/react-native": "catalog:",
+		"@powersync/web": "catalog:",
+		"@react-native-async-storage/async-storage": "catalog:",
+		"@supabase/supabase-js": "catalog:",
+		"drizzle-orm": "catalog:",
 		"expo": "catalog:",
 		"expo-constants": "catalog:",
+		"expo-dev-client": "catalog:",
 		"expo-linking": "catalog:",
 		"expo-router": "catalog:",
 		"expo-status-bar": "catalog:",
@@ -21,12 +36,31 @@
 		"react-native-reanimated": "catalog:",
 		"react-native-safe-area-context": "catalog:",
 		"react-native-screens": "catalog:",
+		"react-native-url-polyfill": "catalog:",
 		"react-native-web": "catalog:",
 		"react-native-worklets": "catalog:"
 	},
 	"devDependencies": {
+		"@jest/globals": "catalog:",
 		"@react-native/metro-config": "catalog:",
+		"@testing-library/react-native": "catalog:",
 		"@types/react": "catalog:",
+		"babel-preset-expo": "catalog:",
+		"jest": "catalog:",
+		"jest-expo": "catalog:",
+		"test-renderer": "catalog:",
 		"typescript": "catalog:"
+	},
+	"jest": {
+		"projects": [
+			{
+				"displayName": "ios",
+				"preset": "jest-expo/ios"
+			},
+			{
+				"displayName": "android",
+				"preset": "jest-expo/android"
+			}
+		]
 	}
 }

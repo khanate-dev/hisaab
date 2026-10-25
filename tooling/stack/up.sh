@@ -11,4 +11,5 @@ if [[ ! -s $keys ]]; then
 fi
 
 pnpm exec supabase start
-docker compose -f powersync/compose.yaml up --detach --wait
+# Recreate so PowerSync always loads the current sync-config.yaml.
+docker compose -f powersync/compose.yaml up --detach --wait --force-recreate

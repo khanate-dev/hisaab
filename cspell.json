@@ -1,6 +1,7 @@
 {
 	"version": "0.2",
 	"language": "en,en-GB",
+	"useGitignore": true,
 	"ignorePaths": [
 		".git",
 		".expo",
@@ -21,7 +22,9 @@
 		"aparajita",
 		"Appflow",
 		"Archivo",
+		"asynciterator",
 		"beforeunload",
+		"btrim",
 		"Bubblewrap",
 		"Capawesome",
 		"capgo",
@@ -55,6 +58,7 @@
 		"PAYG",
 		"pglite",
 		"pgtap",
+		"plpgsql",
 		"PostgREST",
 		"powersync",
 		"prereqs",
@@ -83,6 +87,7 @@
 		"Turso",
 		"upcaster",
 		"upcasters",
+		"uuidv",
 		"vitest",
 		"Wayfinder",
 		"worklets"

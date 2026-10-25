@@ -3,7 +3,10 @@
 	"compilerOptions": {
 		"jsx": "react-jsx",
 		"lib": ["ES2023", "DOM"],
-		"types": []
+		"types": [],
+		"paths": {
+			"@/*": ["./src/*"]
+		}
 	},
 	"include": ["src", "expo-env.d.ts", ".expo/types/**/*.ts"]
 }
