@@ -6,6 +6,7 @@ import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { useMemo } from "react";
 
 import { db } from "@/lib/powersync";
+import { whenLoaded } from "@/lib/watched";
 
 import type { HistoryRow, WalletSummary } from "./types";
 
@@ -107,4 +108,23 @@ export const useWallet = (walletId: string) => {
 			hasEntries: entryRows.length > 0,
 		};
 	}, [wallet, entryRows]);
+};
+
+/**
+ * The household's Wallet rows, archived ones included: for pickers (active ones) and for naming any Entry's Wallet.
+ * Undefined until the first read lands, so a form doesn't start before its Wallets are known.
+ */
+export const useWalletRows = (householdId: string | undefined) => {
+	return whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(wallets)
+					.where(eq(wallets.household_id, householdId ?? ""))
+					.orderBy(asc(wallets.created_at)),
+			),
+		),
+		householdId !== undefined,
+	);
 };

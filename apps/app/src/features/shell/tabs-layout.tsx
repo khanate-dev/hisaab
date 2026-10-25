@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import { Tabs } from "expo-router";
+import { Tabs, useNavigation, usePathname } from "expo-router";
+import { useEffect } from "react";
 import { View } from "react-native";
 
 import { useColors } from "@/theme/theme";
@@ -16,6 +17,14 @@ export const TabsLayout = () => {
 	const { i18n } = useLingui();
 	const wide = useIsWide();
 	const colors = useColors();
+	const navigation = useNavigation();
+	const pathname = usePathname();
+	const section = SECTIONS.find((s) => s.href === pathname);
+	const title = section ? i18n._(section.title) : undefined;
+	// The shell's title is the back link's label on screens above it, so it names the section they were opened from.
+	useEffect(() => {
+		if (title !== undefined) navigation.setOptions({ title });
+	}, [navigation, title]);
 
 	return (
 		<QuickAddProvider>

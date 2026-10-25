@@ -11,7 +11,7 @@ import { useQuery, useStatus } from "@powersync/react";
 import { eq } from "drizzle-orm";
 
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
-import { localToday, nowIso } from "@/lib/dates";
+import { deviceTimeZone, nowIso, todayIn } from "@/lib/dates";
 import { newId } from "@/lib/ids";
 import { db } from "@/lib/powersync";
 
@@ -62,7 +62,7 @@ export const saveName = async (userId: string, name: string) => {
 };
 
 /**
- * The Personal household's Base currency, its Cash wallet, and the opening balance as that Wallet's first Balance
+ * The Personal household's Base currency and timezone, its Cash wallet, and the opening balance as that Wallet's first Balance
  * adjustment (ADR-0002), in one local transaction: the Base currency uploads before the Entry that would lock it.
  */
 export const createFirstWallet = async (
@@ -74,10 +74,12 @@ export const createFirstWallet = async (
 ) => {
 	// Stored in Money's canonical form; a zero opening (however it was typed) records no Entry, as Skip does.
 	const amount = parseMoney(opening, currency);
+	// The household's Entry dates are in this device's timezone until household settings change it (#40).
+	const timezone = deviceTimeZone();
 	await db.transaction(async (tx) => {
 		await tx
 			.update(households)
-			.set(stamped({ base_currency: currency }))
+			.set(stamped({ base_currency: currency, timezone }))
 			.where(eq(households.id, householdId));
 		const walletId = newId();
 		await tx.insert(wallets).values(
@@ -98,7 +100,7 @@ export const createFirstWallet = async (
 					wallet_id: walletId,
 					kind: "balance_adjustment" as const,
 					amount: amount.toString(),
-					occurred_on: localToday(),
+					occurred_on: todayIn(timezone),
 					created_by: userId,
 					created_at: nowIso(),
 				}),

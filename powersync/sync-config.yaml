@@ -15,7 +15,7 @@ streams:
   households:
     auto_subscribe: true
     queries:
-      - SELECT households.id, households.name, households.personal_user_id, households.base_currency, households.created_at
+      - SELECT households.id, households.name, households.personal_user_id, households.base_currency, households.timezone, households.created_at
         FROM households
         WHERE households.id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       - SELECT memberships.id, memberships.household_id, memberships.user_id, memberships.role, memberships.created_at
@@ -28,7 +28,7 @@ streams:
         FROM categories
         WHERE categories.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       # amount is numeric in Postgres and arrives as text: parsed into Money, never a float (ADR-0002).
-      - SELECT entries.id, entries.household_id, entries.wallet_id, entries.kind, entries.amount, entries.occurred_on, entries.description, entries.created_by, entries.created_at
+      - SELECT entries.id, entries.household_id, entries.wallet_id, entries.kind, entries.amount, entries.occurred_on, entries.occurred_time, entries.category_id, entries.description, entries.notes, entries.created_by, entries.created_at
         FROM entries
         WHERE entries.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 

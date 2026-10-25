@@ -1,5 +1,10 @@
+import { FLOW_KINDS, type FlowKind } from "@hisaab/domain";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
+import { router } from "expo-router";
 import { createContext, type ReactNode, use, useMemo, useState } from "react";
+import { View } from "react-native";
 
 import {
 	Dialog,
@@ -9,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Text } from "@/components/ui/text";
 
 import { useIsWide } from "./layout";
 
@@ -20,10 +24,29 @@ const QuickAddContext = createContext<QuickAdd>({ open: () => {} });
 /** Opens quick-add: a sheet on phones, a centred dialog on wide web (Navigation ticket, #17). */
 export const useQuickAdd = () => use(QuickAddContext);
 
-const Body = () => {
-	const { t } = useLingui();
+/** Until the quick-add keypad lands (#35), quick-add opens the full Entry form. */
+const RECORD_LABELS: Record<FlowKind, MessageDescriptor> = {
+	expense: msg`Record an Expense`,
+	income: msg`Record an Income`,
+};
+
+const Body = ({ onChoose }: { onChoose: () => void }) => {
+	const { i18n } = useLingui();
 	return (
-		<Text variant="muted">{t`Recording an Entry arrives with the quick-add keypad.`}</Text>
+		<View className="gap-3">
+			{FLOW_KINDS.map((kind, index) => (
+				<Button
+					key={kind}
+					onPress={() => {
+						onChoose();
+						router.push(`/entries/new?kind=${kind}`);
+					}}
+					variant={index === 0 ? "primary" : "secondary"}
+				>
+					{i18n._(RECORD_LABELS[kind])}
+				</Button>
+			))}
+		</View>
 	);
 };
 
@@ -43,7 +66,7 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
 				>
 					<DialogContent>
 						<DialogTitle>{t`New entry`}</DialogTitle>
-						<Body />
+						<Body onChoose={() => setOpen(false)} />
 						<DialogClose asChild>
 							<Button variant="secondary">{t`Close`}</Button>
 						</DialogClose>
@@ -56,7 +79,7 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
 				>
 					<SheetContent>
 						<SheetTitle>{t`New entry`}</SheetTitle>
-						<Body />
+						<Body onChoose={() => setOpen(false)} />
 					</SheetContent>
 				</Sheet>
 			)}
