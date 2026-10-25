@@ -27,13 +27,54 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
+#: src/app/wallets/index.tsx
+#: src/app/wallets/new.tsx
+msgid "Add Wallet"
+msgstr "Add Wallet"
+
 #: src/features/households/household-list.tsx
 msgid "Admin"
 msgstr "Admin"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/app/(tabs)/index.tsx
+msgid "All Wallets"
+msgstr "All Wallets"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Archive"
+msgstr "Archive"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Archive {name}?"
+msgstr "Archive {name}?"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Archive Wallet"
+msgstr "Archive Wallet"
+
+#: src/app/wallets/index.tsx
+msgid "Archived Wallets"
+msgstr "Archived Wallets"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Archived: hidden from your Wallets, its Entries kept."
+msgstr "Archived: hidden from your Wallets, its Entries kept."
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Balance adjustment"
+msgstr "Balance adjustment"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Balance history"
+msgstr "Balance history"
+
+#: src/features/wallets/labels.ts
 msgid "Bank"
 msgstr "Bank"
+
+#: src/features/wallets/balance.tsx
+msgid "Below zero"
+msgstr "Below zero"
 
 #: src/app/(tabs)/budgets.tsx
 msgid "Budget months and Pace arrive with Budgets."
@@ -44,8 +85,12 @@ msgstr "Budget months and Pace arrive with Budgets."
 msgid "Budgets"
 msgstr "Budgets"
 
+#: src/features/wallets/wallet-detail.tsx
+msgid "Cancel"
+msgstr "Cancel"
+
 #: src/app/onboarding.tsx
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Cash"
 msgstr "Cash"
 
@@ -70,11 +115,12 @@ msgstr "Continue"
 msgid "Create Cash Wallet"
 msgstr "Create Cash Wallet"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Credit card"
 msgstr "Credit card"
 
 #: src/features/onboarding/first-wallet-form.tsx
+#: src/features/wallets/wallet-form.tsx
 msgid "Currency"
 msgstr "Currency"
 
@@ -118,11 +164,21 @@ msgstr "Dismiss: new household"
 msgid "Dismiss: new membership"
 msgstr "Dismiss: new membership"
 
+#: src/features/wallets/wallet-detail.tsx
+msgid "Edit"
+msgstr "Edit"
+
+#: src/app/_layout.tsx
+#: src/app/wallets/[id]/edit.tsx
+msgid "Edit Wallet"
+msgstr "Edit Wallet"
+
 #: src/features/auth/sign-in-form.tsx
 msgid "Email"
 msgstr "Email"
 
 #: src/features/onboarding/first-wallet-form.tsx
+#: src/features/wallets/wallet-form.tsx
 msgid "Enter a three-letter currency code, like PKR or USD."
 msgstr "Enter a three-letter currency code, like PKR or USD."
 
@@ -143,6 +199,7 @@ msgstr "Every Entry, searchable, arrives with recording Entries."
 msgid "Getting your households ready…"
 msgstr "Getting your households ready…"
 
+#: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
 #: src/features/shell/sections.ts
 msgid "Home"
@@ -160,6 +217,14 @@ msgstr "Households"
 msgid "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 
+#: src/features/wallets/balance.tsx
+msgid "In credit"
+msgstr "In credit"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "It leaves your Wallets list. Its Entries and Balance stay, and you can bring it back any time."
+msgstr "It leaves your Wallets list. Its Entries and Balance stay, and you can bring it back any time."
+
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
 msgstr "Made by an older version of the app, and it no longer fits."
@@ -175,15 +240,28 @@ msgstr "Me & household"
 msgid "Member"
 msgstr "Member"
 
-#: src/features/wallets/wallet-list.tsx
+#: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
+
+#: src/features/wallets/wallet-form.tsx
+msgid "Name"
+msgstr "Name"
 
 #: src/features/shell/quick-add.tsx
 #: src/features/shell/sidebar.tsx
 #: src/features/shell/tab-bar.tsx
 msgid "New entry"
 msgstr "New entry"
+
+#: src/app/_layout.tsx
+#: src/app/wallets/new.tsx
+msgid "New Wallet"
+msgstr "New Wallet"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "No Entries yet."
+msgstr "No Entries yet."
 
 #: src/app/inbox.tsx
 msgid "No notifications yet."
@@ -220,6 +298,10 @@ msgstr "Online."
 msgid "Online. Every change synced."
 msgstr "Online. Every change synced."
 
+#: src/features/wallets/balance.tsx
+msgid "Owed"
+msgstr "Owed"
+
 #: src/features/households/household-list.tsx
 #: src/features/shell/household-pill.tsx
 msgid "Personal"
@@ -238,6 +320,10 @@ msgstr "Reports"
 msgid "Reports arrive once there are Entries to report on."
 msgstr "Reports arrive once there are Entries to report on."
 
+#: src/app/wallets/[id]/edit.tsx
+msgid "Save"
+msgstr "Save"
+
 #: src/features/shell/sidebar.tsx
 msgid "Sections"
 msgstr "Sections"
@@ -245,6 +331,14 @@ msgstr "Sections"
 #: src/features/auth/sign-in-form.tsx
 msgid "Send code"
 msgstr "Send code"
+
+#: src/app/wallets/index.tsx
+msgid "Show active Wallets"
+msgstr "Show active Wallets"
+
+#: src/app/wallets/index.tsx
+msgid "Show archived Wallets"
+msgstr "Show archived Wallets"
 
 #: src/app/_layout.tsx
 #: src/features/auth/sign-in-form.tsx
@@ -275,6 +369,10 @@ msgstr "Sync status"
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
 
+#: src/features/wallets/wallet-form.tsx
+msgid "The currency is fixed once the Wallet has Entries."
+msgstr "The currency is fixed once the Wallet has Entries."
+
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "This becomes your Base currency. It locks after your first Entry."
 msgstr "This becomes your Base currency. It locks after your first Entry."
@@ -286,6 +384,18 @@ msgstr "This is how the people you share a household with will see you."
 #: src/features/update/update-required.tsx
 msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
 msgstr "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
+
+#: src/app/wallets/[id]/index.tsx
+msgid "This Wallet isn't here. It may not have synced yet."
+msgstr "This Wallet isn't here. It may not have synced yet."
+
+#: src/features/wallets/wallet-form.tsx
+msgid "Type"
+msgstr "Type"
+
+#: src/features/wallets/wallet-detail.tsx
+msgid "Unarchive"
+msgstr "Unarchive"
 
 #: src/features/update/update-required.tsx
 msgid "Update Hisaab from your app store, then open it again."
@@ -303,7 +413,15 @@ msgstr "Update required"
 msgid "Viewer"
 msgstr "Viewer"
 
+#: src/app/_layout.tsx
+#: src/app/wallets/[id]/index.tsx
+msgid "Wallet"
+msgstr "Wallet"
+
+#: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
+#: src/app/me.tsx
+#: src/app/wallets/index.tsx
 msgid "Wallets"
 msgstr "Wallets"
 

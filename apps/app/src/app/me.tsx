@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { useStatus } from "@powersync/react";
+import { router } from "expo-router";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +42,12 @@ export default function MeAndHousehold() {
 	return (
 		<Screen title={t`Me & household`}>
 			<Text variant="muted">{t`Household settings, Members, Wallets and your preferences arrive here.`}</Text>
+			<Button
+				onPress={() => router.push("/wallets")}
+				variant="secondary"
+			>
+				{t`Wallets`}
+			</Button>
 			<SyncStatusSheet />
 			<Button
 				onPress={() => void supabase.auth.signOut()}

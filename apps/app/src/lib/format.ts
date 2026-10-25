@@ -20,3 +20,11 @@ export const formatMoney = (money: Money) => {
 		maximumFractionDigits: digits,
 	}).format(text as `${number}`);
 };
+
+/** A calendar date (YYYY-MM-DD) for display in the device's locale, without shifting it across timezones. */
+export const formatDate = (isoDate: string) => {
+	const [year, month, day] = isoDate.split("-").map(Number);
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+		new Date(year ?? 0, (month ?? 1) - 1, day ?? 1),
+	);
+};

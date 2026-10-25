@@ -1,5 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
+import { router } from "expo-router";
 
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
@@ -15,7 +17,16 @@ export default function Home() {
 	return (
 		<Screen title={t`Home`}>
 			<Text variant="title">{t`Wallets`}</Text>
-			<WalletList wallets={wallets} />
+			<WalletList
+				onOpen={(id) => router.push(`/wallets/${id}`)}
+				wallets={wallets}
+			/>
+			<Button
+				onPress={() => router.push("/wallets")}
+				variant="secondary"
+			>
+				{t`All Wallets`}
+			</Button>
 		</Screen>
 	);
 }
