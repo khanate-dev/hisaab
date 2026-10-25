@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_rules.json
+# Sync Streams. Must stay a subset of what RLS allows (CLAUDE.md, ADR-0010).
+config:
+  edition: 3
+
+streams: {}

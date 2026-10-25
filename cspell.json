@@ -13,7 +13,9 @@
 		"supabase/.temp",
 		"skills-lock.json",
 		".agents",
-		".claude/skills"
+		".claude/skills",
+		"supabase/signing_keys.json",
+		"supabase/config.toml"
 	],
 	"words": [
 		"aparajita",
@@ -35,13 +37,16 @@
 		"firestore",
 		"Grotesk",
 		"Hazelcast",
+		"healthcheck",
 		"Hisaab",
 		"hostable",
 		"instantdb",
+		"isready",
 		"journeyapps",
 		"keepalive",
 		"khanate",
 		"Lingui",
+		"Mailpit",
 		"mmkv",
 		"necolas",
 		"Neobrutal",
@@ -52,6 +57,7 @@
 		"PostgREST",
 		"powersync",
 		"prereqs",
+		"PSYNC",
 		"quasis",
 		"reactnative",
 		"Replicache",
@@ -61,6 +67,7 @@
 		"sideload",
 		"sideloaded",
 		"signups",
+		"sslmode",
 		"supabase",
 		"Tauri",
 		"tinybase",
@@ -72,5 +79,6 @@
 		"vitest",
 		"Wayfinder",
 		"worklets"
-	]
+	],
+	"ignoreRegExpList": ["sb_(?:publishable|secret)_[\\w-]+"]
 }

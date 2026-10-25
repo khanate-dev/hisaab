@@ -6,6 +6,7 @@ pnpm-lock.yaml
 android
 ios
 supabase/.temp
+supabase/signing_keys.json
 # Prose and vendored agent skills keep their hand formatting
 *.md
 .agents

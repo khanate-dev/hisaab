@@ -1,0 +1,24 @@
+# Self-hosted PowerSync Service for the local Docker stack. Prod runs PowerSync Cloud with the same sync-config.yaml.
+telemetry:
+  disable_telemetry_sharing: true
+
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_URI
+  sslmode: disable
+
+port: 8080
+
+sync_config:
+  path: sync-config.yaml
+
+# Supabase signs access tokens with ES256; PowerSync verifies them through Supabase's JWKS, as in prod.
+client_auth:
+  jwks_uri: !env PS_JWKS_URI
+  audience: ["authenticated"]

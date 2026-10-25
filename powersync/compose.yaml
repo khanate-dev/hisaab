@@ -1,0 +1,56 @@
+# PowerSync Service + its bucket storage, joined to the network `supabase start` creates for project_id "hisaab".
+name: hisaab-powersync
+
+services:
+  powersync:
+    image: journeyapps/powersync-service:1.26.1
+    command: ["start", "-r", "unified"]
+    restart: unless-stopped
+    depends_on:
+      storage:
+        condition: service_healthy
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      PS_DATA_SOURCE_URI: postgresql://postgres:postgres@supabase_db_hisaab:5432/postgres
+      PS_STORAGE_URI: postgresql://powersync:powersync@storage:5432/powersync
+      PS_JWKS_URI: http://supabase_kong_hisaab:8000/auth/v1/.well-known/jwks.json
+    volumes:
+      - ./service.yaml:/config/service.yaml:ro
+      - ./sync-config.yaml:/config/sync-config.yaml:ro
+    ports:
+      - "55380:8080"
+    networks: [default, supabase]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:8080/probes/liveness').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+
+  storage:
+    image: postgres:18.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: powersync
+      POSTGRES_PASSWORD: powersync
+      POSTGRES_DB: powersync
+    volumes:
+      - storage:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U powersync -d powersync"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+networks:
+  supabase:
+    name: supabase_network_hisaab
+    external: true
+
+volumes:
+  storage:

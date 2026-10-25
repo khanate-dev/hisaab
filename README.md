@@ -17,3 +17,17 @@ The rebuild is specified in [`docs/spec.md`](docs/spec.md) and sequenced in [`do
 - `pnpm install`
 - `pnpm check` runs typecheck, lint, format check, spellcheck and tests
 - `pnpm --filter @hisaab/app start` starts the Expo dev server
+
+## Local stack
+
+Needs Docker. `pnpm stack:up` starts Supabase (Postgres, Auth, Storage, Edge Functions) through the CLI, then a self-hosted PowerSync Service loaded with `powersync/sync-config.yaml`. The first run generates a local-only ES256 signing key (`supabase/signing_keys.json`, gitignored), so access tokens are asymmetric as in prod and PowerSync verifies them through Supabase's JWKS. No prod secret is involved. `pnpm stack:down` stops everything.
+
+| Service | URL |
+|---|---|
+| Supabase API | http://localhost:55321 |
+| Postgres | postgresql://postgres:postgres@localhost:55322/postgres |
+| Studio | http://localhost:55323 |
+| Mailpit (OTP emails) | http://localhost:55324 |
+| PowerSync | http://localhost:55380 |
+
+The ports sit in the 553xx range so they don't clash with other Supabase projects on the default 543xx ports. Copy `apps/app/.env.example` to `apps/app/.env.local` to point the app at this stack. `pnpm test:sync` runs the sync harness against it.
