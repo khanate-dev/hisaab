@@ -11,7 +11,7 @@ streams:
     auto_subscribe: true
     query: SELECT app_config.id, app_config.min_contract_version FROM app_config
 
-  # Every household the User belongs to, with its Memberships, Wallets and Entries.
+  # Every household the User belongs to, with its Memberships, Wallets, Categories and Entries.
   households:
     auto_subscribe: true
     queries:
@@ -24,6 +24,9 @@ streams:
       - SELECT wallets.id, wallets.household_id, wallets.name, wallets.type, wallets.currency, wallets.archived_at, wallets.created_at
         FROM wallets
         WHERE wallets.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT categories.id, categories.household_id, categories.kind, categories.parent_id, categories.name, categories.icon, categories.color, categories.archived_at, categories.created_at
+        FROM categories
+        WHERE categories.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       # amount is numeric in Postgres and arrives as text: parsed into Money, never a float (ADR-0002).
       - SELECT entries.id, entries.household_id, entries.wallet_id, entries.kind, entries.amount, entries.occurred_on, entries.description, entries.created_by, entries.created_at
         FROM entries

@@ -17,6 +17,7 @@ export const drizzleSchema = tables;
 // Keys are the SQLite table names. Never generated from Postgres.
 export const schema = new Schema({
 	app_config: toPowerSyncTable(tables.appConfig),
+	categories: toPowerSyncTable(tables.categories),
 	entries: toPowerSyncTable(tables.entries),
 	households: toPowerSyncTable(tables.households),
 	memberships: toPowerSyncTable(tables.memberships),

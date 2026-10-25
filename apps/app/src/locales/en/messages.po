@@ -7,6 +7,14 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/categories/category-list.tsx
+msgid "{name}, in {parentName}"
+msgstr "{name}, in {parentName}"
+
+#: src/features/categories/category-list.tsx
+msgid "{name}, under {parentName}"
+msgstr "{name}, under {parentName}"
+
 #: src/features/sync/sync-status.tsx
 msgid "A change couldn't sync"
 msgstr "A change couldn't sync"
@@ -27,6 +35,16 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
+#: src/app/categories/index.tsx
+#: src/app/categories/new.tsx
+msgid "Add Category"
+msgstr "Add Category"
+
+#: src/app/categories/[id].tsx
+#: src/app/categories/new.tsx
+msgid "Add Subcategory"
+msgstr "Add Subcategory"
+
 #: src/app/wallets/index.tsx
 #: src/app/wallets/new.tsx
 msgid "Add Wallet"
@@ -40,25 +58,43 @@ msgstr "Admin"
 msgid "All Wallets"
 msgstr "All Wallets"
 
+#: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archive"
 msgstr "Archive"
 
+#: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archive {name}?"
 msgstr "Archive {name}?"
+
+#: src/features/categories/category-actions.tsx
+msgid "Archive Category"
+msgstr "Archive Category"
 
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archive Wallet"
 msgstr "Archive Wallet"
 
+#: src/app/categories/index.tsx
+msgid "Archived Categories"
+msgstr "Archived Categories"
+
 #: src/app/wallets/index.tsx
 msgid "Archived Wallets"
 msgstr "Archived Wallets"
 
+#: src/app/categories/[id].tsx
+msgid "Archived: gone from your lists, everything recorded in it kept."
+msgstr "Archived: gone from your lists, everything recorded in it kept."
+
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archived: hidden from your Wallets, its Entries kept."
 msgstr "Archived: hidden from your Wallets, its Entries kept."
+
+#: src/features/categories/labels.ts
+msgid "Baby"
+msgstr "Baby"
 
 #: src/features/wallets/wallet-detail.tsx
 msgid "Balance adjustment"
@@ -85,9 +121,18 @@ msgstr "Budget months and Pace arrive with Budgets."
 msgid "Budgets"
 msgstr "Budgets"
 
+#: src/features/categories/labels.ts
+msgid "Bus"
+msgstr "Bus"
+
+#: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Cancel"
 msgstr "Cancel"
+
+#: src/features/categories/labels.ts
+msgid "Car"
+msgstr "Car"
 
 #: src/app/onboarding.tsx
 #: src/features/wallets/labels.ts
@@ -98,6 +143,17 @@ msgstr "Cash"
 msgid "Cash in hand"
 msgstr "Cash in hand"
 
+#: src/app/_layout.tsx
+#: src/app/categories/index.tsx
+#: src/app/me.tsx
+msgid "Categories"
+msgstr "Categories"
+
+#: src/app/_layout.tsx
+#: src/app/categories/[id].tsx
+msgid "Category"
+msgstr "Category"
+
 #: src/components/ui/sheet.tsx
 #: src/features/shell/quick-add.tsx
 msgid "Close"
@@ -106,6 +162,18 @@ msgstr "Close"
 #: src/features/auth/sign-in-form.tsx
 msgid "Code"
 msgstr "Code"
+
+#: src/features/categories/labels.ts
+msgid "Coffee cup"
+msgstr "Coffee cup"
+
+#: src/features/categories/labels.ts
+msgid "Coin"
+msgstr "Coin"
+
+#: src/features/categories/category-form.tsx
+msgid "Colour"
+msgstr "Colour"
 
 #: src/features/onboarding/name-form.tsx
 msgid "Continue"
@@ -123,6 +191,26 @@ msgstr "Credit card"
 #: src/features/wallets/wallet-form.tsx
 msgid "Currency"
 msgstr "Currency"
+
+#: src/features/categories/labels.ts
+msgid "Cutlery"
+msgstr "Cutlery"
+
+#: src/features/categories/labels.ts
+msgid "Cyan"
+msgstr "Cyan"
+
+#: src/features/categories/category-actions.tsx
+msgid "Delete"
+msgstr "Delete"
+
+#: src/features/categories/category-actions.tsx
+msgid "Delete {name}?"
+msgstr "Delete {name}?"
+
+#: src/features/categories/category-actions.tsx
+msgid "Delete Category"
+msgstr "Delete Category"
 
 #: src/features/sync/sync-status.tsx
 msgid "Deleting a household couldn't sync"
@@ -195,9 +283,33 @@ msgstr "Entries"
 msgid "Every Entry, searchable, arrives with recording Entries."
 msgstr "Every Entry, searchable, arrives with recording Entries."
 
+#: src/features/categories/labels.ts
+msgid "Expense"
+msgstr "Expense"
+
 #: src/features/shell/syncing.tsx
 msgid "Getting your households ready…"
 msgstr "Getting your households ready…"
+
+#: src/features/categories/labels.ts
+msgid "Gift"
+msgstr "Gift"
+
+#: src/features/categories/category-form.tsx
+msgid "Give the Category a name."
+msgstr "Give the Category a name."
+
+#: src/features/categories/labels.ts
+msgid "Graduation cap"
+msgstr "Graduation cap"
+
+#: src/features/categories/labels.ts
+msgid "Green"
+msgstr "Green"
+
+#: src/features/categories/labels.ts
+msgid "Heartbeat"
+msgstr "Heartbeat"
 
 #: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
@@ -205,9 +317,13 @@ msgstr "Getting your households ready…"
 msgid "Home"
 msgstr "Home"
 
+#: src/features/categories/labels.ts
+msgid "House"
+msgstr "House"
+
 #: src/app/me.tsx
-msgid "Household settings, Members, Wallets and your preferences arrive here."
-msgstr "Household settings, Members, Wallets and your preferences arrive here."
+msgid "Household settings, Members and your preferences arrive here."
+msgstr "Household settings, Members and your preferences arrive here."
 
 #: src/features/shell/household-pill.tsx
 msgid "Households"
@@ -217,17 +333,57 @@ msgstr "Households"
 msgid "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 
+#: src/features/categories/category-form.tsx
+msgid "Icon"
+msgstr "Icon"
+
 #: src/features/wallets/balance.tsx
 msgid "In credit"
 msgstr "In credit"
+
+#: src/features/categories/labels.ts
+msgid "Income"
+msgstr "Income"
+
+#: src/features/categories/category-actions.tsx
+msgid "It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time."
+msgstr "It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time."
+
+#: src/features/categories/category-actions.tsx
+msgid "It leaves your lists. Everything recorded in it stays, and you can bring it back any time."
+msgstr "It leaves your lists. Everything recorded in it stays, and you can bring it back any time."
 
 #: src/features/wallets/wallet-detail.tsx
 msgid "It leaves your Wallets list. Its Entries and Balance stay, and you can bring it back any time."
 msgstr "It leaves your Wallets list. Its Entries and Balance stay, and you can bring it back any time."
 
+#: src/features/categories/category-actions.tsx
+msgid "It sits under {parentName}, which is archived too. Bring {parentName} back first."
+msgstr "It sits under {parentName}, which is archived too. Bring {parentName} back first."
+
+#: src/features/categories/category-form.tsx
+msgid "Keep the name to 60 characters or fewer."
+msgstr "Keep the name to 60 characters or fewer."
+
+#: src/features/categories/labels.ts
+msgid "Lightning bolt"
+msgstr "Lightning bolt"
+
+#: src/features/categories/labels.ts
+msgid "Lime"
+msgstr "Lime"
+
+#: src/app/categories/index.tsx
+msgid "List"
+msgstr "List"
+
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
 msgstr "Made by an older version of the app, and it no longer fits."
+
+#: src/features/categories/labels.ts
+msgid "Magenta"
+msgstr "Magenta"
 
 #: src/app/_layout.tsx
 #: src/app/me.tsx
@@ -244,9 +400,15 @@ msgstr "Member"
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
 
+#: src/features/categories/category-form.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Name"
 msgstr "Name"
+
+#: src/app/_layout.tsx
+#: src/app/categories/new.tsx
+msgid "New Category"
+msgstr "New Category"
 
 #: src/features/shell/quick-add.tsx
 #: src/features/shell/sidebar.tsx
@@ -254,10 +416,22 @@ msgstr "Name"
 msgid "New entry"
 msgstr "New entry"
 
+#: src/app/categories/new.tsx
+msgid "New Subcategory"
+msgstr "New Subcategory"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/new.tsx
 msgid "New Wallet"
 msgstr "New Wallet"
+
+#: src/features/categories/category-list.tsx
+msgid "No archived Categories in this list."
+msgstr "No archived Categories in this list."
+
+#: src/features/categories/category-list.tsx
+msgid "No Categories in this list yet."
+msgstr "No Categories in this list yet."
 
 #: src/features/wallets/wallet-detail.tsx
 msgid "No Entries yet."
@@ -279,6 +453,14 @@ msgstr "No permission."
 msgid "No Wallets yet."
 msgstr "No Wallets yet."
 
+#: src/features/categories/category-actions.tsx
+msgid "Nothing is recorded in it yet, so it's removed for good."
+msgstr "Nothing is recorded in it yet, so it's removed for good."
+
+#: src/features/categories/category-form.tsx
+msgid "Nothing: a top-level Category"
+msgstr "Nothing: a top-level Category"
+
 #: src/app/_layout.tsx
 #: src/app/inbox.tsx
 #: src/features/shell/sections.ts
@@ -298,6 +480,10 @@ msgstr "Online."
 msgid "Online. Every change synced."
 msgstr "Online. Every change synced."
 
+#: src/features/categories/labels.ts
+msgid "Orange"
+msgstr "Orange"
+
 #: src/features/wallets/balance.tsx
 msgid "Owed"
 msgstr "Owed"
@@ -307,9 +493,21 @@ msgstr "Owed"
 msgid "Personal"
 msgstr "Personal"
 
+#: src/features/categories/labels.ts
+msgid "Phone"
+msgstr "Phone"
+
+#: src/features/categories/labels.ts
+msgid "Plane"
+msgstr "Plane"
+
 #: src/features/shell/quick-add.tsx
 msgid "Recording an Entry arrives with the quick-add keypad."
 msgstr "Recording an Entry arrives with the quick-add keypad."
+
+#: src/features/categories/labels.ts
+msgid "Red"
+msgstr "Red"
 
 #: src/app/(tabs)/reports.tsx
 #: src/features/shell/sections.ts
@@ -320,6 +518,7 @@ msgstr "Reports"
 msgid "Reports arrive once there are Entries to report on."
 msgstr "Reports arrive once there are Entries to report on."
 
+#: src/app/categories/[id].tsx
 #: src/app/wallets/[id]/edit.tsx
 msgid "Save"
 msgstr "Save"
@@ -332,9 +531,25 @@ msgstr "Sections"
 msgid "Send code"
 msgstr "Send code"
 
+#: src/features/categories/labels.ts
+msgid "Shirt"
+msgstr "Shirt"
+
+#: src/features/categories/labels.ts
+msgid "Shopping cart"
+msgstr "Shopping cart"
+
+#: src/app/categories/index.tsx
+msgid "Show active Categories"
+msgstr "Show active Categories"
+
 #: src/app/wallets/index.tsx
 msgid "Show active Wallets"
 msgstr "Show active Wallets"
+
+#: src/app/categories/index.tsx
+msgid "Show archived Categories"
+msgstr "Show archived Categories"
 
 #: src/app/wallets/index.tsx
 msgid "Show archived Wallets"
@@ -349,11 +564,16 @@ msgstr "Sign in"
 msgid "Sign out"
 msgstr "Sign out"
 
+#: src/features/categories/category-form.tsx
+msgid "Sits under"
+msgstr "Sits under"
+
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Skip"
 msgstr "Skip"
 
 #: src/features/auth/sign-in-form.tsx
+#: src/features/categories/category-form.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -377,6 +597,10 @@ msgstr "The currency is fixed once the Wallet has Entries."
 msgid "This becomes your Base currency. It locks after your first Entry."
 msgstr "This becomes your Base currency. It locks after your first Entry."
 
+#: src/app/categories/[id].tsx
+msgid "This Category isn't here. It may not have synced yet."
+msgstr "This Category isn't here. It may not have synced yet."
+
 #: src/features/onboarding/name-form.tsx
 msgid "This is how the people you share a household with will see you."
 msgstr "This is how the people you share a household with will see you."
@@ -393,9 +617,14 @@ msgstr "This Wallet isn't here. It may not have synced yet."
 msgid "Type"
 msgstr "Type"
 
+#: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Unarchive"
 msgstr "Unarchive"
+
+#: src/features/categories/category-list.tsx
+msgid "Under {parentName}"
+msgstr "Under {parentName}"
 
 #: src/features/update/update-required.tsx
 msgid "Update Hisaab from your app store, then open it again."
@@ -413,8 +642,13 @@ msgstr "Update required"
 msgid "Viewer"
 msgstr "Viewer"
 
+#: src/features/categories/labels.ts
+msgid "Violet"
+msgstr "Violet"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/[id]/index.tsx
+#: src/features/categories/labels.ts
 msgid "Wallet"
 msgstr "Wallet"
 
@@ -432,6 +666,14 @@ msgstr "We emailed a code to {codeSentTo}."
 #: src/app/onboarding.tsx
 msgid "What's your name?"
 msgstr "What's your name?"
+
+#: src/features/categories/labels.ts
+msgid "Wrench"
+msgstr "Wrench"
+
+#: src/features/categories/labels.ts
+msgid "Yellow"
+msgstr "Yellow"
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"

@@ -1,6 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { ENTRY_KINDS, WALLET_TYPES } from "./kinds";
+import { CATEGORY_KINDS, ENTRY_KINDS, WALLET_TYPES } from "./kinds";
 import { ROLES } from "./roles";
 import { STAMP_COLUMN } from "./stamp";
 
@@ -47,6 +47,21 @@ export const wallets = sqliteTable("wallets", {
 	type: text("type", { enum: WALLET_TYPES }).notNull(),
 	/** ISO 4217. */
 	currency: text("currency").notNull(),
+	archived_at: text("archived_at"),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+});
+
+export const categories = sqliteTable("categories", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	kind: text("kind", { enum: CATEGORY_KINDS }).notNull(),
+	/** A Subcategory's parent; null for a top-level Category. One level deep only. */
+	parent_id: text("parent_id"),
+	name: text("name").notNull(),
+	/** Keys into the app's icon and colour registries (ADR-0008). */
+	icon: text("icon").notNull(),
+	color: text("color").notNull(),
 	archived_at: text("archived_at"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
