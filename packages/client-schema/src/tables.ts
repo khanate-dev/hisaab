@@ -19,3 +19,19 @@ export const memberships = sqliteTable("memberships", {
 	role: text("role", { enum: ROLES }).notNull(),
 	created_at: text("created_at").notNull(),
 });
+
+// Local-only: never synced. Writes the server rejected, shown as "couldn't sync" items (ADR-0007).
+export const uploadErrors = sqliteTable("upload_errors", {
+	id: text("id").primaryKey(),
+	/** The synced table the write targeted. */
+	table_name: text("table_name").notNull(),
+	row_id: text("row_id").notNull(),
+	/** PowerSync's operation: PUT, PATCH or DELETE. */
+	op: text("op", { enum: ["PUT", "PATCH", "DELETE"] }).notNull(),
+	/** The Postgres or PostgREST error code, or `no_rows` when RLS silently matched nothing. */
+	code: text("code").notNull(),
+	message: text("message").notNull(),
+	/** The rejected values as JSON. */
+	data: text("data"),
+	created_at: text("created_at").notNull(),
+});

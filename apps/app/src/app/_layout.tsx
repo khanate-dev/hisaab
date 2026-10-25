@@ -15,6 +15,10 @@ const Routes = () => {
 					name="index"
 					options={{ title: "Hisaab" }}
 				/>
+				<Stack.Screen
+					name="sync-status"
+					options={{ presentation: "modal", title: "Sync status" }}
+				/>
 			</Stack.Protected>
 			<Stack.Protected guard={session === null}>
 				<Stack.Screen

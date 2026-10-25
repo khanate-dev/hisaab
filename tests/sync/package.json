@@ -7,6 +7,7 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"devDependencies": {
+		"@hisaab/app": "workspace:*",
 		"@hisaab/client-schema": "workspace:*",
 		"@powersync/common": "catalog:",
 		"@powersync/node": "catalog:",

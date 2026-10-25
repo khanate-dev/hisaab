@@ -1,12 +1,17 @@
+import { createConnector } from "@hisaab/app/connector";
 import { schema } from "@hisaab/client-schema";
+import type {
+	AbstractPowerSyncDatabase,
+	PowerSyncBackendConnector,
+} from "@powersync/common";
 import { PowerSyncDatabase } from "@powersync/node";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { onTestFinished } from "vitest";
+import { expect, onTestFinished, vi } from "vitest";
 
 import { stack } from "./stack";
-import type { SignedInUser } from "./users";
+import { type SignedInUser, userClient } from "./users";
 
 /** Opens a PowerSync sync stream with the token, returning the status and any error body. */
 export const openSyncStream = async (token: string) => {
@@ -41,14 +46,35 @@ export const connectClient = async (user: SignedInUser) => {
 		await db.close();
 		rmSync(dbLocation, { recursive: true, force: true });
 	});
-	await db.connect({
-		fetchCredentials: async () => ({
-			endpoint: stack.powersyncUrl,
-			token: user.accessToken,
-		}),
-		// Uploads arrive with the shared upload connector (#25); nothing writes locally yet.
-		uploadData: async () => {},
+	// The connector the app ships, writing through RLS as this User.
+	const connector = createConnector({
+		supabase: userClient(user),
+		powersyncUrl: stack.powersyncUrl,
+		getToken: async () => user.accessToken,
 	});
+	connectors.set(db, connector);
+	await db.connect(connector);
 	await db.waitForFirstSync();
 	return db;
 };
+
+const connectors = new WeakMap<
+	AbstractPowerSyncDatabase,
+	PowerSyncBackendConnector
+>();
+
+/** Stops syncing: local writes queue up until the client goes online again. */
+export const goOffline = (db: AbstractPowerSyncDatabase) => db.disconnect();
+
+export const goOnline = async (db: AbstractPowerSyncDatabase) => {
+	const connector = connectors.get(db);
+	if (!connector) throw new Error("goOnline needs a client from connectClient");
+	await db.connect(connector);
+};
+
+/** Resolves once every queued local write has been uploaded (or rejected). */
+export const waitForUploads = (db: AbstractPowerSyncDatabase) =>
+	vi.waitFor(
+		async () => expect((await db.getUploadQueueStats()).count).toBe(0),
+		{ timeout: 15_000 },
+	);

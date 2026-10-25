@@ -2,6 +2,9 @@
 	"name": "@hisaab/app",
 	"private": true,
 	"main": "expo-router/entry",
+	"exports": {
+		"./connector": "./src/lib/powersync/connector.ts"
+	},
 	"scripts": {
 		"start": "expo start",
 		"web": "pnpm prepare:web && expo start --web",
