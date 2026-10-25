@@ -315,6 +315,9 @@ importers:
 
   packages/client-schema:
     dependencies:
+      '@hisaab/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@powersync/common':
         specifier: 'catalog:'
         version: 2.3.1
@@ -349,9 +352,6 @@ importers:
       '@hisaab/client-schema':
         specifier: workspace:*
         version: link:../../packages/client-schema
-      '@hisaab/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
       '@powersync/common':
         specifier: 'catalog:'
         version: 2.3.1
@@ -7327,9 +7327,7 @@ snapshots:
       metro-runtime: 0.84.6
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

@@ -33,6 +33,21 @@ describe("checkContractVersion", () => {
 		);
 	});
 
+	it("stops a version too long to be one, however big", () => {
+		fc.assert(
+			fc.property(
+				version,
+				fc.stringMatching(/^[0-9]{10,30}$/),
+				(minimum, sent) => {
+					expect(checkContractVersion(sent, minimum)).toMatchObject({
+						ok: false,
+						sent: null,
+					});
+				},
+			),
+		);
+	});
+
 	it("stops a client that sends no version or a malformed one", () => {
 		fc.assert(
 			fc.property(

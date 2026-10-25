@@ -1,7 +1,9 @@
 import "react-native-url-polyfill/auto";
 
-import { CONTRACT_VERSION } from "@hisaab/client-schema";
-import { CONTRACT_VERSION_HEADER } from "@hisaab/domain";
+import {
+	CONTRACT_VERSION,
+	CONTRACT_VERSION_HEADER,
+} from "@hisaab/client-schema";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 

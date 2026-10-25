@@ -81,6 +81,7 @@
 		"sideload",
 		"sideloaded",
 		"signups",
+		"SQLSTATE",
 		"sslmode",
 		"supabase",
 		"tablename",

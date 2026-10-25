@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(12);
 
 select is(
 	(select min_contract_version from public.app_config),
@@ -40,6 +40,9 @@ select throws_ok(
 	'a User cannot change app_config'
 );
 
+select pg_temp.request_with('9999999999');
+select throws_ok('select private.check_contract_version()', 'PT426', null, 'a version too long to be one is refused');
+
 reset role;
 select set_config('role', 'service_role', true);
 select pg_temp.request_with(null);
@@ -48,6 +51,13 @@ select lives_ok('select private.check_contract_version()', 'server-side callers 
 reset role;
 select set_config('role', 'anon', true);
 select throws_ok($$ select * from public.app_config $$, '42501', null, 'anon cannot read app_config');
+
+-- Fail closed: without its row, the gate refuses everyone rather than letting every build through.
+reset role;
+delete from public.app_config;
+select set_config('role', 'authenticated', true);
+select pg_temp.request_with('1');
+select throws_ok('select private.check_contract_version()', 'PT503', null, 'a missing app_config row refuses requests');
 
 select * from finish();
 rollback;

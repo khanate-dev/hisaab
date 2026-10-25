@@ -115,6 +115,11 @@ describe("upload connector", () => {
 		expect(updateRequired).toBe(1);
 		expect(await queued(db)).toBe(1);
 		expect(await rejectedChanges(db)).toEqual([]);
+
+		// Paused, not retried: later attempts stop before the network until the app is updated.
+		await expect(server.upload(db)).rejects.toThrow(/update required/i);
+		expect(server.calls).toHaveLength(1);
+		expect(await queued(db)).toBe(1);
 	});
 
 	it.each(["42501", "23505", "22P02"])(

@@ -1,5 +1,7 @@
-import { CONTRACT_VERSION } from "@hisaab/client-schema";
-import { CONTRACT_VERSION_HEADER } from "@hisaab/domain";
+import {
+	CONTRACT_VERSION,
+	CONTRACT_VERSION_HEADER,
+} from "@hisaab/client-schema";
 import { createClient } from "@supabase/supabase-js";
 
 import { stack } from "./stack";

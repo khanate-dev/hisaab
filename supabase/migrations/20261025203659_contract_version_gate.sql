@@ -29,7 +29,16 @@ begin
 	end if;
 
 	select min_contract_version into minimum from public.app_config where id = 'app';
-	if sent is null or sent !~ '^[0-9]{1,9}$' or sent::integer < minimum then
+	-- Fail closed: without its row the gate refuses everyone instead of letting every build through.
+	if minimum is null then
+		raise sqlstate 'PT503' using message = 'app_config is missing its row';
+	end if;
+
+	-- Same rule as packages/domain/src/contract-version.ts: up to nine digits, at or above the minimum.
+	if sent is null or sent !~ '^[0-9]{1,9}$' then
+		sent := null;
+	end if;
+	if sent is null or sent::integer < minimum then
 		raise sqlstate 'PT426' using
 			message = 'Update required',
 			detail = format('This app speaks contract version %s; the server needs %s or later.', coalesce(sent, 'none'), minimum);
