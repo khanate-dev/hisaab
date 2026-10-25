@@ -1,0 +1,54 @@
+# The ADR-0010 gate set. Runs with no secrets: the repo is public and forks open PRs (ADR-0011).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Superseded PR runs are cancelled; every main commit keeps its run, since deploy waits on it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Typecheck, lint, format, spellcheck, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm check
+
+  backend:
+    name: Migrations, pgTAP, sync harness, Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # A fresh runner has an empty database, so this applies every migration from zero.
+      - name: Start the local stack
+        run: pnpm stack:up
+      - name: pgTAP
+        run: pnpm test:db
+      - name: Sync harness
+        run: pnpm test:sync
+      - name: Edge Functions smoke run
+        run: pnpm test:functions
+      - name: Stack logs
+        if: failure()
+        run: |
+          for container in $(docker ps --all --filter name=hisaab --format '{{.Names}}'); do
+            echo "::group::$container"
+            docker logs --tail 200 "$container" 2>&1
+            echo "::endgroup::"
+          done

@@ -30,4 +30,4 @@ Needs Docker. `pnpm stack:up` starts Supabase (Postgres, Auth, Storage, Edge Fun
 | Mailpit (OTP emails) | http://localhost:55324 |
 | PowerSync | http://localhost:55380 |
 
-The ports sit in the 553xx range so they don't clash with other Supabase projects on the default 543xx ports. Copy `apps/app/.env.example` to `apps/app/.env.local` to point the app at this stack. `pnpm test:sync` runs the sync harness against it.
+The ports sit in the 553xx range so they don't clash with other Supabase projects on the default 543xx ports. Copy `apps/app/.env.example` to `apps/app/.env.local` to point the app at this stack. Against the running stack: `pnpm test:db` runs pgTAP, `pnpm test:sync` runs the sync harness and `pnpm test:functions` smoke-runs the Edge Functions with `supabase functions serve` (which takes over the stack's edge runtime; `pnpm stack:down && pnpm stack:up` restores it). CI (`.github/workflows/ci.yml`) runs all of these plus `pnpm check` on every PR and push to `main`.
