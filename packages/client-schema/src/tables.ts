@@ -1,8 +1,15 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { ROLES } from "./roles";
+import { STAMP_COLUMN } from "./stamp";
 
 // Synced tables mirror their Sync Streams columns (powersync/sync-config.yaml), not the Postgres tables.
+
+/**
+ * Write-only: the contract version a local write was made under, which PowerSync attaches to the queued op
+ * (ADR-0009). Set it with `stamped()`; it never syncs and is never uploaded as a column.
+ */
+const contractStamp = () => text(STAMP_COLUMN);
 
 export const households = sqliteTable("households", {
 	id: text("id").primaryKey(),
@@ -10,6 +17,7 @@ export const households = sqliteTable("households", {
 	/** Set only on a Personal household: the User it belongs to. */
 	personal_user_id: text("personal_user_id"),
 	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
 });
 
 export const memberships = sqliteTable("memberships", {
@@ -18,6 +26,7 @@ export const memberships = sqliteTable("memberships", {
 	user_id: text("user_id").notNull(),
 	role: text("role", { enum: ROLES }).notNull(),
 	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
 });
 
 /** The one global row: the minimum contract version the server accepts writes from (ADR-0009). */

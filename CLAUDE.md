@@ -22,6 +22,7 @@ During review, scrutinize aggressively and flag potential violations of this str
 - RLS is the authority. Every `public` table has RLS and policies; Sync Streams must stay a subset of what RLS allows.
 - Every tenant-owned row carries `household_id`, children included. Ids are client-generated UUIDv7.
 - Schema changes are expand/contract only (ADR-0009). Destructive DDL needs the `contract` label; a contract-version bump ships its upcaster in the same PR.
+- Every local insert or update of a synced table goes through `stamped()` (client-schema), so the queued op carries its contract version.
 - A PostgREST UPDATE/DELETE returning 0 rows is a rejection, not a success.
 - Local data goes through Drizzle watched queries; TanStack Query only for online-only calls.
 - Use `CONTEXT.md` terms in code, UI copy and tests (Entry, not transaction; Wallet, not account).

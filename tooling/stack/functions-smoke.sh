@@ -40,7 +40,7 @@ fi
 # The shared contract version helper (ADR-0009): no header and an old build get 426, a current build passes.
 probe="$api/functions/v1/contract-probe"
 status() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 10 "$probe" "$@"; }
-current=$(sed -n 's/^export const CONTRACT_VERSION = \([0-9]*\);$/\1/p' packages/client-schema/src/contract-version.ts)
+current=$(sed -n 's/^export const CONTRACT_VERSION = \([0-9]*\);$/\1/p' packages/domain/src/contract-version.ts)
 [[ -n $current ]] || { echo "Could not read CONTRACT_VERSION" >&2; exit 1; }
 results="none:$(status) old:$(status -H "x-contract-version: 0") current:$(status -H "x-contract-version: $current")"
 echo "contract-probe: $results"

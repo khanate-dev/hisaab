@@ -1,4 +1,4 @@
-import { NO_ROWS, type uploadErrors } from "@hisaab/client-schema";
+import { NO_ROWS, UNMAPPABLE, type uploadErrors } from "@hisaab/client-schema";
 import { Button, StyleSheet, Text, View } from "react-native";
 
 /** A local change the server rejected (CONTEXT.md: Rejected change). */
@@ -19,6 +19,8 @@ const describeChange = ({ op, table_name }: RejectedChange) => {
 const describeReason = ({ code, message }: RejectedChange) => {
 	if (code === NO_ROWS) return "No permission, or someone else deleted it.";
 	if (code === "42501") return "No permission.";
+	if (code === UNMAPPABLE)
+		return "Made by an older version of the app, and it no longer fits.";
 	return message;
 };
 

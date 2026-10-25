@@ -41,6 +41,8 @@ catalog:
   "@powersync/node": 1.1.1
   "@powersync/react": 2.0.2
   "@powersync/react-native": 2.3.1
+  # Same version as inside journeyapps/powersync-service:1.26.1; tests/sync validates Sync Streams with it
+  "@powersync/service-sync-rules": 0.42.0
   "@powersync/web": 2.4.2
   "@azure/core-asynciterator-polyfill": 1.0.2
   "@op-engineering/op-sqlite": 17.2.0
