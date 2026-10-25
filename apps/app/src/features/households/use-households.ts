@@ -1,11 +1,17 @@
-import { households, memberships } from "@hisaab/client-schema";
+import { households, memberships, type Role } from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/powersync";
 
-import type { HouseholdSummary } from "./household-list";
+export type HouseholdSummary = {
+	id: string;
+	name: string;
+	isPersonal: boolean;
+	/** The signed-in User's Role in the household. */
+	role: Role;
+};
 
 /** Every household the User belongs to, with their Role there, as a watched query. */
 export const useHouseholds = (userId: string): HouseholdSummary[] => {
@@ -15,7 +21,7 @@ export const useHouseholds = (userId: string): HouseholdSummary[] => {
 				.select({
 					id: households.id,
 					name: households.name,
-					personalOwnerId: households.personal_owner_id,
+					personalUserId: households.personal_user_id,
 					role: memberships.role,
 				})
 				.from(households)
@@ -28,8 +34,8 @@ export const useHouseholds = (userId: string): HouseholdSummary[] => {
 				),
 		),
 	);
-	return data.map(({ personalOwnerId, ...household }) => ({
+	return data.map(({ personalUserId, ...household }) => ({
 		...household,
-		isPersonal: personalOwnerId === userId,
+		isPersonal: personalUserId === userId,
 	}));
 };

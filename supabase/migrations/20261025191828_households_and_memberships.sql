@@ -6,7 +6,7 @@ revoke all on schema private from public;
 grant usage on schema private to authenticated, service_role;
 
 -- RFC 9562 UUIDv7: a 48-bit Unix-millisecond timestamp, then random bits (Postgres 17 has no built-in).
--- Clients mint their own UUIDv7 ids; this covers rows the server creates.
+-- Clients mint their own UUIDv7 ids; this covers the rows the server itself creates.
 create function private.uuid_v7() returns uuid
 language sql volatile
 set search_path = ''
@@ -26,18 +26,21 @@ as $$
 		'hex'
 	)::uuid;
 $$;
+revoke all on function private.uuid_v7() from public;
 
 create table public.households (
-	id uuid primary key default private.uuid_v7(),
+	-- Ids are client-generated UUIDv7 (ADR-0001), so there is no default.
+	id uuid primary key,
 	name text not null check (char_length(btrim(name)) between 1 and 100),
 	-- Set only on a Personal household; one per User.
-	personal_owner_id uuid unique references auth.users (id) on delete cascade,
+	personal_user_id uuid unique references auth.users (id) on delete cascade,
 	created_at timestamptz not null default now()
 );
 
 create table public.memberships (
-	id uuid primary key default private.uuid_v7(),
+	id uuid primary key,
 	household_id uuid not null references public.households (id) on delete cascade,
+	-- TODO(#64): account deletion replaces the User with a Former member in shared households instead of cascading.
 	user_id uuid not null references auth.users (id) on delete cascade,
 	role text not null check (role in ('admin', 'member', 'viewer')),
 	created_at timestamptz not null default now(),
@@ -62,13 +65,13 @@ alter table public.households enable row level security;
 alter table public.memberships enable row level security;
 
 create policy "Members read their households" on public.households
-	for select to authenticated using ((select private.is_member(id)));
+	for select to authenticated using (private.is_member(id));
 create policy "Members read their households' memberships" on public.memberships
-	for select to authenticated using ((select private.is_member(household_id)));
+	for select to authenticated using (private.is_member(household_id));
 
 -- Reads only for now: household and membership writes arrive with their own tickets.
-revoke all on public.households, public.memberships from anon;
-revoke insert, update, delete, truncate on public.households, public.memberships from authenticated;
+revoke all on public.households, public.memberships from anon, authenticated;
+grant select on public.households, public.memberships to authenticated;
 
 create function private.create_personal_household() returns trigger
 language plpgsql security definer
@@ -77,8 +80,8 @@ as $$
 declare
 	personal_id uuid := private.uuid_v7();
 begin
-	insert into public.households (id, name, personal_owner_id) values (personal_id, 'Personal', new.id);
-	insert into public.memberships (household_id, user_id, role) values (personal_id, new.id, 'admin');
+	insert into public.households (id, name, personal_user_id) values (personal_id, 'Personal', new.id);
+	insert into public.memberships (id, household_id, user_id, role) values (private.uuid_v7(), personal_id, new.id, 'admin');
 	return new;
 end;
 $$;

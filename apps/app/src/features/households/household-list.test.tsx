@@ -24,6 +24,6 @@ describe("HouseholdList", () => {
 
 	it("says it is still syncing while there is no household yet", async () => {
 		await render(<HouseholdList households={[]} />);
-		expect(screen.getByText(/syncing/i)).toBeOnTheScreen();
+		expect(screen.getByRole("status")).toHaveTextContent(/syncing/i);
 	});
 });

@@ -45,13 +45,14 @@ catalog:
   "@azure/core-asynciterator-polyfill": 1.0.2
   "@op-engineering/op-sqlite": 17.2.0
   "@supabase/supabase-js": 2.117.2
+  # tests/sync mints client-side UUIDv7 ids for its seed
+  uuid: 14.0.2
   react-native-url-polyfill: 4.0.0
   better-sqlite3: 12.11.1
   drizzle-orm: 0.45.3
 
   # Domain
   decimal.js: 10.6.0
-  uuid: 14.0.2
   fast-check: 4.10.2
 
   # Component tests (jest-expo 57 runs on Jest 29)

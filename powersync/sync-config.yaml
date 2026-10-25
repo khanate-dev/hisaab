@@ -10,7 +10,7 @@ streams:
   households:
     auto_subscribe: true
     queries:
-      - SELECT households.id, households.name, households.personal_owner_id, households.created_at
+      - SELECT households.id, households.name, households.personal_user_id, households.created_at
         FROM households
         WHERE households.id IN (SELECT household_id FROM memberships WHERE user_id = auth.user_id())
       - SELECT memberships.id, memberships.household_id, memberships.user_id, memberships.role, memberships.created_at

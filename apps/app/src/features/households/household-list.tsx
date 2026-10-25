@@ -1,14 +1,7 @@
+import type { Role } from "@hisaab/client-schema";
 import { StyleSheet, Text, View } from "react-native";
 
-export type Role = "admin" | "member" | "viewer";
-
-export type HouseholdSummary = {
-	id: string;
-	name: string;
-	isPersonal: boolean;
-	/** The signed-in User's Role in the household. */
-	role: Role;
-};
+import type { HouseholdSummary } from "./use-households";
 
 const ROLE_LABELS: Record<Role, string> = {
 	admin: "Admin",
@@ -29,7 +22,8 @@ export const HouseholdList = ({
 }: {
 	households: HouseholdSummary[];
 }) => {
-	if (households.length === 0) return <Text>Syncing your households…</Text>;
+	if (households.length === 0)
+		return <Text role="status">Syncing your households…</Text>;
 
 	return (
 		<View
