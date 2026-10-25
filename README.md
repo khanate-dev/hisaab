@@ -15,8 +15,9 @@ The rebuild is specified in [`docs/spec.md`](docs/spec.md) and sequenced in [`do
 
 - Node.js 24 and pnpm (version pinned in `package.json`)
 - `pnpm install`
-- `pnpm check` runs typecheck, lint, format check, spellcheck and tests
-- `pnpm --filter @hisaab/app start` starts the Expo dev server
+- `pnpm check` runs typecheck, lint, format check, spellcheck, the Vitest suites and the app's Jest component tests
+- `pnpm --filter @hisaab/app web` runs the app in the browser against the local stack (copy `apps/app/.env.example` to `apps/app/.env.local` first)
+- `pnpm --filter @hisaab/app android` builds and runs an Android dev build; on an emulator or USB device, `adb reverse tcp:55321 tcp:55321 && adb reverse tcp:55380 tcp:55380` lets it reach the local stack
 
 ## Local stack
 

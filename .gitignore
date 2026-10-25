@@ -13,3 +13,10 @@ apps/app/expo-env.d.ts
 # Supabase CLI
 supabase/.temp
 supabase/.branches
+
+# PowerSync web worker assets (`pnpm --filter @hisaab/app prepare:web`)
+apps/app/public/@powersync
+
+# Expo prebuild output (continuous native generation)
+apps/app/android
+apps/app/ios

@@ -19,12 +19,25 @@ export default defineConfig(
 		"**/.expo",
 		"**/coverage",
 		"supabase/.temp",
+		"apps/app/public/@powersync",
 	]),
 	js.configs.recommended,
 	tseslint.configs.strict,
 	{
 		languageOptions: { globals: globals.node },
 		linterOptions: { reportUnusedDisableDirectives: "error" },
+		rules: {
+			"@typescript-eslint/no-unused-vars": [
+				"error",
+				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+			],
+		},
+	},
+	{
+		// Metro and Babel load these as CommonJS.
+		files: ["apps/app/*.config.js"],
+		languageOptions: { sourceType: "commonjs" },
+		rules: { "@typescript-eslint/no-require-imports": "off" },
 	},
 	{
 		files: ["apps/app/**/*.{ts,tsx}"],

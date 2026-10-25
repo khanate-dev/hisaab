@@ -1,6 +1,7 @@
 {
 	"version": "0.2",
 	"language": "en,en-GB",
+	"useGitignore": true,
 	"ignorePaths": [
 		".git",
 		".expo",
@@ -21,6 +22,7 @@
 		"aparajita",
 		"Appflow",
 		"Archivo",
+		"asynciterator",
 		"beforeunload",
 		"btrim",
 		"Bubblewrap",
