@@ -1,0 +1,9 @@
+{
+	"extends": ["expo/tsconfig.base", "../../tsconfig.base.json"],
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"lib": ["ES2023", "DOM"],
+		"types": []
+	},
+	"include": ["src", "expo-env.d.ts", ".expo/types/**/*.ts"]
+}

@@ -1,9 +1,15 @@
 .DS_Store
 node_modules
-
-/.react-router/
-/.cache
-/build/
+coverage
+dist
 .env
+.env.local
 
-.react-router
+# Expo
+.expo
+web-build
+apps/app/expo-env.d.ts
+
+# Supabase CLI
+supabase/.temp
+supabase/.branches

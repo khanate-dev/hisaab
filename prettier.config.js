@@ -1,7 +1,5 @@
 /** @type {import('prettier').Config} */
-const config = {
+export default {
 	useTabs: true,
 	singleAttributePerLine: true,
 };
-
-module.exports = config;

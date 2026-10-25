@@ -1,68 +1,9 @@
 {
+	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
-		// type checking
-		"strict": true,
-		"allowUnreachableCode": false,
-		"allowUnusedLabels": false,
-		"noFallthroughCasesInSwitch": true,
-		"noImplicitAny": true,
-		"noImplicitOverride": true,
-		"noImplicitThis": true,
-		"noUncheckedIndexedAccess": true,
-		"strictFunctionTypes": true,
-		"strictBindCallApply": true,
-		"strictNullChecks": true,
-		"strictPropertyInitialization": true,
-		"useUnknownInCatchVariables": true,
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-
-		// modules
-		"baseUrl": ".",
-		"rootDirs": [".", "./.react-router/types"],
-		"module": "Preserve",
-		"moduleResolution": "bundler",
-		"resolveJsonModule": true,
-		"paths": {
-			"~/*": ["./app/*"]
-		},
-
-		// emit
-		"downlevelIteration": true,
-		"noEmit": true,
-
-		// javascript support
 		"allowJs": true,
 		"checkJs": true,
-
-		// interop constraints
-		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"isolatedModules": true,
-		"verbatimModuleSyntax": true,
-
-		// language and environment
-		"lib": ["DOM", "DOM.Iterable", "ES2022"],
-		"target": "ES2022",
-		"moduleDetection": "force",
-		"jsx": "react-jsx",
-
-		// output formatting
-		"noErrorTruncation": true,
-
-		// completeness
-		"skipLibCheck": true
+		"types": ["node"]
 	},
-	"include": [
-		"./*.ts",
-		"./*.js",
-		"./*.cjs",
-		"./.*.cjs",
-		"app/**/*",
-		"**/.server/**/*",
-		"**/.client/**/*",
-		".react-router/types/**/*",
-		"db"
-	]
+	"include": ["*.js", "*.ts", "tooling/**/*"]
 }
