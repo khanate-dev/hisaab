@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { SyncStatus } from "./sync-status";
+import { render } from "@/test/render";
 
 const rejectedChange = {
 	id: "1:1",
@@ -37,21 +38,21 @@ describe("SyncStatus", () => {
 		const dismiss = screen.getAllByRole("button", { name: /^dismiss/i });
 		expect(dismiss).toHaveLength(2);
 		expect(
-			screen.getByRole("button", { name: /dismiss: change to a household/i }),
+			screen.getByRole("button", { name: /^dismiss: change to a household$/i }),
 		).toBeOnTheScreen();
 		expect(
-			screen.getByRole("button", { name: /dismiss: new household/i }),
+			screen.getByRole("button", { name: /^dismiss: new household$/i }),
 		).toBeOnTheScreen();
 		expect(
 			screen.getByText(/no permission, or someone else deleted it/i),
 		).toBeOnTheScreen();
 		expect(screen.getByText(/^no permission\.$/i)).toBeOnTheScreen();
 
-		await userEvent
-			.setup()
-			.press(
-				screen.getByRole("button", { name: /dismiss: change to a household/i }),
-			);
+		await userEvent.setup().press(
+			screen.getByRole("button", {
+				name: /^dismiss: change to a household$/i,
+			}),
+		);
 		expect(onDismiss).toHaveBeenCalledWith("1:1");
 	});
 

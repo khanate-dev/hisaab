@@ -1,3 +1,4 @@
+import { useLingui } from "@lingui/react/macro";
 import * as DialogPrimitive from "@rn-primitives/dialog";
 import type { ReactNode } from "react";
 
@@ -10,14 +11,17 @@ export const SheetTrigger = DialogPrimitive.Trigger;
 export const SheetClose = DialogPrimitive.Close;
 export const SheetTitle = ModalTitle;
 
-export const SheetContent = ({ children }: { children: ReactNode }) => (
-	<ModalSurface
-		overlayClassName="justify-end"
-		surfaceClassName="max-h-[85%] rounded-t-card border-b-0"
-	>
-		{children}
-		<SheetClose asChild>
-			<Button variant="secondary">Close</Button>
-		</SheetClose>
-	</ModalSurface>
-);
+export const SheetContent = ({ children }: { children: ReactNode }) => {
+	const { t } = useLingui();
+	return (
+		<ModalSurface
+			overlayClassName="justify-end"
+			surfaceClassName="max-h-[85%] rounded-t-card border-b-0"
+		>
+			{children}
+			<SheetClose asChild>
+				<Button variant="secondary">{t`Close`}</Button>
+			</SheetClose>
+		</ModalSurface>
+	);
+};

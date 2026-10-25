@@ -16,7 +16,8 @@
 		".agents",
 		".claude/skills",
 		"supabase/signing_keys.json",
-		"supabase/config.toml"
+		"supabase/config.toml",
+		"apps/app/src/locales/**/*.ts"
 	],
 	"words": [
 		"aparajita",
@@ -52,8 +53,10 @@
 		"keepalive",
 		"khanate",
 		"Lingui",
+		"lingui",
 		"lucide",
 		"Mailpit",
+		"messageformat",
 		"mmkv",
 		"nativewind",
 		"necolas",
@@ -93,6 +96,7 @@
 		"todolist",
 		"triplit",
 		"Turso",
+		"unlocalized",
 		"upcaster",
 		"upcasters",
 		"uuidv",

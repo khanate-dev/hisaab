@@ -1,6 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 import { PortalHost } from "@rn-primitives/portal";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
+
+import { render } from "@/test/render";
 
 import { Button } from "./button";
 import {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
-import { render, screen } from "@testing-library/react-native";
+import { screen } from "@testing-library/react-native";
 
 import { HouseholdList } from "./household-list";
+import { render } from "@/test/render";
 
 describe("HouseholdList", () => {
 	it("shows the Personal household first as Personal, then shared households with the User's Role", async () => {

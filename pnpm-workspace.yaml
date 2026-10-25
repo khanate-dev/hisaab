@@ -46,6 +46,14 @@ catalog:
   react-native-css-interop: 0.2.7
   react-native-svg: 15.15.4
   tailwindcss: 3.4.19
+
+  # i18n (ADR-0008): every string goes through Lingui
+  "@lingui/babel-plugin-lingui-macro": 6.9.1
+  "@lingui/cli": 6.9.1
+  "@lingui/core": 6.9.1
+  "@lingui/format-po": 6.9.1
+  "@lingui/react": 6.9.1
+  eslint-plugin-lingui: 0.16.0
   babel-preset-expo: 57.0.16
 
   # Sync and local data. drizzle-orm stays below 1.0: @powersync/drizzle-driver's peer range is <1.0.0.

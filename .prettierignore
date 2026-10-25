@@ -13,3 +13,4 @@ supabase/signing_keys.json
 .claude/skills
 skills-lock.json
 apps/app/public/@powersync
+apps/app/src/locales

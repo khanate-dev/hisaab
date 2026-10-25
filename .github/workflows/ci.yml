@@ -25,6 +25,12 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm check
+      # Every string goes through Lingui (ADR-0008); the committed catalogs must match the source.
+      - name: Message catalogs are up to date
+        run: |
+          pnpm --filter @hisaab/app i18n:extract
+          pnpm --filter @hisaab/app i18n:compile
+          test -z "$(git status --porcelain -- apps/app/src/locales)" || { git status --porcelain -- apps/app/src/locales; exit 1; }
 
   backend:
     name: Migrations, pgTAP, sync harness, Edge Functions

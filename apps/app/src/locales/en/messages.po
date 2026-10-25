@@ -1,0 +1,251 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-26 02:44+0500\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/sync/sync-status.tsx
+msgid "A change couldn't sync"
+msgstr "A change couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "A change to a household couldn't sync"
+msgstr "A change to a household couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "A change to a membership couldn't sync"
+msgstr "A change to a membership couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "A new household couldn't sync"
+msgstr "A new household couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "A new membership couldn't sync"
+msgstr "A new membership couldn't sync"
+
+#: src/features/households/household-list.tsx
+msgid "Admin"
+msgstr "Admin"
+
+#: src/app/(tabs)/budgets.tsx
+msgid "Budget months and Pace arrive with Budgets."
+msgstr "Budget months and Pace arrive with Budgets."
+
+#: src/app/(tabs)/budgets.tsx
+#: src/features/shell/sections.ts
+msgid "Budgets"
+msgstr "Budgets"
+
+#: src/components/ui/sheet.tsx
+#: src/features/shell/quick-add.tsx
+msgid "Close"
+msgstr "Close"
+
+#: src/features/auth/sign-in-form.tsx
+msgid "Code"
+msgstr "Code"
+
+#: src/features/sync/sync-status.tsx
+msgid "Deleting a household couldn't sync"
+msgstr "Deleting a household couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "Deleting a membership couldn't sync"
+msgstr "Deleting a membership couldn't sync"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss"
+msgstr "Dismiss"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss this change"
+msgstr "Dismiss this change"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: change to a household"
+msgstr "Dismiss: change to a household"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: change to a membership"
+msgstr "Dismiss: change to a membership"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: deleting a household"
+msgstr "Dismiss: deleting a household"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: deleting a membership"
+msgstr "Dismiss: deleting a membership"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: new household"
+msgstr "Dismiss: new household"
+
+#: src/features/sync/sync-status.tsx
+msgid "Dismiss: new membership"
+msgstr "Dismiss: new membership"
+
+#: src/features/auth/sign-in-form.tsx
+msgid "Email"
+msgstr "Email"
+
+#: src/app/(tabs)/entries.tsx
+#: src/features/shell/sections.ts
+msgid "Entries"
+msgstr "Entries"
+
+#: src/app/(tabs)/entries.tsx
+msgid "Every Entry, searchable, arrives with recording Entries."
+msgstr "Every Entry, searchable, arrives with recording Entries."
+
+#: src/app/(tabs)/index.tsx
+#: src/features/shell/sections.ts
+msgid "Home"
+msgstr "Home"
+
+#: src/app/me.tsx
+msgid "Household settings, Members, Wallets and your preferences arrive here."
+msgstr "Household settings, Members, Wallets and your preferences arrive here."
+
+#: src/features/shell/household-pill.tsx
+msgid "Households"
+msgstr "Households"
+
+#: src/features/sync/sync-status.tsx
+msgid "Made by an older version of the app, and it no longer fits."
+msgstr "Made by an older version of the app, and it no longer fits."
+
+#: src/app/_layout.tsx
+#: src/app/me.tsx
+#: src/features/shell/sections.ts
+#: src/features/shell/top-bar.tsx
+msgid "Me & household"
+msgstr "Me & household"
+
+#: src/features/households/household-list.tsx
+msgid "Member"
+msgstr "Member"
+
+#: src/features/shell/quick-add.tsx
+#: src/features/shell/sidebar.tsx
+#: src/features/shell/tab-bar.tsx
+msgid "New entry"
+msgstr "New entry"
+
+#: src/app/inbox.tsx
+msgid "No notifications yet."
+msgstr "No notifications yet."
+
+#: src/features/sync/sync-status.tsx
+msgid "No permission, or someone else deleted it."
+msgstr "No permission, or someone else deleted it."
+
+#: src/features/sync/sync-status.tsx
+msgid "No permission."
+msgstr "No permission."
+
+#: src/app/_layout.tsx
+#: src/app/inbox.tsx
+#: src/features/shell/sections.ts
+#: src/features/shell/top-bar.tsx
+msgid "Notifications"
+msgstr "Notifications"
+
+#: src/features/sync/sync-status.tsx
+msgid "Offline. Changes sync when you're back online."
+msgstr "Offline. Changes sync when you're back online."
+
+#: src/features/sync/sync-status.tsx
+msgid "Online."
+msgstr "Online."
+
+#: src/features/sync/sync-status.tsx
+msgid "Online. Every change synced."
+msgstr "Online. Every change synced."
+
+#: src/features/households/household-list.tsx
+#: src/features/shell/household-pill.tsx
+msgid "Personal"
+msgstr "Personal"
+
+#: src/features/shell/quick-add.tsx
+msgid "Recording an Entry arrives with the quick-add keypad."
+msgstr "Recording an Entry arrives with the quick-add keypad."
+
+#: src/app/(tabs)/reports.tsx
+#: src/features/shell/sections.ts
+msgid "Reports"
+msgstr "Reports"
+
+#: src/app/(tabs)/reports.tsx
+msgid "Reports arrive once there are Entries to report on."
+msgstr "Reports arrive once there are Entries to report on."
+
+#: src/features/shell/sidebar.tsx
+msgid "Sections"
+msgstr "Sections"
+
+#: src/features/auth/sign-in-form.tsx
+msgid "Send code"
+msgstr "Send code"
+
+#: src/app/_layout.tsx
+#: src/features/auth/sign-in-form.tsx
+msgid "Sign in"
+msgstr "Sign in"
+
+#: src/app/me.tsx
+msgid "Sign out"
+msgstr "Sign out"
+
+#: src/features/auth/sign-in-form.tsx
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+#: src/features/shell/household-pill.tsx
+msgid "Switch household: {name}"
+msgstr "Switch household: {name}"
+
+#: src/app/me.tsx
+msgid "Sync status"
+msgstr "Sync status"
+
+#: src/features/households/household-list.tsx
+msgid "Syncing your households…"
+msgstr "Syncing your households…"
+
+#: src/features/update/update-required.tsx
+msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
+msgstr "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
+
+#: src/features/update/update-required.tsx
+msgid "Update Hisaab from your app store, then open it again."
+msgstr "Update Hisaab from your app store, then open it again."
+
+#: src/features/update/update-required.tsx
+msgid "Update now"
+msgstr "Update now"
+
+#: src/features/update/update-required.tsx
+msgid "Update required"
+msgstr "Update required"
+
+#: src/features/households/household-list.tsx
+msgid "Viewer"
+msgstr "Viewer"
+
+#: src/features/auth/sign-in-form.tsx
+msgid "We emailed a code to {codeSentTo}."
+msgstr "We emailed a code to {codeSentTo}."
+
+#: src/features/auth/sign-in-form.tsx
+msgid "you@example.com"
+msgstr "you@example.com"
+
+#: src/app/(tabs)/index.tsx
+msgid "Your balance, spending and budgets arrive with your first Wallet."
+msgstr "Your balance, spending and budgets arrive with your first Wallet."

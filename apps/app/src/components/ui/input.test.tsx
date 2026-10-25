@@ -1,8 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 import { useState } from "react";
 
 import { Input } from "./input";
+import { render } from "@/test/render";
 
 const Controlled = ({ error }: { error?: string }) => {
 	const [value, setValue] = useState("");

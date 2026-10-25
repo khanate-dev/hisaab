@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { Button } from "./button";
+import { render } from "@/test/render";
 
 describe("Button", () => {
 	it("runs its action when pressed", async () => {

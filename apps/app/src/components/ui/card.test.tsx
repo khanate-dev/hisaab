@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { Card } from "./card";
+import { render } from "@/test/render";
 
 describe("Card", () => {
 	it("is a plain container unless it has an action", async () => {

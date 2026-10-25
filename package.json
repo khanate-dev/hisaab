@@ -23,6 +23,7 @@
 		"@types/node": "catalog:",
 		"cspell": "catalog:",
 		"eslint": "catalog:",
+		"eslint-plugin-lingui": "catalog:",
 		"eslint-plugin-react-hooks": "catalog:",
 		"globals": "catalog:",
 		"prettier": "catalog:",

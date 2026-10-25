@@ -1,12 +1,23 @@
 import js from "@eslint/js";
+import pluginLingui from "eslint-plugin-lingui";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import { builtinModules } from "node:module";
 import tseslint from "typescript-eslint";
 
+import { logicalProperties } from "./tooling/eslint/logical-properties.js";
 import { noSqlMoneyAggregates } from "./tooling/eslint/no-sql-money-aggregates.js";
 import { stampLocalWrites } from "./tooling/eslint/stamp-local-writes.js";
+
+/** Hisaab's own rules (tooling/eslint), one plugin object so every config block shares it. */
+const hisaab = {
+	rules: {
+		"logical-properties": logicalProperties,
+		"no-sql-money-aggregates": noSqlMoneyAggregates,
+		"stamp-local-writes": stampLocalWrites,
+	},
+};
 
 const DEVICE_CODE = [
 	"apps/app/**/*.{ts,tsx}",
@@ -15,6 +26,7 @@ const DEVICE_CODE = [
 
 export default defineConfig(
 	globalIgnores([
+		"apps/app/src/locales/**/*.ts",
 		"**/node_modules",
 		"**/dist",
 		"**/.expo",
@@ -35,6 +47,68 @@ export default defineConfig(
 		},
 	},
 	{
+		// ADR-0008: logical properties only, so the layout mirrors for right-to-left languages.
+		files: ["apps/app/src/**/*.{ts,tsx}"],
+		plugins: { hisaab },
+		rules: { "hisaab/logical-properties": "error" },
+	},
+	{
+		// ADR-0008: every user-facing string goes through Lingui. Identifiers, routes, class names and test files aren't copy.
+		// The UI layers; lib/ and theme/ hold identifiers, env names and log messages, not copy.
+		files: ["apps/app/src/{app,components,features}/**/*.{ts,tsx}"],
+		ignores: ["**/*.test.{ts,tsx}"],
+		// The plugin's typings predate ESLint 10's Plugin type; the runtime shape is fine.
+		plugins: {
+			lingui: /** @type {import("eslint").ESLint.Plugin} */ (
+				/** @type {unknown} */ (pluginLingui)
+			),
+		},
+		rules: {
+			...pluginLingui.configs["flat/recommended"].rules,
+			"lingui/no-unlocalized-strings": [
+				"error",
+				{
+					ignore: [
+						// No letters, a kebab or dotted identifier, a route
+						"^[^A-Za-z]*$",
+						"^[a-z0-9]+([-_./:@][a-z0-9]+)+$",
+						"^/",
+					],
+					ignoreNames: [
+						{
+							regex: {
+								pattern:
+									"className|ClassName|^(role|name|type|href|route|variant|inputMode|autoComplete|autoCapitalize|accessibilityRole|testID|key)$",
+							},
+						},
+						// UPPER_SNAKE constants hold class tables and keys, never copy; copy uses msg``.
+						{
+							regex: {
+								pattern: "^[A-Z][A-Z0-9_]*$",
+							},
+						},
+					],
+					ignoreFunctions: [
+						"Error",
+						"console.*",
+						"require",
+						"*.addEventListener",
+						"useQuickAdd",
+						"router.push",
+						"router.navigate",
+						"navigation.emit",
+						"navigation.navigate",
+						"usePressIn",
+						"hardShadow",
+						"pressInStyle",
+						// Marks a Tailwind class list, so class tables needn't be matched by pattern
+						"classes",
+					],
+				},
+			],
+		},
+	},
+	{
 		// Metro and Babel load these as CommonJS.
 		files: ["apps/app/*.config.js"],
 		languageOptions: { sourceType: "commonjs" },
@@ -47,14 +121,7 @@ export default defineConfig(
 	},
 	{
 		files: DEVICE_CODE,
-		plugins: {
-			hisaab: {
-				rules: {
-					"no-sql-money-aggregates": noSqlMoneyAggregates,
-					"stamp-local-writes": stampLocalWrites,
-				},
-			},
-		},
+		plugins: { hisaab },
 		rules: {
 			"hisaab/no-sql-money-aggregates": "error",
 			"hisaab/stamp-local-writes": "error",
