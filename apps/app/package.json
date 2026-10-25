@@ -1,0 +1,32 @@
+{
+	"name": "@hisaab/app",
+	"private": true,
+	"main": "expo-router/entry",
+	"scripts": {
+		"start": "expo start",
+		"web": "expo start --web",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@hisaab/client-schema": "workspace:*",
+		"@hisaab/domain": "workspace:*",
+		"expo": "catalog:",
+		"expo-constants": "catalog:",
+		"expo-linking": "catalog:",
+		"expo-router": "catalog:",
+		"expo-status-bar": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"react-native": "catalog:",
+		"react-native-reanimated": "catalog:",
+		"react-native-safe-area-context": "catalog:",
+		"react-native-screens": "catalog:",
+		"react-native-web": "catalog:",
+		"react-native-worklets": "catalog:"
+	},
+	"devDependencies": {
+		"@react-native/metro-config": "catalog:",
+		"@types/react": "catalog:",
+		"typescript": "catalog:"
+	}
+}

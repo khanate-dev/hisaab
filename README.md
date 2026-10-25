@@ -1,34 +1,19 @@
-![logo](./public/logo.svg)
-
 # Hisaab
 
-Hisaab is a personal finance management tool that helps you keep track of your expenses and income.
+Household finance management: shared Wallets, Entries, Budgets, Loans and reports, offline-first across Android, iOS and the web.
 
-## Architecture
+The rebuild is specified in [`docs/spec.md`](docs/spec.md) and sequenced in [`docs/implementation-plan.md`](docs/implementation-plan.md). Domain terms are in [`CONTEXT.md`](CONTEXT.md); decisions are in [`.claude/docs/adr`](.claude/docs/adr).
 
-- Code Spell Checker as spell checker (linter)
-- Eslint for code quality (linter)
-- Prettier for formatting
-- Typescript for type-safe code
-- Remix SSR
-- React
-- Typescript
-- Mantine
-- Tabler Icons
-- CSS Modules
-- Zod
-- Offline first with Watermelon DB
-- Hosted on Deno Deploy
-- SQLite (libSQL) as DB on Turso
-- Drizzle as ORM
+## Stack
 
-## ERD
+- Expo universal app (Expo Router, React Native, react-native-web)
+- Supabase (Postgres + RLS, Auth, Storage, Edge Functions) with PowerSync Sync Streams
+- Drizzle over the PowerSync client database
+- pnpm workspace with catalogs; TypeScript, ESLint, Prettier, cspell, Vitest
 
-![Hisaab ERD](docs/erd.svg)
+## Getting started
 
-## Getting Started
-
-- [Setup Turso CLI](https://docs.turso.tech/cli/installation)
-- Setup Node.js LTS and pnpm
-- Install dependencies with `pnpm i`
-- Start development server with `pnpm dev`
+- Node.js 24 and pnpm (version pinned in `package.json`)
+- `pnpm install`
+- `pnpm check` runs typecheck, lint, format check, spellcheck and tests
+- `pnpm --filter @hisaab/app start` starts the Expo dev server

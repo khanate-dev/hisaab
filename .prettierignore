@@ -1,13 +1,13 @@
-# Ignore artifacts:
-build
 coverage
 node_modules
 dist
-build
+.expo
 pnpm-lock.yaml
-package-lock.json
-yarn.lock
-trace
-tsconfig.vitest-temp.json
 android
 ios
+supabase/.temp
+# Prose and vendored agent skills keep their hand formatting
+*.md
+.agents
+.claude/skills
+skills-lock.json

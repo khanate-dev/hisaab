@@ -1,0 +1,52 @@
+packages:
+  - apps/*
+  - packages/*
+  - tests/*
+
+# `pnpm add` must go through the catalog.
+catalogMode: strict
+
+# Every dependency version lives here, exact. package.json files reference `catalog:` only.
+catalog:
+  # Expo SDK 57 set (seeded from the Spike, #14; matches expo@57.0.31's bundledNativeModules.json)
+  expo: 57.0.31
+  expo-constants: 57.0.22
+  expo-linking: 57.0.13
+  expo-router: 57.0.29
+  expo-status-bar: 57.0.1
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3
+  react-native-reanimated: 4.5.1
+  react-native-worklets: 0.10.1
+  react-native-safe-area-context: 5.7.0
+  react-native-screens: 4.26.2
+  react-native-web: 0.21.4
+  "@react-native/metro-config": 0.86.3
+  "@types/react": 19.2.18
+
+  # Sync and local data. drizzle-orm stays below 1.0: @powersync/drizzle-driver's peer range is <1.0.0.
+  "@powersync/common": 2.3.1
+  "@powersync/drizzle-driver": 0.8.0
+  "@powersync/react": 2.0.2
+  "@powersync/react-native": 2.3.1
+  "@powersync/web": 2.4.2
+  "@supabase/supabase-js": 2.117.2
+  drizzle-orm: 0.45.3
+
+  # Domain
+  decimal.js: 10.6.0
+  fast-check: 4.10.2
+
+  # Tooling
+  "@eslint/js": 10.0.1
+  "@types/estree": 1.0.9
+  "@types/node": 24.19.2
+  cspell: 9.8.0
+  eslint: 10.12.0
+  eslint-plugin-react-hooks: 7.1.1
+  globals: 17.13.0
+  prettier: 3.9.10
+  typescript: 6.0.3
+  typescript-eslint: 8.72.0
+  vitest: 4.1.12

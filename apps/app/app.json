@@ -1,0 +1,24 @@
+{
+	"expo": {
+		"name": "Hisaab",
+		"slug": "hisaab",
+		"scheme": "hisaab",
+		"version": "0.0.0",
+		"orientation": "portrait",
+		"userInterfaceStyle": "automatic",
+		"ios": {
+			"bundleIdentifier": "pk.khanate.hisaab"
+		},
+		"android": {
+			"package": "pk.khanate.hisaab"
+		},
+		"web": {
+			"bundler": "metro",
+			"output": "static"
+		},
+		"plugins": ["expo-router"],
+		"experiments": {
+			"typedRoutes": true
+		}
+	}
+}

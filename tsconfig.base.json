@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitOverride": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"useUnknownInCatchVariables": true,
+
+		"module": "Preserve",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
+		"forceConsistentCasingInFileNames": true,
+
+		"target": "ES2022",
+		"lib": ["ES2023"],
+		"noEmit": true,
+		"noErrorTruncation": true,
+		"skipLibCheck": true
+	}
+}
