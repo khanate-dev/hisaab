@@ -7,8 +7,12 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"devDependencies": {
+		"@hisaab/client-schema": "workspace:*",
+		"@powersync/common": "catalog:",
+		"@powersync/node": "catalog:",
 		"@supabase/supabase-js": "catalog:",
 		"@types/node": "catalog:",
+		"better-sqlite3": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}

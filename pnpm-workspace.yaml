@@ -3,8 +3,10 @@ packages:
   - packages/*
   - tests/*
 
-# The Supabase CLI package downloads its binary in a postinstall script.
+# Packages whose install scripts must run: the Supabase CLI downloads its binary;
+# better-sqlite3 (the @powersync/node driver in tests/sync) fetches or compiles its native addon.
 onlyBuiltDependencies:
+  - better-sqlite3
   - supabase
 
 # `pnpm add` must go through the catalog.
@@ -32,10 +34,12 @@ catalog:
   # Sync and local data. drizzle-orm stays below 1.0: @powersync/drizzle-driver's peer range is <1.0.0.
   "@powersync/common": 2.3.1
   "@powersync/drizzle-driver": 0.8.0
+  "@powersync/node": 1.1.1
   "@powersync/react": 2.0.2
   "@powersync/react-native": 2.3.1
   "@powersync/web": 2.4.2
   "@supabase/supabase-js": 2.117.2
+  better-sqlite3: 12.11.1
   drizzle-orm: 0.45.3
 
   # Domain

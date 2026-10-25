@@ -1,5 +1,10 @@
+import { schema } from "@hisaab/client-schema";
+import { PowerSyncDatabase } from "@powersync/node";
 import { createClient } from "@supabase/supabase-js";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Keys come from the running local stack, so the secret key is never committed.
@@ -76,4 +81,23 @@ export const openSyncStream = async (token: string) => {
 	// A healthy stream never ends on its own; the status is all we need.
 	await response.body?.cancel();
 	return { status: response.status, body: "" };
+};
+
+/** Signs in a fresh user and connects a @powersync/node client for them, resolved once the first sync completes. */
+export const connectClient = async () => {
+	const token = await signInNewUser();
+	const db = new PowerSyncDatabase({
+		schema,
+		database: {
+			dbFilename: "client.db",
+			dbLocation: mkdtempSync(join(tmpdir(), "hisaab-sync-")),
+		},
+	});
+	await db.connect({
+		fetchCredentials: async () => ({ endpoint: stack.powersyncUrl, token }),
+		// Uploads arrive with the shared upload connector (#25); nothing writes locally yet.
+		uploadData: async () => {},
+	});
+	await db.waitForFirstSync();
+	return db;
 };
