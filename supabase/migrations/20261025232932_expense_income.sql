@@ -43,22 +43,35 @@ alter table public.entries add constraint entries_kind_shape check (
 	or (kind = 'income' and category_id is not null and amount > 0)
 );
 
--- An Expense's Category is from the Expense list, an Income's from the Income list. The Category is looked up in the
--- Entry's own household only; one elsewhere is left to the foreign key.
+-- An Expense's Category is from the Expense list, an Income's from the Income list, and an Entry is never newly put
+-- in an archived Category (one already there keeps it). The Category is looked up in the Entry's own household only;
+-- one elsewhere is left to the foreign key.
 create function private.keep_entry_category_in_list() returns trigger
 language plpgsql security definer
 set search_path = ''
 as $$
 declare
-	category_kind text;
+	category public.categories;
 begin
 	if new.category_id is null then
 		return new;
 	end if;
-	select kind into category_kind from public.categories
+	select * into category from public.categories
 	where id = new.category_id and household_id = new.household_id;
-	if found and category_kind is distinct from new.kind then
+	if not found then
+		return new;
+	end if;
+	if category.kind is distinct from new.kind then
 		raise exception 'An Entry''s Category is from its own list' using errcode = '23514';
+	end if;
+	if category.archived_at is not null then
+		-- An update that keeps the Category is fine; OLD exists only on update, so it's read only there.
+		if tg_op = 'UPDATE' then
+			if new.category_id is not distinct from old.category_id then
+				return new;
+			end if;
+		end if;
+		raise exception 'An archived Category takes no new Entries' using errcode = '23514';
 	end if;
 	return new;
 end;
@@ -68,7 +81,7 @@ create trigger keep_entry_category_in_list
 	before insert or update of kind, category_id on public.entries
 	for each row execute function private.keep_entry_category_in_list();
 
--- Admins and Members delete any Entry (CONTEXT.md, Role).
-create policy "Admins and Members delete Entries" on public.entries
-	for delete to authenticated using (private.can_write(household_id));
+-- Admins and Members delete any Expense or Income (CONTEXT.md, Role). Balance adjustments join with #37.
+create policy "Admins and Members delete Expenses and Incomes" on public.entries
+	for delete to authenticated using (private.can_write(household_id) and kind in ('expense', 'income'));
 grant delete on public.entries to authenticated;

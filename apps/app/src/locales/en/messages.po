@@ -785,6 +785,7 @@ msgstr "This becomes your Base currency. It locks after your first Entry."
 msgid "This Category isn't here. It may not have synced yet."
 msgstr "This Category isn't here. It may not have synced yet."
 
+#: src/app/entries/[id]/edit.tsx
 #: src/app/entries/[id]/index.tsx
 msgid "This Entry isn't here. It may have been deleted, or not synced yet."
 msgstr "This Entry isn't here. It may have been deleted, or not synced yet."
@@ -851,6 +852,10 @@ msgstr "Wallet"
 #: src/app/wallets/index.tsx
 msgid "Wallets"
 msgstr "Wallets"
+
+#: src/features/entries/entry-form.tsx
+msgid "Wallets in other currencies take Entries once exchange rates arrive."
+msgstr "Wallets in other currencies take Entries once exchange rates arrive."
 
 #: src/features/auth/sign-in-form.tsx
 msgid "We emailed a code to {codeSentTo}."

@@ -45,13 +45,3 @@ export const calendarDateIn = (instant: Date, timeZone: string) => {
 	});
 	return `${year}-${month}-${day}`;
 };
-
-/** The wall-clock time, HH:MM, that an instant shows in a timezone. */
-export const timeOfDayIn = (instant: Date, timeZone: string) => {
-	const { hour, minute } = parts(instant, timeZone, {
-		hour: "2-digit",
-		minute: "2-digit",
-		hourCycle: "h23",
-	});
-	return `${hour}:${minute}`;
-};

@@ -30,10 +30,24 @@ type Props = {
 	onDelete: () => Promise<void>;
 };
 
-const Field = ({ label, value }: { label: string; value: string }) => (
-	<View className="gap-0.5">
+/** A labelled value, read as one: "Category, Food › Groceries". */
+const Field = ({
+	label,
+	value,
+	figure = false,
+}: {
+	label: string;
+	value: string;
+	figure?: boolean;
+}) => (
+	<View
+		accessibilityLabel={label}
+		accessibilityValue={{ text: value }}
+		accessible
+		className="gap-0.5"
+	>
 		<Text variant="muted">{label}</Text>
-		<Text variant="label">{value}</Text>
+		<Text variant={figure ? "figure" : "label"}>{value}</Text>
 	</View>
 );
 
@@ -66,10 +80,11 @@ export const EntryDetail = ({
 							size={28}
 						/>
 					)}
-					<View className="shrink gap-1">
-						<Text variant="muted">{i18n._(entryKindLabel(entry.kind))}</Text>
-						<Text variant="figure">{formatMoney(amount)}</Text>
-					</View>
+					<Field
+						figure
+						label={i18n._(entryKindLabel(entry.kind))}
+						value={formatMoney(amount)}
+					/>
 				</View>
 			</Card>
 			{entry.description !== null && (

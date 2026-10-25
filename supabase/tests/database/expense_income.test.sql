@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(24);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000003a1', 'member@example.com'),
@@ -95,7 +95,21 @@ select throws_ok(
 select is(pg_temp.affected($$ update public.entries set amount = -500, notes = 'Weekly shop' where id = '00000000-0000-7000-8000-0000000003d1' $$), 1,
 	'a Member edits an Expense');
 
--- Deleting Entries.
+select is(pg_temp.affected($$ update public.categories set archived_at = now() where name = 'Travel' and household_id = '00000000-0000-7000-8000-0000000003f1' $$), 1,
+	'a Member archives a Category');
+select throws_ok(
+	pg_temp.record('00000000-0000-7000-8000-0000000003da', 'expense', -10, pg_temp.category('00000000-0000-7000-8000-0000000003f1', 'Travel')),
+	'23514', null, 'an archived Category takes no new Entries'
+);
+select is(pg_temp.affected(format($$ update public.categories set archived_at = now() where id = %L $$,
+	pg_temp.category('00000000-0000-7000-8000-0000000003f1', 'Groceries'))), 1, 'a Category in use can be archived');
+select is(pg_temp.affected($$ update public.entries set notes = 'Still here' where id = '00000000-0000-7000-8000-0000000003d1' $$), 1,
+	'an Entry in an archived Category stays editable');
+
+-- Deleting Entries. (Former members join with account deletion, #64.)
+select set_config('role', 'anon', true);
+select throws_ok($$ delete from public.entries $$, '42501', null, 'anon cannot delete Entries');
+select set_config('role', 'postgres', true);
 select pg_temp.act_as('00000000-0000-4000-8000-0000000003b1');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000003d1' $$), 0,
 	'a Viewer can''t delete an Entry');
@@ -108,6 +122,8 @@ select is(pg_temp.affected($$ delete from public.entries where id = '00000000-00
 select pg_temp.act_as('00000000-0000-4000-8000-0000000003a2');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000003d2' $$), 1,
 	'an Admin deletes an Entry');
+select is(pg_temp.affected($$ delete from public.entries where kind = 'balance_adjustment' $$), 0,
+	'Balance adjustments are not deleted yet');
 
 -- The household timezone.
 select is(pg_temp.affected($$ update public.households set timezone = 'Asia/Karachi' where id = '00000000-0000-7000-8000-0000000003f1' $$), 1,

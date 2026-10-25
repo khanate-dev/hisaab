@@ -1,7 +1,12 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { descriptionSuggestions, magnitude, signedAmount } from "./entries";
+import {
+	descriptionSuggestions,
+	isFlowKind,
+	magnitude,
+	signedAmount,
+} from "./entries";
 import { newestFirst } from "./entry-order";
 import { isNegative, isZero, moneyEquals, parseMoney } from "./money";
 
@@ -9,6 +14,21 @@ const money = fc
 	.integer({ min: -10_000_000, max: 10_000_000 })
 	.map((units) => parseMoney((units / 100).toFixed(2), "PKR"));
 const flowKind = fc.constantFrom("expense" as const, "income" as const);
+
+describe("isFlowKind", () => {
+	it("is true for exactly Expense and Income", () => {
+		fc.assert(
+			fc.property(
+				fc.oneof(flowKind, fc.string(), fc.constant("balance_adjustment")),
+				(kind) => {
+					expect(isFlowKind(kind)).toBe(
+						kind === "expense" || kind === "income",
+					);
+				},
+			),
+		);
+	});
+});
 
 describe("signedAmount", () => {
 	it("takes money out for an Expense and brings it in for an Income, keeping how much", () => {

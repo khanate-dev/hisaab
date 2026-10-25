@@ -1,4 +1,4 @@
-import { FLOW_KINDS, type FlowKind } from "@hisaab/domain";
+import { isFlowKind } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
@@ -11,12 +11,9 @@ import { useCanWrite } from "@/features/households/use-can-write";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
-import { entryTimeZone, todayIn } from "@/lib/dates";
+import { entryTimeZone } from "@/lib/dates";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
-
-const isFlowKind = (value: string | undefined): value is FlowKind =>
-	FLOW_KINDS.some((kind) => kind === value);
 
 export default function NewEntry() {
 	const { t } = useLingui();
@@ -40,6 +37,7 @@ export default function NewEntry() {
 		return null;
 	const kind = isFlowKind(params.kind) ? params.kind : undefined;
 	const title = kind === "income" ? t`New Income` : t`New Expense`;
+
 	const timeZone = entryTimeZone(household);
 
 	return (
@@ -54,8 +52,8 @@ export default function NewEntry() {
 						leaveTo("/entries");
 					}}
 					submitLabel={t`Save Entry`}
+					baseCurrency={household.base_currency}
 					timeZone={timeZone}
-					today={todayIn(timeZone)}
 					wallets={wallets}
 					{...(kind && { kind })}
 					{...(params.wallet && { walletId: params.wallet })}

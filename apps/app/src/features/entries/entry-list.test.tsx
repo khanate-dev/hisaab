@@ -5,8 +5,8 @@ import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
-import type { WalletChoice } from "./entry-form";
 import { EntryList } from "./entry-list";
+import type { WalletChoice } from "./types";
 import { toEntryViews } from "./views";
 
 const wallets: WalletChoice[] = [

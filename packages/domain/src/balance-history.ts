@@ -1,8 +1,8 @@
 import { addMoney, type Money, parseMoney, zeroMoney } from "./money";
 
-import { chronological, type Occurrence } from "./entry-order";
+import { chronological, type Dated } from "./entry-order";
 
-type HistoryEntry = Occurrence & { amount: string };
+type HistoryEntry = Dated & { amount: string };
 
 /** One Entry, its amount as Money and the Wallet's Balance just after it. */
 export type BalanceStep<T extends HistoryEntry = HistoryEntry> = {

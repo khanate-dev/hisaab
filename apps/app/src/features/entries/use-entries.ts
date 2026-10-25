@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { useCategories } from "@/features/categories/use-categories";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import { db } from "@/lib/powersync";
+import { whenLoaded } from "@/lib/watched";
 
 import type { Entry } from "./types";
 import { toEntryViews } from "./views";
@@ -18,15 +19,17 @@ import { toEntryViews } from "./views";
 export const useEntries = (
 	householdId: string | undefined,
 ): Entry[] | undefined => {
-	const { data, isLoading } = useQuery(
-		toCompilableQuery(
-			db
-				.select()
-				.from(entries)
-				.where(eq(entries.household_id, householdId ?? "")),
+	return whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(entries)
+					.where(eq(entries.household_id, householdId ?? "")),
+			),
 		),
+		householdId !== undefined,
 	);
-	return isLoading || householdId === undefined ? undefined : data;
 };
 
 /** A User's display name, for "Recorded by"; undefined until their profile has synced. */

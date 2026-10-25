@@ -20,18 +20,12 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import type { Category } from "@/features/categories/types";
+import { todayIn } from "@/lib/dates";
 
 import { entryKindLabel } from "./labels";
-import type { Entry, EntryDraft } from "./types";
+import type { Entry, EntryDraft, WalletChoice } from "./types";
 
 const DEFAULT_KIND: FlowKind = "expense";
-
-export type WalletChoice = {
-	id: string;
-	name: string;
-	currency: string;
-	archived_at: string | null;
-};
 
 type Props = {
 	/** The Entry being edited; absent when recording one. Its kind is fixed. */
@@ -44,9 +38,15 @@ type Props = {
 	categories: readonly Category[];
 	/** Past Entries, for description suggestions. */
 	history: readonly Entry[];
-	/** The household's timezone and today in it, YYYY-MM-DD. */
+	/**
+	 * Entries are recorded in the household's Base currency only until Base amounts land (#45, ADR-0005); null
+	 * before the household has one.
+	 */
+	baseCurrency: string | null;
+	/** The household's timezone; the date starts as today in it. */
 	timeZone: string;
-	today: string;
+	/** Today, YYYY-MM-DD; injected by tests. */
+	today?: string;
 	submitLabel: string;
 	onSubmit: (draft: EntryDraft, currency: string) => Promise<void>;
 };
@@ -64,16 +64,23 @@ export const EntryForm = ({
 	wallets,
 	categories,
 	history,
+	baseCurrency,
 	timeZone,
-	today,
+	today = todayIn(timeZone),
 	submitLabel,
 	onSubmit,
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const walletOf = (id: string | undefined) => wallets.find((w) => w.id === id);
-	const active = wallets.filter((w) => w.archived_at === null);
+	const recordable = (w: WalletChoice) =>
+		w.archived_at === null &&
+		(baseCurrency === null || w.currency === baseCurrency);
+	const active = wallets.filter(recordable);
+	const linked = walletOf(startWalletId);
+	// An Entry keeps its own Wallet even after it's archived; a new one only starts in a Wallet it can go into.
 	const startWallet =
-		walletOf(entry?.wallet_id) ?? walletOf(startWalletId) ?? active[0];
+		walletOf(entry?.wallet_id) ??
+		(linked && recordable(linked) ? linked : active[0]);
 
 	const [kind, setKind] = useState<FlowKind>(
 		entry?.kind === "income" || entry?.kind === "expense"
@@ -97,8 +104,11 @@ export const EntryForm = ({
 
 	const walletChoices = [
 		...active,
-		...(startWallet && startWallet.archived_at !== null ? [startWallet] : []),
+		...(startWallet && !recordable(startWallet) ? [startWallet] : []),
 	];
+	const otherCurrencies = wallets.some(
+		(w) => w.archived_at === null && !recordable(w),
+	);
 	const categoryChoices = categoryTree(categories, kind).flatMap(
 		({ category, subcategories }) => {
 			const parentName = category.name;
@@ -135,7 +145,7 @@ export const EntryForm = ({
 		const category = categories.find((c) => c.id === past.category_id);
 		if (category && category.archived_at === null) setCategoryId(category.id);
 		const wallet = walletOf(past.wallet_id);
-		if (wallet && wallet.archived_at === null) {
+		if (wallet && recordable(wallet)) {
 			setWalletId(wallet.id);
 			setAmount(magnitude(parseMoney(past.amount, wallet.currency)).toString());
 		}
@@ -218,6 +228,11 @@ export const EntryForm = ({
 					options={walletChoices.map((w) => ({ value: w.id, label: w.name }))}
 					value={walletId}
 				/>
+				{otherCurrencies && (
+					<Text variant="muted">
+						{t`Wallets in other currencies take Entries once exchange rates arrive.`}
+					</Text>
+				)}
 			</View>
 			<View className="gap-2">
 				<Text variant="label">{t`Category`}</Text>

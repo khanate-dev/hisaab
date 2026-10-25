@@ -1,12 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import {
-	calendarDateIn,
-	isCalendarDate,
-	isTimeOfDay,
-	timeOfDayIn,
-} from "./dates";
+import { calendarDateIn, isCalendarDate, isTimeOfDay } from "./dates";
 
 // Entry dates are calendar dates in the household's timezone (spec §3.3).
 
@@ -60,17 +55,6 @@ describe("calendarDateIn", () => {
 			calendarDateIn(new Date("2026-10-26T20:00:00Z"), "Asia/Karachi"),
 		).toBe("2026-10-27");
 		expect(calendarDateIn(at, "America/Los_Angeles")).toBe("2026-10-26");
-	});
-});
-
-describe("timeOfDayIn", () => {
-	it("is a wall-clock time, and the UTC one in UTC", () => {
-		fc.assert(
-			fc.property(instant, timeZone, (at, zone) => {
-				expect(isTimeOfDay(timeOfDayIn(at, zone))).toBe(true);
-				expect(timeOfDayIn(at, "UTC")).toBe(at.toISOString().slice(11, 16));
-			}),
-		);
 	});
 });
 

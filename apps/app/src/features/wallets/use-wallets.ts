@@ -6,6 +6,7 @@ import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { useMemo } from "react";
 
 import { db } from "@/lib/powersync";
+import { whenLoaded } from "@/lib/watched";
 
 import type { HistoryRow, WalletSummary } from "./types";
 
@@ -114,14 +115,16 @@ export const useWallet = (walletId: string) => {
  * Undefined until the first read lands, so a form doesn't start before its Wallets are known.
  */
 export const useWalletRows = (householdId: string | undefined) => {
-	const { data, isLoading } = useQuery(
-		toCompilableQuery(
-			db
-				.select()
-				.from(wallets)
-				.where(eq(wallets.household_id, householdId ?? ""))
-				.orderBy(asc(wallets.created_at)),
+	return whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(wallets)
+					.where(eq(wallets.household_id, householdId ?? ""))
+					.orderBy(asc(wallets.created_at)),
+			),
 		),
+		householdId !== undefined,
 	);
-	return isLoading || householdId === undefined ? undefined : data;
 };

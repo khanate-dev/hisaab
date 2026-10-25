@@ -2,8 +2,7 @@ import { newestFirst, type Money, parseMoney } from "@hisaab/domain";
 
 import type { Category } from "@/features/categories/types";
 
-import type { WalletChoice } from "./entry-form";
-import type { Entry } from "./types";
+import type { Entry, WalletChoice } from "./types";
 
 /** An Entry with what it points at, as the list and detail show it. */
 export type EntryView = {

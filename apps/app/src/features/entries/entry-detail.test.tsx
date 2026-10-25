@@ -7,7 +7,7 @@ import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
 import { EntryDetail } from "./entry-detail";
-import type { WalletChoice } from "./entry-form";
+import type { WalletChoice } from "./types";
 import { toEntryViews } from "./views";
 
 const wallets: WalletChoice[] = [
@@ -54,12 +54,14 @@ const setup = async (
 describe("EntryDetail", () => {
 	it("shows how much, its Category, Wallet, date and time, notes and who recorded it", async () => {
 		await setup();
-		expect(screen.getByText(/PKR\s?-?450|-PKR\s?450/)).toBeOnTheScreen();
-		expect(screen.getByText("Food › Groceries")).toBeOnTheScreen();
-		expect(screen.getByText("Cash")).toBeOnTheScreen();
-		expect(screen.getByText(/at 18:30/)).toBeOnTheScreen();
-		expect(screen.getByText("Two loaves")).toBeOnTheScreen();
-		expect(screen.getByText("Ayesha")).toBeOnTheScreen();
+		const value = (label: string) =>
+			screen.getByLabelText(label).props.accessibilityValue?.text;
+		expect(value("Expense")).toMatch(/PKR\s?-?450|-PKR\s?450/);
+		expect(value("Category")).toBe("Food › Groceries");
+		expect(value("Wallet")).toBe("Cash");
+		expect(value("Date")).toMatch(/at 18:30/);
+		expect(value("Notes")).toBe("Two loaves");
+		expect(value("Recorded by")).toBe("Ayesha");
 	});
 
 	it("deletes only after confirming", async () => {

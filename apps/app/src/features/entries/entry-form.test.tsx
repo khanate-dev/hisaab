@@ -5,8 +5,8 @@ import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
-import { EntryForm, type WalletChoice } from "./entry-form";
-import type { EntryDraft } from "./types";
+import { EntryForm } from "./entry-form";
+import type { EntryDraft, WalletChoice } from "./types";
 
 const wallets: WalletChoice[] = [
 	{ id: "w1", name: "Cash", currency: "PKR", archived_at: null },
@@ -32,6 +32,7 @@ const setup = async (props: Partial<Parameters<typeof EntryForm>[0]> = {}) => {
 			categories={categories}
 			history={[]}
 			onSubmit={onSubmit}
+			baseCurrency="PKR"
 			submitLabel="Save Entry"
 			timeZone="Asia/Karachi"
 			today="2026-10-26"

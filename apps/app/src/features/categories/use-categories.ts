@@ -4,6 +4,7 @@ import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/powersync";
+import { whenLoaded } from "@/lib/watched";
 
 import type { Category } from "./types";
 
@@ -14,13 +15,15 @@ import type { Category } from "./types";
 export const useCategories = (
 	householdId: string | undefined,
 ): Category[] | undefined => {
-	const { data, isLoading } = useQuery(
-		toCompilableQuery(
-			db
-				.select()
-				.from(categories)
-				.where(eq(categories.household_id, householdId ?? "")),
+	return whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(categories)
+					.where(eq(categories.household_id, householdId ?? "")),
+			),
 		),
+		householdId !== undefined,
 	);
-	return isLoading || householdId === undefined ? undefined : data;
 };

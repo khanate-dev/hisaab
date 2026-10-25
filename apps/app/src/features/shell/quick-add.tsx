@@ -1,4 +1,6 @@
 import { FLOW_KINDS, type FlowKind } from "@hisaab/domain";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { router } from "expo-router";
 import { createContext, type ReactNode, use, useMemo, useState } from "react";
@@ -23,23 +25,27 @@ const QuickAddContext = createContext<QuickAdd>({ open: () => {} });
 export const useQuickAdd = () => use(QuickAddContext);
 
 /** Until the quick-add keypad lands (#35), quick-add opens the full Entry form. */
+const RECORD_LABELS: Record<FlowKind, MessageDescriptor> = {
+	expense: msg`Record an Expense`,
+	income: msg`Record an Income`,
+};
+
 const Body = ({ onChoose }: { onChoose: () => void }) => {
-	const { t } = useLingui();
-	const record = (kind: FlowKind) => {
-		onChoose();
-		router.push(`/entries/new?kind=${kind}`);
-	};
+	const { i18n } = useLingui();
 	return (
 		<View className="gap-3">
-			<Button
-				onPress={() => record(FLOW_KINDS[0])}
-			>{t`Record an Expense`}</Button>
-			<Button
-				onPress={() => record(FLOW_KINDS[1])}
-				variant="secondary"
-			>
-				{t`Record an Income`}
-			</Button>
+			{FLOW_KINDS.map((kind, index) => (
+				<Button
+					key={kind}
+					onPress={() => {
+						onChoose();
+						router.push(`/entries/new?kind=${kind}`);
+					}}
+					variant={index === 0 ? "primary" : "secondary"}
+				>
+					{i18n._(RECORD_LABELS[kind])}
+				</Button>
+			))}
 		</View>
 	);
 };

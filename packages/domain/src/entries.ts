@@ -1,9 +1,13 @@
 import { isNegative, type Money, negateMoney } from "./money";
-import { newestFirst, type Occurrence } from "./entry-order";
+import { newestFirst, type Dated } from "./entry-order";
 
 /** The kinds a person records with the Entry form; their amounts are signed by kind. */
 export const FLOW_KINDS = ["expense", "income"] as const;
 export type FlowKind = (typeof FLOW_KINDS)[number];
+
+/** Whether an Entry kind (or any text, say a route parameter) is one the Entry form records. */
+export const isFlowKind = (kind: string | undefined): kind is FlowKind =>
+	FLOW_KINDS.some((flow) => flow === kind);
 
 /** How much, whichever way it went: what the Entry form shows and takes. */
 export const magnitude = (amount: Money) =>
@@ -13,7 +17,7 @@ export const magnitude = (amount: Money) =>
 export const signedAmount = (kind: FlowKind, amount: Money) =>
 	kind === "expense" ? negateMoney(magnitude(amount)) : magnitude(amount);
 
-type Describable = Occurrence & { kind: string; description: string | null };
+type Describable = Dated & { kind: string; description: string | null };
 
 const key = (description: string) => description.trim().toLowerCase();
 
@@ -24,7 +28,7 @@ const key = (description: string) => description.trim().toLowerCase();
 export const descriptionSuggestions = <T extends Describable>(
 	entries: readonly T[],
 	query: string,
-	kind: string,
+	kind: FlowKind,
 	limit = 5,
 ): T[] => {
 	const typed = key(query);

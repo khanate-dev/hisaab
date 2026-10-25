@@ -13,11 +13,10 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
+import { entryKindLabel } from "@/features/entries/labels";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { Balance } from "./balance";
-import { entryKindLabel } from "@/features/entries/labels";
-
 import { WALLET_TYPE_LABELS } from "./labels";
 import type { HistoryRow, WalletSummary } from "./types";
 

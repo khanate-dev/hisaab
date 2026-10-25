@@ -15,3 +15,11 @@ export type EntryDraft = {
 	description: string | null;
 	notes: string | null;
 };
+
+/** A Wallet as the Entry form and lists need it. */
+export type WalletChoice = {
+	id: string;
+	name: string;
+	currency: string;
+	archived_at: string | null;
+};
