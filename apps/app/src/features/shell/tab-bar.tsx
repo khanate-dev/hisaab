@@ -16,7 +16,7 @@ type TabBarProps = Parameters<
 	NonNullable<ComponentProps<typeof Tabs>["tabBar"]>
 >[0];
 
-/** The raised centre ＋: quick-add, the most frequent action, opens over the current tab. */
+/** The raised centre ＋: an action, not a tab. Quick-add, the most frequent action, opens over the current tab. */
 const AddButton = () => {
 	const { t } = useLingui();
 	const quickAdd = useQuickAdd();
@@ -24,7 +24,7 @@ const AddButton = () => {
 	return (
 		<Pressable
 			accessibilityLabel={t`New entry`}
-			accessibilityRole="tab"
+			role="button"
 			className="-mt-6 size-16 items-center justify-center rounded-full border-3 border-border bg-primary"
 			onPress={quickAdd.open}
 			{...pressIn}
@@ -45,7 +45,10 @@ export const TabBar = ({ state, navigation }: TabBarProps) => {
 	const active = state.routes[state.index]?.name;
 
 	return (
-		<View className="flex-row items-center justify-around border-t-3 border-border bg-surface pb-4 pt-2">
+		<View
+			className="flex-row items-center justify-around border-t-3 border-border bg-surface pb-4 pt-2"
+			role="tablist"
+		>
 			{state.routes.map((route) => {
 				if (route.name === ADD_ROUTE) return <AddButton key={route.key} />;
 				const section = SECTIONS.find((s) => s.route === route.name);
@@ -55,7 +58,7 @@ export const TabBar = ({ state, navigation }: TabBarProps) => {
 				return (
 					<Pressable
 						accessibilityLabel={title}
-						accessibilityRole="tab"
+						role="tab"
 						accessibilityState={{ selected }}
 						className="min-w-16 items-center gap-1 py-1"
 						key={route.key}

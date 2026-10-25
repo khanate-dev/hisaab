@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { PortalHost } from "@rn-primitives/portal";
 import { Text } from "react-native";
-import { userEvent } from "@testing-library/react-native";
+import { userEvent, within } from "@testing-library/react-native";
 import { renderRouter, screen } from "expo-router/testing-library";
 
 import { WithI18n } from "@/test/i18n";
@@ -74,7 +74,7 @@ describe("phone navigation", () => {
 		width.current = 390;
 		const { user, pathname } = await renderShell();
 
-		await user.press(screen.getByRole("tab", { name: "New entry" }));
+		await user.press(screen.getByRole("button", { name: "New entry" }));
 		expect(
 			await screen.findByRole("heading", { name: "New entry" }),
 		).toBeOnTheScreen();
@@ -96,19 +96,60 @@ describe("phone navigation", () => {
 		await user.press(screen.getByRole("button", { name: "Notifications" }));
 		expect(pathname()).toBe("/inbox");
 	});
+
+	it("opens Me & household from the avatar", async () => {
+		width.current = 390;
+		const { user, pathname } = await renderShell();
+
+		await user.press(screen.getByRole("button", { name: "Me & household" }));
+		expect(pathname()).toBe("/me");
+	});
 });
 
 describe("wide web navigation", () => {
-	it("shows a sidebar with the household, New entry and every section instead of tabs", async () => {
+	it("puts the household, New entry and every destination in the sidebar, with no tabs or top bar", async () => {
 		width.current = 1280;
 		const { user, pathname } = await renderShell();
 
 		expect(screen.queryByRole("tab")).toBeNull();
 		// The sidebar is a navigation landmark; it stays non-grouping so each link is reachable on its own.
-		expect(screen.getByLabelText("Sections")).toBeOnTheScreen();
+		const sidebar = screen.getByLabelText("Sections");
+		expect(
+			within(sidebar).getByRole("button", {
+				name: "Switch household: Personal",
+			}),
+		).toBeOnTheScreen();
+		for (const destination of [
+			"Home",
+			"Entries",
+			"Budgets",
+			"Reports",
+			"Me & household",
+			"Notifications",
+		]) {
+			expect(
+				within(sidebar).getByRole("link", { name: destination }),
+			).toBeOnTheScreen();
+		}
+		expect(
+			screen.getAllByRole("button", { name: "Switch household: Personal" }),
+		).toHaveLength(1);
 
-		await user.press(screen.getByRole("link", { name: "Budgets" }));
-		expect(pathname()).toBe("/budgets");
+		for (const [destination, path] of [
+			["Budgets", "/budgets"],
+			["Me & household", "/me"],
+		] as const) {
+			await user.press(
+				within(sidebar).getByRole("link", { name: destination }),
+			);
+			expect(pathname()).toBe(path);
+		}
+	});
+
+	it("opens quick-add as a dialog from + New entry", async () => {
+		width.current = 1280;
+		const { user } = await renderShell();
+
 		await user.press(screen.getByRole("button", { name: "New entry" }));
 		expect(
 			await screen.findByRole("heading", { name: "New entry" }),

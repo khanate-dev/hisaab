@@ -5,8 +5,7 @@ import { Pressable, View } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
 
-import { HouseholdPill } from "./household-switcher";
-import { useIsWide } from "./layout";
+import { HouseholdPill } from "./household-pill";
 
 const IconButton = ({
 	label,
@@ -19,7 +18,7 @@ const IconButton = ({
 }) => (
 	<Pressable
 		accessibilityLabel={label}
-		accessibilityRole="button"
+		role="button"
 		className="size-11 items-center justify-center"
 		onPress={onPress}
 	>
@@ -27,10 +26,9 @@ const IconButton = ({
 	</Pressable>
 );
 
-/** On every tab: the avatar opens Me & household, the pill the switcher, the bell the inbox (Navigation ticket). */
+/** On every tab of the phone layout: the avatar opens Me & household, the pill the switcher, the bell the inbox (Navigation ticket). */
 export const TopBar = () => {
 	const { t } = useLingui();
-	const wide = useIsWide();
 	return (
 		<View className="flex-row items-center justify-between gap-3 border-b-3 border-border bg-bg ps-4 pe-4 py-2">
 			<IconButton
@@ -38,8 +36,7 @@ export const TopBar = () => {
 				label={t`Me & household`}
 				onPress={() => router.push("/me")}
 			/>
-			{/* On wide web the sidebar carries the pill. */}
-			{!wide && <HouseholdPill />}
+			<HouseholdPill />
 			<IconButton
 				icon={Bell}
 				label={t`Notifications`}

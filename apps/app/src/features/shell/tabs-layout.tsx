@@ -6,17 +6,16 @@ import { useColors } from "@/theme/theme";
 
 import { useIsWide } from "./layout";
 import { QuickAddProvider } from "./quick-add";
-import { ADD_ROUTE, SECTIONS } from "./sections";
+import { SECTIONS, TAB_ORDER } from "./sections";
 import { Sidebar } from "./sidebar";
 import { TabBar } from "./tab-bar";
 import { TopBar } from "./top-bar";
 
-/** The app shell around the four sections: tabs and a top bar on phones, a sidebar on wide web. */
+/** The app shell around the four sections: tabs and a top bar on phones; on wide web a sidebar holds all of it. */
 export const TabsLayout = () => {
 	const { i18n } = useLingui();
 	const wide = useIsWide();
 	const colors = useColors();
-	const [home, entries, budgets, reports] = SECTIONS;
 
 	return (
 		<QuickAddProvider>
@@ -25,26 +24,23 @@ export const TabsLayout = () => {
 				<View className="flex-1">
 					<Tabs
 						screenOptions={{
+							// On wide web the sidebar carries the pill, Me & household and Notifications.
+							headerShown: !wide,
 							header: () => <TopBar />,
 							sceneStyle: { backgroundColor: colors.bg },
 						}}
 						tabBar={(props) => (wide ? null : <TabBar {...props} />)}
 					>
-						{[home, entries].map((section) => (
-							<Tabs.Screen
-								key={section.route}
-								name={section.route}
-								options={{ title: i18n._(section.title) }}
-							/>
-						))}
-						<Tabs.Screen name={ADD_ROUTE} />
-						{[budgets, reports].map((section) => (
-							<Tabs.Screen
-								key={section.route}
-								name={section.route}
-								options={{ title: i18n._(section.title) }}
-							/>
-						))}
+						{TAB_ORDER.map((route) => {
+							const section = SECTIONS.find((s) => s.route === route);
+							return (
+								<Tabs.Screen
+									key={route}
+									name={route}
+									options={section ? { title: i18n._(section.title) } : {}}
+								/>
+							);
+						})}
 					</Tabs>
 				</View>
 			</View>

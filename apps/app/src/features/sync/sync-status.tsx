@@ -11,22 +11,47 @@ import { Text } from "@/components/ui/text";
 /** A local change the server rejected (CONTEXT.md: Rejected change). */
 export type RejectedChange = typeof uploadErrors.$inferSelect;
 
-const describeChange = ({
-	op,
-	table_name,
-}: RejectedChange): MessageDescriptor => {
-	if (table_name === "households") {
-		if (op === "PUT") return msg`New household`;
-		if (op === "DELETE") return msg`Deleting a household`;
-		return msg`Change to a household`;
-	}
-	if (table_name === "memberships") {
-		if (op === "PUT") return msg`New membership`;
-		if (op === "DELETE") return msg`Deleting a membership`;
-		return msg`Change to a membership`;
-	}
-	return msg`A change`;
+type Described = { title: MessageDescriptor; dismiss: MessageDescriptor };
+
+/** Whole sentences per case, so translators never get a noun phrase spliced into a sentence. */
+const CHANGES: Record<string, Record<RejectedChange["op"], Described>> = {
+	households: {
+		PUT: {
+			title: msg`A new household couldn't sync`,
+			dismiss: msg`Dismiss: new household`,
+		},
+		PATCH: {
+			title: msg`A change to a household couldn't sync`,
+			dismiss: msg`Dismiss: change to a household`,
+		},
+		DELETE: {
+			title: msg`Deleting a household couldn't sync`,
+			dismiss: msg`Dismiss: deleting a household`,
+		},
+	},
+	memberships: {
+		PUT: {
+			title: msg`A new membership couldn't sync`,
+			dismiss: msg`Dismiss: new membership`,
+		},
+		PATCH: {
+			title: msg`A change to a membership couldn't sync`,
+			dismiss: msg`Dismiss: change to a membership`,
+		},
+		DELETE: {
+			title: msg`Deleting a membership couldn't sync`,
+			dismiss: msg`Dismiss: deleting a membership`,
+		},
+	},
 };
+
+const UNKNOWN_CHANGE: Described = {
+	title: msg`A change couldn't sync`,
+	dismiss: msg`Dismiss this change`,
+};
+
+const describeChange = ({ op, table_name }: RejectedChange): Described =>
+	CHANGES[table_name]?.[op] ?? UNKNOWN_CHANGE;
 
 /** The reason, translated; anything unexpected shows the server's own message. */
 const describeReason = ({
@@ -57,10 +82,11 @@ export const SyncStatus = ({
 	return (
 		<View className="gap-4">
 			<Text role="status">
-				{connected
-					? t`Online.`
-					: t`Offline. Changes sync when you're back online.`}
-				{rejectedChanges.length === 0 && ` ${t`Every change synced.`}`}
+				{!connected
+					? t`Offline. Changes sync when you're back online.`
+					: rejectedChanges.length === 0
+						? t`Online. Every change synced.`
+						: t`Online.`}
 			</Text>
 			{rejectedChanges.length > 0 && (
 				<View
@@ -68,7 +94,7 @@ export const SyncStatus = ({
 					role="list"
 				>
 					{rejectedChanges.map((change) => {
-						const what = i18n._(describeChange(change));
+						const described = describeChange(change);
 						const reason = describeReason(change);
 						return (
 							<Card
@@ -76,12 +102,12 @@ export const SyncStatus = ({
 								key={change.id}
 								role="listitem"
 							>
-								<Text variant="label">{t`${what} couldn't sync`}</Text>
+								<Text variant="label">{i18n._(described.title)}</Text>
 								<Text variant="muted">
 									{typeof reason === "string" ? reason : i18n._(reason)}
 								</Text>
 								<Button
-									accessibilityLabel={t`Dismiss: ${what}`}
+									accessibilityLabel={i18n._(described.dismiss)}
 									onPress={() => onDismiss(change.id)}
 									variant="secondary"
 								>

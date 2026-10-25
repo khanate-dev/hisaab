@@ -60,6 +60,7 @@
 		"@jest/globals": "catalog:",
 		"@lingui/babel-plugin-lingui-macro": "catalog:",
 		"@lingui/cli": "catalog:",
+		"@lingui/format-po": "catalog:",
 		"@react-native/metro-config": "catalog:",
 		"@testing-library/react-native": "catalog:",
 		"@types/react": "catalog:",
@@ -69,40 +70,5 @@
 		"tailwindcss": "catalog:",
 		"test-renderer": "catalog:",
 		"typescript": "catalog:"
-	},
-	"jest": {
-		"testTimeout": 20000,
-		"projects": [
-			{
-				"displayName": "ios",
-				"preset": "jest-expo/ios",
-				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg|@lingui|@messageformat))",
-					"/node_modules/react-native-reanimated/plugin/",
-					"/node_modules/@react-native/babel-preset/"
-				],
-				"moduleNameMapper": {
-					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
-				},
-				"transform": {
-					"\\.mjs$": "babel-jest"
-				}
-			},
-			{
-				"displayName": "android",
-				"preset": "jest-expo/android",
-				"transformIgnorePatterns": [
-					"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@powersync|drizzle-orm|@rn-primitives|lucide-react-native|nativewind|react-native-css-interop|react-native-svg|@lingui|@messageformat))",
-					"/node_modules/react-native-reanimated/plugin/",
-					"/node_modules/@react-native/babel-preset/"
-				],
-				"moduleNameMapper": {
-					"^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
-				},
-				"transform": {
-					"\\.mjs$": "babel-jest"
-				}
-			}
-		]
 	}
 }

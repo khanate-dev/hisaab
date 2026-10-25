@@ -103,6 +103,39 @@ describe("app writes to synced tables carry their contract version", () => {
 	});
 });
 
+describe("app styling uses logical properties (ADR-0008)", () => {
+	const file = "apps/app/src/sample.tsx";
+
+	it.each([
+		['export const A = () => <View className="ml-2" />;'],
+		['export const A = () => <View className="flex pr-4" />;'],
+		['export const A = () => <View className="md:pl-3" />;'],
+		['export const A = () => <View className="border-l-2" />;'],
+		['export const A = () => <View className="rounded-tr-card" />;'],
+		['export const A = () => <Text className="text-left" />;'],
+		['export const A = () => <View className="absolute left-0" />;'],
+		["export const A = () => <View style={{ marginLeft: 4 }} />;"],
+		["export const A = () => <View style={{ paddingRight: 4 }} />;"],
+		['export const A = () => <Text style={{ textAlign: "right" }} />;'],
+	])("rejects %s", async (code) => {
+		expect(await errorsFor(file, code)).toContain("hisaab/logical-properties");
+	});
+
+	it.each([
+		[
+			'export const A = () => <View className="ms-2 pe-4 border-s-2 rounded-t-card text-start start-0 px-3 mx-auto" />;',
+		],
+		[
+			"export const A = () => <View style={{ marginStart: 4, paddingInline: 8, marginTop: 2 }} />;",
+		],
+		['export const A = () => <Text style={{ textAlign: "center" }} />;'],
+	])("accepts %s", async (code) => {
+		expect(await errorsFor(file, code)).not.toContain(
+			"hisaab/logical-properties",
+		);
+	});
+});
+
 describe("device code never aggregates money in SQL", () => {
 	it.each([
 		[

@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 
-import { HouseholdPill } from "./household-switcher";
+import { HouseholdPill } from "./household-pill";
 import { useQuickAdd } from "./quick-add";
-import { SECTIONS } from "./sections";
+import { SECTIONS, SIDEBAR_EXTRAS } from "./sections";
 
-/** Wide web (from 1024px): the household pill, then + New entry, then every section (Navigation ticket, #17). */
+/** Wide web (from 1024px): the household pill, then + New entry, then every section, Me & household and Notifications. */
 export const Sidebar = () => {
 	const { t, i18n } = useLingui();
 	const quickAdd = useQuickAdd();
@@ -32,7 +32,7 @@ export const Sidebar = () => {
 				<Text variant="label">{t`New entry`}</Text>
 			</Button>
 			<View className="gap-1">
-				{SECTIONS.map((section) => {
+				{[...SECTIONS, ...SIDEBAR_EXTRAS].map((section) => {
 					const current = pathname === section.href;
 					const title = i18n._(section.title);
 					return (
