@@ -1,5 +1,6 @@
 import { createConnector } from "@hisaab/app/connector";
 import { CONTRACT_VERSION } from "@hisaab/client-schema";
+import type { Upcasters } from "@hisaab/domain";
 import type {
 	AbstractPowerSyncDatabase,
 	PowerSyncBackendConnector,
@@ -27,38 +28,40 @@ export const openSyncStream = async (token: string) => {
 	return { status: response.status, body: "" };
 };
 
-/**
- * Connects a @powersync/node client as the User, resolved once the first sync completes.
- */
-/** `contractVersion` plays an app build of that version; it defaults to this build. */
-export const connectClient = async (
-	user: SignedInUser,
-	contractVersion = CONTRACT_VERSION,
-) => {
+/** An app build: the contract version it speaks and its upcasters. Defaults to this build. */
+export type Build = { contractVersion?: number; upcasters?: Upcasters };
+
+/** Connects a @powersync/node client as the User, running `build`, resolved once the first sync completes. */
+export const connectClient = async (user: SignedInUser, build: Build = {}) => {
 	const db = openLocalDatabase();
 	// The connector the app ships, writing through RLS as this User.
-	const connector = connectorFor(user, contractVersion);
+	const connector = connectorFor(user, build);
 	connectors.set(db, connector);
 	await db.connect(connector);
 	await db.waitForFirstSync();
 	return db;
 };
 
-const connectorFor = (user: SignedInUser, contractVersion: number) =>
+const connectorFor = (
+	user: SignedInUser,
+	{ contractVersion = CONTRACT_VERSION, upcasters }: Build,
+) =>
 	createConnector({
 		supabase: userClient(user, contractVersion),
 		powersyncUrl: stack.powersyncUrl,
 		getToken: async () => user.accessToken,
+		contractVersion,
+		...(upcasters && { upcasters }),
 	});
 
-/** Installs a newer build: the same local database and queue, a connector speaking `contractVersion`. */
+/** Installs another build: the same local database and queue, a connector for `build`. */
 export const updateApp = async (
 	db: AbstractPowerSyncDatabase,
 	user: SignedInUser,
-	contractVersion = CONTRACT_VERSION,
+	build: Build = {},
 ) => {
 	await db.disconnect();
-	const connector = connectorFor(user, contractVersion);
+	const connector = connectorFor(user, build);
 	connectors.set(db, connector);
 	await db.connect(connector);
 };

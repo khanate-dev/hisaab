@@ -2,6 +2,12 @@
 // Downloads come through PowerSync and are never gated.
 // The same rule runs in Postgres (private.check_contract_version) and in Edge Functions (through this module).
 
+/**
+ * The contract version this build speaks. Bump it only for a contract change (a dropped or tightened column or
+ * table), never for an ordinary release, and add the change's upcaster to UPCASTERS in the same PR.
+ */
+export const CONTRACT_VERSION = 1;
+
 export const CONTRACT_VERSION_HEADER = "x-contract-version";
 
 /** The error code of the gate's HTTP 426, from PostgREST (SQLSTATE PT426) and Edge Functions alike. */

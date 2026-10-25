@@ -1,10 +1,20 @@
-import { NO_ROWS } from "@hisaab/client-schema";
-import { UPDATE_REQUIRED_CODE } from "@hisaab/domain";
+import {
+	CONTRACT_VERSION,
+	NO_ROWS,
+	readStamp,
+	UNMAPPABLE,
+} from "@hisaab/client-schema";
+import {
+	type QueuedOp,
+	UPCASTERS,
+	type Upcasters,
+	UPDATE_REQUIRED_CODE,
+	upcast,
+} from "@hisaab/domain";
 import {
 	type AbstractPowerSyncDatabase,
 	type CrudEntry,
 	type PowerSyncBackendConnector,
-	UpdateType,
 } from "@powersync/common";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
@@ -17,6 +27,9 @@ type ConnectorOptions = {
 	getToken: () => Promise<string | null>;
 	/** Called when the server answers 426: this build is below its minimum contract version (ADR-0009). */
 	onUpdateRequired?: () => void;
+	/** The contract version this build speaks, and the upcasters that bring older queued ops up to it. */
+	contractVersion?: number;
+	upcasters?: Upcasters;
 };
 
 type Outcome =
@@ -33,11 +46,29 @@ const isRejection = (error: PostgrestError) =>
 
 const quoted = (identifier: string) => `"${identifier.replaceAll('"', '""')}"`;
 
-const localRow = (db: AbstractPowerSyncDatabase, entry: CrudEntry) =>
-	db.getOptional<Record<string, unknown>>(
+/**
+ * PowerSync's own columns (`_metadata` for the contract stamp, `_deleted`) start with an underscore and are never
+ * sent; Hisaab's columns never do. The stamp travels as the op's metadata instead.
+ */
+const withoutPowerSyncColumns = (values: Record<string, unknown>) =>
+	Object.fromEntries(
+		Object.entries(values).filter(([column]) => !column.startsWith("_")),
+	);
+
+const localRow = async (db: AbstractPowerSyncDatabase, entry: CrudEntry) => {
+	const row = await db.getOptional<Record<string, unknown>>(
 		`SELECT * FROM ${quoted(entry.table)} WHERE id = ?`,
 		[entry.id],
 	);
+	return row === null ? null : withoutPowerSyncColumns(row);
+};
+
+const queuedOp = (entry: CrudEntry): QueuedOp => ({
+	table: entry.table,
+	op: entry.op,
+	id: entry.id,
+	data: entry.opData ? withoutPowerSyncColumns(entry.opData) : null,
+});
 
 type Write = {
 	sent: unknown;
@@ -48,48 +79,70 @@ const write = async (
 	supabase: SupabaseClient,
 	db: AbstractPowerSyncDatabase,
 	entry: CrudEntry,
+	op: QueuedOp,
 ): Promise<Write | null> => {
-	const table = supabase.from(entry.table);
-	switch (entry.op) {
-		case UpdateType.PUT: {
-			const row = { ...entry.opData, id: entry.id };
+	const table = supabase.from(op.table);
+	switch (op.op) {
+		case "PUT": {
+			const row = { ...op.data, id: op.id };
 			return { sent: row, result: table.upsert(row).select("id") };
 		}
-		case UpdateType.PATCH: {
+		case "PATCH": {
 			// Last writer wins per row (ADR-0007): send the whole local row, never PowerSync's changed fields.
+			// The row is read from the local table in this build's schema, so it is already this build's shape; the op's
+			// own (upcast) values go on top, so an older build's change lands even when its column was renamed. Any
+			// later change to the same row is queued after this op and overwrites it when it uploads.
 			const row = await localRow(db, entry);
 			// Deleted locally since: the DELETE queued after this update speaks for the row.
 			if (row === null) return null;
-			const { id: _id, ...columns } = row;
+			const { id: _id, ...columns } = { ...row, ...op.data };
 			return {
 				sent: columns,
-				result: table.update(columns).eq("id", entry.id).select("id"),
+				result: table.update(columns).eq("id", op.id).select("id"),
 			};
 		}
-		case UpdateType.DELETE:
+		case "DELETE":
 			return {
 				sent: null,
-				result: table.delete().eq("id", entry.id).select("id"),
+				result: table.delete().eq("id", op.id).select("id"),
 			};
 	}
 };
 
 /** A delete that matched nothing is done if the row is gone; if the User can still read it, RLS refused it. */
-const stillReadable = async (supabase: SupabaseClient, entry: CrudEntry) => {
+const stillReadable = async (supabase: SupabaseClient, op: QueuedOp) => {
 	const { data, error } = await supabase
-		.from(entry.table)
+		.from(op.table)
 		.select("id")
-		.eq("id", entry.id);
+		.eq("id", op.id);
 	if (error) throw error;
 	return data.length > 0;
 };
 
 const upload = async (
-	{ supabase, onUpdateRequired }: ConnectorOptions,
+	{
+		supabase,
+		onUpdateRequired,
+		contractVersion = CONTRACT_VERSION,
+		upcasters = UPCASTERS,
+	}: ConnectorOptions,
 	db: AbstractPowerSyncDatabase,
 	entry: CrudEntry,
 ): Promise<Outcome> => {
-	const pending = await write(supabase, db, entry);
+	// ADR-0009: bring an op queued by an older build up to this build's contract. An unstamped op is this build's own.
+	const original = queuedOp(entry);
+	const writtenUnder = readStamp(entry.metadata) ?? contractVersion;
+	const op = upcast(original, writtenUnder, contractVersion, upcasters);
+	if (op === null) {
+		return {
+			rejected: true,
+			code: UNMAPPABLE,
+			message: `This change was made by an app speaking contract version ${writtenUnder} and can't be applied.`,
+			sent: original.data,
+		};
+	}
+
+	const pending = await write(supabase, db, entry, op);
 	if (pending === null) return { rejected: false };
 
 	const { data, error } = await pending.result;
@@ -108,7 +161,7 @@ const upload = async (
 	// RLS hides a rejected UPDATE or DELETE as "0 rows": that is a rejection, not a success.
 	if (
 		data?.length === 0 &&
-		(entry.op !== UpdateType.DELETE || (await stillReadable(supabase, entry)))
+		(op.op !== "DELETE" || (await stillReadable(supabase, op)))
 	) {
 		return {
 			rejected: true,

@@ -9,8 +9,10 @@
 	"devDependencies": {
 		"@hisaab/app": "workspace:*",
 		"@hisaab/client-schema": "workspace:*",
+		"@hisaab/domain": "workspace:*",
 		"@powersync/common": "catalog:",
 		"@powersync/node": "catalog:",
+		"@powersync/service-sync-rules": "catalog:",
 		"@supabase/supabase-js": "catalog:",
 		"@types/node": "catalog:",
 		"better-sqlite3": "catalog:",

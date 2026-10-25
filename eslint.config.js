@@ -6,6 +6,7 @@ import { builtinModules } from "node:module";
 import tseslint from "typescript-eslint";
 
 import { noSqlMoneyAggregates } from "./tooling/eslint/no-sql-money-aggregates.js";
+import { stampLocalWrites } from "./tooling/eslint/stamp-local-writes.js";
 
 const DEVICE_CODE = [
 	"apps/app/**/*.{ts,tsx}",
@@ -47,9 +48,17 @@ export default defineConfig(
 	{
 		files: DEVICE_CODE,
 		plugins: {
-			hisaab: { rules: { "no-sql-money-aggregates": noSqlMoneyAggregates } },
+			hisaab: {
+				rules: {
+					"no-sql-money-aggregates": noSqlMoneyAggregates,
+					"stamp-local-writes": stampLocalWrites,
+				},
+			},
 		},
-		rules: { "hisaab/no-sql-money-aggregates": "error" },
+		rules: {
+			"hisaab/no-sql-money-aggregates": "error",
+			"hisaab/stamp-local-writes": "error",
+		},
 	},
 	{
 		// tests/sync runs the app's upload connector in Node, so it can't reach React Native or Expo.

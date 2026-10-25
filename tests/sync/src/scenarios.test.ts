@@ -1,3 +1,4 @@
+import { CONTRACT_VERSION, stamped } from "@hisaab/client-schema";
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
 import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -35,13 +36,16 @@ const localName = async (
 		)
 	)?.name;
 
+/** Renames as the app does: the write is stamped with the contract version of the build making it. */
 const rename = (
 	device: AbstractPowerSyncDatabase,
 	household: string,
 	name: string,
+	contractVersion = CONTRACT_VERSION,
 ) =>
-	device.execute("UPDATE households SET name = ? WHERE id = ?", [
+	device.execute("UPDATE households SET name = ?, _metadata = ? WHERE id = ?", [
 		name,
+		stamped({}, contractVersion)._metadata,
 		household,
 	]);
 
@@ -190,10 +194,14 @@ describe("sync scenarios", () => {
 
 	it("a too-old build still downloads, and its writes wait out the 426s until the app is updated", async () => {
 		const { users, household } = await seedHousehold({ alice: "admin" });
-		const alice = await connectClient(users.alice, 0);
-		expect(await localName(alice, household)).toBe("Family");
+		const alice = await connectClient(users.alice, { contractVersion: 0 });
+		// Downloads aren't gated; the seeded row may land just after the first sync, so wait for it.
+		await vi.waitFor(
+			async () => expect(await localName(alice, household)).toBe("Family"),
+			{ timeout: 10_000 },
+		);
 
-		await rename(alice, household, "Renamed by an old build");
+		await rename(alice, household, "Renamed by an old build", 0);
 		await vi.waitFor(
 			() =>
 				expect(alice.currentStatus.dataFlowStatus.uploadError).toBeDefined(),
@@ -209,5 +217,54 @@ describe("sync scenarios", () => {
 		await waitForUploads(alice);
 		expect(await serverName(household)).toBe("Renamed by an old build");
 		expect(await uploadErrors(alice)).toEqual([]);
+	});
+
+	it("an op queued by an older build is upcast by the newer one before it uploads", async () => {
+		const { users, household } = await seedHousehold({ alice: "admin" });
+		const alice = await connectClient(users.alice);
+
+		await goOffline(alice);
+		await rename(alice, household, "Home", 1);
+		// The update speaks contract version 3, and its chain maps a version 1 op through 2 and 3.
+		await updateApp(alice, users.alice, {
+			contractVersion: 3,
+			upcasters: {
+				2: (op) => ({
+					...op,
+					data: { ...op.data, name: `${op.data?.["name"]} (v2)` },
+				}),
+				3: (op) => ({
+					...op,
+					data: { ...op.data, name: `${op.data?.["name"]} (v3)` },
+				}),
+			},
+		});
+		await waitForUploads(alice);
+
+		expect(await serverName(household)).toBe("Home (v2) (v3)");
+		expect(await uploadErrors(alice)).toEqual([]);
+	});
+
+	it("an op the newer build's chain can't map is kept as a couldn't-sync item", async () => {
+		const { users, household } = await seedHousehold({ alice: "admin" });
+		const alice = await connectClient(users.alice);
+
+		await goOffline(alice);
+		await rename(alice, household, "Home", 1);
+		await updateApp(alice, users.alice, {
+			contractVersion: 2,
+			upcasters: { 2: () => null },
+		});
+		await waitForUploads(alice);
+
+		expect(await serverName(household)).toBe("Family");
+		expect(await uploadErrors(alice)).toEqual([
+			{
+				table_name: "households",
+				row_id: household,
+				op: "PATCH",
+				code: "unmappable",
+			},
+		]);
 	});
 });

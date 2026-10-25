@@ -11,7 +11,6 @@
 	"dependencies": {
 		"@hisaab/domain": "workspace:*",
 		"@powersync/common": "catalog:",
-		"@powersync/drizzle-driver": "catalog:",
 		"drizzle-orm": "catalog:"
 	},
 	"devDependencies": {
