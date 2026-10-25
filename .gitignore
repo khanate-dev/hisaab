@@ -20,3 +20,6 @@ apps/app/public/@powersync
 # Expo prebuild output (continuous native generation)
 apps/app/android
 apps/app/ios
+
+# Written and removed by tooling/stack/functions-smoke.sh
+supabase/functions/contract-probe

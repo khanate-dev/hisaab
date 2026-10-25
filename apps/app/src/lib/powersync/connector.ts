@@ -1,4 +1,5 @@
 import { NO_ROWS } from "@hisaab/client-schema";
+import { UPDATE_REQUIRED_CODE } from "@hisaab/domain";
 import {
 	type AbstractPowerSyncDatabase,
 	type CrudEntry,
@@ -14,6 +15,8 @@ type ConnectorOptions = {
 	supabase: SupabaseClient;
 	powersyncUrl: string;
 	getToken: () => Promise<string | null>;
+	/** Called when the server answers 426: this build is below its minimum contract version (ADR-0009). */
+	onUpdateRequired?: () => void;
 };
 
 type Outcome =
@@ -23,7 +26,7 @@ type Outcome =
 /**
  * Only errors about this write itself are final: RLS or privileges (42501), constraints (23) and bad values (22).
  * Everything else retries: network, an unreachable database or pool (PGRST0xx), an expired token (PGRST3xx), and
- * schema mismatches (42703, 42P01, PGRST2xx) from a client ahead of the server, which the contract version gate handles.
+ * schema mismatches (42703, 42P01, PGRST2xx) while the server catches up, and the contract version gate's 426.
  */
 const isRejection = (error: PostgrestError) =>
 	error.code === "42501" || /^(22|23)/.test(error.code);
@@ -82,7 +85,7 @@ const stillReadable = async (supabase: SupabaseClient, entry: CrudEntry) => {
 };
 
 const upload = async (
-	supabase: SupabaseClient,
+	{ supabase, onUpdateRequired }: ConnectorOptions,
 	db: AbstractPowerSyncDatabase,
 	entry: CrudEntry,
 ): Promise<Outcome> => {
@@ -91,6 +94,8 @@ const upload = async (
 
 	const { data, error } = await pending.result;
 	if (error) {
+		// A too-old build waits: its queue is kept until the app is updated, and nothing becomes a Rejected change.
+		if (error.code === UPDATE_REQUIRED_CODE) onUpdateRequired?.();
 		// Throwing keeps the transaction queued, and PowerSync retries it later.
 		if (!isRejection(error)) throw error;
 		return {
@@ -137,25 +142,41 @@ const recordRejection = (
 		],
 	);
 
-export const createConnector = ({
-	supabase,
-	powersyncUrl,
-	getToken,
-}: ConnectorOptions): PowerSyncBackendConnector => ({
-	fetchCredentials: async () => {
-		const token = await getToken();
-		return token === null ? null : { endpoint: powersyncUrl, token };
-	},
-	uploadData: async (db) => {
-		const transaction = await db.getNextCrudTransaction();
-		if (!transaction) return;
+export const createConnector = (
+	options: ConnectorOptions,
+): PowerSyncBackendConnector => {
+	// After a 426 the queue is paused: this build can't upload again, so later attempts stop before the network.
+	let updateRequired = false;
+	const uploadOptions: ConnectorOptions = {
+		...options,
+		onUpdateRequired: () => {
+			updateRequired = true;
+			options.onUpdateRequired?.();
+		},
+	};
 
-		for (const entry of transaction.crud) {
-			const outcome = await upload(supabase, db, entry);
-			// A rejected change is kept locally and the transaction completes, so the next sync restores the server's row.
-			if (outcome.rejected)
-				await recordRejection(db, transaction.transactionId, entry, outcome);
-		}
-		await transaction.complete();
-	},
-});
+	return {
+		fetchCredentials: async () => {
+			const token = await options.getToken();
+			return token === null ? null : { endpoint: options.powersyncUrl, token };
+		},
+		uploadData: async (db) => {
+			if (updateRequired)
+				throw new Error(
+					"Update required: uploads wait for a newer build of the app.",
+				);
+			const transaction = await db.getNextCrudTransaction();
+			if (!transaction) return;
+
+			// A retried transaction replays entries that already landed; that is safe because every write is
+			// idempotent (an upsert, a whole-row update, or a delete that tolerates a missing row).
+			for (const entry of transaction.crud) {
+				const outcome = await upload(uploadOptions, db, entry);
+				// A rejected change is kept locally and the transaction completes, so the next sync restores the server's row.
+				if (outcome.rejected)
+					await recordRejection(db, transaction.transactionId, entry, outcome);
+			}
+			await transaction.complete();
+		},
+	};
+};

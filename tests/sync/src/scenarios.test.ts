@@ -6,6 +6,7 @@ import {
 	connectClient,
 	goOffline,
 	goOnline,
+	updateApp,
 	waitForUploads,
 } from "./powersync";
 import { seedHousehold } from "./seed";
@@ -185,5 +186,28 @@ describe("sync scenarios", () => {
 			async () => expect(await localName(bob, household)).toBe("Family"),
 			{ timeout: 10_000 },
 		);
+	});
+
+	it("a too-old build still downloads, and its writes wait out the 426s until the app is updated", async () => {
+		const { users, household } = await seedHousehold({ alice: "admin" });
+		const alice = await connectClient(users.alice, 0);
+		expect(await localName(alice, household)).toBe("Family");
+
+		await rename(alice, household, "Renamed by an old build");
+		await vi.waitFor(
+			() =>
+				expect(alice.currentStatus.dataFlowStatus.uploadError).toBeDefined(),
+			{
+				timeout: 15_000,
+			},
+		);
+		expect((await alice.getUploadQueueStats()).count).toBe(1);
+		expect(await uploadErrors(alice)).toEqual([]);
+		expect(await serverName(household)).toBe("Family");
+
+		await updateApp(alice, users.alice);
+		await waitForUploads(alice);
+		expect(await serverName(household)).toBe("Renamed by an old build");
+		expect(await uploadErrors(alice)).toEqual([]);
 	});
 });

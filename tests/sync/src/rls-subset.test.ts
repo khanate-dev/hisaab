@@ -6,7 +6,7 @@ import { seedHouseholds } from "./seed";
 import { type SignedInUser, userClient } from "./users";
 
 // ADR-0001 amendment: every row a Sync Stream sends a User must also be readable by them under RLS.
-const SYNCED_TABLES = ["households", "memberships"] as const;
+const SYNCED_TABLES = ["app_config", "households", "memberships"] as const;
 
 const syncedIds = async (
 	device: AbstractPowerSyncDatabase,

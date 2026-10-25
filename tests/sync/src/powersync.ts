@@ -1,4 +1,5 @@
 import { createConnector } from "@hisaab/app/connector";
+import { CONTRACT_VERSION } from "@hisaab/client-schema";
 import type {
 	AbstractPowerSyncDatabase,
 	PowerSyncBackendConnector,
@@ -29,18 +30,37 @@ export const openSyncStream = async (token: string) => {
 /**
  * Connects a @powersync/node client as the User, resolved once the first sync completes.
  */
-export const connectClient = async (user: SignedInUser) => {
+/** `contractVersion` plays an app build of that version; it defaults to this build. */
+export const connectClient = async (
+	user: SignedInUser,
+	contractVersion = CONTRACT_VERSION,
+) => {
 	const db = openLocalDatabase();
 	// The connector the app ships, writing through RLS as this User.
-	const connector = createConnector({
-		supabase: userClient(user),
-		powersyncUrl: stack.powersyncUrl,
-		getToken: async () => user.accessToken,
-	});
+	const connector = connectorFor(user, contractVersion);
 	connectors.set(db, connector);
 	await db.connect(connector);
 	await db.waitForFirstSync();
 	return db;
+};
+
+const connectorFor = (user: SignedInUser, contractVersion: number) =>
+	createConnector({
+		supabase: userClient(user, contractVersion),
+		powersyncUrl: stack.powersyncUrl,
+		getToken: async () => user.accessToken,
+	});
+
+/** Installs a newer build: the same local database and queue, a connector speaking `contractVersion`. */
+export const updateApp = async (
+	db: AbstractPowerSyncDatabase,
+	user: SignedInUser,
+	contractVersion = CONTRACT_VERSION,
+) => {
+	await db.disconnect();
+	const connector = connectorFor(user, contractVersion);
+	connectors.set(db, connector);
+	await db.connect(connector);
 };
 
 const connectors = new WeakMap<

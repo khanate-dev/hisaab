@@ -1,4 +1,4 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { ROLES } from "./roles";
 
@@ -18,6 +18,12 @@ export const memberships = sqliteTable("memberships", {
 	user_id: text("user_id").notNull(),
 	role: text("role", { enum: ROLES }).notNull(),
 	created_at: text("created_at").notNull(),
+});
+
+/** The one global row: the minimum contract version the server accepts writes from (ADR-0009). */
+export const appConfig = sqliteTable("app_config", {
+	id: text("id").primaryKey(),
+	min_contract_version: integer("min_contract_version").notNull(),
 });
 
 // Local-only: never synced. Rejected changes, shown as "couldn't sync" items (ADR-0007).
