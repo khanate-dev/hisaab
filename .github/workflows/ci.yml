@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; every main commit keeps its run, since deploy waits on it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -20,6 +21,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: pnpm check
 
@@ -29,6 +32,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       # A fresh runner has an empty database, so this applies every migration from zero.
       - name: Start the local stack
@@ -39,6 +44,11 @@ jobs:
         run: pnpm test:sync
       - name: Edge Functions smoke run
         run: pnpm test:functions
-      - name: PowerSync logs
+      - name: Stack logs
         if: failure()
-        run: docker compose -f powersync/compose.yaml logs powersync
+        run: |
+          for container in $(docker ps --all --filter name=hisaab --format '{{.Names}}'); do
+            echo "::group::$container"
+            docker logs --tail 200 "$container" 2>&1
+            echo "::endgroup::"
+          done
