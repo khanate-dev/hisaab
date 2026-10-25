@@ -9,6 +9,7 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"devDependencies": {
+		"fast-check": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}

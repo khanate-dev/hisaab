@@ -9,6 +9,7 @@
 	"devDependencies": {
 		"@hisaab/app": "workspace:*",
 		"@hisaab/client-schema": "workspace:*",
+		"@hisaab/domain": "workspace:*",
 		"@powersync/common": "catalog:",
 		"@powersync/node": "catalog:",
 		"@supabase/supabase-js": "catalog:",

@@ -426,3 +426,6 @@ enabled = true
 
 [functions.health]
 verify_jwt = false
+
+[functions.contract-probe]
+verify_jwt = false

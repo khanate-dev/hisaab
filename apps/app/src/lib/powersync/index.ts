@@ -3,6 +3,7 @@ import { wrapPowerSyncWithDrizzle } from "@powersync/drizzle-driver";
 
 import { env } from "../env";
 import { supabase } from "../supabase";
+import { markUpdateRequired } from "../update-required";
 import { createConnector } from "./connector";
 import { connectOptions, openDatabase } from "./open-database";
 
@@ -16,6 +17,7 @@ export const db = wrapPowerSyncWithDrizzle(powersync, {
 const connector = createConnector({
 	supabase,
 	powersyncUrl: env.powersyncUrl,
+	onUpdateRequired: markUpdateRequired,
 	getToken: async () =>
 		(await supabase.auth.getSession()).data.session?.access_token ?? null,
 });

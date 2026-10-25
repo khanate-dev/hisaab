@@ -1,3 +1,5 @@
+import { CONTRACT_VERSION } from "@hisaab/client-schema";
+import { CONTRACT_VERSION_HEADER } from "@hisaab/domain";
 import { createClient } from "@supabase/supabase-js";
 
 import { stack } from "./stack";
@@ -11,10 +13,24 @@ export const adminClient = () =>
 	createClient(stack.supabaseUrl, stack.secretKey, noSession);
 
 /** A client acting as the signed-in User, so every read goes through RLS. */
-export const userClient = (user: SignedInUser) =>
+/**
+ * A client acting as the signed-in User, so every read goes through RLS. It sends this build's contract version,
+ * as the app does; pass another (or null for none) to play an older or broken build.
+ */
+export const userClient = (
+	user: SignedInUser,
+	contractVersion: number | null = CONTRACT_VERSION,
+) =>
 	createClient(stack.supabaseUrl, stack.publishableKey, {
 		...noSession,
-		global: { headers: { Authorization: `Bearer ${user.accessToken}` } },
+		global: {
+			headers: {
+				Authorization: `Bearer ${user.accessToken}`,
+				...(contractVersion === null
+					? {}
+					: { [CONTRACT_VERSION_HEADER]: String(contractVersion) }),
+			},
+		},
 	});
 
 /** Creates a fresh User and signs them in through the email OTP flow. */

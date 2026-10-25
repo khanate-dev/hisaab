@@ -14,7 +14,12 @@ type ConnectorOptions = {
 	supabase: SupabaseClient;
 	powersyncUrl: string;
 	getToken: () => Promise<string | null>;
+	/** Called when the server answers 426: this build is below its minimum contract version (ADR-0009). */
+	onUpdateRequired?: () => void;
 };
+
+/** PostgREST's code for the contract version gate's HTTP 426. */
+const UPDATE_REQUIRED = "PT426";
 
 type Outcome =
 	| { rejected: false }
@@ -23,7 +28,7 @@ type Outcome =
 /**
  * Only errors about this write itself are final: RLS or privileges (42501), constraints (23) and bad values (22).
  * Everything else retries: network, an unreachable database or pool (PGRST0xx), an expired token (PGRST3xx), and
- * schema mismatches (42703, 42P01, PGRST2xx) from a client ahead of the server, which the contract version gate handles.
+ * schema mismatches (42703, 42P01, PGRST2xx) from a client ahead of the server, and the contract version gate's 426.
  */
 const isRejection = (error: PostgrestError) =>
 	error.code === "42501" || /^(22|23)/.test(error.code);
@@ -82,7 +87,7 @@ const stillReadable = async (supabase: SupabaseClient, entry: CrudEntry) => {
 };
 
 const upload = async (
-	supabase: SupabaseClient,
+	{ supabase, onUpdateRequired }: ConnectorOptions,
 	db: AbstractPowerSyncDatabase,
 	entry: CrudEntry,
 ): Promise<Outcome> => {
@@ -91,6 +96,8 @@ const upload = async (
 
 	const { data, error } = await pending.result;
 	if (error) {
+		// A too-old build waits: its queue is kept until the app is updated, and nothing becomes a Rejected change.
+		if (error.code === UPDATE_REQUIRED) onUpdateRequired?.();
 		// Throwing keeps the transaction queued, and PowerSync retries it later.
 		if (!isRejection(error)) throw error;
 		return {
@@ -137,21 +144,19 @@ const recordRejection = (
 		],
 	);
 
-export const createConnector = ({
-	supabase,
-	powersyncUrl,
-	getToken,
-}: ConnectorOptions): PowerSyncBackendConnector => ({
+export const createConnector = (
+	options: ConnectorOptions,
+): PowerSyncBackendConnector => ({
 	fetchCredentials: async () => {
-		const token = await getToken();
-		return token === null ? null : { endpoint: powersyncUrl, token };
+		const token = await options.getToken();
+		return token === null ? null : { endpoint: options.powersyncUrl, token };
 	},
 	uploadData: async (db) => {
 		const transaction = await db.getNextCrudTransaction();
 		if (!transaction) return;
 
 		for (const entry of transaction.crud) {
-			const outcome = await upload(supabase, db, entry);
+			const outcome = await upload(options, db, entry);
 			// A rejected change is kept locally and the transaction completes, so the next sync restores the server's row.
 			if (outcome.rejected)
 				await recordRejection(db, transaction.transactionId, entry, outcome);

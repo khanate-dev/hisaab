@@ -19,7 +19,10 @@ type Reply = {
 	error: { code: string; message: string } | null;
 };
 
-const scriptedServer = (reply: (call: Call) => Reply) => {
+const scriptedServer = (
+	reply: (call: Call) => Reply,
+	onUpdateRequired?: () => void,
+) => {
 	const calls: Call[] = [];
 	const from = (table: string) => {
 		const call: Call = { table, action: "select" };
@@ -47,6 +50,7 @@ const scriptedServer = (reply: (call: Call) => Reply) => {
 		supabase: { from } as unknown as SupabaseClient,
 		powersyncUrl: "http://unused",
 		getToken: async () => "token",
+		...(onUpdateRequired && { onUpdateRequired }),
 	});
 	return {
 		calls,
@@ -94,6 +98,21 @@ describe("upload connector", () => {
 		const server = scriptedServer(() => failure(code));
 
 		await expect(server.upload(db)).rejects.toMatchObject({ code });
+		expect(await queued(db)).toBe(1);
+		expect(await rejectedChanges(db)).toEqual([]);
+	});
+
+	it("pauses on 426 and reports that an update is required, without a rejected change", async () => {
+		const db = openLocalDatabase();
+		await insertHousehold(db);
+		let updateRequired = 0;
+		const server = scriptedServer(
+			() => failure("PT426"),
+			() => (updateRequired += 1),
+		);
+
+		await expect(server.upload(db)).rejects.toMatchObject({ code: "PT426" });
+		expect(updateRequired).toBe(1);
 		expect(await queued(db)).toBe(1);
 		expect(await rejectedChanges(db)).toEqual([]);
 	});

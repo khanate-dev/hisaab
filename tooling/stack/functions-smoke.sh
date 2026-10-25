@@ -18,11 +18,20 @@ for _ in $(seq 60); do
 	# Only trust a response once `functions serve` owns the runtime, not the edge runtime `supabase start` runs.
 	if grep -q "Serving functions on" "$log" && body=$(curl --silent --fail --max-time 2 "$url") && [[ $body == '{"ok":true}' ]]; then
 		echo "health: $body"
-		exit 0
+		break
 	fi
 	sleep 1
 done
+if [[ ${body:-} != '{"ok":true}' ]]; then
+	echo "Edge Functions did not serve $url within 60s" >&2
+	cat "$log" >&2
+	exit 1
+fi
 
-echo "Edge Functions did not serve $url within 60s" >&2
-cat "$log" >&2
-exit 1
+# The shared contract version helper (ADR-0009): no header and an old build get 426, a current build passes.
+probe="$api/functions/v1/contract-probe"
+status() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 10 "$probe" "$@"; }
+current=$(node -p 'require("./packages/client-schema/src/contract-version.ts").CONTRACT_VERSION' 2>/dev/null || echo 1)
+results="none:$(status) old:$(status -H "x-contract-version: 0") current:$(status -H "x-contract-version: $current")"
+echo "contract-probe: $results"
+[[ $results == "none:426 old:426 current:200" ]] || { cat "$log" >&2; exit 1; }

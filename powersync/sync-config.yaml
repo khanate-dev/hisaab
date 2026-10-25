@@ -6,6 +6,11 @@ config:
   edition: 3
 
 streams:
+  # The global config row, for every User: a returning device learns it is too old while downloading (ADR-0009).
+  app_config:
+    auto_subscribe: true
+    query: SELECT app_config.id, app_config.min_contract_version FROM app_config
+
   # Every household the User belongs to, and every Membership in those households.
   households:
     auto_subscribe: true
