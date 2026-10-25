@@ -3,7 +3,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 
 import { SyncStatus } from "./sync-status";
 
-const rejection = {
+const rejectedChange = {
 	id: "1:1",
 	table_name: "households",
 	row_id: "h1",
@@ -21,10 +21,10 @@ describe("SyncStatus", () => {
 			<SyncStatus
 				connected
 				onDismiss={onDismiss}
-				rejections={[
-					rejection,
+				rejectedChanges={[
+					rejectedChange,
 					{
-						...rejection,
+						...rejectedChange,
 						id: "1:2",
 						op: "PUT",
 						code: "42501",
@@ -60,7 +60,7 @@ describe("SyncStatus", () => {
 			<SyncStatus
 				connected
 				onDismiss={() => {}}
-				rejections={[]}
+				rejectedChanges={[]}
 			/>,
 		);
 		expect(screen.getByRole("status")).toHaveTextContent(
@@ -74,7 +74,7 @@ describe("SyncStatus", () => {
 			<SyncStatus
 				connected={false}
 				onDismiss={() => {}}
-				rejections={[]}
+				rejectedChanges={[]}
 			/>,
 		);
 		expect(screen.getByRole("status")).toHaveTextContent(/offline/i);

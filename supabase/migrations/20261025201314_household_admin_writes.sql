@@ -22,8 +22,10 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-	if new.personal_user_id is distinct from old.personal_user_id or new.created_at is distinct from old.created_at then
-		raise exception 'personal_user_id and created_at cannot change' using errcode = '42501';
+	if new.id is distinct from old.id
+		or new.personal_user_id is distinct from old.personal_user_id
+		or new.created_at is distinct from old.created_at then
+		raise exception 'id, personal_user_id and created_at cannot change' using errcode = '42501';
 	end if;
 	return new;
 end;

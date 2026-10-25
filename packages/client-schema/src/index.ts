@@ -2,6 +2,7 @@ import { DrizzleAppSchema } from "@powersync/drizzle-driver";
 
 import * as tables from "./tables";
 
+export * from "./rejected-changes";
 export * from "./roles";
 export * from "./tables";
 

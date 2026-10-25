@@ -6,12 +6,12 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/powersync";
 
 /** The local "couldn't sync" items, newest first, as a watched query. */
-export const useRejections = () =>
+export const useRejectedChanges = () =>
 	useQuery(
 		toCompilableQuery(
 			db.select().from(uploadErrors).orderBy(desc(uploadErrors.created_at)),
 		),
 	).data;
 
-export const dismissRejection = (id: string) =>
+export const dismissRejectedChange = (id: string) =>
 	db.delete(uploadErrors).where(eq(uploadErrors.id, id));

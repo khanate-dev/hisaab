@@ -1,15 +1,11 @@
 import { createConnector } from "@hisaab/app/connector";
-import { schema } from "@hisaab/client-schema";
 import type {
 	AbstractPowerSyncDatabase,
 	PowerSyncBackendConnector,
 } from "@powersync/common";
-import { PowerSyncDatabase } from "@powersync/node";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { expect, onTestFinished, vi } from "vitest";
+import { expect, vi } from "vitest";
 
+import { openLocalDatabase } from "./local-db";
 import { stack } from "./stack";
 import { type SignedInUser, userClient } from "./users";
 
@@ -32,20 +28,9 @@ export const openSyncStream = async (token: string) => {
 
 /**
  * Connects a @powersync/node client as the User, resolved once the first sync completes.
- * Call it inside a test: the client is closed and its database directory removed when the test finishes.
  */
 export const connectClient = async (user: SignedInUser) => {
-	const dbLocation = mkdtempSync(join(tmpdir(), "hisaab-sync-"));
-	const db = new PowerSyncDatabase({
-		schema,
-		// Unique per client: PowerSync keys its connection locks by file name, so two clients sharing one stall.
-		database: { dbFilename: `${crypto.randomUUID()}.db`, dbLocation },
-	});
-	onTestFinished(async () => {
-		await db.disconnectAndClear();
-		await db.close();
-		rmSync(dbLocation, { recursive: true, force: true });
-	});
+	const db = openLocalDatabase();
 	// The connector the app ships, writing through RLS as this User.
 	const connector = createConnector({
 		supabase: userClient(user),

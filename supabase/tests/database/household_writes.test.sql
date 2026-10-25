@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(12);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000000aa', 'admin@example.com'),
@@ -27,6 +27,10 @@ begin
 	get diagnostics affected = row_count;
 	return affected;
 end $$;
+-- Counted past RLS, so the check sees rows the acting User could no longer read.
+create function pg_temp.family_membership_count() returns int language sql security definer as $$
+	select count(*)::int from public.memberships where household_id = '00000000-0000-7000-8000-0000000000e1';
+$$;
 create function pg_temp.family_name() returns text language sql security definer as $$
 	select name from public.households where id = '00000000-0000-7000-8000-0000000000e1';
 $$;
@@ -54,6 +58,14 @@ select throws_ok(
 	'an Admin cannot turn a shared household into a Personal one'
 );
 
+select throws_ok(
+	$$ update public.households set id = '00000000-0000-7000-8000-0000000000e9'
+		where id = '00000000-0000-7000-8000-0000000000e1' $$,
+	'42501',
+	null,
+	'an Admin cannot change a household''s id'
+);
+
 select is_empty(
 	$$ delete from public.households where personal_user_id = '00000000-0000-4000-8000-0000000000aa' returning id $$,
 	'an Admin cannot delete their Personal household'
@@ -67,6 +79,11 @@ select pg_temp.act_as('00000000-0000-4000-8000-0000000000aa');
 select isnt_empty(
 	$$ delete from public.households where id = '00000000-0000-7000-8000-0000000000e1' returning id $$,
 	'an Admin deletes a shared household'
+);
+select is(
+	pg_temp.family_membership_count(),
+	0,
+	'deleting a household removes its Memberships'
 );
 
 select * from finish();

@@ -52,6 +52,32 @@ export default defineConfig(
 		rules: { "hisaab/no-sql-money-aggregates": "error" },
 	},
 	{
+		// tests/sync runs the app's upload connector in Node, so it can't reach React Native or Expo.
+		files: ["apps/app/src/lib/powersync/connector.ts"],
+		rules: {
+			"no-restricted-imports": [
+				"error",
+				{
+					patterns: [
+						{
+							group: [
+								"react",
+								"react-native",
+								"react-native-*",
+								"expo",
+								"expo-*",
+								"@expo/*",
+								"@/*",
+							],
+							message:
+								"The upload connector runs in tests/sync too; keep it framework-free.",
+						},
+					],
+				},
+			],
+		},
+	},
+	{
 		// The domain core is framework-free and does no I/O; adapters are injected.
 		files: ["packages/domain/**/*.ts"],
 		rules: {

@@ -1,4 +1,5 @@
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
+import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -137,19 +138,52 @@ describe("sync scenarios", () => {
 		);
 	});
 
-	it("an insert RLS rejects carries the Postgres error code", async () => {
+	it("an insert RLS rejects while offline carries the Postgres error code and disappears", async () => {
 		const { users } = await seedHousehold({ carol: "viewer" });
 		const carol = await connectClient(users.carol);
 
-		const id = crypto.randomUUID();
+		await goOffline(carol);
+		const id = uuidv7();
 		await carol.execute(
 			"INSERT INTO households (id, name, created_at) VALUES (?, ?, ?)",
 			[id, "Sneaky", new Date().toISOString()],
 		);
+		await goOnline(carol);
 		await waitForUploads(carol);
 
 		expect(await uploadErrors(carol)).toEqual([
 			{ table_name: "households", row_id: id, op: "PUT", code: "42501" },
 		]);
+		await vi.waitFor(
+			async () => expect(await localName(carol, id)).toBeUndefined(),
+			{ timeout: 10_000 },
+		);
+	});
+
+	it("a delete RLS rejects while offline is a couldn't-sync item and the row comes back", async () => {
+		const { users, household } = await seedHousehold({
+			alice: "admin",
+			bob: "member",
+		});
+		const bob = await connectClient(users.bob);
+
+		await goOffline(bob);
+		await bob.execute("DELETE FROM households WHERE id = ?", [household]);
+		await goOnline(bob);
+		await waitForUploads(bob);
+
+		expect(await serverName(household)).toBe("Family");
+		expect(await uploadErrors(bob)).toEqual([
+			{
+				table_name: "households",
+				row_id: household,
+				op: "DELETE",
+				code: "no_rows",
+			},
+		]);
+		await vi.waitFor(
+			async () => expect(await localName(bob, household)).toBe("Family"),
+			{ timeout: 10_000 },
+		);
 	});
 });
