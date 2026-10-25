@@ -1,31 +1,15 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { makeCategory } from "@/test/categories";
 import { render } from "@/test/render";
 
 import { CategoryForm } from "./category-form";
-import type { Category, CategoryDraft } from "./types";
+import type { CategoryDraft } from "./types";
 
-const category = (
-	id: string,
-	name: string,
-	parent_id: string | null = null,
-): Category => ({
-	id,
-	household_id: "h1",
-	kind: "expense",
-	parent_id,
-	name,
-	icon: "groceries",
-	color: "lime",
-	archived_at: null,
-	created_at: "2026-10-26T00:00:00.000Z",
-	_metadata: null,
-});
-
-const food = category("c1", "Food");
-const groceries = category("c2", "Groceries", "c1");
-const travel = category("c3", "Travel");
+const food = makeCategory("c1", "Food");
+const groceries = makeCategory("c2", "Groceries", { parent_id: "c1" });
+const travel = makeCategory("c3", "Travel");
 const household = [food, groceries, travel];
 
 const setup = async (props: Partial<Parameters<typeof CategoryForm>[0]>) => {

@@ -15,6 +15,7 @@ import { useCategories } from "@/features/categories/use-categories";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
+import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
 
 export default function CategoryScreen() {
@@ -62,8 +63,7 @@ export default function CategoryScreen() {
 				kind={category.kind}
 				onSubmit={async (draft) => {
 					await updateCategory(category.id, draft);
-					if (router.canGoBack()) router.back();
-					else router.replace("/categories");
+					leaveTo("/categories");
 				}}
 				submitLabel={t`Save`}
 			/>
@@ -81,13 +81,13 @@ export default function CategoryScreen() {
 			)}
 			<CategoryActions
 				category={category}
+				hasSubcategories={hasSubcategories}
 				// TODO(#34): Entries in it put it in use too.
 				inUse={hasSubcategories}
 				onArchive={() => archiveCategory(category.id)}
 				onDelete={async () => {
 					await deleteCategory(category.id);
-					if (router.canGoBack()) router.back();
-					else router.replace("/categories");
+					leaveTo("/categories");
 				}}
 				onUnarchive={() => unarchiveCategory(category.id)}
 				parent={parent}

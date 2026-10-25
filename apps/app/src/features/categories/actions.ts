@@ -58,11 +58,28 @@ export const archiveCategory = async (categoryId: string) => {
 	});
 };
 
+/** Brought back with the Subcategories that were archived with it, and only those; parent first, as the server asks. */
 export const unarchiveCategory = async (categoryId: string) => {
-	await db
-		.update(categories)
-		.set(stamped({ archived_at: null }))
-		.where(eq(categories.id, categoryId));
+	await db.transaction(async (tx) => {
+		const [category] = await tx
+			.select({ archived_at: categories.archived_at })
+			.from(categories)
+			.where(eq(categories.id, categoryId));
+		await tx
+			.update(categories)
+			.set(stamped({ archived_at: null }))
+			.where(eq(categories.id, categoryId));
+		if (!category?.archived_at) return;
+		await tx
+			.update(categories)
+			.set(stamped({ archived_at: null }))
+			.where(
+				and(
+					eq(categories.parent_id, categoryId),
+					eq(categories.archived_at, category.archived_at),
+				),
+			);
+	});
 };
 
 /** Only an unused Category is deleted; one in use is archived (spec §3.3). The server refuses the rest. */

@@ -2,28 +2,10 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { PortalHost } from "@rn-primitives/portal";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { makeCategory } from "@/test/categories";
 import { render } from "@/test/render";
 
 import { CategoryActions } from "./category-actions";
-import type { Category } from "./types";
-
-const category = (
-	id: string,
-	name: string,
-	parent_id: string | null = null,
-	archived_at: string | null = null,
-): Category => ({
-	id,
-	household_id: "h1",
-	kind: "expense",
-	parent_id,
-	name,
-	icon: "groceries",
-	color: "lime",
-	archived_at,
-	created_at: "2026-10-26T00:00:00.000Z",
-	_metadata: null,
-});
 
 const setup = async (
 	props: Partial<Parameters<typeof CategoryActions>[0]> = {},
@@ -36,7 +18,8 @@ const setup = async (
 	await render(
 		<>
 			<CategoryActions
-				category={category("c1", "Food")}
+				category={makeCategory("c1", "Food")}
+				hasSubcategories={false}
 				inUse={false}
 				parent={null}
 				{...handlers}
@@ -75,7 +58,9 @@ describe("CategoryActions", () => {
 
 	it("brings an archived Category back", async () => {
 		const { user, onUnarchive } = await setup({
-			category: category("c1", "Food", null, "2026-10-26T00:00:00.000Z"),
+			category: makeCategory("c1", "Food", {
+				archived_at: "2026-10-26T00:00:00.000Z",
+			}),
 		});
 		await user.press(screen.getByRole("button", { name: "Unarchive" }));
 		expect(onUnarchive).toHaveBeenCalled();
@@ -84,8 +69,11 @@ describe("CategoryActions", () => {
 	it("asks to bring an archived parent back before its Subcategory", async () => {
 		const archivedAt = "2026-10-26T00:00:00.000Z";
 		await setup({
-			category: category("c2", "Groceries", "c1", archivedAt),
-			parent: category("c1", "Food", null, archivedAt),
+			category: makeCategory("c2", "Groceries", {
+				parent_id: "c1",
+				archived_at: archivedAt,
+			}),
+			parent: makeCategory("c1", "Food", { archived_at: archivedAt }),
 		});
 		expect(screen.queryByRole("button", { name: "Unarchive" })).toBeNull();
 		expect(screen.getByRole("note")).toHaveTextContent(/bring food back/i);

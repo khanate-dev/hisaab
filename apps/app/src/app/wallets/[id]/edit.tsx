@@ -1,21 +1,22 @@
 import { useLingui } from "@lingui/react/macro";
-import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 
 import { Screen } from "@/features/shell/screen";
 import { updateWallet } from "@/features/wallets/actions";
 import { useWallet } from "@/features/wallets/use-wallets";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { WalletForm } from "@/features/wallets/wallet-form";
+import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
 
 export default function EditWallet() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const wallet = useWallet(id);
-	const canManage = useCanWrite(wallet?.row.household_id, useSignedInUserId());
+	const canWrite = useCanWrite(wallet?.row.household_id, useSignedInUserId());
 	// Viewers can't edit Wallets; reached by a link, they land on the Wallet itself.
-	if (canManage === false) return <Redirect href={`/wallets/${id}`} />;
-	if (!wallet || canManage === undefined) return null;
+	if (canWrite === false) return <Redirect href={`/wallets/${id}`} />;
+	if (!wallet || canWrite === undefined) return null;
 
 	return (
 		<Screen title={t`Edit Wallet`}>
@@ -29,9 +30,7 @@ export default function EditWallet() {
 				}}
 				onSubmit={async (draft) => {
 					await updateWallet(id, draft);
-					// Opened directly (a reload or a link), there is no screen to go back to.
-					if (router.canGoBack()) router.back();
-					else router.replace(`/wallets/${id}`);
+					leaveTo(`/wallets/${id}`);
 				}}
 				submitLabel={t`Save`}
 			/>

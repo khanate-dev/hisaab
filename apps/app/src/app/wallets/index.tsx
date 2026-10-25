@@ -16,11 +16,11 @@ export default function Wallets() {
 	const household = usePersonalHousehold(userId);
 	const [showArchived, setShowArchived] = useState(false);
 	const list = useWallets(household?.id, { archived: showArchived });
-	const canManage = useCanWrite(household?.id, userId) === true;
+	const canWrite = useCanWrite(household?.id, userId) === true;
 
 	return (
 		<Screen title={showArchived ? t`Archived Wallets` : t`Wallets`}>
-			{canManage && !showArchived && (
+			{canWrite && !showArchived && (
 				<Button
 					onPress={() => router.push("/wallets/new")}
 				>{t`Add Wallet`}</Button>

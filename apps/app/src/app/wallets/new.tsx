@@ -13,10 +13,10 @@ export default function NewWallet() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
 	const household = usePersonalHousehold(userId);
-	const canManage = useCanWrite(household?.id, userId);
+	const canWrite = useCanWrite(household?.id, userId);
 	// Viewers can't add Wallets; reached by a link, they land on the list.
-	if (canManage === false) return <Redirect href="/wallets" />;
-	if (!household || canManage === undefined) return null;
+	if (canWrite === false) return <Redirect href="/wallets" />;
+	if (!household || canWrite === undefined) return null;
 
 	return (
 		<Screen title={t`New Wallet`}>

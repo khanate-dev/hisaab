@@ -1,6 +1,6 @@
 import { CATEGORY_KINDS, type CategoryKind } from "@hisaab/client-schema";
 import { useLingui } from "@lingui/react/macro";
-import { Redirect, router, Stack, useLocalSearchParams } from "expo-router";
+import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { createCategory } from "@/features/categories/actions";
 import { CategoryForm } from "@/features/categories/category-form";
@@ -8,6 +8,7 @@ import { useCategories } from "@/features/categories/use-categories";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
+import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
 
 const isKind = (value: string | undefined): value is CategoryKind =>
@@ -35,8 +36,7 @@ export default function NewCategory() {
 				kind={kind}
 				onSubmit={async (draft) => {
 					await createCategory(household.id, kind, draft);
-					if (router.canGoBack()) router.back();
-					else router.replace("/categories");
+					leaveTo("/categories");
 				}}
 				parentId={params.parent ?? null}
 				submitLabel={params.parent ? t`Add Subcategory` : t`Add Category`}

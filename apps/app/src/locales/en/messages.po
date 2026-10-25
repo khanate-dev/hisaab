@@ -573,7 +573,6 @@ msgid "Skip"
 msgstr "Skip"
 
 #: src/features/auth/sign-in-form.tsx
-#: src/features/categories/category-form.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -588,6 +587,10 @@ msgstr "Sync status"
 #: src/features/households/household-list.tsx
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
+
+#: src/features/categories/category-form.tsx
+msgid "That didn't save. Try again."
+msgstr "That didn't save. Try again."
 
 #: src/features/wallets/wallet-form.tsx
 msgid "The currency is fixed once the Wallet has Entries."

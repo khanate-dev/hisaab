@@ -88,10 +88,9 @@ export const CategoryForm = ({
 				color,
 				parentId: parent === TOP_LEVEL ? null : parent,
 			});
-		} catch (caught) {
-			setError(
-				caught instanceof Error ? caught.message : t`Something went wrong`,
-			);
+		} catch {
+			// A local write that fails is a bug, not something to explain; the message is the driver's, never copy.
+			setError(t`That didn't save. Try again.`);
 		} finally {
 			setBusy(false);
 		}

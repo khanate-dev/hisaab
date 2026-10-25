@@ -19,7 +19,9 @@ type Props = {
 	category: Category;
 	/** Its parent, when it's a Subcategory. */
 	parent: Category | null;
-	/** In use: it has Subcategories (and, once Expenses land, Entries), so it's archived, never deleted. */
+	/** It has Subcategories, which go with it when it's archived. */
+	hasSubcategories: boolean;
+	/** In use (Subcategories or, once Expenses land, Entries), so it's archived, never deleted. */
 	inUse: boolean;
 	onArchive: () => Promise<void>;
 	onUnarchive: () => Promise<void>;
@@ -30,6 +32,7 @@ type Props = {
 export const CategoryActions = ({
 	category,
 	parent,
+	hasSubcategories,
 	inUse,
 	onArchive,
 	onUnarchive,
@@ -66,7 +69,7 @@ export const CategoryActions = ({
 				<DialogContent>
 					<DialogTitle>{t`Archive ${name}?`}</DialogTitle>
 					<DialogDescription>
-						{parent === null && inUse
+						{hasSubcategories
 							? t`It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time.`
 							: t`It leaves your lists. Everything recorded in it stays, and you can bring it back any time.`}
 					</DialogDescription>

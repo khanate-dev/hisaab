@@ -13,7 +13,7 @@ export default function WalletScreen() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const wallet = useWallet(id);
-	const canManage = useCanWrite(wallet?.row.household_id, useSignedInUserId());
+	const canWrite = useCanWrite(wallet?.row.household_id, useSignedInUserId());
 
 	if (!wallet) {
 		return (
@@ -31,7 +31,7 @@ export default function WalletScreen() {
 		<Screen title={wallet.summary.name}>
 			<Stack.Screen options={{ title: wallet.summary.name }} />
 			<WalletDetail
-				canEdit={canManage === true}
+				canEdit={canWrite === true}
 				history={wallet.history}
 				onArchive={() => archiveWallet(id)}
 				onEdit={() => router.push(`/wallets/${id}/edit`)}

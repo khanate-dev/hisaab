@@ -50,8 +50,10 @@ create trigger keep_category_origin
 	before update on public.categories
 	for each row execute function private.keep_category_origin();
 
--- Subcategories are one level deep and in their parent's list. The parent row is held, so it can't become a
--- Subcategory itself while one is being added under it.
+-- Subcategories are one level deep, in their parent's list, and never active under an archived parent (where they'd
+-- show in neither list). The parent row is held, so it can't change under a Subcategory being added. The parent is
+-- looked up in the row's own household only; one elsewhere is left to the foreign key, so nothing about another
+-- household's Categories leaks through these errors.
 create function private.keep_categories_one_level() returns trigger
 language plpgsql security definer
 set search_path = ''
@@ -62,12 +64,20 @@ begin
 	if new.parent_id is null then
 		return new;
 	end if;
-	select * into parent from public.categories where id = new.parent_id for share;
+	select * into parent from public.categories
+	where id = new.parent_id and household_id = new.household_id
+	for share;
+	if not found then
+		return new;
+	end if;
 	if parent.parent_id is not null then
 		raise exception 'Subcategories are one level deep' using errcode = '23514';
 	end if;
 	if parent.kind is distinct from new.kind then
 		raise exception 'A Subcategory is in its parent''s list' using errcode = '23514';
+	end if;
+	if parent.archived_at is not null and new.archived_at is null then
+		raise exception 'An archived Category''s Subcategories are archived too' using errcode = '23514';
 	end if;
 	if exists (select 1 from public.categories where parent_id = new.id) then
 		raise exception 'A Category with Subcategories can''t become one' using errcode = '23514';
@@ -77,8 +87,26 @@ end;
 $$;
 revoke all on function private.keep_categories_one_level() from public;
 create trigger keep_categories_one_level
-	before insert or update of parent_id on public.categories
+	before insert or update of parent_id, archived_at on public.categories
 	for each row execute function private.keep_categories_one_level();
+
+-- Archiving a Category archives its active Subcategories with it, at the same moment, so bringing the parent back can
+-- bring back exactly those. The app does the same locally; this covers Subcategories another device added meanwhile.
+create function private.archive_subcategories() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+	update public.categories set archived_at = new.archived_at
+	where parent_id = new.id and archived_at is null;
+	return null;
+end;
+$$;
+revoke all on function private.archive_subcategories() from public;
+create trigger archive_subcategories
+	after update of archived_at on public.categories
+	for each row when (old.archived_at is null and new.archived_at is not null and new.parent_id is null)
+	execute function private.archive_subcategories();
 
 -- The built-in template every household's Categories are copied from. Names are English at creation; households rename.
 create table private.category_template (

@@ -1,31 +1,14 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { makeCategory } from "@/test/categories";
 import { render } from "@/test/render";
 
 import { ArchivedCategoryList, CategoryList } from "./category-list";
-import type { Category } from "./types";
 
-const category = (
-	id: string,
-	name: string,
-	parent_id: string | null = null,
-): Category => ({
-	id,
-	household_id: "h1",
-	kind: "expense",
-	parent_id,
-	name,
-	icon: "groceries",
-	color: "butter",
-	archived_at: null,
-	created_at: "2026-10-26T00:00:00.000Z",
-	_metadata: null,
-});
-
-const food = category("c1", "Food");
-const groceries = category("c2", "Groceries", "c1");
-const travel = category("c3", "Travel");
+const food = makeCategory("c1", "Food");
+const groceries = makeCategory("c2", "Groceries", { parent_id: "c1" });
+const travel = makeCategory("c3", "Travel");
 
 describe("CategoryList", () => {
 	it("shows each Category with its Subcategories beneath it", async () => {
