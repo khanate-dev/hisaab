@@ -13,22 +13,31 @@ export type ActivityRow = {
 	after: Record<string, unknown> | null;
 };
 
-/** How many of the latest changes a read returns. */
-const PAGE = 100;
+/** How many changes a read returns. */
+export const ACTIVITY_PAGE = 100;
 
-/** The household's latest changes, newest first, from the server; the log never syncs to devices. */
+/** Where a page of the log ends, so the next one starts just older than it: when it synced, then its id. */
+export type ActivityCursor = { synced_at: string; id: string };
+
+/** The household's changes, newest first, from the server, older than `before`; the log never syncs to devices. */
 export const fetchActivityLog = async (
 	householdId: string,
+	before: ActivityCursor | null = null,
 ): Promise<ActivityRow[]> => {
-	const { data, error } = await supabase
+	let query = supabase
 		.from("activity_log")
 		.select(
 			"id, table_name, row_id, action, actor_id, device_time, synced_at, before, after",
 		)
-		.eq("household_id", householdId)
+		.eq("household_id", householdId);
+	if (before)
+		query = query.or(
+			`synced_at.lt.${before.synced_at},and(synced_at.eq.${before.synced_at},id.lt.${before.id})`,
+		);
+	const { data, error } = await query
 		.order("synced_at", { ascending: false })
 		.order("id", { ascending: false })
-		.limit(PAGE);
+		.limit(ACTIVITY_PAGE);
 	if (error) throw error;
 	return data as ActivityRow[];
 };

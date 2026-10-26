@@ -3,6 +3,9 @@ import { CONTRACT_VERSION } from "@hisaab/domain";
 /** PowerSync's per-op metadata column: whatever a write puts here travels with the queued op, never as data. */
 export const STAMP_COLUMN = "_metadata";
 
+/** PowerSync's delete flag: an update setting it (with a stamp) queues a DELETE that carries its stamp. */
+export const DELETED_COLUMN = "_deleted";
+
 type Stamp = { contractVersion: number; deviceTime?: string };
 
 /**
@@ -53,3 +56,17 @@ export const readStampTime = (
 		return null;
 	}
 };
+
+/**
+ * The values of a stamped delete: `db.update(table).set(stampedDelete()).where(...)` removes the row and queues a
+ * DELETE carrying its stamp, so the Activity log knows when it happened on the device. A plain delete carries none.
+ */
+export const stampedDelete = (
+	contractVersion = CONTRACT_VERSION,
+	now: Date = new Date(),
+) =>
+	stamped(
+		{ [DELETED_COLUMN]: true } as { _deleted: true },
+		contractVersion,
+		now,
+	);

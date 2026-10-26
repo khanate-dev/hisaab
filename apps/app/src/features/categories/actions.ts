@@ -1,4 +1,9 @@
-import { categories, type CategoryKind, stamped } from "@hisaab/client-schema";
+import {
+	categories,
+	type CategoryKind,
+	stamped,
+	stampedDelete,
+} from "@hisaab/client-schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
@@ -84,5 +89,8 @@ export const unarchiveCategory = async (categoryId: string) => {
 
 /** Only an unused Category is deleted; one in use is archived (spec §3.3). The server refuses the rest. */
 export const deleteCategory = async (categoryId: string) => {
-	await db.delete(categories).where(eq(categories.id, categoryId));
+	await db
+		.update(categories)
+		.set(stampedDelete())
+		.where(eq(categories.id, categoryId));
 };

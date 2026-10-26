@@ -6,10 +6,13 @@ import { View } from "react-native";
 import { Chip } from "@/components/ui/chip";
 import { Text } from "@/components/ui/text";
 import { entryKindLabel } from "@/features/entries/labels";
-import { QUIET_COLUMNS } from "@/lib/activity-columns";
-import { formatDateTime } from "@/lib/format";
+import { WALLET_TYPE_LABELS } from "@/features/wallets/labels";
+import type { ActivityRow } from "@/lib/activity-log";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import { isDecimalAmount, isCurrencyCode, parseMoney } from "@hisaab/domain";
+import type { WalletType } from "@hisaab/client-schema";
 
-import type { ActivityRow } from "./types";
+import { LOGGED_FIELDS } from "./fields";
 
 /** What each kind of row is called in the log. */
 const THING_LABELS: Record<string, MessageDescriptor> = {
@@ -28,8 +31,17 @@ const text = (value: unknown) =>
 			? value
 			: JSON.stringify(value);
 
+/** What the log needs to name what rows point at: Wallets (and their currencies) and Categories. */
+export type ActivityLookup = {
+	wallets: ReadonlyMap<string, { name: string; currency: string }>;
+	categories: ReadonlyMap<string, string>;
+	/** Items are in the Base currency until Base amounts land (#45). */
+	baseCurrency: string | null;
+};
+
 type Props = {
 	rows: readonly ActivityRow[];
+	lookup: ActivityLookup;
 	/** Display names of the household's Users, by id. */
 	names: ReadonlyMap<string, string>;
 	/** Whether a row's Entry can be restored from it: a deletion, the Entry still gone, and the User may write. */
@@ -38,7 +50,13 @@ type Props = {
 };
 
 /** The household's Activity log, newest first: who did what, when, and what changed (spec §3.2). */
-export const ActivityList = ({ rows, names, restorable, onRestore }: Props) => {
+export const ActivityList = ({
+	rows,
+	lookup,
+	names,
+	restorable,
+	onRestore,
+}: Props) => {
 	const { t, i18n } = useLingui();
 
 	const describe = (row: ActivityRow) => {
@@ -50,7 +68,7 @@ export const ActivityList = ({ rows, names, restorable, onRestore }: Props) => {
 					? text(values.description)
 					: i18n._(entryKindLabel(text(values.kind)))
 				: text(values.name ?? values.description ?? values.role);
-		const what = thing ? i18n._(thing) : row.table_name;
+		const what = thing ? i18n._(thing) : t`a record`;
 		const who =
 			row.actor_id === null
 				? t`Hisaab`
@@ -62,12 +80,50 @@ export const ActivityList = ({ rows, names, restorable, onRestore }: Props) => {
 				: t`${who} deleted ${what}: ${named}`;
 	};
 
+	/** A field's value as a person reads it: money in its Wallet's currency, names for what ids point at. */
+	const shown = (
+		row: ActivityRow,
+		column: string,
+		values: Record<string, unknown> | null,
+	) => {
+		const field = LOGGED_FIELDS[row.table_name]?.[column];
+		const value = values?.[column];
+		if (value === null || value === undefined || !field) return "—";
+		const raw = text(value);
+		switch (field.kind) {
+			case "money": {
+				const currency = field.currencyFrom
+					? lookup.wallets.get(text(values?.[field.currencyFrom]))?.currency
+					: lookup.baseCurrency;
+				return currency && isCurrencyCode(currency) && isDecimalAmount(raw)
+					? formatMoney(parseMoney(raw, currency))
+					: raw;
+			}
+			case "date":
+				return formatDate(raw);
+			case "instant":
+				return formatDateTime(raw);
+			case "wallet":
+				return lookup.wallets.get(raw)?.name ?? t`a Wallet since gone`;
+			case "category":
+				return lookup.categories.get(raw) ?? t`a Category since gone`;
+			case "entryKind":
+				return i18n._(entryKindLabel(raw));
+			case "walletType":
+				return Object.hasOwn(WALLET_TYPE_LABELS, raw)
+					? i18n._(WALLET_TYPE_LABELS[raw as WalletType])
+					: raw;
+			default:
+				return raw;
+		}
+	};
+
+	/** The fields an edit changed, among those the log shows. */
 	const changes = (row: ActivityRow) =>
 		row.action !== "update" || !row.before || !row.after
 			? []
-			: Object.keys(row.after).filter(
-					(column) =>
-						!QUIET_COLUMNS.has(column) &&
+			: Object.entries(LOGGED_FIELDS[row.table_name] ?? {}).filter(
+					([column]) =>
 						text(row.before?.[column]) !== text(row.after?.[column]),
 				);
 
@@ -107,15 +163,16 @@ export const ActivityList = ({ rows, names, restorable, onRestore }: Props) => {
 									? t`Synced ${synced}`
 									: t`Made ${made}, synced ${synced}`}
 							</Text>
-							{changes(row).map((column) => {
-								const was = text(row.before?.[column]);
-								const now = text(row.after?.[column]);
+							{changes(row).map(([column, field]) => {
+								const label = i18n._(field.label);
+								const was = shown(row, column, row.before);
+								const now = shown(row, column, row.after);
 								return (
 									<Text
 										key={column}
 										variant="muted"
 									>
-										{t`${column}: ${was} → ${now}`}
+										{t`${label}: ${was} → ${now}`}
 									</Text>
 								);
 							})}

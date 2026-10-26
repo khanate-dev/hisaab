@@ -274,6 +274,7 @@ describe("EntryForm", () => {
 			rest,
 			created_at: "2026-10-20T10:00:00.000Z",
 			_metadata: null,
+			_deleted: null,
 		});
 		const { onSubmit, user } = await setup({
 			entry: makeEntry("e1", { amount: "-500", category_id: "c3" }),

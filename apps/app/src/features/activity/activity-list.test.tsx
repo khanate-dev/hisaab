@@ -1,10 +1,12 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { parseMoney } from "@hisaab/domain";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { formatMoney } from "@/lib/format";
 import { render } from "@/test/render";
 
 import { ActivityList } from "./activity-list";
-import type { ActivityRow } from "./types";
+import type { ActivityRow } from "@/lib/activity-log";
 
 const row = (overrides: Partial<ActivityRow>): ActivityRow => ({
 	id: "a1",
@@ -26,6 +28,11 @@ const setup = async (
 	const onRestore = jest.fn();
 	await render(
 		<ActivityList
+			lookup={{
+				wallets: new Map([["w1", { name: "Cash", currency: "PKR" }]]),
+				categories: new Map([["c2", "Groceries"]]),
+				baseCurrency: "PKR",
+			}}
 			names={new Map([["u1", "Ayesha"]])}
 			onRestore={onRestore}
 			restorable={restorable}
@@ -63,20 +70,35 @@ describe("ActivityList", () => {
 					description: "Bread",
 					notes: null,
 					amount: "-120",
+					wallet_id: "w1",
+					category_id: "c2",
 					created_at: "x",
 				},
 				after: {
 					description: "Bread",
 					notes: "Two loaves",
 					amount: "-150",
-					created_at: "x",
+					wallet_id: "w1",
+					category_id: "c9",
+					created_at: "y",
 				},
 			}),
 		]);
 		const item = screen.getByLabelText("Ayesha changed an Entry: Bread");
-		expect(item).toHaveTextContent(/notes: — → Two loaves/);
-		expect(item).toHaveTextContent(/amount: -120 → -150/);
-		expect(item).not.toHaveTextContent(/created_at/);
+		expect(item).toHaveTextContent(/Notes: — → Two loaves/);
+		const was = formatMoney(parseMoney("-120", "PKR"));
+		const now = formatMoney(parseMoney("-150", "PKR"));
+		// Intl's figures use non-breaking spaces: any space matches any whitespace.
+		const loose = (text: string) =>
+			new RegExp(
+				text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/gu, "\\s+"),
+				"u",
+			);
+		expect(item).toHaveTextContent(loose(`Amount: ${was} → ${now}`));
+		expect(item).toHaveTextContent(
+			/Category: Groceries → a Category since gone/,
+		);
+		expect(item).not.toHaveTextContent(/created_at|wallet_id/);
 	});
 
 	it("offers to restore a deleted Entry it can bring back", async () => {

@@ -25,21 +25,41 @@ create index activity_log_row_idx on public.activity_log (row_id);
 alter table public.activity_log enable row level security;
 create policy "Members read their households' Activity log" on public.activity_log
 	for select to authenticated using (private.is_member(household_id));
--- Append-only: the log triggers write it; no role inserts, edits or deletes a row.
+-- Append-only: the log triggers write it; no client role inserts, edits or deletes a row.
 revoke all on public.activity_log from anon, authenticated;
 grant select on public.activity_log to authenticated;
 
--- A row as the log keeps it: money as exact decimal text, never a JSON number a reader would round.
+-- And nobody else either, the service role and the owner included: a log row is never edited, and is only deleted
+-- along with its household (spec §3.1), once that household is already gone.
+create function private.keep_activity_log() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+	if tg_op = 'DELETE' and not exists (select 1 from public.households where id = old.household_id) then
+		return old;
+	end if;
+	raise exception 'The Activity log is append-only' using errcode = '42501';
+end;
+$$;
+revoke all on function private.keep_activity_log() from public;
+create trigger keep_activity_log
+	before update or delete on public.activity_log
+	for each row execute function private.keep_activity_log();
+
+-- A row as the log keeps it: every number (money above all) as exact decimal text, never a JSON number a reader
+-- would round.
 create function private.as_logged(row_data jsonb) returns jsonb
 language sql immutable
 set search_path = ''
 as $$
-	select row_data
-		|| case when row_data ? 'amount' and row_data -> 'amount' <> 'null'
-			then jsonb_build_object('amount', row_data ->> 'amount') else '{}' end
-		|| case when row_data ? 'to_amount' and row_data -> 'to_amount' <> 'null'
-			then jsonb_build_object('to_amount', row_data ->> 'to_amount') else '{}' end
+	select coalesce(
+		jsonb_object_agg(key, case when jsonb_typeof(value) = 'number' then to_jsonb(value #>> '{}') else value end),
+		'{}'
+	)
+	from jsonb_each(row_data)
 $$;
+revoke all on function private.as_logged(jsonb) from public;
 
 create function private.log_activity() returns trigger
 language plpgsql security definer
@@ -100,6 +120,7 @@ create function private.restoring() returns boolean
 language sql stable
 set search_path = ''
 as $$ select coalesce(current_setting('hisaab.restoring', true), '') = 'on' $$;
+revoke all on function private.restoring() from public;
 
 create or replace function private.keep_entry_category_in_list() returns trigger
 language plpgsql security definer
@@ -163,7 +184,8 @@ begin
 end;
 $$;
 
--- Puts a deleted Entry back as it was when deleted, with the Items deleted along with it. Admins and Members only,
+-- Puts a deleted Entry back as it was when deleted, with the Items deleted along with it (the server removes them
+-- in the Entry's own transaction). Admins and Members only,
 -- and only while the Entry is gone. The restore is itself logged, as an insert by whoever restored it.
 create function public.restore_entry(entry_id uuid) returns void
 language plpgsql security definer
@@ -173,8 +195,9 @@ declare
 	deletion public.activity_log;
 	item public.activity_log;
 begin
+	-- Only a deletion in a household the User may write to: an id reused elsewhere can't take this restore over.
 	select * into deletion from public.activity_log
-	where table_name = 'entries' and row_id = entry_id and action = 'delete'
+	where table_name = 'entries' and row_id = entry_id and action = 'delete' and private.can_write(household_id)
 	order by synced_at desc, id desc limit 1;
 	if not found or not private.can_write(deletion.household_id) then
 		raise exception 'There''s no deleted Entry to restore here' using errcode = '42501';
@@ -183,6 +206,7 @@ begin
 		raise exception 'The Entry is already back' using errcode = '23505';
 	end if;
 	perform set_config('hisaab.restoring', 'on', true);
+	-- The row as it was; a column added since comes back null (ADR-0009: a contract change upcasts old rows here).
 	insert into public.entries select * from jsonb_populate_record(null::public.entries, deletion.before);
 	for item in
 		select * from public.activity_log

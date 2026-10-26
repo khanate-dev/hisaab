@@ -76,7 +76,7 @@ type Write = {
 	result: PromiseLike<{ data: unknown[] | null; error: PostgrestError | null }>;
 };
 
-/** The Activity log's device time travels as a header the log trigger reads; a delete carries no stamp to say it. */
+/** The Activity log's device time travels as a header the log trigger reads (deletes are stamped too, `stampedDelete`). */
 const DEVICE_TIME_HEADER = "x-device-time";
 
 const write = async (
@@ -117,7 +117,7 @@ const write = async (
 		case "DELETE":
 			return {
 				sent: null,
-				result: table.delete().eq("id", op.id).select("id"),
+				result: withTime(table.delete().eq("id", op.id).select("id")),
 			};
 	}
 };

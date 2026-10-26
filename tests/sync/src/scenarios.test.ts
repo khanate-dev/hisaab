@@ -359,8 +359,22 @@ describe("sync scenarios", () => {
 			"12345678901234.5678",
 		);
 
-		await device.execute("DELETE FROM entries WHERE id = ?", [entryId]);
+		// Deleted as the app deletes: stamped, so the deletion too says when it happened on the device.
+		const deletedAt = new Date("2026-10-26T14:00:00.000Z");
+		await device.execute(
+			"UPDATE entries SET _deleted = 1, _metadata = ? WHERE id = ?",
+			[stamped({}, CONTRACT_VERSION, deletedAt)._metadata, entryId],
+		);
 		await waitForUploads(device);
+		const deletion = await adminClient()
+			.from("activity_log")
+			.select("device_time")
+			.eq("row_id", entryId)
+			.eq("action", "delete")
+			.single();
+		expect(new Date(deletion.data?.device_time ?? "").toISOString()).toBe(
+			deletedAt.toISOString(),
+		);
 		const restored = await userClient(user).rpc("restore_entry", {
 			entry_id: entryId,
 		});

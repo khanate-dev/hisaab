@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(28);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000006a1', 'member@example.com'),
@@ -84,6 +84,20 @@ select throws_ok(
 );
 select pg_temp.act_as('00000000-0000-4000-8000-0000000006a1');
 select throws_ok($$ delete from public.activity_log $$, '42501', null, 'a Member can''t delete from the log');
+select throws_ok($$ update public.activity_log set before = null $$, '42501', null, 'a Member can''t edit the log');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000006b1');
+select throws_ok($$ update public.activity_log set before = null $$, '42501', null, 'a Viewer can''t edit the log');
+select throws_ok($$ delete from public.activity_log $$, '42501', null, 'a Viewer can''t delete from the log');
+select set_config('role', 'anon', true);
+select throws_ok($$ select * from public.activity_log $$, '42501', null, 'anon can''t read the log');
+select throws_ok($$ delete from public.activity_log $$, '42501', null, 'anon can''t delete from the log');
+-- Nor the service role or the owner: the log refuses edits from anyone.
+select set_config('role', 'postgres', true);
+select throws_ok($$ update public.activity_log set actor_id = null $$, '42501', null, 'not even the owner edits the log');
+select throws_ok(
+	$$ delete from public.activity_log where household_id = '00000000-0000-7000-8000-0000000006f1' $$,
+	'42501', null, 'not even the owner deletes from a household''s log while the household stands'
+);
 
 -- Restoring a deleted Entry, with the Items deleted along with it, even into a Category archived since.
 delete from public.entries where id = '00000000-0000-7000-8000-0000000006d1';
@@ -91,6 +105,9 @@ update public.categories set archived_at = now() where id = pg_temp.category('Gr
 select pg_temp.act_as('00000000-0000-4000-8000-0000000006b1');
 select throws_ok($$ select public.restore_entry('00000000-0000-7000-8000-0000000006d1') $$, '42501', null,
 	'a Viewer can''t restore an Entry');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000006c1');
+select throws_ok($$ select public.restore_entry('00000000-0000-7000-8000-0000000006d1') $$, '42501', null,
+	'someone outside the household can''t restore its Entries');
 select pg_temp.act_as('00000000-0000-4000-8000-0000000006a1');
 select lives_ok($$ select public.restore_entry('00000000-0000-7000-8000-0000000006d1') $$, 'a Member restores a deleted Entry');
 select is(
@@ -100,6 +117,12 @@ select is(
 );
 select is((select description from public.entry_items where entry_id = '00000000-0000-7000-8000-0000000006d1'), 'Milk',
 	'with the Items deleted along with it');
+
+-- Deleting the household takes its log with it (spec §3.1).
+select set_config('role', 'postgres', true);
+delete from public.households where id = '00000000-0000-7000-8000-0000000006f1';
+select is((select count(*)::int from public.activity_log where household_id = '00000000-0000-7000-8000-0000000006f1'), 0,
+	'deleting a household deletes its Activity log');
 
 select * from finish();
 rollback;

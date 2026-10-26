@@ -20,5 +20,6 @@ export const makeEntry = (
 	created_by: "u1",
 	created_at: "2026-10-20T10:00:00.000Z",
 	_metadata: null,
+	_deleted: null,
 	...overrides,
 });
