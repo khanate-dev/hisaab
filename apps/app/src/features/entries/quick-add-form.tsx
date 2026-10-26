@@ -33,6 +33,8 @@ import { entryKindLabel } from "./labels";
 import type { Entry, EntryDraft, WalletChoice } from "./types";
 
 const DEFAULT_KIND: FlowKind = "expense";
+/** The segment's third choice: a Transfer opens its own form. */
+const TRANSFER = "transfer" as const;
 /** How many Categories the grid shows before "All Categories": enough that the usual ones need no scrolling. */
 const GRID_SIZE = 6;
 
@@ -49,6 +51,8 @@ type Props = {
 	onSubmit: (draft: EntryDraft, currency: string) => Promise<void>;
 	/** Items, or anything else quick-add doesn't do, continue in the full form with what's entered so far. */
 	onOpenFullForm: (draft: Partial<EntryDraft>) => void;
+	/** The segment's Transfer opens the Transfer form. */
+	onOpenTransfer: () => void;
 };
 
 /**
@@ -65,6 +69,7 @@ export const QuickAddForm = ({
 	today = todayIn(timeZone),
 	onSubmit,
 	onOpenFullForm,
+	onOpenTransfer,
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const recordable = recordableWallets(wallets, baseCurrency);
@@ -189,8 +194,10 @@ export const QuickAddForm = ({
 			<View className="flex-row flex-wrap items-center justify-between gap-2">
 				<RadioGroup
 					label={t`Kind`}
-					onValueChange={chooseKind}
-					options={FLOW_KINDS.map((value) => ({
+					onValueChange={(next) =>
+						next === TRANSFER ? onOpenTransfer() : chooseKind(next)
+					}
+					options={[...FLOW_KINDS, TRANSFER].map((value) => ({
 						value,
 						label: i18n._(entryKindLabel(value)),
 					}))}

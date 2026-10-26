@@ -38,6 +38,7 @@ const setup = async (
 		onEdit: jest.fn(() => {}),
 		onArchive: jest.fn(async () => {}),
 		onUnarchive: jest.fn(async () => {}),
+		onAdjust: jest.fn(async () => {}),
 	};
 	await render(
 		<>

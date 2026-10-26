@@ -1,4 +1,4 @@
-import { isNegative } from "@hisaab/domain";
+import { isNegative, magnitude } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Pressable, View } from "react-native";
 
@@ -25,16 +25,19 @@ const EntryRow = ({
 }) => {
 	const { t } = useLingui();
 	const title = useEntryTitle()(view);
-	const { category, parent, wallet, amount } = view;
+	const { category, parent, wallet, amount, to } = view;
 	const categoryName = category?.name;
 	const parentName = parent?.name;
 	const walletName = wallet.name;
+	const toName = to?.wallet.name;
 	const where =
-		categoryName === undefined
-			? walletName
-			: parentName === undefined
-				? t`${categoryName} · ${walletName}`
-				: t`${parentName} › ${categoryName} · ${walletName}`;
+		toName !== undefined
+			? t`${walletName} → ${toName}`
+			: categoryName === undefined
+				? walletName
+				: parentName === undefined
+					? t`${categoryName} · ${walletName}`
+					: t`${parentName} › ${categoryName} · ${walletName}`;
 
 	return (
 		<Pressable
@@ -55,10 +58,11 @@ const EntryRow = ({
 				<Text variant="muted">{where}</Text>
 			</View>
 			<Text
-				className={`text-end ${isNegative(amount) ? "" : "text-good"}`}
+				className={`text-end ${to || isNegative(amount) ? "" : "text-good"}`}
 				variant="label"
 			>
-				{formatMoney(amount)}
+				{/* A Transfer moves money within the household: how much, unsigned. */}
+				{formatMoney(to ? magnitude(amount) : amount)}
 			</Text>
 		</Pressable>
 	);

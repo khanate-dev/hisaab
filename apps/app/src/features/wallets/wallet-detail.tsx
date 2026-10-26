@@ -1,3 +1,4 @@
+import type { Money } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -17,6 +18,7 @@ import { entryKindLabel } from "@/features/entries/labels";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { Balance } from "./balance";
+import { AdjustBalance } from "./adjust-balance";
 import { WALLET_TYPE_LABELS } from "./labels";
 import type { HistoryRow, WalletSummary } from "./types";
 
@@ -29,6 +31,8 @@ type Props = {
 	onEdit: () => void;
 	onArchive: () => Promise<void>;
 	onUnarchive: () => Promise<void>;
+	/** Records a Balance adjustment of the gap to what the Wallet really holds. */
+	onAdjust: (gap: Money) => Promise<void>;
 };
 
 /** A Wallet and its balance history, derived from its Entries (ADR-0002). */
@@ -39,6 +43,7 @@ export const WalletDetail = ({
 	onEdit,
 	onArchive,
 	onUnarchive,
+	onAdjust,
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const name = wallet.name;
@@ -65,6 +70,12 @@ export const WalletDetail = ({
 
 			{canEdit && (
 				<View className="flex-row flex-wrap gap-3">
+					{!wallet.archived && (
+						<AdjustBalance
+							balance={wallet.balance}
+							onAdjust={onAdjust}
+						/>
+					)}
 					<Button
 						onPress={onEdit}
 						variant="secondary"

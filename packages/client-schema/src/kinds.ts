@@ -7,8 +7,13 @@ export const WALLET_TYPES = [
 ] as const;
 export type WalletType = (typeof WALLET_TYPES)[number];
 
-/** Entry kinds so far; Transfer and Loans join as they land. Mirrors the `entries.kind` check. */
-export const ENTRY_KINDS = ["balance_adjustment", "expense", "income"] as const;
+/** Entry kinds so far; Loans join as they land. Mirrors the `entries.kind` check. */
+export const ENTRY_KINDS = [
+	"balance_adjustment",
+	"expense",
+	"income",
+	"transfer",
+] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
 
 /** The two Category lists (CONTEXT.md). Mirrors the `categories.kind` check. */

@@ -3,8 +3,9 @@ import { useLingui } from "@lingui/react/macro";
 import { Redirect, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
-import { updateEntry } from "@/features/entries/actions";
+import { updateEntry, updateTransfer } from "@/features/entries/actions";
 import { EntryForm } from "@/features/entries/entry-form";
+import { TransferForm } from "@/features/entries/transfer-form";
 import { useItemsOf } from "@/features/entries/use-entries";
 import { useEntryData } from "@/features/entries/use-entry-data";
 import { Screen } from "@/features/shell/screen";
@@ -18,8 +19,11 @@ export default function EditEntry() {
 	const items = useItemsOf(id);
 	const entry = data?.history.find((e) => e.id === id);
 
-	// Viewers can't edit; nor can anyone edit a Balance adjustment here. Either way, back to the Entry.
-	if (data?.canWrite === false || (entry && !isFlowKind(entry.kind)))
+	// Viewers can't edit; a Balance adjustment is re-recorded, not edited. Either way, back to the Entry.
+	if (
+		data?.canWrite === false ||
+		(entry && !isFlowKind(entry.kind) && entry.kind !== "transfer")
+	)
 		return <Redirect href={`/entries/${id}`} />;
 	if (!data || !items) return null;
 	if (!entry) {
@@ -36,6 +40,25 @@ export default function EditEntry() {
 	}
 	const { household, categories, history, wallets } = data;
 
+	const timeZone = entryTimeZone(household);
+
+	if (entry.kind === "transfer") {
+		return (
+			<Screen title={t`Edit Transfer`}>
+				<TransferForm
+					entry={entry}
+					onSubmit={async (draft, currencies) => {
+						await updateTransfer(entry.id, draft, currencies);
+						leaveTo(`/entries/${entry.id}`);
+					}}
+					submitLabel={t`Save`}
+					timeZone={timeZone}
+					wallets={wallets}
+				/>
+			</Screen>
+		);
+	}
+
 	return (
 		<Screen title={t`Edit Entry`}>
 			<EntryForm
@@ -49,7 +72,7 @@ export default function EditEntry() {
 					leaveTo(`/entries/${entry.id}`);
 				}}
 				submitLabel={t`Save`}
-				timeZone={entryTimeZone(household)}
+				timeZone={timeZone}
 				wallets={wallets}
 			/>
 		</Screen>

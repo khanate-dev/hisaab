@@ -30,6 +30,12 @@ export default function Entries() {
 					>
 						{t`Add Income`}
 					</Button>
+					<Button
+						onPress={() => router.push("/entries/new?kind=transfer")}
+						variant="secondary"
+					>
+						{t`Add Transfer`}
+					</Button>
 				</View>
 			)}
 			{views !== undefined && (

@@ -42,6 +42,10 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 						params: { ...draftToParams(draft), items: "1" },
 					});
 				}}
+				onOpenTransfer={() => {
+					onDone();
+					router.push("/entries/new?kind=transfer");
+				}}
 				onSubmit={async (draft, currency) => {
 					await createEntry(household.id, userId, draft, currency);
 					onDone();

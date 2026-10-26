@@ -1,10 +1,12 @@
 import { useLingui } from "@lingui/react/macro";
 import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
-import { createEntry } from "@/features/entries/actions";
+import { Text } from "@/components/ui/text";
+import { createEntry, createTransfer } from "@/features/entries/actions";
 import { type DraftParams, paramsToDraft } from "@/features/entries/draft";
 import { EntryForm } from "@/features/entries/entry-form";
 import { NeedsWallet } from "@/features/entries/needs-wallet";
+import { TransferForm } from "@/features/entries/transfer-form";
 import { useEntryData } from "@/features/entries/use-entry-data";
 import { Screen } from "@/features/shell/screen";
 import { entryTimeZone } from "@/lib/dates";
@@ -20,12 +22,38 @@ export default function NewEntry() {
 	if (data?.canWrite === false) return <Redirect href="/entries" />;
 	if (!data) return null;
 	const { userId, household, categories, history, wallets } = data;
-	const title = initial.kind === "income" ? t`New Income` : t`New Expense`;
+	const transfer = params.kind === "transfer";
+	const title = transfer
+		? t`New Transfer`
+		: initial.kind === "income"
+			? t`New Income`
+			: t`New Expense`;
+	const timeZone = entryTimeZone(household);
+	const activeWallets = wallets.filter((w) => w.archived_at === null).length;
 
 	return (
 		<Screen title={title}>
 			<Stack.Screen options={{ title }} />
-			{wallets.some((w) => w.archived_at === null) ? (
+			{transfer ? (
+				activeWallets >= 2 ? (
+					<TransferForm
+						onSubmit={async (draft, currencies) => {
+							await createTransfer(household.id, userId, draft, currencies);
+							leaveTo("/entries");
+						}}
+						submitLabel={t`Save Transfer`}
+						timeZone={timeZone}
+						wallets={wallets}
+					/>
+				) : (
+					<Text
+						role="status"
+						variant="muted"
+					>
+						{t`A Transfer moves money between two Wallets; add another Wallet first.`}
+					</Text>
+				)
+			) : activeWallets > 0 ? (
 				<EntryForm
 					baseCurrency={household.base_currency}
 					categories={categories}
@@ -37,7 +65,7 @@ export default function NewEntry() {
 						leaveTo("/entries");
 					}}
 					submitLabel={t`Save Entry`}
-					timeZone={entryTimeZone(household)}
+					timeZone={timeZone}
 					wallets={wallets}
 				/>
 			) : (

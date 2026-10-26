@@ -59,6 +59,33 @@ describe("EntryList", () => {
 		expect(screen.getAllByRole("heading")).toHaveLength(3);
 	});
 
+	it("names a Transfer by its two Wallets", async () => {
+		await render(
+			<EntryList
+				items={toEntryViews(
+					[
+						makeEntry("e9", {
+							kind: "transfer",
+							category_id: null,
+							to_wallet_id: "w2",
+							amount: "-500",
+							to_amount: "500",
+						}),
+					],
+					categories,
+					[
+						...wallets,
+						{ id: "w2", name: "HBL", currency: "PKR", archived_at: null },
+					],
+				)}
+				onOpen={() => {}}
+			/>,
+		);
+		expect(screen.getByRole("button", { name: /Transfer/ })).toHaveTextContent(
+			/Cash → HBL/,
+		);
+	});
+
 	it("opens an Entry", async () => {
 		const onOpen = jest.fn();
 		await render(

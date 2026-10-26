@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(23);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000003a1', 'member@example.com'),
@@ -122,8 +122,6 @@ select is(pg_temp.affected($$ delete from public.entries where id = '00000000-00
 select pg_temp.act_as('00000000-0000-4000-8000-0000000003a2');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000003d2' $$), 1,
 	'an Admin deletes an Entry');
-select is(pg_temp.affected($$ delete from public.entries where kind = 'balance_adjustment' $$), 0,
-	'Balance adjustments are not deleted yet');
 
 -- The household timezone.
 select is(pg_temp.affected($$ update public.households set timezone = 'Asia/Karachi' where id = '00000000-0000-7000-8000-0000000003f1' $$), 1,

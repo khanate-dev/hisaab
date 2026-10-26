@@ -3,17 +3,22 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
 import { Screen } from "@/features/shell/screen";
+import { recordBalanceAdjustment } from "@/features/entries/actions";
+import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { archiveWallet, unarchiveWallet } from "@/features/wallets/actions";
 import { useWallet } from "@/features/wallets/use-wallets";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { WalletDetail } from "@/features/wallets/wallet-detail";
+import { entryTimeZone, todayIn } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
 
 export default function WalletScreen() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const wallet = useWallet(id);
-	const canWrite = useCanWrite(wallet?.row.household_id, useSignedInUserId());
+	const userId = useSignedInUserId();
+	const household = usePersonalHousehold(userId);
+	const canWrite = useCanWrite(wallet?.row.household_id, userId);
 
 	if (!wallet) {
 		return (
@@ -33,6 +38,15 @@ export default function WalletScreen() {
 			<WalletDetail
 				canEdit={canWrite === true}
 				history={wallet.history}
+				onAdjust={(gap) =>
+					recordBalanceAdjustment(
+						wallet.row.household_id,
+						userId,
+						id,
+						gap,
+						todayIn(entryTimeZone(household)),
+					)
+				}
 				onArchive={() => archiveWallet(id)}
 				onEdit={() => router.push(`/wallets/${id}/edit`)}
 				onUnarchive={() => unarchiveWallet(id)}
