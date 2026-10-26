@@ -15,6 +15,8 @@ const SYNCED_TABLES = [
 	"categories",
 	"entries",
 	"entry_items",
+	"contacts",
+	"loans",
 ] as const;
 
 const syncedIds = async (

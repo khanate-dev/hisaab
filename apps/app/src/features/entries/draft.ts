@@ -2,7 +2,10 @@ import {
 	isCalendarDate,
 	isDecimalAmount,
 	isFlowKind,
+	isNegative,
+	isZero,
 	magnitude,
+	type Money,
 	parseMoney,
 } from "@hisaab/domain";
 
@@ -89,5 +92,23 @@ export const paramsToDraft = (params: DraftParams): Partial<EntryDraft> => ({
 		isCalendarDate(params.date) && { occurredOn: params.date }),
 });
 
-/** Whether an Entry of this kind is edited in a form; a Balance adjustment is re-recorded instead (it can be deleted). */
-export const isEditableKind = (kind: string) => kind !== "balance_adjustment";
+/**
+ * Whether an Entry of this kind is edited in the Entry forms: a Balance adjustment is re-recorded instead, and a
+ * Loan's principal and Repayments are changed from their Loan.
+ */
+export const isEditableKind = (kind: string) =>
+	kind === "expense" || kind === "income" || kind === "transfer";
+
+/** A Loan's principal goes only with its Loan; every other Entry can be deleted on its own. */
+export const isDeletableKind = (kind: string) => kind !== "loan_principal";
+
+/** What's typed as an amount, as Money when it's a decimal more than zero; null otherwise. */
+export const positiveMoney = (
+	typed: string,
+	currency: string,
+): Money | null => {
+	const text = typed.trim();
+	if (!isDecimalAmount(text)) return null;
+	const money = parseMoney(text, currency);
+	return isNegative(money) || isZero(money) ? null : money;
+};

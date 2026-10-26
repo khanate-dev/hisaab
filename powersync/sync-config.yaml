@@ -11,7 +11,7 @@ streams:
     auto_subscribe: true
     query: SELECT app_config.id, app_config.min_contract_version FROM app_config
 
-  # Every household the User belongs to, with its Memberships, Wallets, Categories, Entries and Items.
+  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries and Items.
   households:
     auto_subscribe: true
     queries:
@@ -27,8 +27,14 @@ streams:
       - SELECT categories.id, categories.household_id, categories.kind, categories.parent_id, categories.name, categories.icon, categories.color, categories.archived_at, categories.created_at
         FROM categories
         WHERE categories.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT contacts.id, contacts.household_id, contacts.name, contacts.archived_at, contacts.created_at
+        FROM contacts
+        WHERE contacts.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT loans.id, loans.household_id, loans.contact_id, loans.direction, loans.due_on, loans.written_off_at, loans.notes, loans.created_at
+        FROM loans
+        WHERE loans.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       # amount is numeric in Postgres and arrives as text: parsed into Money, never a float (ADR-0002).
-      - SELECT entries.id, entries.household_id, entries.wallet_id, entries.to_wallet_id, entries.kind, entries.amount, entries.to_amount, entries.occurred_on, entries.occurred_time, entries.category_id, entries.description, entries.notes, entries.created_by, entries.created_at
+      - SELECT entries.id, entries.household_id, entries.wallet_id, entries.to_wallet_id, entries.loan_id, entries.kind, entries.amount, entries.to_amount, entries.occurred_on, entries.occurred_time, entries.category_id, entries.description, entries.notes, entries.created_by, entries.created_at
         FROM entries
         WHERE entries.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 

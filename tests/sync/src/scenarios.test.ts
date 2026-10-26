@@ -316,6 +316,84 @@ describe("sync scenarios", () => {
 		expect(household.data?.base_currency).toBe("PKR");
 	});
 
+	it("a Loan uploads with its Contact and principal, then a Repayment, a write-off and its deletion", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const stamp = stamped({})._metadata;
+		const [walletId, contactId, loanId] = [uuidv7(), uuidv7(), uuidv7()];
+		const now = new Date().toISOString();
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				"INSERT INTO contacts (id, household_id, name, created_at, _metadata) VALUES (?, ?, 'Ali', ?, ?)",
+				[contactId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				"INSERT INTO loans (id, household_id, contact_id, direction, due_on, created_at, _metadata) VALUES (?, ?, ?, 'lent', '2026-12-31', ?, ?)",
+				[loanId, personal.id, contactId, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, loan_id, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'loan_principal', '-1000', ?, '2026-10-26', ?, ?, ?)`,
+				[uuidv7(), personal.id, walletId, loanId, user.id, now, stamp],
+			);
+		});
+		await device.execute(
+			`INSERT INTO entries (id, household_id, wallet_id, kind, amount, loan_id, occurred_on, created_by, created_at, _metadata)
+			VALUES (?, ?, ?, 'repayment', '300', ?, '2026-10-27', ?, ?, ?)`,
+			[uuidv7(), personal.id, walletId, loanId, user.id, now, stamp],
+		);
+		await device.execute(
+			"UPDATE loans SET written_off_at = ?, _metadata = ? WHERE id = ?",
+			[now, stamp, loanId],
+		);
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const loan = await adminClient()
+			.from("loans")
+			.select("written_off_at")
+			.eq("id", loanId)
+			.single();
+		expect(loan.data?.written_off_at).not.toBeNull();
+		const loanEntries = await adminClient()
+			.from("entries")
+			.select("kind, amount::text")
+			.eq("loan_id", loanId);
+		expect(
+			loanEntries.data?.map((e) => `${e.kind} ${e.amount}`).sort(),
+		).toEqual(["loan_principal -1000", "repayment 300"]);
+
+		// Deleted as the app deletes a Loan: its Entries first, then the Loan, all stamped.
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"UPDATE entries SET _deleted = 1, _metadata = ? WHERE loan_id = ?",
+				[stamp, loanId],
+			);
+			await tx.execute(
+				"UPDATE loans SET _deleted = 1, _metadata = ? WHERE id = ?",
+				[stamp, loanId],
+			);
+		});
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const gone = await adminClient()
+			.from("loans")
+			.select("id")
+			.eq("id", loanId);
+		expect(gone.data).toEqual([]);
+	});
+
 	it("the Activity log keeps an uploaded change's device time, and a deleted Entry comes back from it", async () => {
 		const user = await signInNewUser();
 		const device = await connectClient(user);

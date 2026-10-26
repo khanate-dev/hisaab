@@ -167,4 +167,39 @@ const seedWallets = async (
 		})),
 	);
 	if (items.error) throw items.error;
+
+	// A Loan Lent to a Contact per household, with its principal.
+	const contacts = wallets.map(({ household_id }) => ({
+		id: uuidv7(),
+		household_id,
+	}));
+	const contactRows = await admin
+		.from("contacts")
+		.insert(contacts.map((c) => ({ ...c, name: "Ali" })));
+	if (contactRows.error) throw contactRows.error;
+	const loans = contacts.map(({ id, household_id }) => ({
+		id: uuidv7(),
+		household_id,
+		contact_id: id,
+	}));
+	const loanRows = await admin
+		.from("loans")
+		.insert(loans.map((l) => ({ ...l, direction: "lent" })));
+	if (loanRows.error) throw loanRows.error;
+	const principals = await admin.from("entries").insert(
+		loans.map(({ id, household_id }) => {
+			const wallet = wallets.find((w) => w.household_id === household_id);
+			return {
+				id: uuidv7(),
+				household_id,
+				wallet_id: wallet?.id,
+				kind: "loan_principal",
+				amount: "-1000",
+				loan_id: id,
+				occurred_on: "2026-10-26",
+				created_by: wallet?.author,
+			};
+		}),
+	);
+	if (principals.error) throw principals.error;
 };

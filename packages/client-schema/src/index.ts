@@ -18,9 +18,11 @@ export const drizzleSchema = tables;
 export const schema = new Schema({
 	app_config: toPowerSyncTable(tables.appConfig),
 	categories: toPowerSyncTable(tables.categories),
+	contacts: toPowerSyncTable(tables.contacts),
 	entries: toPowerSyncTable(tables.entries),
 	entry_items: toPowerSyncTable(tables.entryItems),
 	households: toPowerSyncTable(tables.households),
+	loans: toPowerSyncTable(tables.loans),
 	memberships: toPowerSyncTable(tables.memberships),
 	profiles: toPowerSyncTable(tables.profiles),
 	wallets: toPowerSyncTable(tables.wallets),
