@@ -35,6 +35,7 @@
 		"@rn-primitives/portal": "catalog:",
 		"@rn-primitives/radio-group": "catalog:",
 		"@supabase/supabase-js": "catalog:",
+		"@tanstack/react-query": "catalog:",
 		"drizzle-orm": "catalog:",
 		"expo": "catalog:",
 		"expo-constants": "catalog:",

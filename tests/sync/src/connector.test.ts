@@ -32,7 +32,9 @@ const scriptedServer = (
 	{ onUpdateRequired, contractVersion, upcasters }: Build = {},
 ) => {
 	const calls: Call[] = [];
+	const headers: Record<string, string>[] = [];
 	const from = (table: string) => {
+		const sent: Record<string, string> = {};
 		const call: Call = { table, action: "select" };
 		const query = {
 			upsert: (values: { id: string }) =>
@@ -42,6 +44,10 @@ const scriptedServer = (
 				Object.assign(call, { action: "update", values }) && query,
 			delete: () => Object.assign(call, { action: "delete" }) && query,
 			select: () => query,
+			setHeader: (name: string, value: string) => {
+				sent[name] = value;
+				return query;
+			},
 			eq: (_column: string, value: unknown) =>
 				Object.assign(call, { id: value }) && query,
 			then: (
@@ -49,6 +55,7 @@ const scriptedServer = (
 				reject: (error: unknown) => unknown,
 			) => {
 				calls.push({ ...call });
+				headers.push({ ...sent });
 				return Promise.resolve(reply(call)).then(resolve, reject);
 			},
 		};
@@ -64,6 +71,7 @@ const scriptedServer = (
 	});
 	return {
 		calls,
+		headers,
 		upload: (db: AbstractPowerSyncDatabase) => connector.uploadData(db),
 	};
 };
@@ -305,7 +313,7 @@ describe("upload connector", () => {
 			await db.execute("DELETE FROM ps_crud");
 			await db.execute(
 				"UPDATE households SET name = 'Home', _metadata = ? WHERE id = ?",
-				[stamped({}, 1)._metadata, id],
+				[stamped({}, 1, new Date("2026-10-26T13:30:00.000Z"))._metadata, id],
 			);
 			const server = scriptedServer(ok);
 
@@ -323,6 +331,10 @@ describe("upload connector", () => {
 						created_at: "2026-01-01",
 					},
 				},
+			]);
+			// The stamp's device time travels as a header, for the Activity log.
+			expect(server.headers).toEqual([
+				{ "x-device-time": "2026-10-26T13:30:00.000Z" },
 			]);
 		});
 

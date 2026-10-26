@@ -96,6 +96,7 @@
 		"sslmode",
 		"supabase",
 		"tablename",
+		"tanstack",
 		"Tauri",
 		"tgname",
 		"tgrelid",

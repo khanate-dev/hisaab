@@ -10,6 +10,7 @@ import { I18nProvider } from "@lingui/react";
 import { useLingui } from "@lingui/react/macro";
 import { PowerSyncContext } from "@powersync/react";
 import { PortalHost } from "@rn-primitives/portal";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
@@ -23,6 +24,7 @@ import { UpdateRequired } from "@/features/update/update-required";
 import { useUpdateRequired } from "@/features/update/use-update-required";
 import { i18n } from "@/lib/i18n";
 import { powersync } from "@/lib/powersync";
+import { queryClient } from "@/lib/query";
 import { SessionProvider, useSession } from "@/lib/session";
 import { ThemeProvider, useColors } from "@/theme/theme";
 import { FONTS } from "@/theme/tokens";
@@ -59,6 +61,10 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 				<Stack.Screen
 					name="inbox"
 					options={{ title: t`Notifications` }}
+				/>
+				<Stack.Screen
+					name="activity"
+					options={{ title: t`Activity log` }}
 				/>
 				<Stack.Screen
 					name="wallets/index"
@@ -145,14 +151,16 @@ export default function RootLayout() {
 
 	return (
 		<I18nProvider i18n={i18n}>
-			<PowerSyncContext value={powersync}>
-				<ThemeProvider>
-					<SessionProvider>
-						<Routes />
-					</SessionProvider>
-					<PortalHost />
-				</ThemeProvider>
-			</PowerSyncContext>
+			<QueryClientProvider client={queryClient}>
+				<PowerSyncContext value={powersync}>
+					<ThemeProvider>
+						<SessionProvider>
+							<Routes />
+						</SessionProvider>
+						<PortalHost />
+					</ThemeProvider>
+				</PowerSyncContext>
+			</QueryClientProvider>
 		</I18nProvider>
 	);
 }

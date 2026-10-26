@@ -71,6 +71,7 @@ catalog:
   "@azure/core-asynciterator-polyfill": 1.0.2
   "@op-engineering/op-sqlite": 17.2.0
   "@supabase/supabase-js": 2.117.2
+  "@tanstack/react-query": 5.104.2
   # tests/sync mints client-side UUIDv7 ids for its seed
   uuid: 14.0.2
   react-native-url-polyfill: 4.0.0
