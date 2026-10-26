@@ -1,3 +1,4 @@
+import { type AmountKey, DELETE_KEY } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Delete } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -6,16 +7,14 @@ import { Icon } from "@/components/ui/icon";
 import { usePressIn } from "@/components/ui/pressable-surface";
 import { Text } from "@/components/ui/text";
 
-import { DELETE_KEY, type KeypadKey } from "./keypad";
-
-const ROWS: readonly (readonly KeypadKey[])[] = [
+const ROWS: readonly (readonly AmountKey[])[] = [
 	["1", "2", "3"],
 	["4", "5", "6"],
 	["7", "8", "9"],
 	[".", "0", DELETE_KEY],
 ];
 
-const Key = ({ value, onPress }: { value: KeypadKey; onPress: () => void }) => {
+const Key = ({ value, onPress }: { value: AmountKey; onPress: () => void }) => {
 	const { t } = useLingui();
 	const pressIn = usePressIn("control", {});
 	const label =
@@ -27,7 +26,7 @@ const Key = ({ value, onPress }: { value: KeypadKey; onPress: () => void }) => {
 	return (
 		<Pressable
 			accessibilityLabel={label}
-			className="min-h-12 flex-1 items-center justify-center rounded-control border-3 border-border bg-surface"
+			className="min-h-11 flex-1 items-center justify-center rounded-control border-3 border-border bg-surface"
 			onPress={onPress}
 			role="button"
 			{...pressIn}
@@ -50,7 +49,7 @@ const Key = ({ value, onPress }: { value: KeypadKey; onPress: () => void }) => {
 export const AmountKeypad = ({
 	onKey,
 }: {
-	onKey: (key: KeypadKey) => void;
+	onKey: (key: AmountKey) => void;
 }) => (
 	<View className="gap-2">
 		{ROWS.map((row) => (

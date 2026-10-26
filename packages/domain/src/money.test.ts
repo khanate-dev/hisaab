@@ -169,11 +169,42 @@ describe("currencyDecimals", () => {
 		expect(currencyDecimals(currency)).toBe(decimals);
 	});
 
-	it("is 0, 2 or 3 for any currency code", () => {
+	it("is 2 for any currency ISO 4217 doesn't list otherwise", () => {
+		const listed = [
+			"BIF",
+			"CLP",
+			"DJF",
+			"GNF",
+			"ISK",
+			"JPY",
+			"KMF",
+			"KRW",
+			"PYG",
+			"RWF",
+			"UGX",
+			"UYI",
+			"VND",
+			"VUV",
+			"XAF",
+			"XOF",
+			"XPF",
+			"BHD",
+			"IQD",
+			"JOD",
+			"KWD",
+			"LYD",
+			"OMR",
+			"TND",
+		];
 		fc.assert(
-			fc.property(fc.stringMatching(/^[A-Z]{3}$/), (code) => {
-				expect([0, 2, 3]).toContain(currencyDecimals(code));
-			}),
+			fc.property(
+				fc
+					.stringMatching(/^[A-Z]{3}$/)
+					.filter((code) => !listed.includes(code)),
+				(code) => {
+					expect(currencyDecimals(code)).toBe(2);
+				},
+			),
 		);
 	});
 });

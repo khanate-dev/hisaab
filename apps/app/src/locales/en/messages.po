@@ -55,8 +55,7 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
-#: src/app/entries/new.tsx
-#: src/features/entries/quick-add.tsx
+#: src/features/entries/needs-wallet.tsx
 msgid "Add a Wallet first: every Entry comes out of or goes into one."
 msgstr "Add a Wallet first: every Entry comes out of or goes into one."
 
@@ -86,6 +85,10 @@ msgstr "Add Wallet"
 #: src/features/households/household-list.tsx
 msgid "Admin"
 msgstr "Admin"
+
+#: src/features/entries/quick-add-form.tsx
+msgid "All Categories"
+msgstr "All Categories"
 
 #: src/app/(tabs)/index.tsx
 msgid "All Entries"

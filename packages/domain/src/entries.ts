@@ -78,3 +78,31 @@ export const recentDescriptions = <T extends Describable>(
 		.slice(0, limit)
 		.map(({ latest }) => latest);
 };
+
+type Categorized = Dated & { kind: string; category_id: string | null };
+
+/**
+ * The Categories quick-add shows first: those the kind's `window` latest Entries used most, most used first (ties to
+ * the most recent), up to `limit`.
+ */
+export const frequentCategories = (
+	entries: readonly Categorized[],
+	kind: FlowKind,
+	{ window = 50, limit = 8 } = {},
+): string[] => {
+	const uses = new Map<string, { count: number; rank: number }>();
+	entries
+		.filter((e) => e.kind === kind && e.category_id !== null)
+		.toSorted(newestFirst)
+		.slice(0, window)
+		.forEach((entry, rank) => {
+			const id = entry.category_id ?? "";
+			const seen = uses.get(id);
+			if (seen) seen.count += 1;
+			else uses.set(id, { count: 1, rank });
+		});
+	return [...uses]
+		.toSorted(([, a], [, b]) => b.count - a.count || a.rank - b.rank)
+		.slice(0, limit)
+		.map(([id]) => id);
+};

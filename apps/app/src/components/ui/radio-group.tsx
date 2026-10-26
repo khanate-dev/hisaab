@@ -5,6 +5,8 @@ import { Text } from "./text";
 
 type Props<T extends string> = {
 	label: string;
+	/** Smaller chips, for a grid that has to fit beside a keypad. */
+	compact?: boolean;
 	value: T;
 	onValueChange: (value: T) => void;
 	options: readonly {
@@ -19,6 +21,7 @@ type Props<T extends string> = {
 /** One choice from a few, shown as chips; the chosen one is filled. */
 export const RadioGroup = <T extends string>({
 	label,
+	compact = false,
 	value,
 	onValueChange,
 	options,
@@ -37,7 +40,7 @@ export const RadioGroup = <T extends string>({
 				<RadioGroupPrimitive.Item
 					accessibilityLabel={option.label}
 					aria-label={option.label}
-					className={`rounded-full border-2 border-border ${option.content ? "p-2" : "ps-4 pe-4 py-2"} ${selected ? "bg-butter" : "bg-surface"}`}
+					className={`rounded-full border-2 border-border ${option.content ? (compact ? "p-1" : "p-2") : compact ? "ps-3 pe-3 py-1" : "ps-4 pe-4 py-2"} ${selected ? "bg-butter" : "bg-surface"}`}
 					key={option.value}
 					value={option.value}
 				>

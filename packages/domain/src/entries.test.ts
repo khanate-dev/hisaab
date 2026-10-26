@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	descriptionSuggestions,
+	frequentCategories,
 	isFlowKind,
 	magnitude,
 	recentDescriptions,
@@ -187,6 +188,45 @@ describe("recentDescriptions", () => {
 						limit: 25,
 					}))
 						expect(latest).toContain(chip);
+				},
+			),
+		);
+	});
+});
+
+describe("frequentCategories", () => {
+	const categorized = fc.uniqueArray(
+		fc.record({
+			id: fc.uuid(),
+			kind: flowKind,
+			category_id: fc.option(fc.constantFrom("c1", "c2", "c3", "c4"), {
+				nil: null,
+			}),
+			occurred_on: fc
+				.integer({ min: 1, max: 28 })
+				.map((d) => `2026-10-${String(d).padStart(2, "0")}`),
+			created_at: fc
+				.integer({ min: 0, max: 1000 })
+				.map((s) => new Date(Date.UTC(2026, 9, 1, 0, 0, s)).toISOString()),
+		}),
+		{ selector: (e) => e.id, maxLength: 25 },
+	);
+
+	it("lists each Category the kind's recent Entries used once, most used first, up to the limit", () => {
+		fc.assert(
+			fc.property(
+				categorized,
+				flowKind,
+				fc.integer({ min: 1, max: 5 }),
+				(list, kind, limit) => {
+					const ids = frequentCategories(list, kind, { limit, window: 25 });
+					expect(ids.length).toBeLessThanOrEqual(limit);
+					expect(new Set(ids).size).toBe(ids.length);
+					const uses = (id: string) =>
+						list.filter((e) => e.kind === kind && e.category_id === id).length;
+					for (const id of ids) expect(uses(id)).toBeGreaterThan(0);
+					const counts = ids.map(uses);
+					expect(counts).toEqual(counts.toSorted((a, b) => b - a));
 				},
 			),
 		);

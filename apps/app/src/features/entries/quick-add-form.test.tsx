@@ -1,8 +1,10 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { screen, userEvent } from "@testing-library/react-native";
+import { parseMoney } from "@hisaab/domain";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -157,8 +159,8 @@ describe("QuickAddForm", () => {
 			"7",
 		])
 			await tap(key);
-		expect(screen.getByLabelText("Amount").props.accessibilityValue).toEqual({
-			text: "PKR 12.7",
+		expect(screen.getByLabelText("Amount")).toHaveAccessibilityValue({
+			text: formatMoney(parseMoney("12.7", "PKR")),
 		});
 	});
 
@@ -177,6 +179,26 @@ describe("QuickAddForm", () => {
 			expect.objectContaining({ occurredOn: "2026-10-25", walletId: "w2" }),
 			"PKR",
 		);
+	});
+
+	it("shows the most used Categories first, and the rest on request", async () => {
+		// Groceries (a Subcategory) is used most; ten more top-level Categories overflow the grid.
+		const many = [
+			...categories,
+			...Array.from({ length: 10 }, (_, i) =>
+				makeCategory(`x${i}`, `Extra ${i}`),
+			),
+		];
+		const { tap } = await setup({ categories: many });
+		await tap("New entry");
+		const shown = () =>
+			screen.getAllByRole("radio").map((r) => r.props.accessibilityLabel);
+		expect(shown().indexOf("Groceries")).toBeLessThan(
+			shown().indexOf("Extra 0"),
+		);
+		expect(shown()).not.toContain("Extra 9");
+		await tap("All Categories");
+		expect(shown()).toContain("Extra 9");
 	});
 
 	it("opens the full form for Items with what's entered so far", async () => {
