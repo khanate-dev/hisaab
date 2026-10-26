@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import { useSave } from "@/features/entries/form-checks";
-import { ROLE_LABELS } from "@/features/households/household-list";
+import { ROLE_LABELS } from "@/features/households/labels";
 
 import type { InviteDraft } from "./actions";
 

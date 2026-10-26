@@ -192,6 +192,10 @@ export const deviceState = sqliteTable("device_state", {
 	id: text("id").primaryKey(),
 	/** The household last switched to here; the Personal household when it's null or no longer the User's. */
 	current_household_id: text("current_household_id"),
+	/** The Invite someone arrived by, kept through sign-in and naming themselves until they've joined. */
+	pending_invite_token: text("pending_invite_token"),
+	/** That Invite's household, once accepted; onboarding waits for its Membership to sync. */
+	pending_invite_household_id: text("pending_invite_household_id"),
 });
 
 export const DEVICE_STATE_ID = "device";

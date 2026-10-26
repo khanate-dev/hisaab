@@ -50,12 +50,12 @@ insert into public.invites (id, household_id, token, role, expires_at, created_b
 create temporary table attempts (attempt text primary key, statement text not null);
 insert into attempts values
 	('households.select', $$ select 1 from public.households where id = '00000000-0000-7000-8000-00000000aaf1' $$),
-	('households.insert', $$ insert into public.households (id, name, created_by) values (gen_random_uuid(), 'New', (select auth.uid())) $$),
+	('households.insert', $$ insert into public.households (id, name, created_by) values ('00000000-0000-7000-8000-00000000ab01', 'New', (select auth.uid())) $$),
 	('households.update', $$ update public.households set name = name where id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('households.delete', $$ delete from public.households where id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('memberships.select', $$ select 1 from public.memberships where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('memberships.insert', $$ insert into public.memberships (id, household_id, user_id, role)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa4', 'admin') $$),
+		values ('00000000-0000-7000-8000-00000000ab02', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa4', 'admin') $$),
 	('memberships.update', $$ update public.memberships set default_wallet_id = default_wallet_id
 		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = (select auth.uid()) $$),
 	('memberships.delete', $$ delete from public.memberships where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
@@ -64,44 +64,44 @@ insert into attempts values
 	('profiles.delete', $$ delete from public.profiles where id = (select auth.uid()) $$),
 	('wallets.select', $$ select 1 from public.wallets where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('wallets.insert', $$ insert into public.wallets (id, household_id, name, type, currency)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', 'New', 'cash', 'PKR') $$),
+		values ('00000000-0000-7000-8000-00000000ab03', '00000000-0000-7000-8000-00000000aaf1', 'New', 'cash', 'PKR') $$),
 	('wallets.update', $$ update public.wallets set name = name where id = '00000000-0000-7000-8000-00000000aac1' $$),
 	('wallets.delete', $$ delete from public.wallets where id = '00000000-0000-7000-8000-00000000aac1' $$),
 	('categories.select', $$ select 1 from public.categories where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('categories.insert', $$ insert into public.categories (id, household_id, kind, name, icon, color)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', 'expense', 'New', 'tag', 'red') $$),
+		values ('00000000-0000-7000-8000-00000000ab04', '00000000-0000-7000-8000-00000000aaf1', 'expense', 'New', 'tag', 'red') $$),
 	('categories.update', $$ update public.categories set name = name where id = '00000000-0000-7000-8000-00000000aab1' $$),
 	('categories.delete', $$ delete from public.categories where id = '00000000-0000-7000-8000-00000000aab1' $$),
 	('entries.select', $$ select 1 from public.entries where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('entries.insert', $$ insert into public.entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aac1',
+		values ('00000000-0000-7000-8000-00000000ab05', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aac1',
 		        'balance_adjustment', 1, '2026-10-26', (select auth.uid())) $$),
 	('entries.update', $$ update public.entries set amount = amount where id = '00000000-0000-7000-8000-00000000aad1' $$),
 	('entries.delete', $$ delete from public.entries where id = '00000000-0000-7000-8000-00000000aad1' $$),
 	('entry_items.select', $$ select 1 from public.entry_items where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('entry_items.insert', $$ insert into public.entry_items (id, household_id, entry_id, position, description, amount, category_id)
-		select gen_random_uuid(), household_id, entry_id, 1, 'Bread', 10, category_id from public.entry_items
+		select '00000000-0000-7000-8000-00000000ab06', household_id, entry_id, 1, 'Bread', 10, category_id from public.entry_items
 		where id = '00000000-0000-7000-8000-00000000aa01' $$),
 	('entry_items.update', $$ update public.entry_items set description = description where id = '00000000-0000-7000-8000-00000000aa01' $$),
 	('entry_items.delete', $$ delete from public.entry_items where id = '00000000-0000-7000-8000-00000000aa01' $$),
 	('contacts.select', $$ select 1 from public.contacts where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('contacts.insert', $$ insert into public.contacts (id, household_id, name)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', 'New') $$),
+		values ('00000000-0000-7000-8000-00000000ab07', '00000000-0000-7000-8000-00000000aaf1', 'New') $$),
 	('contacts.update', $$ update public.contacts set name = name where id = '00000000-0000-7000-8000-00000000aa12' $$),
 	('contacts.delete', $$ delete from public.contacts where id = '00000000-0000-7000-8000-00000000aa12' $$),
 	('loans.select', $$ select 1 from public.loans where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('loans.insert', $$ insert into public.loans (id, household_id, contact_id, direction)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa11', 'borrowed') $$),
+		values ('00000000-0000-7000-8000-00000000ab08', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa11', 'borrowed') $$),
 	('loans.update', $$ update public.loans set notes = notes where id = '00000000-0000-7000-8000-00000000aa21' $$),
 	('loans.delete', $$ delete from public.loans where id = '00000000-0000-7000-8000-00000000aa21' $$),
 	('activity_log.select', $$ select 1 from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.insert', $$ insert into public.activity_log (household_id, table_name, row_id, action)
-		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', gen_random_uuid(), 'insert') $$),
+		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', '00000000-0000-7000-8000-00000000ab09', 'insert') $$),
 	('activity_log.update', $$ update public.activity_log set action = action where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.delete', $$ delete from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('invites.select', $$ select 1 from public.invites where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('invites.insert', $$ insert into public.invites (id, household_id, token, role, expires_at, created_by)
-		values (gen_random_uuid(), '00000000-0000-7000-8000-00000000aaf1', repeat('n', 32), 'viewer',
+		values ('00000000-0000-7000-8000-00000000ab10', '00000000-0000-7000-8000-00000000aaf1', repeat('n', 32), 'viewer',
 		        now() + interval '1 day', (select auth.uid())) $$),
 	('invites.update', $$ update public.invites set revoked_at = now() where id = '00000000-0000-7000-8000-00000000aa31' $$),
 	('invites.delete', $$ delete from public.invites where id = '00000000-0000-7000-8000-00000000aa31' $$),

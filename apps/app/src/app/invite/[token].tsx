@@ -15,11 +15,14 @@ export default function InviteScreen() {
 		<Screen title={t`Invite`}>
 			<InviteJoin
 				onJoined={() => router.replace("/")}
-				onSignIn={() => {
-					setPendingInvite({ token });
-					router.replace("/sign-in");
-				}}
-				signedIn={signedIn}
+				onSignIn={
+					signedIn
+						? undefined
+						: async () => {
+								await setPendingInvite(token);
+								router.replace("/sign-in");
+							}
+				}
 				token={token}
 			/>
 		</Screen>

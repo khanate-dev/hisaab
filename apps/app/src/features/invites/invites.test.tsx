@@ -111,9 +111,10 @@ describe("InviteList", () => {
 				onRevoke={() => {}}
 			/>,
 		);
-		expect(screen.getByText("Revoked")).toBeOnTheScreen();
-		expect(screen.getByText("Used")).toBeOnTheScreen();
-		expect(screen.getByText("Expired")).toBeOnTheScreen();
+		for (const standing of ["Revoked", "Used", "Expired"])
+			expect(
+				screen.getByLabelText(`Member, for anyone with the link: ${standing}`),
+			).toBeOnTheScreen();
 		expect(screen.queryByLabelText("Invite link")).toBeNull();
 		expect(screen.queryByRole("button")).toBeNull();
 	});
@@ -136,12 +137,14 @@ describe("InviteLanding", () => {
 				onJoin={async () => ({ status: "signed_out" })}
 				onSignIn={onSignIn}
 				preview={open}
-				signedIn={false}
 			/>,
 		);
-		expect(screen.getByText("Join Family")).toBeOnTheScreen();
-		expect(screen.getByText("You're invited as Viewer.")).toBeOnTheScreen();
-		expect(screen.getByText(/for one email address/)).toBeOnTheScreen();
+		expect(
+			screen.getByRole("heading", { name: "Join Family" }),
+		).toBeOnTheScreen();
+		expect(
+			screen.getByLabelText(/invited as Viewer.*one email address/),
+		).toBeOnTheScreen();
 		await userEvent.press(
 			screen.getByRole("button", { name: "Sign in to join" }),
 		);
@@ -157,9 +160,7 @@ describe("InviteLanding", () => {
 			<InviteLanding
 				failed={false}
 				onJoin={onJoin}
-				onSignIn={() => {}}
 				preview={open}
-				signedIn
 			/>,
 		);
 		await userEvent.press(screen.getByRole("button", { name: "Join" }));
@@ -167,14 +168,14 @@ describe("InviteLanding", () => {
 		expect(await screen.findByRole("status")).toHaveTextContent(/You're in/);
 	});
 
-	it("says when the Invite is for another email", async () => {
+	it("says when the Invite is for another email, and offers a way on without it", async () => {
+		const onLeave = jest.fn();
 		await render(
 			<InviteLanding
 				failed={false}
 				onJoin={async () => ({ status: "wrong_email" })}
-				onSignIn={() => {}}
+				onLeave={onLeave}
 				preview={open}
-				signedIn
 			/>,
 		);
 		await userEvent.press(screen.getByRole("button", { name: "Join" }));
@@ -182,6 +183,10 @@ describe("InviteLanding", () => {
 			/different email/,
 		);
 		expect(screen.getByRole("button", { name: "Join" })).toBeOnTheScreen();
+		await userEvent.press(
+			screen.getByRole("button", { name: "Set up on my own instead" }),
+		);
+		expect(onLeave).toHaveBeenCalled();
 	});
 
 	it("offers no Join on an Invite that no longer works", async () => {
@@ -189,13 +194,15 @@ describe("InviteLanding", () => {
 			<InviteLanding
 				failed={false}
 				onJoin={async () => ({ status: "expired" })}
-				onSignIn={() => {}}
+				onLeave={() => {}}
 				preview={{ ...open, status: "expired" }}
-				signedIn
 			/>,
 		);
 		expect(screen.getByRole("alert")).toHaveTextContent(/expired/);
 		expect(screen.queryByRole("button", { name: "Join" })).toBeNull();
+		expect(
+			screen.getByRole("button", { name: "Set up on my own instead" }),
+		).toBeOnTheScreen();
 	});
 
 	it("says when the link is no Invite at all", async () => {
@@ -203,9 +210,7 @@ describe("InviteLanding", () => {
 			<InviteLanding
 				failed={false}
 				onJoin={async () => ({ status: "not_found" })}
-				onSignIn={() => {}}
 				preview={{ status: "not_found" }}
-				signedIn
 			/>,
 		);
 		expect(screen.getByRole("alert")).toHaveTextContent(/doesn't work/);

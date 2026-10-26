@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(27);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000009a1', 'admin@example.com'),
@@ -55,13 +55,26 @@ select throws_ok(
 	$$ insert into public.invites (id, household_id, token, role, expires_at, created_by)
 	   values ('00000000-0000-7000-8000-0000000009c6', '00000000-0000-7000-8000-0000000009f1', repeat('w', 32), 'member',
 	           now() + interval '60 days', '00000000-0000-4000-8000-0000000009a1') $$,
-	'23514', null, 'an Invite lasts a month at most'
+	'42501', null, 'an Invite lasts a month at most'
 );
 select throws_ok(
 	$$ insert into public.invites (id, household_id, token, role, expires_at, created_by)
 	   values ('00000000-0000-7000-8000-0000000009c5', '00000000-0000-7000-8000-0000000009f1', 'short', 'member',
 	           now() + interval '1 day', '00000000-0000-4000-8000-0000000009a1') $$,
 	'23514', null, 'and carries a real token'
+);
+select throws_ok(
+	$$ insert into public.invites (id, household_id, token, role, expires_at, created_by, created_at)
+	   values ('00000000-0000-7000-8000-0000000009c3', '00000000-0000-7000-8000-0000000009f1', repeat('v', 32), 'member',
+	           now() + interval '1 year', '00000000-0000-4000-8000-0000000009a1', now() + interval '360 days') $$,
+	'42501', null, 'nor longer by dating it ahead'
+);
+select throws_ok(
+	$$ insert into public.invites (id, household_id, token, role, expires_at, created_by)
+	   values ('00000000-0000-7000-8000-0000000009c0',
+	           (select id from public.households where personal_user_id = '00000000-0000-4000-8000-0000000009a1'),
+	           repeat('u', 32), 'member', now() + interval '1 day', '00000000-0000-4000-8000-0000000009a1') $$,
+	'42501', null, 'nobody is invited into a Personal household'
 );
 select lives_ok(pg_temp.invite('00000000-0000-7000-8000-0000000009c2', 'c', '00000000-0000-4000-8000-0000000009a1',
 	'email=''joiner@example.com'''), 'an Admin ties an Invite to one email');
@@ -100,10 +113,23 @@ select is(public.redeem_invite('00000000-0000-7000-8000-0000000009c1', '00000000
 	'00000000-0000-7000-8000-0000000009f1'::uuid, 'an open Invite is redeemed for its household');
 select is((select role from public.memberships where user_id = '00000000-0000-4000-8000-0000000009a5'
 	and household_id = '00000000-0000-7000-8000-0000000009f1'), 'member', 'with its Role');
+select is((select actor_id from public.activity_log where table_name = 'memberships' and action = 'insert'
+	and household_id = '00000000-0000-7000-8000-0000000009f1' and after ->> 'user_id' = '00000000-0000-4000-8000-0000000009a5'),
+	'00000000-0000-4000-8000-0000000009a5'::uuid,
+	'and the Activity log says who joined');
 select is(public.redeem_invite('00000000-0000-7000-8000-0000000009c1', '00000000-0000-4000-8000-0000000009a4'),
 	null, 'once');
 select is(public.redeem_invite('00000000-0000-7000-8000-0000000009c2', '00000000-0000-4000-8000-0000000009a4'),
 	null, 'and a revoked one not at all');
+insert into public.invites (id, household_id, token, role, expires_at, created_by) values
+	('00000000-0000-7000-8000-0000000009cb', '00000000-0000-7000-8000-0000000009f1', repeat('t', 32), 'admin',
+	 now() + interval '1 day', '00000000-0000-4000-8000-0000000009a1');
+select is(public.redeem_invite('00000000-0000-7000-8000-0000000009cb', '00000000-0000-4000-8000-0000000009a3'),
+	'00000000-0000-7000-8000-0000000009f1'::uuid, 'a Member redeeming keeps their Role');
+select ok((select accepted_at is null from public.invites where id = '00000000-0000-7000-8000-0000000009cb')
+	and (select role from public.memberships where user_id = '00000000-0000-4000-8000-0000000009a3'
+	     and household_id = '00000000-0000-7000-8000-0000000009f1') = 'viewer',
+	'and leaves the Invite open for someone else');
 
 select * from finish();
 rollback;

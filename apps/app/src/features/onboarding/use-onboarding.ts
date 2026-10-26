@@ -9,12 +9,12 @@ import {
 import { isZero, parseMoney } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery, useStatus } from "@powersync/react";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { useEffect } from "react";
 
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import {
-	setPendingInvite,
+	clearPendingInvite,
 	usePendingInvite,
 } from "@/features/invites/pending-invite";
 import { deviceTimeZone, nowIso, todayIn } from "@/lib/dates";
@@ -56,29 +56,35 @@ export const useOnboardingStep = (userId: string): OnboardingStep => {
 			),
 		).data.length > 0;
 
-	const joined = useQuery(
+	// The shared households the User belongs to.
+	const shared = useQuery(
 		toCompilableQuery(
 			db
 				.select({ householdId: memberships.household_id })
 				.from(memberships)
-				.where(eq(memberships.user_id, userId)),
+				.innerJoin(households, eq(households.id, memberships.household_id))
+				.where(
+					and(
+						eq(memberships.user_id, userId),
+						isNull(households.personal_user_id),
+					),
+				),
 		),
 	).data.map((row) => row.householdId);
 	const invite = usePendingInvite();
 	// Joined, and the Membership has synced: the Invite is done with.
 	const arrived =
-		invite?.joinedHouseholdId !== undefined &&
-		joined.includes(invite.joinedHouseholdId);
+		invite?.joinedHouseholdId != null &&
+		shared.includes(invite.joinedHouseholdId);
 	useEffect(() => {
-		if (arrived) setPendingInvite(null);
+		if (arrived) void clearPendingInvite();
 	}, [arrived]);
 
-	if (!hasSynced || personal === undefined) return ONBOARDING_STEP.WAITING;
+	if (!hasSynced || personal === undefined || invite === undefined)
+		return ONBOARDING_STEP.WAITING;
 	if (profile === undefined) return ONBOARDING_STEP.NAME;
 	if (invite !== null && !arrived) return ONBOARDING_STEP.JOIN;
-	// Their Personal Membership, and one in a shared household at least.
-	const inSharedHousehold = joined.length > 1;
-	if (!hasWallet && personal.base_currency === null && !inSharedHousehold)
+	if (!hasWallet && personal.base_currency === null && shared.length === 0)
 		return ONBOARDING_STEP.FIRST_WALLET;
 	return ONBOARDING_STEP.DONE;
 };

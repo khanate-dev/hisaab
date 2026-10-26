@@ -55,7 +55,10 @@ export type Invite = {
 /** Whether an Invite can still be accepted, or why not. A revoked or used one says so even once it has expired. */
 export type InviteStanding = "open" | "revoked" | "used" | "expired";
 
-export const inviteStanding = (invite: Invite, now: Date): InviteStanding =>
+export const inviteStanding = (
+	invite: Pick<Invite, "expiresAt" | "revokedAt" | "acceptedAt">,
+	now: Date,
+): InviteStanding =>
 	invite.revokedAt !== null
 		? "revoked"
 		: invite.acceptedAt !== null
@@ -140,6 +143,12 @@ export const acceptInvite = async (
 		? { status: "used" }
 		: { status: "joined", householdId };
 };
+
+/** The household an accept put the User in (newly, or already), or null when it didn't. */
+export const joinedHousehold = (result: AcceptResult) =>
+	result.status === "joined" || result.status === "already_member"
+		? result.householdId
+		: null;
 
 const STATUS_CODES: Record<AcceptResult["status"], number> = {
 	joined: 200,

@@ -17,7 +17,8 @@ const url = env("SUPABASE_URL");
 const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
 const asService = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` };
 
-const rest = async (path: string, init: RequestInit = {}) => {
+/** A PostgREST call as the service role; `what` names it in errors, never the path, which can carry a token. */
+const rest = async (what: string, path: string, init: RequestInit = {}) => {
 	const response = await fetch(`${url}/rest/v1/${path}`, {
 		...init,
 		headers: {
@@ -47,6 +48,7 @@ type InviteRow = {
 const adapters: InviteAdapters = {
 	findInvite: async (token) => {
 		const [row] = (await rest(
+			"findInvite",
 			`invites?token=eq.${encodeURIComponent(token)}&select=id,household_id,role,email,expires_at,revoked_at,accepted_at,households(name)`,
 		)) as InviteRow[];
 		return row
@@ -77,11 +79,12 @@ const adapters: InviteAdapters = {
 	isMember: async (householdId, userId) =>
 		(
 			(await rest(
-				`memberships?household_id=eq.${householdId}&user_id=eq.${userId}&select=id`,
+				"isMember",
+				`memberships?household_id=eq.${encodeURIComponent(householdId)}&user_id=eq.${encodeURIComponent(userId)}&select=id`,
 			)) as unknown[]
 		).length > 0,
 	redeem: async (inviteId, userId) =>
-		(await rest("rpc/redeem_invite", {
+		(await rest("redeem", "rpc/redeem_invite", {
 			method: "POST",
 			body: JSON.stringify({ target_invite: inviteId, joiner: userId }),
 		})) as string | null,

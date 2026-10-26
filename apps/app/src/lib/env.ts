@@ -20,4 +20,6 @@ export const env = {
 		"EXPO_PUBLIC_POWERSYNC_URL",
 		process.env.EXPO_PUBLIC_POWERSYNC_URL,
 	),
+	/** Where the web app lives, for links people open anywhere (Invites); unset, links use this app's own URL. */
+	webUrl: process.env.EXPO_PUBLIC_WEB_URL || null,
 };

@@ -6,7 +6,7 @@ import { View } from "react-native";
 
 import { Chip } from "@/components/ui/chip";
 import { Text } from "@/components/ui/text";
-import { ROLE_LABELS } from "@/features/households/household-list";
+import { ROLE_LABELS } from "@/features/households/labels";
 import { formatDateTime } from "@/lib/format";
 
 import type { InviteRow } from "./use-invites";
@@ -47,11 +47,6 @@ export const InviteList = ({ invites, now, linkFor, onRevoke }: Props) => {
 			{invites.map((invite) => {
 				const standing = inviteStanding(
 					{
-						id: invite.id,
-						householdId: invite.household_id,
-						householdName: "",
-						role: invite.role,
-						email: invite.email,
 						expiresAt: invite.expires_at,
 						revokedAt: invite.revoked_at,
 						acceptedAt: invite.accepted_at,
@@ -62,14 +57,23 @@ export const InviteList = ({ invites, now, linkFor, onRevoke }: Props) => {
 				const who = invite.email ?? t`anyone with the link`;
 				const until = formatDateTime(invite.expires_at);
 				const summary = t`${role}, for ${who}`;
+				const closed =
+					standing === "open" ? null : i18n._(STANDING_LABELS[standing]);
 				return (
 					<View
 						className="gap-1 border-b-2 border-border py-2"
 						key={invite.id}
 						role="listitem"
 					>
-						<Text variant="label">{summary}</Text>
-						{standing === "open" ? (
+						<Text
+							accessibilityLabel={
+								closed === null ? summary : t`${summary}: ${closed}`
+							}
+							variant="label"
+						>
+							{summary}
+						</Text>
+						{closed === null ? (
 							<>
 								<Text variant="muted">{t`Works until ${until}`}</Text>
 								<Text
@@ -88,7 +92,7 @@ export const InviteList = ({ invites, now, linkFor, onRevoke }: Props) => {
 								</View>
 							</>
 						) : (
-							<Text variant="muted">{i18n._(STANDING_LABELS[standing])}</Text>
+							<Text variant="muted">{closed}</Text>
 						)}
 					</View>
 				);

@@ -1,19 +1,11 @@
-import type { Role } from "@hisaab/client-schema";
-import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
+import { ROLE_LABELS } from "./labels";
 import type { HouseholdSummary } from "./use-households";
-
-export const ROLE_LABELS: Record<Role, MessageDescriptor> = {
-	admin: msg`Admin`,
-	member: msg`Member`,
-	viewer: msg`Viewer`,
-};
 
 /** The Personal household comes first, presented as "Personal"; shared households follow by name. */
 const ordered = (households: HouseholdSummary[]) =>

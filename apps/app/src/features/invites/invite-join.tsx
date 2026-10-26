@@ -1,3 +1,4 @@
+import { joinedHousehold } from "@hisaab/domain";
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchInvitePreview } from "./api";
@@ -6,17 +7,17 @@ import { joinInvite } from "./join-invite";
 
 const INVITE_QUERY = "invite";
 
-/** The landing for one Invite token, fetched online; signing in is the caller's. */
+/** The landing for one Invite token, fetched online; signing in and leaving are the caller's. */
 export const InviteJoin = ({
 	token,
-	signedIn,
 	onSignIn,
 	onJoined,
+	onLeave,
 }: {
 	token: string;
-	signedIn: boolean;
-	onSignIn: () => void;
-	onJoined?: () => void;
+	onSignIn?: (() => void) | undefined;
+	onJoined?: (() => void) | undefined;
+	onLeave?: (() => void) | undefined;
 }) => {
 	const preview = useQuery({
 		queryKey: [INVITE_QUERY, token],
@@ -28,13 +29,12 @@ export const InviteJoin = ({
 			failed={preview.isError}
 			onJoin={async () => {
 				const result = await joinInvite(token);
-				if (result.status === "joined" || result.status === "already_member")
-					onJoined?.();
+				if (joinedHousehold(result) !== null) onJoined?.();
 				return result;
 			}}
+			onLeave={onLeave}
 			onSignIn={onSignIn}
 			preview={preview.data}
-			signedIn={signedIn}
 		/>
 	);
 };

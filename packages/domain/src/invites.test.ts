@@ -11,6 +11,7 @@ import {
 	type InviteAdapters,
 	inviteStanding,
 	isInviteToken,
+	joinedHousehold,
 	inviteTokenFromLink,
 	normalizeEmail,
 	previewInvite,
@@ -252,6 +253,24 @@ describe("acceptInvite", () => {
 		expect(await acceptInvite(adapters, TOKEN, "Bearer x")).toEqual({
 			status: "used",
 		});
+	});
+});
+
+describe("joinedHousehold", () => {
+	it("is the household for a join or a Member, and nothing otherwise", () => {
+		expect(joinedHousehold({ status: "joined", householdId: "h1" })).toBe("h1");
+		expect(
+			joinedHousehold({ status: "already_member", householdId: "h1" }),
+		).toBe("h1");
+		for (const status of [
+			"signed_out",
+			"not_found",
+			"wrong_email",
+			"revoked",
+			"used",
+			"expired",
+		] as const)
+			expect(joinedHousehold({ status })).toBeNull();
 	});
 });
 

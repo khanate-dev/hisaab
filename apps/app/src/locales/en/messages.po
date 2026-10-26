@@ -75,6 +75,10 @@ msgstr "{restName}, {restAmount}"
 msgid "{role}, for {who}"
 msgstr "{role}, for {who}"
 
+#: src/features/invites/invite-list.tsx
+msgid "{summary}: {closed}"
+msgstr "{summary}: {closed}"
+
 #: src/features/entries/entry-list.tsx
 msgid "{walletName} → {toName}"
 msgstr "{walletName} → {toName}"
@@ -220,7 +224,7 @@ msgstr "Add Wallet"
 msgid "Adjust balance"
 msgstr "Adjust balance"
 
-#: src/features/households/household-list.tsx
+#: src/features/households/labels.ts
 msgid "Admin"
 msgstr "Admin"
 
@@ -1015,7 +1019,7 @@ msgstr "Magenta"
 msgid "Me & household"
 msgstr "Me & household"
 
-#: src/features/households/household-list.tsx
+#: src/features/households/labels.ts
 msgid "Member"
 msgstr "Member"
 
@@ -1424,6 +1428,10 @@ msgstr "Sections"
 msgid "Send code"
 msgstr "Send code"
 
+#: src/features/invites/invite-landing.tsx
+msgid "Set up on my own instead"
+msgstr "Set up on my own instead"
+
 #: src/features/loans/loan-detail.tsx
 msgid "Settled"
 msgstr "Settled"
@@ -1605,16 +1613,8 @@ msgid "This Invite is for a different email address. Sign in with that one to jo
 msgstr "This Invite is for a different email address. Sign in with that one to join."
 
 #: src/features/invites/invite-landing.tsx
-msgid "This Invite is for one email address; sign in with it."
-msgstr "This Invite is for one email address; sign in with it."
-
-#: src/features/invites/invite-landing.tsx
 msgid "This Invite link doesn't work. Ask for a new one."
 msgstr "This Invite link doesn't work. Ask for a new one."
-
-#: src/features/invites/invite-landing.tsx
-msgid "This Invite no longer works. Ask for a new one."
-msgstr "This Invite no longer works. Ask for a new one."
 
 #: src/features/invites/invite-landing.tsx
 msgid "This Invite was revoked. Ask for a new one."
@@ -1727,7 +1727,7 @@ msgstr "Update required"
 msgid "Used"
 msgstr "Used"
 
-#: src/features/households/household-list.tsx
+#: src/features/households/labels.ts
 msgid "Viewer"
 msgstr "Viewer"
 
@@ -1814,6 +1814,10 @@ msgstr "You're in. Getting {name} ready…"
 #: src/features/invites/invite-landing.tsx
 msgid "You're invited as {role}."
 msgstr "You're invited as {role}."
+
+#: src/features/invites/invite-landing.tsx
+msgid "You're invited as {role}. This Invite is for one email address; sign in with it."
+msgstr "You're invited as {role}. This Invite is for one email address; sign in with it."
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"
