@@ -1,6 +1,8 @@
 import { useLingui } from "@lingui/react/macro";
 
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { InviteJoin } from "@/features/invites/invite-join";
+import { usePendingInvite } from "@/features/invites/pending-invite";
 import { FirstWalletForm } from "@/features/onboarding/first-wallet-form";
 import { NameForm } from "@/features/onboarding/name-form";
 import {
@@ -18,11 +20,24 @@ export default function Onboarding() {
 	const userId = useSignedInUserId();
 	const step = useOnboardingStep(userId);
 	const personal = usePersonalHousehold(userId);
+	const invite = usePendingInvite();
 
 	if (step === ONBOARDING_STEP.NAME) {
 		return (
 			<Screen title={t`What's your name?`}>
 				<NameForm onSubmit={(name) => saveName(userId, name)} />
+			</Screen>
+		);
+	}
+	if (step === ONBOARDING_STEP.JOIN && invite) {
+		return (
+			<Screen title={t`Join the household`}>
+				<InviteJoin
+					// Already signed in here; joining ends onboarding once the Membership syncs.
+					onSignIn={() => {}}
+					signedIn
+					token={invite.token}
+				/>
 			</Screen>
 		);
 	}

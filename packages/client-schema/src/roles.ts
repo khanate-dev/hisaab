@@ -1,3 +1,2 @@
-/** A Member's Role within one household (CONTEXT.md). Mirrors the `memberships.role` check in Postgres. */
-export const ROLES = ["admin", "member", "viewer"] as const;
-export type Role = (typeof ROLES)[number];
+// A Member's Role within one household (CONTEXT.md); defined with Invites in the domain package.
+export { ROLES, type Role } from "@hisaab/domain";

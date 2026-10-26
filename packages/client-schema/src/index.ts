@@ -22,6 +22,7 @@ export const schema = new Schema({
 	entries: toPowerSyncTable(tables.entries),
 	entry_items: toPowerSyncTable(tables.entryItems),
 	households: toPowerSyncTable(tables.households),
+	invites: toPowerSyncTable(tables.invites),
 	loans: toPowerSyncTable(tables.loans),
 	memberships: toPowerSyncTable(tables.memberships),
 	profiles: toPowerSyncTable(tables.profiles),

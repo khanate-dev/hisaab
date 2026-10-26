@@ -426,3 +426,8 @@ enabled = true
 
 [functions.health]
 verify_jwt = false
+
+# Previews an Invite for someone not signed in yet, so the platform's JWT check is off; accepting checks the User
+# itself, against Auth.
+[functions.accept-invite]
+verify_jwt = false

@@ -195,3 +195,22 @@ export const deviceState = sqliteTable("device_state", {
 });
 
 export const DEVICE_STATE_ID = "device";
+
+/** An Admin's Invite (spec §3.1); synced to the household's Admins only, since its token is the link. */
+export const invites = sqliteTable("invites", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	/** The secret the link carries (`encodeInviteToken`). */
+	token: text("token").notNull(),
+	role: text("role", { enum: ROLES }).notNull(),
+	/** Normalized (`normalizeEmail`); null when anyone with the link may accept. */
+	email: text("email"),
+	expires_at: text("expires_at").notNull(),
+	revoked_at: text("revoked_at"),
+	accepted_by: text("accepted_by"),
+	accepted_at: text("accepted_at"),
+	created_by: text("created_by").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
