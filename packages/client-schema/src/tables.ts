@@ -89,6 +89,25 @@ export const entries = sqliteTable("entries", {
 	_metadata: contractStamp(),
 });
 
+/** One line of an Expense (CONTEXT.md, Item); the Expense's amount is minus the sum of its Items' amounts. */
+export const entryItems = sqliteTable("entry_items", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	entry_id: text("entry_id").notNull(),
+	/** The order Items were added in; never reordered. */
+	position: integer("position").notNull(),
+	description: text("description").notNull(),
+	/** Exact decimal text, positive. Parse with parseMoney; never SUM it in SQL. */
+	amount: text("amount").notNull(),
+	/** Informational only, say "2 kg". */
+	quantity: text("quantity"),
+	category_id: text("category_id").notNull(),
+	/** The Rest (CONTEXT.md): what the other Items left of the receipt total, saved as "Other <category>". */
+	rest: integer("rest", { mode: "boolean" }).notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+});
+
 /** The one global row: the minimum contract version the server accepts writes from (ADR-0009). */
 export const appConfig = sqliteTable("app_config", {
 	id: text("id").primaryKey(),

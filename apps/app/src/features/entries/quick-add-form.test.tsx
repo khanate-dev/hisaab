@@ -102,6 +102,7 @@ describe("QuickAddForm", () => {
 				occurredTime: null,
 				description: "Bread",
 				notes: null,
+				items: [],
 			},
 			"PKR",
 		);
@@ -191,14 +192,12 @@ describe("QuickAddForm", () => {
 		];
 		const { tap } = await setup({ categories: many });
 		await tap("New entry");
-		const shown = () =>
-			screen.getAllByRole("radio").map((r) => r.props.accessibilityLabel);
-		expect(shown().indexOf("Groceries")).toBeLessThan(
-			shown().indexOf("Extra 0"),
-		);
-		expect(shown()).not.toContain("Extra 9");
+		const position = (name: string) =>
+			screen.getAllByRole("radio").indexOf(screen.getByRole("radio", { name }));
+		expect(position("Groceries")).toBeLessThan(position("Extra 0"));
+		expect(screen.queryByRole("radio", { name: "Extra 9" })).toBeNull();
 		await tap("All Categories");
-		expect(shown()).toContain("Extra 9");
+		expect(screen.getByRole("radio", { name: "Extra 9" })).toBeOnTheScreen();
 	});
 
 	it("opens the full form for Items with what's entered so far", async () => {

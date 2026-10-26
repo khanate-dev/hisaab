@@ -14,6 +14,7 @@ const SYNCED_TABLES = [
 	"wallets",
 	"categories",
 	"entries",
+	"entry_items",
 ] as const;
 
 const syncedIds = async (

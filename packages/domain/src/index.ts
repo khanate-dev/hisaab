@@ -8,5 +8,6 @@ export * from "./dates";
 export * from "./entries";
 export * from "./entry-order";
 export * from "./ids";
+export * from "./items";
 export * from "./money";
 export * from "./upcasters";

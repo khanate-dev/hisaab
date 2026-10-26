@@ -17,7 +17,7 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { useEntryTitle } from "./entry-list";
-import { entryKindLabel } from "./labels";
+import { entryKindLabel, useItemNames } from "./labels";
 import type { EntryView } from "./views";
 
 type Props = {
@@ -61,6 +61,7 @@ export const EntryDetail = ({
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const title = useEntryTitle()(view);
+	const names = useItemNames();
 	const { entry, category, parent, wallet, amount } = view;
 	const editable =
 		canEdit && (entry.kind === "expense" || entry.kind === "income");
@@ -111,6 +112,37 @@ export const EntryDetail = ({
 				label={t`Date`}
 				value={time === null ? day : t`${day} at ${time}`}
 			/>
+			{view.items.length > 0 && (
+				<View className="gap-1">
+					<Text variant="muted">{t`Items`}</Text>
+					<View role="list">
+						{view.items.map(
+							({ item, amount: itemAmount, category: itemCategory }) => {
+								const { description, quantity } = item;
+								const where = itemCategory?.name ?? "";
+								const name = names.item(description, quantity);
+								const shown = formatMoney(itemAmount);
+								return (
+									<View
+										accessibilityLabel={name}
+										accessibilityValue={{ text: t`${where}, ${shown}` }}
+										accessible
+										className="flex-row items-center justify-between gap-3 border-b-2 border-border py-2"
+										key={item.id}
+										role="listitem"
+									>
+										<View className="shrink gap-0.5">
+											<Text variant="label">{name}</Text>
+											<Text variant="muted">{where}</Text>
+										</View>
+										<Text variant="label">{shown}</Text>
+									</View>
+								);
+							},
+						)}
+					</View>
+				</View>
+			)}
 			{entry.notes !== null && (
 				<Field
 					label={t`Notes`}

@@ -1,4 +1,4 @@
-import { entries, profiles } from "@hisaab/client-schema";
+import { entries, entryItems, profiles } from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -9,7 +9,7 @@ import { useWalletRows } from "@/features/wallets/use-wallets";
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
 
-import type { Entry } from "./types";
+import type { Entry, EntryItem } from "./types";
 import { toEntryViews } from "./views";
 
 /**
@@ -32,6 +32,61 @@ export const useEntries = (
 	);
 };
 
+/** Every Item of the household's Expenses, for the Entries list; undefined until the first read lands. */
+export const useEntryItems = (
+	householdId: string | undefined,
+): EntryItem[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(entryItems)
+					.where(eq(entryItems.household_id, householdId ?? "")),
+			),
+		),
+		householdId !== undefined,
+	);
+
+/** One Expense's Items, for editing it; undefined until the first read lands. */
+export const useItemsOf = (entryId: string): EntryItem[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db.select().from(entryItems).where(eq(entryItems.entry_id, entryId)),
+			),
+		),
+	);
+
+/** Whether anything is recorded in a Category (an Entry or an Item), so it's archived, never deleted; undefined while loading. */
+export const useCategoryInUse = (categoryId: string): boolean | undefined => {
+	const entry = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: entries.id })
+					.from(entries)
+					.where(eq(entries.category_id, categoryId))
+					.limit(1),
+			),
+		),
+	);
+	const item = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: entryItems.id })
+					.from(entryItems)
+					.where(eq(entryItems.category_id, categoryId))
+					.limit(1),
+			),
+		),
+	);
+	return entry === undefined || item === undefined
+		? undefined
+		: entry.length + item.length > 0;
+};
+
 /** A User's display name, for "Recorded by"; undefined until their profile has synced. */
 export const useDisplayName = (userId: string | undefined) =>
 	useQuery(
@@ -48,11 +103,15 @@ export const useEntryViews = (householdId: string | undefined) => {
 	const list = useEntries(householdId);
 	const categories = useCategories(householdId);
 	const wallets = useWalletRows(householdId);
+	const items = useEntryItems(householdId);
 	return useMemo(
 		() =>
-			list === undefined || categories === undefined || wallets === undefined
+			list === undefined ||
+			categories === undefined ||
+			wallets === undefined ||
+			items === undefined
 				? undefined
-				: toEntryViews(list, categories, wallets),
-		[list, categories, wallets],
+				: toEntryViews(list, categories, wallets, items),
+		[list, categories, wallets, items],
 	);
 };

@@ -1,6 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { parseMoney } from "@hisaab/domain";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -54,13 +56,14 @@ describe("EntryForm", () => {
 		expect(onSubmit).toHaveBeenCalledWith(
 			{
 				kind: "expense",
-				amount: "450.50",
+				amount: "450.5",
 				walletId: "w1",
 				categoryId: "c2",
 				occurredOn: "2026-10-26",
 				occurredTime: null,
 				description: "Weekly shop",
 				notes: null,
+				items: [],
 			},
 			"PKR",
 		);
@@ -153,6 +156,169 @@ describe("EntryForm", () => {
 			}),
 			"PKR",
 		);
+	});
+
+	it("splits a receipt total into Items, saving the Rest as Other <category>", async () => {
+		const { onSubmit, user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "500");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		await user.press(screen.getByRole("button", { name: "Add Items" }));
+		await user.type(screen.getByLabelText("Item"), "Milk");
+		await user.type(screen.getByLabelText("Item amount (PKR)"), "120");
+		await user.type(screen.getByLabelText("Quantity"), "2 litres");
+		// The Item's own Category picker comes after the Expense's.
+		const groceries = screen.getAllByRole("radio", {
+			name: "Food › Groceries",
+		});
+		await user.press(
+			groceries[groceries.length - 1] as (typeof groceries)[number],
+		);
+		await user.press(screen.getByRole("button", { name: "Add Item" }));
+		expect(screen.getByLabelText("Rest")).toHaveAccessibilityValue({
+			text: `Other Travel, ${formatMoney(parseMoney("380", "PKR"))}`,
+		});
+		await user.press(screen.getByRole("button", { name: "Save Entry" }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				amount: "500",
+				items: [
+					expect.objectContaining({
+						description: "Milk",
+						amount: "120",
+						quantity: "2 litres",
+						categoryId: "c2",
+						rest: false,
+					}),
+					expect.objectContaining({
+						description: "Other Travel",
+						amount: "380",
+						quantity: null,
+						categoryId: "c3",
+						rest: true,
+					}),
+				],
+			}),
+			"PKR",
+		);
+	});
+
+	it("grows the total to Items that run over it, with a warning", async () => {
+		const { onSubmit, user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "100");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		await user.press(screen.getByRole("button", { name: "Add Items" }));
+		await user.type(screen.getByLabelText("Item"), "Taxi");
+		await user.type(screen.getByLabelText("Item amount (PKR)"), "150");
+		await user.press(screen.getByRole("button", { name: "Add Item" }));
+		expect(screen.getByRole("alert")).toHaveTextContent(/more than the total/i);
+		await user.press(screen.getByRole("button", { name: "Save Entry" }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				amount: "150",
+				items: [
+					expect.objectContaining({
+						description: "Taxi",
+						amount: "150",
+						quantity: null,
+						categoryId: "c3",
+						rest: false,
+					}),
+				],
+			}),
+			"PKR",
+		);
+	});
+
+	it("removes an Item with Undo, keeping the order Items were added in", async () => {
+		const { user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "500");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		for (const [name, amount] of [
+			["Bus", "50"],
+			["Taxi", "100"],
+		] as const) {
+			await user.press(
+				screen.getByRole("button", {
+					name: /^Add (Items|another Item)$/,
+				}),
+			);
+			await user.type(screen.getByLabelText("Item"), name);
+			await user.type(screen.getByLabelText("Item amount (PKR)"), amount);
+			await user.press(screen.getByRole("button", { name: "Add Item" }));
+		}
+		await user.press(screen.getByRole("button", { name: "Remove Bus" }));
+		expect(screen.queryByRole("button", { name: "Remove Bus" })).toBeNull();
+		await user.press(screen.getByRole("button", { name: "Undo" }));
+		const removes = screen.getAllByRole("button", { name: /^Remove / });
+		expect(removes[0]).toHaveAccessibleName("Remove Bus");
+		expect(removes[1]).toHaveAccessibleName("Remove Taxi");
+	});
+
+	it("edits an itemized Expense keeping its Items' ids and recomputing its Rest, never adding a second", async () => {
+		const item = (
+			id: string,
+			description: string,
+			amount: string,
+			rest: boolean,
+		) => ({
+			id,
+			household_id: "h1",
+			entry_id: "e1",
+			position: rest ? 1 : 0,
+			description,
+			amount,
+			quantity: null,
+			category_id: "c3",
+			rest,
+			created_at: "2026-10-20T10:00:00.000Z",
+			_metadata: null,
+		});
+		const { onSubmit, user } = await setup({
+			entry: makeEntry("e1", { amount: "-500", category_id: "c3" }),
+			items: [
+				item("i1", "Bus", "100", false),
+				item("i2", "Other Travel", "400", true),
+			],
+		});
+		expect(screen.getByLabelText("Total")).toHaveAccessibilityValue({
+			text: formatMoney(parseMoney("500", "PKR")),
+		});
+		expect(
+			screen.queryByRole("button", { name: "Remove Other Travel" }),
+		).toBeNull();
+		await user.press(screen.getByRole("button", { name: "Change the total" }));
+		await user.clear(screen.getByLabelText("Amount (PKR)"));
+		await user.type(screen.getByLabelText("Amount (PKR)"), "600");
+		await user.press(screen.getByRole("button", { name: "Save Entry" }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				amount: "600",
+				items: [
+					expect.objectContaining({
+						id: "i1",
+						description: "Bus",
+						amount: "100",
+						rest: false,
+					}),
+					expect.objectContaining({
+						id: "i2",
+						description: "Other Travel",
+						amount: "500",
+						rest: true,
+					}),
+				],
+			}),
+			"PKR",
+		);
+	});
+
+	it("never itemizes an Income", async () => {
+		const { user } = await setup();
+		await user.press(screen.getByRole("radio", { name: "Income" }));
+		expect(screen.queryByRole("button", { name: "Add Items" })).toBeNull();
 	});
 
 	it("edits an Entry as how much it was, keeping its kind", async () => {

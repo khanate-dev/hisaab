@@ -1,7 +1,9 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { parseMoney } from "@hisaab/domain";
 import { PortalHost } from "@rn-primitives/portal";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { formatDate, formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -54,14 +56,42 @@ const setup = async (
 describe("EntryDetail", () => {
 	it("shows how much, its Category, Wallet, date and time, notes and who recorded it", async () => {
 		await setup();
-		const value = (label: string) =>
-			screen.getByLabelText(label).props.accessibilityValue?.text;
-		expect(value("Expense")).toMatch(/PKR\s?-?450|-PKR\s?450/);
-		expect(value("Category")).toBe("Food › Groceries");
-		expect(value("Wallet")).toBe("Cash");
-		expect(value("Date")).toMatch(/at 18:30/);
-		expect(value("Notes")).toBe("Two loaves");
-		expect(value("Recorded by")).toBe("Ayesha");
+		const has = (label: string, text: string) =>
+			expect(screen.getByLabelText(label)).toHaveAccessibilityValue({ text });
+		has("Expense", formatMoney(parseMoney("-450", "PKR")));
+		has("Category", "Food › Groceries");
+		has("Wallet", "Cash");
+		has("Date", `${formatDate("2026-10-20")} at 18:30`);
+		has("Notes", "Two loaves");
+		has("Recorded by", "Ayesha");
+	});
+
+	it("lists an itemized Expense's Items with their Categories", async () => {
+		const [itemized] = toEntryViews(
+			[makeEntry("e1", { amount: "-450" })],
+			categories,
+			wallets,
+			[
+				{
+					id: "i1",
+					household_id: "h1",
+					entry_id: "e1",
+					position: 0,
+					description: "Milk",
+					amount: "120",
+					quantity: "2 litres",
+					category_id: "c2",
+					rest: false,
+					created_at: "2026-10-20T10:00:00.000Z",
+					_metadata: null,
+				},
+			],
+		);
+		if (!itemized) throw new Error("no view");
+		await setup({ view: itemized });
+		expect(screen.getByLabelText("Milk × 2 litres")).toHaveAccessibilityValue({
+			text: `Groceries, ${formatMoney(parseMoney("120", "PKR"))}`,
+		});
 	});
 
 	it("deletes only after confirming", async () => {

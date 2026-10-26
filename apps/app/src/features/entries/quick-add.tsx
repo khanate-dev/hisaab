@@ -39,7 +39,7 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 					onDone();
 					router.push({
 						pathname: "/entries/new",
-						params: draftToParams(draft),
+						params: { ...draftToParams(draft), items: "1" },
 					});
 				}}
 				onSubmit={async (draft, currency) => {
