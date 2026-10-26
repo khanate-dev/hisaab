@@ -12,7 +12,8 @@ import { leaveTo } from "@/lib/navigation";
 
 export default function NewEntry() {
 	const { t } = useLingui();
-	const initial = paramsToDraft(useLocalSearchParams<DraftParams>());
+	const params = useLocalSearchParams<DraftParams>();
+	const initial = paramsToDraft(params);
 	const data = useEntryData();
 
 	// Viewers can't record Entries; reached by a link, they land on the list.
@@ -30,6 +31,7 @@ export default function NewEntry() {
 					categories={categories}
 					history={history}
 					initial={initial}
+					split={params.split === "1"}
 					onSubmit={async (draft, currency) => {
 						await createEntry(household.id, userId, draft, currency);
 						leaveTo("/entries");

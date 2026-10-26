@@ -139,6 +139,7 @@ export const QuickAddForm = ({
 		occurredTime: null,
 		description: orNull(description),
 		notes: null,
+		items: [],
 	});
 
 	const save = async () => {

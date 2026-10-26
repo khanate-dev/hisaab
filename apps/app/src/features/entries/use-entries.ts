@@ -1,4 +1,4 @@
-import { entries, profiles } from "@hisaab/client-schema";
+import { entries, entryItems, profiles } from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -9,7 +9,7 @@ import { useWalletRows } from "@/features/wallets/use-wallets";
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
 
-import type { Entry } from "./types";
+import type { Entry, EntryItem } from "./types";
 import { toEntryViews } from "./views";
 
 /**
@@ -32,6 +32,22 @@ export const useEntries = (
 	);
 };
 
+/** Every Item of the household's Expenses; undefined until the first read lands. */
+export const useEntryItems = (
+	householdId: string | undefined,
+): EntryItem[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(entryItems)
+					.where(eq(entryItems.household_id, householdId ?? "")),
+			),
+		),
+		householdId !== undefined,
+	);
+
 /** A User's display name, for "Recorded by"; undefined until their profile has synced. */
 export const useDisplayName = (userId: string | undefined) =>
 	useQuery(
@@ -48,11 +64,15 @@ export const useEntryViews = (householdId: string | undefined) => {
 	const list = useEntries(householdId);
 	const categories = useCategories(householdId);
 	const wallets = useWalletRows(householdId);
+	const items = useEntryItems(householdId);
 	return useMemo(
 		() =>
-			list === undefined || categories === undefined || wallets === undefined
+			list === undefined ||
+			categories === undefined ||
+			wallets === undefined ||
+			items === undefined
 				? undefined
-				: toEntryViews(list, categories, wallets),
-		[list, categories, wallets],
+				: toEntryViews(list, categories, wallets, items),
+		[list, categories, wallets, items],
 	);
 };

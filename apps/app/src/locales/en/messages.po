@@ -15,6 +15,11 @@ msgstr "{categoryName} · {walletName}"
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
 
+#: src/features/entries/entry-detail.tsx
+#: src/features/entries/items-section.tsx
+msgid "{description} × {quantity}"
+msgstr "{description} × {quantity}"
+
 #: src/features/categories/category-list.tsx
 msgid "{name}, in {parentName}"
 msgstr "{name}, in {parentName}"
@@ -34,6 +39,10 @@ msgstr "{parentName} › {categoryName} · {walletName}"
 #: src/features/entries/entry-form.tsx
 msgid "{parentName} › {name}"
 msgstr "{parentName} › {name}"
+
+#: src/features/entries/entry-detail.tsx
+msgid "{where}, {shown}"
+msgstr "{where}, {shown}"
 
 #: src/features/sync/sync-status.tsx
 msgid "A change couldn't sync"
@@ -59,6 +68,10 @@ msgstr "A new membership couldn't sync"
 msgid "Add a Wallet first: every Entry comes out of or goes into one."
 msgstr "Add a Wallet first: every Entry comes out of or goes into one."
 
+#: src/features/entries/items-section.tsx
+msgid "Add another Item"
+msgstr "Add another Item"
+
 #: src/app/categories/index.tsx
 #: src/app/categories/new.tsx
 msgid "Add Category"
@@ -71,6 +84,10 @@ msgstr "Add Expense"
 #: src/app/(tabs)/entries.tsx
 msgid "Add Income"
 msgstr "Add Income"
+
+#: src/features/entries/items-section.tsx
+msgid "Add Item"
+msgstr "Add Item"
 
 #: src/app/categories/[id].tsx
 #: src/app/categories/new.tsx
@@ -176,6 +193,7 @@ msgstr "Bus"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/entries/entry-detail.tsx
+#: src/features/entries/items-section.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -352,6 +370,10 @@ msgstr "Edit"
 msgid "Edit Entry"
 msgstr "Edit Entry"
 
+#: src/features/entries/items-section.tsx
+msgid "Edit this Item"
+msgstr "Edit this Item"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/[id]/edit.tsx
 msgid "Edit Wallet"
@@ -365,6 +387,10 @@ msgstr "Email"
 #: src/features/wallets/wallet-form.tsx
 msgid "Enter a three-letter currency code, like PKR or USD."
 msgstr "Enter a three-letter currency code, like PKR or USD."
+
+#: src/features/entries/items-section.tsx
+msgid "Enter an amount like 150 or 150.50."
+msgstr "Enter an amount like 150 or 150.50."
 
 #: src/features/entries/entry-form.tsx
 #: src/features/onboarding/first-wallet-form.tsx
@@ -495,6 +521,20 @@ msgstr "It leaves your Wallets list. Its Entries and Balance stay, and you can b
 msgid "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 msgstr "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 
+#: src/features/entries/items-section.tsx
+msgid "Item"
+msgstr "Item"
+
+#: src/features/entries/items-section.tsx
+msgid "Item amount ({currency})"
+msgstr "Item amount ({currency})"
+
+#: src/features/entries/items-section.tsx
+msgid "Item Category"
+msgstr "Item Category"
+
+#: src/features/entries/entry-detail.tsx
+#: src/features/entries/items-section.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Items"
 msgstr "Items"
@@ -504,6 +544,7 @@ msgid "Its Wallet's Balance changes back as if it never happened."
 msgstr "Its Wallet's Balance changes back as if it never happened."
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/items-section.tsx
 msgid "Keep the description to 200 characters or fewer."
 msgstr "Keep the description to 200 characters or fewer."
 
@@ -514,6 +555,10 @@ msgstr "Keep the name to 60 characters or fewer."
 #: src/features/entries/entry-form.tsx
 msgid "Keep the notes to 1000 characters or fewer."
 msgstr "Keep the notes to 1000 characters or fewer."
+
+#: src/features/entries/items-section.tsx
+msgid "Keep the quantity to 40 characters or fewer."
+msgstr "Keep the quantity to 40 characters or fewer."
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
@@ -657,6 +702,10 @@ msgstr "Online. Every change synced."
 msgid "Optional, as HH:MM."
 msgstr "Optional, as HH:MM."
 
+#: src/features/entries/items-section.tsx
+msgid "Optional, say \"2 kg\"; it doesn't change the amount."
+msgstr "Optional, say \"2 kg\"; it doesn't change the amount."
+
 #: src/features/entries/quick-add-form.tsx
 msgid "Optional."
 msgstr "Optional."
@@ -664,6 +713,15 @@ msgstr "Optional."
 #: src/features/categories/labels.ts
 msgid "Orange"
 msgstr "Orange"
+
+#: src/features/entries/entry-form.tsx
+#: src/features/entries/items-section.tsx
+msgid "Other {categoryName}"
+msgstr "Other {categoryName}"
+
+#: src/features/entries/items-section.tsx
+msgid "Other {categoryName}, {restAmount}"
+msgstr "Other {categoryName}, {restAmount}"
 
 #: src/features/wallets/balance.tsx
 msgid "Owed"
@@ -679,6 +737,7 @@ msgid "Phone"
 msgstr "Phone"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/items-section.tsx
 msgid "Pick a Category."
 msgstr "Pick a Category."
 
@@ -689,6 +748,10 @@ msgstr "Pick a Wallet."
 #: src/features/categories/labels.ts
 msgid "Plane"
 msgstr "Plane"
+
+#: src/features/entries/items-section.tsx
+msgid "Quantity"
+msgstr "Quantity"
 
 #: src/app/(tabs)/index.tsx
 msgid "Recent Entries"
@@ -702,6 +765,18 @@ msgstr "Recorded by"
 msgid "Red"
 msgstr "Red"
 
+#: src/features/entries/items-section.tsx
+msgid "Remove"
+msgstr "Remove"
+
+#: src/features/entries/items-section.tsx
+msgid "Remove {description}"
+msgstr "Remove {description}"
+
+#: src/features/entries/items-section.tsx
+msgid "Removed {removedName}."
+msgstr "Removed {removedName}."
+
 #: src/app/(tabs)/reports.tsx
 #: src/features/shell/sections.ts
 msgid "Reports"
@@ -710,6 +785,10 @@ msgstr "Reports"
 #: src/app/(tabs)/reports.tsx
 msgid "Reports arrive once there are Entries to report on."
 msgstr "Reports arrive once there are Entries to report on."
+
+#: src/features/entries/items-section.tsx
+msgid "Rest"
+msgstr "Rest"
 
 #: src/app/categories/[id].tsx
 #: src/app/entries/[id]/edit.tsx
@@ -721,6 +800,14 @@ msgstr "Save"
 #: src/app/entries/new.tsx
 msgid "Save Entry"
 msgstr "Save Entry"
+
+#: src/features/entries/items-section.tsx
+msgid "Save Item"
+msgstr "Save Item"
+
+#: src/features/entries/items-section.tsx
+msgid "Say what the Item is."
+msgstr "Say what the Item is."
 
 #: src/features/shell/sidebar.tsx
 msgid "Sections"
@@ -775,6 +862,10 @@ msgstr "Skip"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
+#: src/features/entries/items-section.tsx
+msgid "Split into Items"
+msgstr "Split into Items"
+
 #: src/features/shell/household-pill.tsx
 msgid "Switch household: {name}"
 msgstr "Switch household: {name}"
@@ -794,12 +885,17 @@ msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/items-section.tsx
 msgid "The amount is more than zero."
 msgstr "The amount is more than zero."
 
 #: src/features/wallets/wallet-form.tsx
 msgid "The currency is fixed once the Wallet has Entries."
 msgstr "The currency is fixed once the Wallet has Entries."
+
+#: src/features/entries/items-section.tsx
+msgid "The Items add up to more than the total, so the total is now {grownTotal}."
+msgstr "The Items add up to more than the total, so the total is now {grownTotal}."
 
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "This becomes your Base currency. It locks after your first Entry."
@@ -846,6 +942,10 @@ msgstr "Unarchive"
 #: src/features/categories/category-list.tsx
 msgid "Under {parentName}"
 msgstr "Under {parentName}"
+
+#: src/features/entries/items-section.tsx
+msgid "Undo"
+msgstr "Undo"
 
 #: src/features/update/update-required.tsx
 msgid "Update Hisaab from your app store, then open it again."

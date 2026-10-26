@@ -316,6 +316,94 @@ describe("sync scenarios", () => {
 		expect(household.data?.base_currency).toBe("PKR");
 	});
 
+	it("an itemized Expense uploads with its Items, which follow its edits and its deletion", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const groceries = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM categories WHERE household_id = ? AND name = 'Groceries'",
+					[personal.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const stamp = stamped({})._metadata;
+		const [walletId, expenseId] = [uuidv7(), uuidv7()];
+		const now = new Date().toISOString();
+		const item = (
+			tx: { execute: typeof device.execute },
+			position: number,
+			description: string,
+			amount: string,
+		) =>
+			tx.execute(
+				`INSERT INTO entry_items (id, household_id, entry_id, position, description, amount, category_id, created_at, _metadata)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				[
+					uuidv7(),
+					personal.id,
+					expenseId,
+					position,
+					description,
+					amount,
+					groceries.id,
+					now,
+					stamp,
+				],
+			);
+
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'expense', '-500', ?, '2026-10-26', ?, ?, ?)`,
+				[expenseId, personal.id, walletId, groceries.id, user.id, now, stamp],
+			);
+			await item(tx, 0, "Milk", "120");
+			await item(tx, 1, "Other Groceries", "380");
+		});
+		// Edited: the Items are replaced, as the app does.
+		await device.writeTransaction(async (tx) => {
+			await tx.execute("DELETE FROM entry_items WHERE entry_id = ?", [
+				expenseId,
+			]);
+			await item(tx, 0, "Milk", "500");
+		});
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const items = await adminClient()
+			.from("entry_items")
+			.select("description, amount::text")
+			.eq("entry_id", expenseId);
+		if (items.error) throw items.error;
+		expect(items.data).toEqual([{ description: "Milk", amount: "500" }]);
+
+		await device.writeTransaction(async (tx) => {
+			await tx.execute("DELETE FROM entry_items WHERE entry_id = ?", [
+				expenseId,
+			]);
+			await tx.execute("DELETE FROM entries WHERE id = ?", [expenseId]);
+		});
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const gone = await adminClient()
+			.from("entry_items")
+			.select("id")
+			.eq("entry_id", expenseId);
+		expect(gone.data).toEqual([]);
+	});
+
 	it("an Expense and an Income upload with their Category, time and notes, and an edit and a delete follow", async () => {
 		const user = await signInNewUser();
 		const device = await connectClient(user);

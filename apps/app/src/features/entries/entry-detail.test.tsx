@@ -64,6 +64,33 @@ describe("EntryDetail", () => {
 		expect(value("Recorded by")).toBe("Ayesha");
 	});
 
+	it("lists an itemized Expense's Items with their Categories", async () => {
+		const [itemized] = toEntryViews(
+			[makeEntry("e1", { amount: "-450" })],
+			categories,
+			wallets,
+			[
+				{
+					id: "i1",
+					household_id: "h1",
+					entry_id: "e1",
+					position: 0,
+					description: "Milk",
+					amount: "120",
+					quantity: "2 litres",
+					category_id: "c2",
+					created_at: "2026-10-20T10:00:00.000Z",
+					_metadata: null,
+				},
+			],
+		);
+		if (!itemized) throw new Error("no view");
+		await setup({ view: itemized });
+		expect(
+			screen.getByLabelText("Milk × 2 litres").props.accessibilityValue?.text,
+		).toMatch(/^Groceries, .*120/);
+	});
+
 	it("deletes only after confirming", async () => {
 		const { user, onDelete } = await setup();
 		await user.press(screen.getByRole("button", { name: "Delete" }));

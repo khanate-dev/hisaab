@@ -32,7 +32,7 @@ export default function EditEntry() {
 			</Screen>
 		);
 	}
-	const { household, categories, history, wallets } = data;
+	const { household, categories, history, wallets, items } = data;
 
 	return (
 		<Screen title={t`Edit Entry`}>
@@ -41,8 +41,9 @@ export default function EditEntry() {
 				categories={categories}
 				entry={entry}
 				history={history}
+				items={items.filter((item) => item.entry_id === entry.id)}
 				onSubmit={async (draft, currency) => {
-					await updateEntry(entry.id, draft, currency);
+					await updateEntry(entry.id, household.id, draft, currency);
 					leaveTo(`/entries/${entry.id}`);
 				}}
 				submitLabel={t`Save`}

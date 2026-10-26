@@ -102,6 +102,7 @@ describe("QuickAddForm", () => {
 				occurredTime: null,
 				description: "Bread",
 				notes: null,
+				items: [],
 			},
 			"PKR",
 		);

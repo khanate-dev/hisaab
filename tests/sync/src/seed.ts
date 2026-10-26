@@ -123,4 +123,48 @@ const seedWallets = async (
 		})),
 	);
 	if (entries.error) throw entries.error;
+
+	// An itemized Expense per household, in its template Groceries Category.
+	const groceries = await admin
+		.from("categories")
+		.select("id, household_id")
+		.eq("name", "Groceries")
+		.in(
+			"household_id",
+			wallets.map((w) => w.household_id),
+		);
+	if (groceries.error) throw groceries.error;
+	const expenses = wallets.map(({ id, household_id, author }) => ({
+		id: uuidv7(),
+		household_id,
+		wallet_id: id,
+		category_id:
+			groceries.data.find((c) => c.household_id === household_id)?.id ?? null,
+		author,
+	}));
+	const expenseRows = await admin.from("entries").insert(
+		expenses.map(({ id, household_id, wallet_id, category_id, author }) => ({
+			id,
+			household_id,
+			wallet_id,
+			kind: "expense",
+			amount: "-450",
+			category_id,
+			occurred_on: "2026-10-26",
+			created_by: author,
+		})),
+	);
+	if (expenseRows.error) throw expenseRows.error;
+	const items = await admin.from("entry_items").insert(
+		expenses.map(({ id, household_id, category_id }) => ({
+			id: uuidv7(),
+			household_id,
+			entry_id: id,
+			position: 0,
+			description: "Milk",
+			amount: "450",
+			category_id,
+		})),
+	);
+	if (items.error) throw items.error;
 };

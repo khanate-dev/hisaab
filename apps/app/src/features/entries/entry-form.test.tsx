@@ -1,6 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { parseMoney } from "@hisaab/domain";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -54,13 +56,14 @@ describe("EntryForm", () => {
 		expect(onSubmit).toHaveBeenCalledWith(
 			{
 				kind: "expense",
-				amount: "450.50",
+				amount: "450.5",
 				walletId: "w1",
 				categoryId: "c2",
 				occurredOn: "2026-10-26",
 				occurredTime: null,
 				description: "Weekly shop",
 				notes: null,
+				items: [],
 			},
 			"PKR",
 		);
@@ -153,6 +156,111 @@ describe("EntryForm", () => {
 			}),
 			"PKR",
 		);
+	});
+
+	it("splits a receipt total into Items, saving the Rest as Other <category>", async () => {
+		const { onSubmit, user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "500");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		await user.press(screen.getByRole("button", { name: "Split into Items" }));
+		await user.type(screen.getByLabelText("Item"), "Milk");
+		await user.type(screen.getByLabelText("Item amount (PKR)"), "120");
+		await user.type(screen.getByLabelText("Quantity"), "2 litres");
+		// The Item's own Category picker comes after the Expense's.
+		const groceries = screen.getAllByRole("radio", {
+			name: "Food › Groceries",
+		});
+		await user.press(
+			groceries[groceries.length - 1] as (typeof groceries)[number],
+		);
+		await user.press(screen.getByRole("button", { name: "Add Item" }));
+		expect(screen.getByLabelText("Rest")).toHaveAccessibilityValue({
+			text: `Other Travel, ${formatMoney(parseMoney("380", "PKR"))}`,
+		});
+		await user.press(screen.getByRole("button", { name: "Save Entry" }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				amount: "500",
+				items: [
+					{
+						description: "Milk",
+						amount: "120",
+						quantity: "2 litres",
+						categoryId: "c2",
+					},
+					{
+						description: "Other Travel",
+						amount: "380",
+						quantity: null,
+						categoryId: "c3",
+					},
+				],
+			}),
+			"PKR",
+		);
+	});
+
+	it("grows the total to Items that run over it, with a warning", async () => {
+		const { onSubmit, user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "100");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		await user.press(screen.getByRole("button", { name: "Split into Items" }));
+		await user.type(screen.getByLabelText("Item"), "Taxi");
+		await user.type(screen.getByLabelText("Item amount (PKR)"), "150");
+		await user.press(screen.getByRole("button", { name: "Add Item" }));
+		expect(screen.getByRole("alert")).toHaveTextContent(/more than the total/i);
+		await user.press(screen.getByRole("button", { name: "Save Entry" }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				amount: "150",
+				items: [
+					{
+						description: "Taxi",
+						amount: "150",
+						quantity: null,
+						categoryId: "c3",
+					},
+				],
+			}),
+			"PKR",
+		);
+	});
+
+	it("removes an Item with Undo, keeping the order Items were added in", async () => {
+		const { user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "500");
+		await user.press(screen.getByRole("radio", { name: "Travel" }));
+		for (const [name, amount] of [
+			["Bus", "50"],
+			["Taxi", "100"],
+		] as const) {
+			await user.press(
+				screen.getByRole("button", {
+					name: /Split into Items|Add another Item/,
+				}),
+			);
+			await user.type(screen.getByLabelText("Item"), name);
+			await user.type(screen.getByLabelText("Item amount (PKR)"), amount);
+			await user.press(screen.getByRole("button", { name: "Add Item" }));
+		}
+		await user.press(screen.getByRole("button", { name: "Remove Bus" }));
+		expect(screen.queryByRole("button", { name: "Remove Bus" })).toBeNull();
+		await user.press(screen.getByRole("button", { name: "Undo" }));
+		expect(
+			screen
+				.getAllByRole("button", { name: /^Remove / })
+				.map((b) => b.props.accessibilityLabel),
+		).toEqual(["Remove Bus", "Remove Taxi"]);
+	});
+
+	it("never itemizes an Income", async () => {
+		const { user } = await setup();
+		await user.press(screen.getByRole("radio", { name: "Income" }));
+		expect(
+			screen.queryByRole("button", { name: "Split into Items" }),
+		).toBeNull();
 	});
 
 	it("edits an Entry as how much it was, keeping its kind", async () => {

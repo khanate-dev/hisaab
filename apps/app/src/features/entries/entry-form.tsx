@@ -9,6 +9,7 @@ import {
 	isTimeOfDay,
 	isZero,
 	magnitude,
+	withRest,
 	parseMoney,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
@@ -21,10 +22,12 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import type { Category } from "@/features/categories/types";
 import { todayIn } from "@/lib/dates";
+import { newId } from "@/lib/ids";
 
 import { orNull, recordableWallets, repeatEntry } from "./draft";
 import { entryKindLabel } from "./labels";
-import type { Entry, EntryDraft, WalletChoice } from "./types";
+import { ItemsSection, type SplitItem } from "./items-section";
+import type { Entry, EntryDraft, EntryItem, WalletChoice } from "./types";
 
 const DEFAULT_KIND: FlowKind = "expense";
 
@@ -33,6 +36,10 @@ type Props = {
 	entry?: Entry;
 	/** Where a new Entry starts, say what quick-add had when Items opened the full form. */
 	initial?: Partial<EntryDraft>;
+	/** The edited Expense's Items, if it has any. */
+	items?: readonly EntryItem[];
+	/** Open straight onto splitting the Expense into Items (quick-add's Items chip). */
+	split?: boolean;
 	/** The household's Wallets, archived ones included: active ones are offered. */
 	wallets: readonly WalletChoice[];
 	categories: readonly Category[];
@@ -58,6 +65,8 @@ type Props = {
 export const EntryForm = ({
 	entry,
 	initial = {},
+	items: savedItems = [],
+	split = false,
 	wallets,
 	categories,
 	history,
@@ -102,6 +111,17 @@ export const EntryForm = ({
 	);
 	const [occurredTime, setOccurredTime] = useState(entry?.occurred_time ?? "");
 	const [notes, setNotes] = useState(entry?.notes ?? "");
+	const [splitItems, setSplitItems] = useState<SplitItem[]>(() =>
+		savedItems
+			.toSorted((a, b) => a.position - b.position)
+			.map((item) => ({
+				key: item.id,
+				description: item.description,
+				amount: item.amount,
+				quantity: item.quantity,
+				categoryId: item.category_id,
+			})),
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 
@@ -173,19 +193,47 @@ export const EntryForm = ({
 			return setError(t`Keep the description to 200 characters or fewer.`);
 		if (notes.trim().length > 1000)
 			return setError(t`Keep the notes to 1000 characters or fewer.`);
+		// Once an Expense has Items its total is their sum: the Rest becomes "Other <category>" (spec §4.3).
+		const categoryName =
+			categories.find((c) => c.id === categoryId)?.name ?? "";
+		const itemized =
+			kind === "expense"
+				? withRest(
+						money,
+						splitItems.map((item) => ({
+							...item,
+							amount: parseMoney(item.amount, wallet.currency),
+						})),
+						(rest) => ({
+							key: "rest",
+							description: t`Other ${categoryName}`,
+							amount: rest,
+							quantity: null,
+							categoryId,
+						}),
+					)
+				: { total: money, items: [] };
 		setError(null);
 		setBusy(true);
 		try {
 			await onSubmit(
 				{
 					kind,
-					amount: typed,
+					amount: itemized.total.toString(),
 					walletId: wallet.id,
 					categoryId,
 					occurredOn: occurredOn.trim(),
 					occurredTime: time,
 					description: orNull(description),
 					notes: orNull(notes),
+					items: itemized.items.map(
+						({ description, amount, quantity, categoryId }) => ({
+							description,
+							amount: amount.toString(),
+							quantity,
+							categoryId,
+						}),
+					),
 				},
 				wallet.currency,
 			);
@@ -243,6 +291,18 @@ export const EntryForm = ({
 					value={categoryId}
 				/>
 			</View>
+			{kind === "expense" && (
+				<ItemsSection
+					category={categories.find((c) => c.id === categoryId)}
+					categoryChoices={categoryChoices}
+					currency={currency ?? baseCurrency ?? ""}
+					items={splitItems}
+					newKey={newId}
+					onChange={setSplitItems}
+					startSplitting={split}
+					total={amount}
+				/>
+			)}
 			<View className="gap-2">
 				<Input
 					label={t`Description`}

@@ -64,6 +64,8 @@ export type DraftParams = {
 	category?: string;
 	description?: string;
 	date?: string;
+	/** "1" opens the form on splitting the Expense into Items. */
+	split?: string;
 };
 
 export const draftToParams = (draft: Partial<EntryDraft>): DraftParams => ({
