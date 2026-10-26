@@ -3,7 +3,11 @@ import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
 import { createEntry, createTransfer } from "@/features/entries/actions";
-import { type DraftParams, paramsToDraft } from "@/features/entries/draft";
+import {
+	type DraftParams,
+	paramsToDraft,
+	recordableWallets,
+} from "@/features/entries/draft";
 import { EntryForm } from "@/features/entries/entry-form";
 import { NeedsWallet } from "@/features/entries/needs-wallet";
 import { TransferForm } from "@/features/entries/transfer-form";
@@ -30,13 +34,18 @@ export default function NewEntry() {
 			: t`New Expense`;
 	const timeZone = entryTimeZone(household);
 	const activeWallets = wallets.filter((w) => w.archived_at === null).length;
+	const transferable = recordableWallets(
+		wallets,
+		household.base_currency,
+	).length;
 
 	return (
 		<Screen title={title}>
 			<Stack.Screen options={{ title }} />
 			{transfer ? (
-				activeWallets >= 2 ? (
+				transferable >= 2 ? (
 					<TransferForm
+						baseCurrency={household.base_currency}
 						onSubmit={async (draft, currencies) => {
 							await createTransfer(household.id, userId, draft, currencies);
 							leaveTo("/entries");

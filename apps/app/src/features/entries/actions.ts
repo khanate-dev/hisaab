@@ -12,7 +12,7 @@ import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/ids";
 import { db } from "@/lib/powersync";
 
-import type { EntryDraft } from "./types";
+import type { EntryDraft, TransferDraft } from "./types";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -121,19 +121,6 @@ export const deleteEntry = async (entryId: string) => {
 		await tx.delete(entryItems).where(eq(entryItems.entry_id, entryId));
 		await tx.delete(entries).where(eq(entries.id, entryId));
 	});
-};
-
-/** A Transfer as its form edits it: what leaves one Wallet and, between currencies, what arrives in the other. */
-export type TransferDraft = {
-	fromWalletId: string;
-	toWalletId: string;
-	/** How much leaves, positive, in the From Wallet's currency. */
-	amount: string;
-	/** How much arrives, in the To Wallet's currency; the same as `amount` between Wallets of one currency. */
-	toAmount: string;
-	occurredOn: string;
-	description: string | null;
-	notes: string | null;
 };
 
 const transferColumns = (

@@ -40,3 +40,16 @@ export type WalletChoice = {
 	currency: string;
 	archived_at: string | null;
 };
+
+/** A Transfer as its form edits it: what leaves one Wallet and, between currencies, what arrives in the other. */
+export type TransferDraft = {
+	fromWalletId: string;
+	toWalletId: string;
+	/** How much leaves, positive, in the From Wallet's currency. */
+	amount: string;
+	/** How much arrives, in the To Wallet's currency: the same as `amount` until Transfers between currencies (#45). */
+	toAmount: string;
+	occurredOn: string;
+	description: string | null;
+	notes: string | null;
+};

@@ -34,7 +34,7 @@ import type { Entry, EntryDraft, WalletChoice } from "./types";
 
 const DEFAULT_KIND: FlowKind = "expense";
 /** The segment's third choice: a Transfer opens its own form. */
-const TRANSFER = "transfer" as const;
+const TRANSFER_KIND = "transfer" as const;
 /** How many Categories the grid shows before "All Categories": enough that the usual ones need no scrolling. */
 const GRID_SIZE = 6;
 
@@ -195,9 +195,9 @@ export const QuickAddForm = ({
 				<RadioGroup
 					label={t`Kind`}
 					onValueChange={(next) =>
-						next === TRANSFER ? onOpenTransfer() : chooseKind(next)
+						next === TRANSFER_KIND ? onOpenTransfer() : chooseKind(next)
 					}
-					options={[...FLOW_KINDS, TRANSFER].map((value) => ({
+					options={[...FLOW_KINDS, TRANSFER_KIND].map((value) => ({
 						value,
 						label: i18n._(entryKindLabel(value)),
 					}))}

@@ -4,9 +4,8 @@ import { screen, userEvent } from "@testing-library/react-native";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
-import type { TransferDraft } from "./actions";
 import { TransferForm } from "./transfer-form";
-import type { WalletChoice } from "./types";
+import type { TransferDraft, WalletChoice } from "./types";
 
 const wallets: WalletChoice[] = [
 	{ id: "w1", name: "Cash", currency: "PKR", archived_at: null },
@@ -31,6 +30,7 @@ const setup = async (
 	);
 	await render(
 		<TransferForm
+			baseCurrency="PKR"
 			onSubmit={onSubmit}
 			submitLabel="Save Transfer"
 			timeZone="Asia/Karachi"
@@ -61,25 +61,9 @@ describe("TransferForm", () => {
 		);
 	});
 
-	it("asks what arrived when the currencies differ", async () => {
-		const { onSubmit, user } = await setup();
-		expect(screen.queryByLabelText("Received (USD)")).toBeNull();
-		await user.press(
-			screen.getAllByRole("radio", { name: "Dollars" }).at(-1) as never,
-		);
-		await user.type(screen.getByLabelText("Amount (PKR)"), "28000");
-		await user.press(screen.getByRole("button", { name: "Save Transfer" }));
-		expect(screen.getByRole("alert")).toHaveTextContent(/arrived in Dollars/i);
-		await user.type(screen.getByLabelText("Received (USD)"), "100");
-		await user.press(screen.getByRole("button", { name: "Save Transfer" }));
-		expect(onSubmit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				toWalletId: "w3",
-				amount: "28000",
-				toAmount: "100",
-			}),
-			{ from: "PKR", to: "USD" },
-		);
+	it("moves money between Base-currency Wallets only, until Transfers between currencies (#45)", async () => {
+		await setup();
+		expect(screen.queryByRole("radio", { name: "Dollars" })).toBeNull();
 	});
 
 	it("never offers the From Wallet, or an archived one, to move money to", async () => {

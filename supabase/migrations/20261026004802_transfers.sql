@@ -1,7 +1,9 @@
 -- Transfers (spec §3.2): one Entry moving money between two Wallets of the same household. `wallet_id` is the Wallet
 -- it leaves (amount: minus what leaves it) and `to_wallet_id` the one it arrives in (to_amount: what arrives, in that
--- Wallet's currency; the same as what left when the currencies match). Expand-only: the kind check is widened,
--- columns are added nullable, and new rules only constrain Transfers.
+-- Wallet's currency; the same as what left when the currencies match, and the app records only those until Base
+-- amounts land, #45). Expand-only: the kind check is widened, columns are added nullable, and new rules only
+-- constrain Transfers. Builds from before this one don't sync the new columns, so they show a Transfer only on the
+-- Wallet it leaves; there are none in use yet.
 
 alter table public.entries drop constraint entries_kind_check;
 alter table public.entries add constraint entries_kind_check
@@ -11,7 +13,7 @@ alter table public.entries
 	add column to_wallet_id uuid,
 	add column to_amount numeric;
 alter table public.entries add constraint entries_to_wallet_id_household_id_fkey
-	foreign key (to_wallet_id, household_id) references public.wallets (id, household_id);
+	foreign key (to_wallet_id, household_id) references public.wallets (id, household_id) on delete cascade;
 create index entries_to_wallet_id_idx on public.entries (to_wallet_id);
 
 -- A Transfer leaves one Wallet for another, with no Category; nothing else has a second Wallet.

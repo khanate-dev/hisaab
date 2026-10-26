@@ -1,4 +1,4 @@
-import { newestFirst, type Money, parseMoney } from "@hisaab/domain";
+import { magnitude, newestFirst, type Money, parseMoney } from "@hisaab/domain";
 
 import type { Category } from "@/features/categories/types";
 
@@ -9,8 +9,8 @@ export type EntryView = {
 	entry: Entry;
 	amount: Money;
 	wallet: WalletChoice;
-	/** A Transfer's other Wallet and what arrived in it. */
-	to: { wallet: WalletChoice; amount: Money } | null;
+	/** Where a Transfer's money arrived: its other Wallet, and how much. */
+	arrival: { wallet: WalletChoice; amount: Money } | null;
 	category: Category | null;
 	/** The Category's parent, when it's a Subcategory. */
 	parent: Category | null;
@@ -46,7 +46,7 @@ export const toEntryViews = (
 			entry.to_wallet_id === null
 				? undefined
 				: walletById.get(entry.to_wallet_id);
-		const to =
+		const arrival =
 			toWallet && entry.to_amount !== null
 				? {
 						wallet: toWallet,
@@ -66,7 +66,7 @@ export const toEntryViews = (
 				entry,
 				amount: parseMoney(entry.amount, wallet.currency),
 				wallet,
-				to,
+				arrival,
 				category,
 				parent,
 				items: (itemsByEntry.get(entry.id) ?? [])
@@ -80,3 +80,7 @@ export const toEntryViews = (
 		];
 	});
 };
+
+/** How much an Entry shows: signed by its effect, but unsigned for a Transfer, which only moves money within the household. */
+export const shownAmount = ({ amount, arrival }: EntryView): Money =>
+	arrival ? magnitude(amount) : amount;

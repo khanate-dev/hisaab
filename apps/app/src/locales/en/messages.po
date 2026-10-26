@@ -153,12 +153,9 @@ msgid "Amount"
 msgstr "Amount"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Amount ({currency})"
 msgstr "Amount ({currency})"
-
-#: src/features/entries/transfer-form.tsx
-msgid "Amount ({fromCurrency})"
-msgstr "Amount ({fromCurrency})"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
@@ -451,18 +448,13 @@ msgstr "Enter an amount like 1500 or 1500.50."
 msgid "Enter an amount more than zero, like 1500."
 msgstr "Enter an amount more than zero, like 1500."
 
-#: src/features/entries/entry-form.tsx
-#: src/features/entries/transfer-form.tsx
+#: src/features/entries/form-checks.ts
 msgid "Enter the date as YYYY-MM-DD, like {today}."
 msgstr "Enter the date as YYYY-MM-DD, like {today}."
 
 #: src/features/entries/entry-form.tsx
 msgid "Enter the time as HH:MM, like 18:30, or leave it empty."
 msgstr "Enter the time as HH:MM, like 18:30, or leave it empty."
-
-#: src/features/entries/transfer-form.tsx
-msgid "Enter what arrived in {toName}, more than zero."
-msgstr "Enter what arrived in {toName}, more than zero."
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "Enter what the Wallet really holds, like 1500 or -250."
@@ -483,6 +475,10 @@ msgstr "Entry"
 #: src/features/entries/labels.ts
 msgid "Expense"
 msgstr "Expense"
+
+#: src/features/entries/quick-add.tsx
+msgid "Expense or Income instead"
+msgstr "Expense or Income instead"
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
@@ -614,9 +610,8 @@ msgstr "Its Balance is {now}. What does it really hold?"
 msgid "Its Wallet's Balance changes back as if it never happened."
 msgstr "Its Wallet's Balance changes back as if it never happened."
 
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/form-checks.ts
 #: src/features/entries/items-section.tsx
-#: src/features/entries/transfer-form.tsx
 msgid "Keep the description to 200 characters or fewer."
 msgstr "Keep the description to 200 characters or fewer."
 
@@ -624,8 +619,7 @@ msgstr "Keep the description to 200 characters or fewer."
 msgid "Keep the name to 60 characters or fewer."
 msgstr "Keep the name to 60 characters or fewer."
 
-#: src/features/entries/entry-form.tsx
-#: src/features/entries/transfer-form.tsx
+#: src/features/entries/form-checks.ts
 msgid "Keep the notes to 1000 characters or fewer."
 msgstr "Keep the notes to 1000 characters or fewer."
 
@@ -835,10 +829,6 @@ msgstr "Quantity"
 msgid "Received"
 msgstr "Received"
 
-#: src/features/entries/transfer-form.tsx
-msgid "Received ({toCurrency})"
-msgstr "Received ({toCurrency})"
-
 #: src/app/(tabs)/index.tsx
 msgid "Recent Entries"
 msgstr "Recent Entries"
@@ -897,6 +887,7 @@ msgid "Save Item"
 msgstr "Save Item"
 
 #: src/app/entries/new.tsx
+#: src/features/entries/quick-add.tsx
 msgid "Save Transfer"
 msgstr "Save Transfer"
 
@@ -970,9 +961,8 @@ msgid "Syncing your households…"
 msgstr "Syncing your households…"
 
 #: src/features/categories/category-form.tsx
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/form-checks.ts
 #: src/features/entries/quick-add-form.tsx
-#: src/features/entries/transfer-form.tsx
 #: src/features/wallets/adjust-balance.tsx
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
@@ -1115,10 +1105,6 @@ msgstr "Wallets in other currencies take Entries once exchange rates arrive."
 #: src/features/auth/sign-in-form.tsx
 msgid "We emailed a code to {codeSentTo}."
 msgstr "We emailed a code to {codeSentTo}."
-
-#: src/features/entries/transfer-form.tsx
-msgid "What arrived, in {toCurrency}; the rate is what the two amounts imply."
-msgstr "What arrived, in {toCurrency}; the rate is what the two amounts imply."
 
 #: src/app/onboarding.tsx
 msgid "What's your name?"

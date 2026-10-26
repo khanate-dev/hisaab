@@ -1,4 +1,3 @@
-import { magnitude } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -18,8 +17,9 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { useEntryTitle } from "./entry-list";
+import { isEditableKind } from "./draft";
 import { entryKindLabel, useItemNames } from "./labels";
-import type { EntryView } from "./views";
+import { type EntryView, shownAmount } from "./views";
 
 type Props = {
 	view: EntryView;
@@ -63,13 +63,13 @@ export const EntryDetail = ({
 	const { t, i18n } = useLingui();
 	const title = useEntryTitle()(view);
 	const names = useItemNames();
-	const { entry, category, parent, wallet, amount, to } = view;
+	const { entry, category, parent, wallet, arrival } = view;
 	// Every Entry can be deleted; a Balance adjustment is re-recorded rather than edited.
-	const editable = canEdit && entry.kind !== "balance_adjustment";
-	const toName = to?.wallet.name;
+	const editable = canEdit && isEditableKind(entry.kind);
+	const toName = arrival?.wallet.name;
 	const received =
-		to && to.wallet.currency !== wallet.currency
-			? formatMoney(to.amount)
+		arrival && arrival.wallet.currency !== wallet.currency
+			? formatMoney(arrival.amount)
 			: null;
 	const day = formatDate(entry.occurred_on);
 	const time = entry.occurred_time;
@@ -90,7 +90,7 @@ export const EntryDetail = ({
 					<Field
 						figure
 						label={i18n._(entryKindLabel(entry.kind))}
-						value={formatMoney(to ? magnitude(amount) : amount)}
+						value={formatMoney(shownAmount(view))}
 					/>
 				</View>
 			</Card>
@@ -197,7 +197,7 @@ export const EntryDetail = ({
 						<DialogContent>
 							<DialogTitle>{t`Delete ${title}?`}</DialogTitle>
 							<DialogDescription>
-								{to
+								{arrival
 									? t`Both Wallets' Balances change back as if it never happened.`
 									: t`Its Wallet's Balance changes back as if it never happened.`}
 							</DialogDescription>

@@ -1,9 +1,9 @@
-import { isFlowKind } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Redirect, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
 import { updateEntry, updateTransfer } from "@/features/entries/actions";
+import { isEditableKind } from "@/features/entries/draft";
 import { EntryForm } from "@/features/entries/entry-form";
 import { TransferForm } from "@/features/entries/transfer-form";
 import { useItemsOf } from "@/features/entries/use-entries";
@@ -20,10 +20,7 @@ export default function EditEntry() {
 	const entry = data?.history.find((e) => e.id === id);
 
 	// Viewers can't edit; a Balance adjustment is re-recorded, not edited. Either way, back to the Entry.
-	if (
-		data?.canWrite === false ||
-		(entry && !isFlowKind(entry.kind) && entry.kind !== "transfer")
-	)
+	if (data?.canWrite === false || (entry && !isEditableKind(entry.kind)))
 		return <Redirect href={`/entries/${id}`} />;
 	if (!data || !items) return null;
 	if (!entry) {
@@ -46,6 +43,7 @@ export default function EditEntry() {
 		return (
 			<Screen title={t`Edit Transfer`}>
 				<TransferForm
+					baseCurrency={household.base_currency}
 					entry={entry}
 					onSubmit={async (draft, currencies) => {
 						await updateTransfer(entry.id, draft, currencies);

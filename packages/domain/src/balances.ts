@@ -1,3 +1,4 @@
+import { isFlowKind } from "./entries";
 import {
 	addMoney,
 	type Money,
@@ -63,5 +64,4 @@ export const adjustmentTo = (balance: Money, actual: Money): Money =>
  * Whether an Entry of this kind counts in budgets and reports: spending and income do; a Transfer only moves money
  * and a Balance adjustment only corrects a Balance (spec §3.2), so neither does.
  */
-export const countsInReports = (kind: string) =>
-	kind === "expense" || kind === "income";
+export const countsInReports: (kind: string) => boolean = isFlowKind;

@@ -1,4 +1,4 @@
-import { isNegative, magnitude } from "@hisaab/domain";
+import { isNegative } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Pressable, View } from "react-native";
 
@@ -7,7 +7,7 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { entryKindLabel } from "./labels";
-import type { EntryView } from "./views";
+import { type EntryView, shownAmount } from "./views";
 
 /** What an Entry is called in a list: its description, else its Category, else its kind. */
 export const useEntryTitle = () => {
@@ -25,11 +25,11 @@ const EntryRow = ({
 }) => {
 	const { t } = useLingui();
 	const title = useEntryTitle()(view);
-	const { category, parent, wallet, amount, to } = view;
+	const { category, parent, wallet, amount, arrival } = view;
 	const categoryName = category?.name;
 	const parentName = parent?.name;
 	const walletName = wallet.name;
-	const toName = to?.wallet.name;
+	const toName = arrival?.wallet.name;
 	const where =
 		toName !== undefined
 			? t`${walletName} → ${toName}`
@@ -58,11 +58,10 @@ const EntryRow = ({
 				<Text variant="muted">{where}</Text>
 			</View>
 			<Text
-				className={`text-end ${to || isNegative(amount) ? "" : "text-good"}`}
+				className={`text-end ${arrival || isNegative(amount) ? "" : "text-good"}`}
 				variant="label"
 			>
-				{/* A Transfer moves money within the household: how much, unsigned. */}
-				{formatMoney(to ? magnitude(amount) : amount)}
+				{formatMoney(shownAmount(view))}
 			</Text>
 		</Pressable>
 	);

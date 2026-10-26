@@ -3,7 +3,6 @@ import {
 	descriptionSuggestions,
 	FLOW_KINDS,
 	type FlowKind,
-	isCalendarDate,
 	isDecimalAmount,
 	isNegative,
 	isTimeOfDay,
@@ -30,6 +29,7 @@ import { formatMoney } from "@/lib/format";
 import { newId } from "@/lib/ids";
 
 import { orNull, recordableWallets, repeatEntry } from "./draft";
+import { useCommonChecks, useSave } from "./form-checks";
 import { entryKindLabel, useItemNames } from "./labels";
 import { ItemsSection } from "./items-section";
 import type {
@@ -139,8 +139,8 @@ export const EntryForm = ({
 	);
 	const [changingTotal, setChangingTotal] = useState(false);
 	const names = useItemNames();
-	const [error, setError] = useState<string | null>(null);
-	const [busy, setBusy] = useState(false);
+	const checks = useCommonChecks();
+	const { busy, error, setError, save } = useSave();
 
 	const walletChoices = [
 		...active,
@@ -199,17 +199,13 @@ export const EntryForm = ({
 			return setError(t`The amount is more than zero.`);
 		if (!categoryChoices.some((c) => c.value === categoryId))
 			return setError(t`Pick a Category.`);
-		if (!isCalendarDate(occurredOn.trim()))
-			return setError(t`Enter the date as YYYY-MM-DD, like ${today}.`);
+		const problem = checks({ occurredOn, description, notes, today });
+		if (problem) return setError(problem);
 		const time = orNull(occurredTime);
 		if (time !== null && !isTimeOfDay(time))
 			return setError(
 				t`Enter the time as HH:MM, like 18:30, or leave it empty.`,
 			);
-		if (description.trim().length > 200)
-			return setError(t`Keep the description to 200 characters or fewer.`);
-		if (notes.trim().length > 1000)
-			return setError(t`Keep the notes to 1000 characters or fewer.`);
 		// Once an Expense has Items its total is their sum: the Rest becomes "Other <category>" (spec §4.3).
 		const itemized =
 			kind === "expense"
@@ -229,10 +225,8 @@ export const EntryForm = ({
 						}),
 					)
 				: { total: money, items: [] };
-		setError(null);
-		setBusy(true);
-		try {
-			await onSubmit(
+		await save(() =>
+			onSubmit(
 				{
 					kind,
 					amount: itemized.total.toString(),
@@ -248,13 +242,8 @@ export const EntryForm = ({
 					})),
 				},
 				wallet.currency,
-			);
-		} catch {
-			// A local write that fails is a bug, not something to explain; the message is the driver's, never copy.
-			setError(t`That didn't save. Try again.`);
-		} finally {
-			setBusy(false);
-		}
+			),
+		);
 	};
 
 	const currency = walletOf(walletId)?.currency;

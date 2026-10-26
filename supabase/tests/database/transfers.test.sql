@@ -3,17 +3,20 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(15);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000005a1', 'member@example.com'),
-	('00000000-0000-4000-8000-0000000005b1', 'viewer@example.com');
+	('00000000-0000-4000-8000-0000000005b1', 'viewer@example.com'),
+	('00000000-0000-4000-8000-0000000005a2', 'admin@example.com'),
+	('00000000-0000-4000-8000-0000000005c9', 'stranger@example.com');
 insert into public.households (id, name) values
 	('00000000-0000-7000-8000-0000000005f1', 'Family'),
 	('00000000-0000-7000-8000-0000000005f2', 'Elsewhere');
 insert into public.memberships (id, household_id, user_id, role) values
 	('00000000-0000-7000-8000-0000000005e1', '00000000-0000-7000-8000-0000000005f1', '00000000-0000-4000-8000-0000000005a1', 'member'),
-	('00000000-0000-7000-8000-0000000005e2', '00000000-0000-7000-8000-0000000005f1', '00000000-0000-4000-8000-0000000005b1', 'viewer');
+	('00000000-0000-7000-8000-0000000005e2', '00000000-0000-7000-8000-0000000005f1', '00000000-0000-4000-8000-0000000005b1', 'viewer'),
+	('00000000-0000-7000-8000-0000000005e3', '00000000-0000-7000-8000-0000000005f1', '00000000-0000-4000-8000-0000000005a2', 'admin');
 insert into public.wallets (id, household_id, name, type, currency) values
 	('00000000-0000-7000-8000-0000000005c1', '00000000-0000-7000-8000-0000000005f1', 'Cash', 'cash', 'PKR'),
 	('00000000-0000-7000-8000-0000000005c2', '00000000-0000-7000-8000-0000000005f1', 'HBL', 'bank', 'PKR'),
@@ -89,11 +92,17 @@ select lives_ok(
 select pg_temp.act_as('00000000-0000-4000-8000-0000000005b1');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000005d1' $$), 0,
 	'a Viewer can''t delete a Transfer');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000005c9');
+select is(pg_temp.affected($$ delete from public.entries $$), 0,
+	'someone outside the household can''t delete its Entries');
 select pg_temp.act_as('00000000-0000-4000-8000-0000000005a1');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000005d1' $$), 1,
 	'a Member deletes a Transfer');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000005a2');
 select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000005d7' $$), 1,
-	'a Member deletes a Balance adjustment');
+	'an Admin deletes a Balance adjustment');
+select is(pg_temp.affected($$ delete from public.entries where id = '00000000-0000-7000-8000-0000000005d2' $$), 1,
+	'an Admin deletes a Transfer');
 select set_config('role', 'anon', true);
 select throws_ok($$ delete from public.entries $$, '42501', null, 'anon cannot delete Entries');
 

@@ -4,7 +4,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { Screen } from "@/features/shell/screen";
 import { recordBalanceAdjustment } from "@/features/entries/actions";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useHousehold } from "@/features/households/use-household";
 import { archiveWallet, unarchiveWallet } from "@/features/wallets/actions";
 import { useWallet } from "@/features/wallets/use-wallets";
 import { useCanWrite } from "@/features/households/use-can-write";
@@ -17,7 +17,8 @@ export default function WalletScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const wallet = useWallet(id);
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	// The household the Wallet belongs to: its timezone dates the adjustment.
+	const household = useHousehold(wallet?.row.household_id);
 	const canWrite = useCanWrite(wallet?.row.household_id, userId);
 
 	if (!wallet) {

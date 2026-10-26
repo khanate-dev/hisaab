@@ -88,3 +88,6 @@ export const paramsToDraft = (params: DraftParams): Partial<EntryDraft> => ({
 	...(params.date &&
 		isCalendarDate(params.date) && { occurredOn: params.date }),
 });
+
+/** Whether an Entry of this kind is edited in a form; a Balance adjustment is re-recorded instead (it can be deleted). */
+export const isEditableKind = (kind: string) => kind !== "balance_adjustment";

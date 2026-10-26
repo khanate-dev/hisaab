@@ -180,10 +180,61 @@ describe("adjustmentTo", () => {
 });
 
 describe("countsInReports", () => {
-	it("counts spending and income, never Transfers or Balance adjustments", () => {
-		expect(["expense", "income"].every(countsInReports)).toBe(true);
-		expect(["transfer", "balance_adjustment"].some(countsInReports)).toBe(
-			false,
+	it("counts exactly spending and income, never Transfers, Balance adjustments or anything else", () => {
+		fc.assert(
+			fc.property(
+				fc.oneof(
+					fc.constantFrom(
+						"expense",
+						"income",
+						"transfer",
+						"balance_adjustment",
+					),
+					fc.string(),
+				),
+				(kind) => {
+					expect(countsInReports(kind)).toBe(
+						kind === "expense" || kind === "income",
+					);
+				},
+			),
+		);
+	});
+});
+
+describe("a Transfer between currencies", () => {
+	it("takes what left out of one Wallet and puts what arrived into the other", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				positiveText,
+				positiveText,
+				(list, left, arrived) => {
+					const move = {
+						wallet_id: "bank",
+						amount: `-${left}`,
+						to_wallet_id: "card",
+						to_amount: arrived,
+					};
+					const before = walletBalances(wallets, list);
+					const after = walletBalances(wallets, [...list, move]);
+					expect(
+						moneyEquals(
+							balanceOf(after, "bank"),
+							addMoney(
+								balanceOf(before, "bank"),
+								parseMoney(`-${left}`, "PKR"),
+							),
+						),
+					).toBe(true);
+					expect(
+						moneyEquals(
+							balanceOf(after, "card"),
+							addMoney(balanceOf(before, "card"), parseMoney(arrived, "USD")),
+						),
+					).toBe(true);
+				},
+			),
 		);
 	});
 });
