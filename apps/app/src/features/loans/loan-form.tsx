@@ -16,7 +16,11 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import type { Contact } from "@/features/contacts/use-contacts";
-import { orNull, recordableWallets } from "@/features/entries/draft";
+import {
+	orNull,
+	recordableWallets,
+	startingWallet,
+} from "@/features/entries/draft";
 import { useCommonChecks, useSave } from "@/features/entries/form-checks";
 import type { WalletChoice } from "@/features/entries/types";
 import { todayIn } from "@/lib/dates";
@@ -33,6 +37,8 @@ type Props = {
 	wallets: readonly WalletChoice[];
 	/** Loans move money in Base-currency Wallets until Base amounts land (#45). */
 	baseCurrency: string | null;
+	/** The Member's default Wallet in the household: where a new one starts, when it can. */
+	defaultWalletId?: string | null;
 	timeZone: string;
 	/** Today, YYYY-MM-DD; injected by tests. */
 	today?: string;
@@ -44,6 +50,7 @@ export const LoanForm = ({
 	contacts,
 	wallets,
 	baseCurrency,
+	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
 	onSubmit,
@@ -56,7 +63,9 @@ export const LoanForm = ({
 	const [direction, setDirection] = useState<LoanDirection>(DEFAULT_DIRECTION);
 	const [contactId, setContactId] = useState(active[0]?.id ?? NEW_CONTACT);
 	const [newName, setNewName] = useState("");
-	const [walletId, setWalletId] = useState(recordable[0]?.id ?? "");
+	const [walletId, setWalletId] = useState(
+		startingWallet(recordable, defaultWalletId)?.id ?? "",
+	);
 	const [amount, setAmount] = useState("");
 	const [occurredOn, setOccurredOn] = useState(today);
 	const [dueOn, setDueOn] = useState("");

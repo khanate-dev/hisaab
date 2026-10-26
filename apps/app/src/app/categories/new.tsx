@@ -6,7 +6,7 @@ import { createCategory } from "@/features/categories/actions";
 import { CategoryForm } from "@/features/categories/category-form";
 import { useCategories } from "@/features/categories/use-categories";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
@@ -18,7 +18,7 @@ export default function NewCategory() {
 	const { t } = useLingui();
 	const params = useLocalSearchParams<{ kind?: string; parent?: string }>();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const all = useCategories(household?.id);
 	const canWrite = useCanWrite(household?.id, userId);
 	// Viewers can't add Categories, and a link without a list has nothing to add to.

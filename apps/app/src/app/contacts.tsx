@@ -4,14 +4,14 @@ import { setContactArchived, createContact } from "@/features/contacts/actions";
 import { ContactList } from "@/features/contacts/contact-list";
 import { useContacts } from "@/features/contacts/use-contacts";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { useSignedInUserId } from "@/lib/session";
 
 export default function Contacts() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const contacts = useContacts(household?.id);
 	const canWrite = useCanWrite(household?.id, userId) === true;
 

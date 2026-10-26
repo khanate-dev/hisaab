@@ -28,7 +28,12 @@ import { todayIn } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { newId } from "@/lib/ids";
 
-import { orNull, recordableWallets, repeatEntry } from "./draft";
+import {
+	orNull,
+	recordableWallets,
+	repeatEntry,
+	startingWallet,
+} from "./draft";
 import { useCommonChecks, useSave } from "./form-checks";
 import { entryKindLabel, useItemNames } from "./labels";
 import { ItemsSection } from "./items-section";
@@ -61,6 +66,8 @@ type Props = {
 	 * before the household has one.
 	 */
 	baseCurrency: string | null;
+	/** The Member's default Wallet in the household: where a new one starts, when it can. */
+	defaultWalletId?: string | null;
 	/** The household's timezone; the date starts as today in it. */
 	timeZone: string;
 	/** Today, YYYY-MM-DD; injected by tests. */
@@ -82,6 +89,7 @@ export const EntryForm = ({
 	categories,
 	history,
 	baseCurrency,
+	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
 	submitLabel,
@@ -95,7 +103,9 @@ export const EntryForm = ({
 	// An Entry keeps its own Wallet even after it's archived; a new one only starts in a Wallet it can go into.
 	const startWallet =
 		walletOf(entry?.wallet_id) ??
-		(linked && recordable(linked) ? linked : active[0]);
+		(linked && recordable(linked)
+			? linked
+			: startingWallet(active, defaultWalletId));
 
 	const [kind, setKind] = useState<FlowKind>(
 		entry?.kind === "income" || entry?.kind === "expense"

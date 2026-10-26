@@ -14,7 +14,7 @@ import { CategoryForm } from "@/features/categories/category-form";
 import { useCategories } from "@/features/categories/use-categories";
 import { useCategoryInUse } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
@@ -23,7 +23,7 @@ export default function CategoryScreen() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const all = useCategories(household?.id);
 	const canWrite = useCanWrite(household?.id, userId);
 	const recordedIn = useCategoryInUse(id) ?? true;

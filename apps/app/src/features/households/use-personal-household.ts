@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/powersync";
 
-/** The User's Personal household, once it has synced. Until switching arrives (#40) it is the current household. */
+/** The User's Personal household, once it has synced: where onboarding puts the First Wallet. */
 export const usePersonalHousehold = (userId: string) => {
 	const { data } = useQuery(
 		toCompilableQuery(

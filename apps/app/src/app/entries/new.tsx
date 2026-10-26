@@ -25,7 +25,8 @@ export default function NewEntry() {
 	// Viewers can't record Entries; reached by a link, they land on the list.
 	if (data?.canWrite === false) return <Redirect href="/entries" />;
 	if (!data) return null;
-	const { userId, household, categories, history, wallets } = data;
+	const { userId, household, categories, history, wallets, defaultWalletId } =
+		data;
 	const transfer = params.kind === "transfer";
 	const title = transfer
 		? t`New Transfer`
@@ -46,6 +47,7 @@ export default function NewEntry() {
 				transferable >= 2 ? (
 					<TransferForm
 						baseCurrency={household.base_currency}
+						defaultWalletId={defaultWalletId}
 						onSubmit={async (draft, currencies) => {
 							await createTransfer(household.id, userId, draft, currencies);
 							leaveTo("/entries");
@@ -65,6 +67,7 @@ export default function NewEntry() {
 			) : activeWallets > 0 ? (
 				<EntryForm
 					baseCurrency={household.base_currency}
+					defaultWalletId={defaultWalletId}
 					categories={categories}
 					history={history}
 					initial={initial}

@@ -22,7 +22,15 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 	const [transferring, setTransferring] = useState(false);
 
 	if (!data) return null;
-	const { userId, household, canWrite, categories, history, wallets } = data;
+	const {
+		userId,
+		household,
+		canWrite,
+		categories,
+		history,
+		wallets,
+		defaultWalletId,
+	} = data;
 	if (!canWrite)
 		return (
 			<Text
@@ -44,6 +52,7 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 					>{t`Expense or Income instead`}</Chip>
 					<TransferForm
 						baseCurrency={household.base_currency}
+						defaultWalletId={defaultWalletId}
 						onSubmit={async (draft, currencies) => {
 							await createTransfer(household.id, userId, draft, currencies);
 							onDone();
@@ -61,6 +70,7 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 		<ScrollView keyboardShouldPersistTaps="handled">
 			<QuickAddForm
 				baseCurrency={household.base_currency}
+				defaultWalletId={defaultWalletId}
 				categories={categories}
 				history={history}
 				onOpenFullForm={(draft) => {

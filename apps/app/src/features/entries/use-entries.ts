@@ -115,3 +115,21 @@ export const useEntryViews = (householdId: string | undefined) => {
 		[list, categories, wallets, items],
 	);
 };
+
+/** Whether the household has any Entry, which fixes its Base currency (ADR-0005); undefined while loading. */
+export const useHouseholdHasEntries = (
+	householdId: string | undefined,
+): boolean | undefined => {
+	const rows = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: entries.id })
+					.from(entries)
+					.where(eq(entries.household_id, householdId ?? ""))
+					.limit(1),
+			),
+		),
+	);
+	return rows === undefined ? undefined : rows.length > 0;
+};

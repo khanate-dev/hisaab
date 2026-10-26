@@ -13,7 +13,7 @@ import {
 import { CATEGORY_KIND_LABELS } from "@/features/categories/labels";
 import { useCategories } from "@/features/categories/use-categories";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { useSignedInUserId } from "@/lib/session";
 
@@ -22,7 +22,7 @@ const DEFAULT_KIND: CategoryKind = "expense";
 export default function Categories() {
 	const { t, i18n } = useLingui();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const all = useCategories(household?.id);
 	const canWrite = useCanWrite(household?.id, userId) === true;
 	const [kind, setKind] = useState(DEFAULT_KIND);

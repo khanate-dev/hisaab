@@ -15,7 +15,7 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import { todayIn } from "@/lib/dates";
 
-import { orNull, recordableWallets } from "./draft";
+import { orNull, recordableWallets, startingWallet } from "./draft";
 import { useCommonChecks, useSave } from "./form-checks";
 import type { Entry, TransferDraft, WalletChoice } from "./types";
 
@@ -26,6 +26,8 @@ type Props = {
 	wallets: readonly WalletChoice[];
 	/** Transfers move money between Base-currency Wallets until Base amounts land (#45); null before there's one. */
 	baseCurrency: string | null;
+	/** The Member's default Wallet in the household: where a new one starts, when it can. */
+	defaultWalletId?: string | null;
 	timeZone: string;
 	/** Today, YYYY-MM-DD; injected by tests. */
 	today?: string;
@@ -44,6 +46,7 @@ export const TransferForm = ({
 	entry,
 	wallets,
 	baseCurrency,
+	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
 	submitLabel,
@@ -56,7 +59,7 @@ export const TransferForm = ({
 		wallets.find((w) => w.id === id);
 	const recordable = recordableWallets(wallets, baseCurrency);
 	const [fromId, setFromId] = useState(
-		entry?.wallet_id ?? recordable[0]?.id ?? "",
+		entry?.wallet_id ?? startingWallet(recordable, defaultWalletId)?.id ?? "",
 	);
 	const [toId, setToId] = useState(
 		entry?.to_wallet_id ?? recordable.find((w) => w.id !== fromId)?.id ?? "",

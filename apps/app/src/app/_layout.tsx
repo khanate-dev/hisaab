@@ -71,6 +71,14 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Contacts` }}
 				/>
 				<Stack.Screen
+					name="household"
+					options={{ title: t`Household settings` }}
+				/>
+				<Stack.Screen
+					name="households/new"
+					options={{ title: t`New household` }}
+				/>
+				<Stack.Screen
 					name="loans/index"
 					options={{ title: t`Loans` }}
 				/>

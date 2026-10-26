@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { Redirect, router } from "expo-router";
 
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { createWallet } from "@/features/wallets/actions";
 import { useCanWrite } from "@/features/households/use-can-write";
@@ -12,7 +12,7 @@ import { useSignedInUserId } from "@/lib/session";
 export default function NewWallet() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const canWrite = useCanWrite(household?.id, userId);
 	// Viewers can't add Wallets; reached by a link, they land on the list.
 	if (canWrite === false) return <Redirect href="/wallets" />;

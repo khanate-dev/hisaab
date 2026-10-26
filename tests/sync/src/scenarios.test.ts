@@ -712,4 +712,70 @@ describe("sync scenarios", () => {
 			},
 		]);
 	});
+
+	it("a shared household created offline uploads with its founder as Admin, gets its Categories, and keeps their default Wallet", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const stamp = stamped({})._metadata;
+		const household = uuidv7();
+		const membership = uuidv7();
+		const wallet = uuidv7();
+		const now = new Date().toISOString();
+
+		await goOffline(device);
+		// As the app's createHousehold does: the household first, then its founder's Admin Membership.
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				`INSERT INTO households (id, name, personal_user_id, base_currency, timezone, budget_month_start_day, created_by, created_at, _metadata)
+				VALUES (?, 'Family', NULL, 'PKR', 'Asia/Karachi', 1, ?, ?, ?)`,
+				[household, user.id, now, stamp],
+			);
+			await tx.execute(
+				"INSERT INTO memberships (id, household_id, user_id, role, default_wallet_id, created_at, _metadata) VALUES (?, ?, ?, 'admin', NULL, ?, ?)",
+				[membership, household, user.id, now, stamp],
+			);
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[wallet, household, now, stamp],
+			);
+			await tx.execute(
+				"UPDATE memberships SET default_wallet_id = ?, _metadata = ? WHERE id = ?",
+				[wallet, stamp, membership],
+			);
+			await tx.execute(
+				"UPDATE households SET budget_month_start_day = 25, _metadata = ? WHERE id = ?",
+				[stamp, household],
+			);
+		});
+		await goOnline(device);
+		await waitForUploads(device);
+
+		expect(await uploadErrors(device)).toEqual([]);
+		const { data, error } = await adminClient()
+			.from("memberships")
+			.select("user_id, role, default_wallet_id")
+			.eq("household_id", household);
+		if (error) throw error;
+		expect(data).toEqual([
+			{ user_id: user.id, role: "admin", default_wallet_id: wallet },
+		]);
+		await vi.waitFor(
+			async () =>
+				expect(
+					(
+						await device.getAll(
+							"SELECT id FROM categories WHERE household_id = ?",
+							[household],
+						)
+					).length,
+				).toBeGreaterThan(0),
+			{ timeout: 10_000 },
+		);
+		expect(
+			await device.get<{ day: number }>(
+				"SELECT budget_month_start_day AS day FROM households WHERE id = ?",
+				[household],
+			),
+		).toEqual({ day: 25 });
+	});
 });

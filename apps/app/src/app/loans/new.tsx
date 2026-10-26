@@ -18,13 +18,14 @@ export default function NewLoan() {
 	// Viewers can't record Loans; reached by a link, they land on the list.
 	if (data?.canWrite === false) return <Redirect href="/loans" />;
 	if (!data || !contacts) return null;
-	const { userId, household, wallets } = data;
+	const { userId, household, wallets, defaultWalletId } = data;
 
 	return (
 		<Screen title={t`New Loan`}>
 			{wallets.some((w) => w.archived_at === null) ? (
 				<LoanForm
 					baseCurrency={household.base_currency}
+					defaultWalletId={defaultWalletId}
 					contacts={contacts}
 					onSubmit={async (draft, currency) => {
 						const id = await createLoan(household.id, userId, draft, currency);

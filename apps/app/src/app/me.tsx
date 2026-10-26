@@ -41,7 +41,13 @@ export default function MeAndHousehold() {
 	const { t } = useLingui();
 	return (
 		<Screen title={t`Me & household`}>
-			<Text variant="muted">{t`Household settings, Members and your preferences arrive here.`}</Text>
+			<Text variant="muted">{t`Members and your preferences arrive here.`}</Text>
+			<Button
+				onPress={() => router.push("/household")}
+				variant="secondary"
+			>
+				{t`Household settings`}
+			</Button>
 			<Button
 				onPress={() => router.push("/wallets")}
 				variant="secondary"
