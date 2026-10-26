@@ -46,3 +46,35 @@ export const descriptionSuggestions = <T extends Describable>(
 	}
 	return suggestions;
 };
+
+/**
+ * Recent chips (spec §4.2): the most frequent descriptions among the kind's `window` latest Entries, most frequent
+ * first (ties to the most recent), each as its latest Entry, so tapping one repeats it.
+ */
+export const recentDescriptions = <T extends Describable>(
+	entries: readonly T[],
+	kind: FlowKind,
+	{ window = 50, limit = 5 } = {},
+): T[] => {
+	const recent = entries
+		.filter(
+			(e) =>
+				e.kind === kind && e.description !== null && key(e.description) !== "",
+		)
+		.toSorted(newestFirst)
+		.slice(0, window);
+	const byDescription = new Map<
+		string,
+		{ latest: T; count: number; rank: number }
+	>();
+	recent.forEach((entry, rank) => {
+		const described = key(entry.description ?? "");
+		const seen = byDescription.get(described);
+		if (seen) seen.count += 1;
+		else byDescription.set(described, { latest: entry, count: 1, rank });
+	});
+	return [...byDescription.values()]
+		.toSorted((a, b) => b.count - a.count || a.rank - b.rank)
+		.slice(0, limit)
+		.map(({ latest }) => latest);
+};

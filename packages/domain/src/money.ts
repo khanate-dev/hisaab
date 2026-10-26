@@ -92,3 +92,37 @@ export const moneyEquals = (a: Money, b: Money) => a.equals(b);
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */
 export const sumMoney = (amounts: readonly Money[], currency: string): Money =>
 	amounts.reduce(addMoney, zeroMoney(currency));
+
+// ISO 4217 minor units, where they aren't 2. (Intl reports the Unicode locale data's cash rounding instead: 0 for PKR.)
+const NO_DECIMALS = new Set([
+	"BIF",
+	"CLP",
+	"DJF",
+	"GNF",
+	"ISK",
+	"JPY",
+	"KMF",
+	"KRW",
+	"PYG",
+	"RWF",
+	"UGX",
+	"UYI",
+	"VND",
+	"VUV",
+	"XAF",
+	"XOF",
+	"XPF",
+]);
+const THREE_DECIMALS = new Set([
+	"BHD",
+	"IQD",
+	"JOD",
+	"KWD",
+	"LYD",
+	"OMR",
+	"TND",
+]);
+
+/** How many decimals a currency's amounts have (ISO 4217): 2 for PKR and USD, 0 for JPY, 3 for KWD. */
+export const currencyDecimals = (currency: string) =>
+	NO_DECIMALS.has(currency) ? 0 : THREE_DECIMALS.has(currency) ? 3 : 2;

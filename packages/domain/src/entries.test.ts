@@ -5,6 +5,7 @@ import {
 	descriptionSuggestions,
 	isFlowKind,
 	magnitude,
+	recentDescriptions,
 	signedAmount,
 } from "./entries";
 import { newestFirst } from "./entry-order";
@@ -123,6 +124,71 @@ describe("descriptionSuggestions", () => {
 					new Set(found.map((e) => e.description?.trim().toLowerCase())),
 				).toEqual(expected);
 			}),
+		);
+	});
+});
+
+describe("recentDescriptions", () => {
+	const normal = (d: string | null) => d?.trim().toLowerCase() ?? "";
+
+	it("offers each of the kind's recent descriptions once, as its latest Entry, up to the limit", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				flowKind,
+				fc.integer({ min: 1, max: 6 }),
+				(list, kind, limit) => {
+					const chips = recentDescriptions(list, kind, { limit });
+					expect(chips.length).toBeLessThanOrEqual(limit);
+					const keys = chips.map((c) => normal(c.description));
+					expect(new Set(keys).size).toBe(keys.length);
+					for (const chip of chips) {
+						expect(chip.kind).toBe(kind);
+						expect(normal(chip.description)).not.toBe("");
+						const same = list.filter(
+							(e) =>
+								e.kind === kind &&
+								normal(e.description) === normal(chip.description),
+						);
+						expect(same.toSorted(newestFirst)[0]).toBe(chip);
+					}
+				},
+			),
+		);
+	});
+
+	it("puts the more frequent descriptions first", () => {
+		fc.assert(
+			fc.property(entries, flowKind, (list, kind) => {
+				const chips = recentDescriptions(list, kind, { limit: 25, window: 25 });
+				const count = (d: string | null) =>
+					list.filter(
+						(e) => e.kind === kind && normal(e.description) === normal(d),
+					).length;
+				const counts = chips.map((c) => count(c.description));
+				expect(counts).toEqual(counts.toSorted((a, b) => b - a));
+			}),
+		);
+	});
+
+	it("only looks at the latest Entries", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				flowKind,
+				fc.integer({ min: 1, max: 10 }),
+				(list, kind, window) => {
+					const latest = list
+						.filter((e) => e.kind === kind && normal(e.description) !== "")
+						.toSorted(newestFirst)
+						.slice(0, window);
+					for (const chip of recentDescriptions(list, kind, {
+						window,
+						limit: 25,
+					}))
+						expect(latest).toContain(chip);
+				},
+			),
 		);
 	});
 });

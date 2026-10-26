@@ -30,9 +30,8 @@ const DEFAULT_KIND: FlowKind = "expense";
 type Props = {
 	/** The Entry being edited; absent when recording one. Its kind is fixed. */
 	entry?: Entry;
-	/** Where a new Entry starts. */
-	kind?: FlowKind;
-	walletId?: string;
+	/** Where a new Entry starts, say what quick-add had when Items opened the full form. */
+	initial?: Partial<EntryDraft>;
 	/** The household's Wallets, archived ones included: active ones are offered. */
 	wallets: readonly WalletChoice[];
 	categories: readonly Category[];
@@ -59,8 +58,7 @@ const orNull = (text: string) => (text.trim() === "" ? null : text.trim());
  */
 export const EntryForm = ({
 	entry,
-	kind: startKind = DEFAULT_KIND,
-	walletId: startWalletId,
+	initial = {},
 	wallets,
 	categories,
 	history,
@@ -76,7 +74,7 @@ export const EntryForm = ({
 		w.archived_at === null &&
 		(baseCurrency === null || w.currency === baseCurrency);
 	const active = wallets.filter(recordable);
-	const linked = walletOf(startWalletId);
+	const linked = walletOf(initial.walletId);
 	// An Entry keeps its own Wallet even after it's archived; a new one only starts in a Wallet it can go into.
 	const startWallet =
 		walletOf(entry?.wallet_id) ??
@@ -85,18 +83,26 @@ export const EntryForm = ({
 	const [kind, setKind] = useState<FlowKind>(
 		entry?.kind === "income" || entry?.kind === "expense"
 			? entry.kind
-			: startKind,
+			: (initial.kind ?? DEFAULT_KIND),
 	);
 	const [amount, setAmount] = useState(
 		entry && startWallet
 			? magnitude(parseMoney(entry.amount, startWallet.currency)).toString()
-			: "",
+			: (initial.amount ?? ""),
 	);
 	const [walletId, setWalletId] = useState(startWallet?.id ?? "");
-	const [categoryId, setCategoryId] = useState(entry?.category_id ?? "");
-	const [description, setDescription] = useState(entry?.description ?? "");
-	const [picked, setPicked] = useState(entry !== undefined);
-	const [occurredOn, setOccurredOn] = useState(entry?.occurred_on ?? today);
+	const [categoryId, setCategoryId] = useState(
+		entry?.category_id ?? initial.categoryId ?? "",
+	);
+	const [description, setDescription] = useState(
+		entry?.description ?? initial.description ?? "",
+	);
+	const [picked, setPicked] = useState(
+		entry !== undefined || initial.description != null,
+	);
+	const [occurredOn, setOccurredOn] = useState(
+		entry?.occurred_on ?? initial.occurredOn ?? today,
+	);
 	const [occurredTime, setOccurredTime] = useState(entry?.occurred_time ?? "");
 	const [notes, setNotes] = useState(entry?.notes ?? "");
 	const [error, setError] = useState<string | null>(null);
