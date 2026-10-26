@@ -1,14 +1,9 @@
-import {
-	DEVICE_STATE_ID,
-	deviceState,
-	households,
-	memberships,
-	stamped,
-} from "@hisaab/client-schema";
+import { households, memberships, stamped } from "@hisaab/client-schema";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/ids";
+import { updateDeviceState } from "@/lib/device-state";
 import { db } from "@/lib/powersync";
 
 export type HouseholdDraft = {
@@ -89,20 +84,5 @@ export const setDefaultWallet = async (
 };
 
 /** Remembered on this device only, so the next launch opens the same household. */
-export const setCurrentHousehold = async (householdId: string) => {
-	await db.transaction(async (tx) => {
-		const [state] = await tx
-			.select({ id: deviceState.id })
-			.from(deviceState)
-			.where(eq(deviceState.id, DEVICE_STATE_ID));
-		if (state)
-			await tx
-				.update(deviceState)
-				.set({ current_household_id: householdId })
-				.where(eq(deviceState.id, DEVICE_STATE_ID));
-		else
-			await tx
-				.insert(deviceState)
-				.values({ id: DEVICE_STATE_ID, current_household_id: householdId });
-	});
-};
+export const setCurrentHousehold = (householdId: string) =>
+	updateDeviceState({ current_household_id: householdId });

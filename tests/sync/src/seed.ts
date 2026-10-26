@@ -217,4 +217,17 @@ const seedWallets = async (
 		}),
 	);
 	if (principals.error) throw principals.error;
+
+	// An open Invite per household, from the User who wrote its rows (its Admin).
+	const invites = await admin.from("invites").insert(
+		wallets.map(({ household_id, author }) => ({
+			id: uuidv7(),
+			household_id,
+			token: uuidv7().replaceAll("-", ""),
+			role: "member",
+			expires_at: new Date(Date.now() + 86_400_000).toISOString(),
+			created_by: author,
+		})),
+	);
+	if (invites.error) throw invites.error;
 };

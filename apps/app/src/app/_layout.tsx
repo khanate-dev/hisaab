@@ -75,6 +75,14 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Household settings` }}
 				/>
 				<Stack.Screen
+					name="invites"
+					options={{ title: t`Invites` }}
+				/>
+				<Stack.Screen
+					name="join"
+					options={{ title: t`Join with link` }}
+				/>
+				<Stack.Screen
 					name="households/new"
 					options={{ title: t`New household` }}
 				/>
@@ -137,6 +145,11 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ headerShown: false }}
 				/>
 			</Stack.Protected>
+			{/* Open signed in or out: an Invite link lands here either way. */}
+			<Stack.Screen
+				name="invite/[token]"
+				options={{ title: t`Invite` }}
+			/>
 			<Stack.Protected guard={!signedIn}>
 				<Stack.Screen
 					name="sign-in"

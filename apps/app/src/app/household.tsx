@@ -1,4 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
+import { router } from "expo-router";
+
+import { Button } from "@/components/ui/button";
 
 import { recordableWallets } from "@/features/entries/draft";
 import { useHouseholdHasEntries } from "@/features/entries/use-entries";
@@ -28,6 +31,14 @@ export default function HouseholdSettings() {
 
 	return (
 		<Screen title={isPersonal ? t`Personal` : household.name}>
+			{membership.role === "admin" && !isPersonal && (
+				<Button
+					onPress={() => router.push("/invites")}
+					variant="secondary"
+				>
+					{t`Invites`}
+				</Button>
+			)}
 			<HouseholdSettingsForm
 				currencyLocked={hasEntries}
 				defaultWallet={

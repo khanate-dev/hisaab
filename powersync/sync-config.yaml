@@ -42,6 +42,11 @@ streams:
         FROM entry_items
         WHERE entry_items.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
+  # A household's Invites, to its Admins only: an Invite's token is the link itself.
+  invites:
+    auto_subscribe: true
+    query: SELECT invites.id, invites.household_id, invites.token, invites.role, invites.email, invites.expires_at, invites.revoked_at, invites.accepted_by, invites.accepted_at, invites.created_by, invites.created_at FROM invites WHERE invites.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id() AND memberships.role = 'admin')
+
   # The User's own profile and the profiles of everyone they share a household with.
   profiles:
     auto_subscribe: true

@@ -54,7 +54,6 @@ export const HouseholdPill = () => {
 						void setCurrentHousehold(id);
 					}}
 				/>
-				{/* Joining with an Invite link arrives with Invites (#41). */}
 				<View className="flex-row flex-wrap gap-3">
 					<SheetClose asChild>
 						<Button
@@ -62,6 +61,14 @@ export const HouseholdPill = () => {
 							variant="secondary"
 						>
 							{t`Create household`}
+						</Button>
+					</SheetClose>
+					<SheetClose asChild>
+						<Button
+							onPress={() => router.push("/join")}
+							variant="secondary"
+						>
+							{t`Join with link`}
 						</Button>
 					</SheetClose>
 					<SheetClose asChild>

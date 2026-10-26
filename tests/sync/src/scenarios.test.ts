@@ -778,4 +778,53 @@ describe("sync scenarios", () => {
 			),
 		).toEqual({ day: 25 });
 	});
+
+	it("an Admin's Invite uploads, reaches only Admins, and a revoke follows", async () => {
+		const { users, household } = await seedHousehold({
+			admin: "admin",
+			member: "member",
+		});
+		const admin = await connectClient(users.admin);
+		const member = await connectClient(users.member);
+		const stamp = stamped({})._metadata;
+		const invite = uuidv7();
+		const now = new Date();
+
+		await admin.execute(
+			`INSERT INTO invites (id, household_id, token, role, email, expires_at, created_by, created_at, _metadata)
+			VALUES (?, ?, ?, 'viewer', 'sara@example.com', ?, ?, ?, ?)`,
+			[
+				invite,
+				household,
+				"b".repeat(32),
+				new Date(now.getTime() + 86_400_000).toISOString(),
+				users.admin.id,
+				now.toISOString(),
+				stamp,
+			],
+		);
+		await admin.execute(
+			"UPDATE invites SET revoked_at = ?, _metadata = ? WHERE id = ?",
+			[new Date().toISOString(), stamp, invite],
+		);
+		await waitForUploads(admin);
+
+		expect(await uploadErrors(admin)).toEqual([]);
+		const { data, error } = await adminClient()
+			.from("invites")
+			.select("role, email, revoked_at")
+			.eq("id", invite)
+			.single();
+		if (error) throw error;
+		expect(data).toMatchObject({ role: "viewer", email: "sara@example.com" });
+		expect(data.revoked_at).not.toBeNull();
+		await vi.waitFor(async () =>
+			expect(
+				await member.getAll("SELECT id FROM households WHERE id = ?", [
+					household,
+				]),
+			).toHaveLength(1),
+		);
+		expect(await member.getAll("SELECT id FROM invites")).toEqual([]);
+	});
 });

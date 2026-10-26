@@ -1,6 +1,7 @@
 import {
 	entries,
 	households,
+	memberships,
 	profiles,
 	stamped,
 	wallets,
@@ -8,9 +9,14 @@ import {
 import { isZero, parseMoney } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery, useStatus } from "@powersync/react";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
+import { useEffect } from "react";
 
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import {
+	clearPendingInvite,
+	usePendingInvite,
+} from "@/features/invites/pending-invite";
 import { deviceTimeZone, nowIso, todayIn } from "@/lib/dates";
 import { newId } from "@/lib/ids";
 import { db } from "@/lib/powersync";
@@ -21,14 +27,16 @@ export const ONBOARDING_STEP = {
 	WAITING: "waiting",
 	NAME: "name",
 	FIRST_WALLET: "first-wallet",
+	JOIN: "join",
 	DONE: "done",
 } as const;
 export type OnboardingStep =
 	(typeof ONBOARDING_STEP)[keyof typeof ONBOARDING_STEP];
 
 /**
- * Where a signed-in User is in onboarding: name, then First Wallet (Core flows ticket, #19). It waits for the first
- * sync, so a returning User on a new device isn't sent through it again.
+ * Where a signed-in User is in onboarding (Core flows ticket, #19): name, then First Wallet; or, arriving by Invite,
+ * name, then Join, with no First Wallet. It waits for the first sync, so a returning User on a new device isn't sent
+ * through it again, and a User who belongs to a shared household needs no First Wallet.
  */
 export const useOnboardingStep = (userId: string): OnboardingStep => {
 	const { hasSynced } = useStatus();
@@ -48,9 +56,35 @@ export const useOnboardingStep = (userId: string): OnboardingStep => {
 			),
 		).data.length > 0;
 
-	if (!hasSynced || personal === undefined) return ONBOARDING_STEP.WAITING;
+	// The shared households the User belongs to.
+	const shared = useQuery(
+		toCompilableQuery(
+			db
+				.select({ householdId: memberships.household_id })
+				.from(memberships)
+				.innerJoin(households, eq(households.id, memberships.household_id))
+				.where(
+					and(
+						eq(memberships.user_id, userId),
+						isNull(households.personal_user_id),
+					),
+				),
+		),
+	).data.map((row) => row.householdId);
+	const invite = usePendingInvite();
+	// Joined, and the Membership has synced: the Invite is done with.
+	const arrived =
+		invite?.joinedHouseholdId != null &&
+		shared.includes(invite.joinedHouseholdId);
+	useEffect(() => {
+		if (arrived) void clearPendingInvite();
+	}, [arrived]);
+
+	if (!hasSynced || personal === undefined || invite === undefined)
+		return ONBOARDING_STEP.WAITING;
 	if (profile === undefined) return ONBOARDING_STEP.NAME;
-	if (!hasWallet && personal.base_currency === null)
+	if (invite !== null && !arrived) return ONBOARDING_STEP.JOIN;
+	if (!hasWallet && personal.base_currency === null && shared.length === 0)
 		return ONBOARDING_STEP.FIRST_WALLET;
 	return ONBOARDING_STEP.DONE;
 };

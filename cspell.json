@@ -20,6 +20,7 @@
 		"apps/app/src/locales/**/*.ts"
 	],
 	"words": [
+		"sqlerrm",
 		"aparajita",
 		"apikey",
 		"Appflow",

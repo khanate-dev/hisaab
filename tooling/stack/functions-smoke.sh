@@ -45,3 +45,11 @@ current=$(sed -n 's/^export const CONTRACT_VERSION = \([0-9]*\);$/\1/p' packages
 results="none:$(status) old:$(status -H "x-contract-version: 0") current:$(status -H "x-contract-version: $current")"
 echo "contract-probe: $results"
 [[ $results == "none:426 old:426 current:200" ]] || { cat "$log" >&2; exit 1; }
+
+# accept-invite boots and answers through the domain handler: an unknown Invite is a 404, a sign-in-less accept a 401.
+invite="$api/functions/v1/accept-invite"
+ask() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 10 "$invite" -H "x-contract-version: $current" -H "content-type: application/json" --data "$1"; }
+token=$(printf 'a%.0s' $(seq 32))
+results="preview:$(ask "{\"action\":\"preview\",\"token\":\"$token\"}") accept:$(ask "{\"action\":\"accept\",\"token\":\"$token\"}")"
+echo "accept-invite: $results"
+[[ $results == "preview:404 accept:401" ]] || { cat "$log" >&2; exit 1; }
