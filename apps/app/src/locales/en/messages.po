@@ -35,6 +35,10 @@ msgstr "{lent}, {left} outstanding"
 msgid "{lent}, settled"
 msgstr "{lent}, settled"
 
+#: src/features/households/household-list.tsx
+msgid "{name}, {role}"
+msgstr "{name}, {role}"
+
 #: src/features/categories/category-list.tsx
 msgid "{name}, in {parentName}"
 msgstr "{name}, in {parentName}"
@@ -302,8 +306,14 @@ msgid "Bank"
 msgstr "Bank"
 
 #: src/features/activity/fields.ts
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
 msgid "Base currency"
 msgstr "Base currency"
+
+#: src/features/households/household-settings.tsx
+msgid "Base currency: {shownCurrency}"
+msgstr "Base currency: {shownCurrency}"
 
 #: src/features/wallets/balance.tsx
 msgid "Below zero"
@@ -329,6 +339,14 @@ msgstr "Borrowed from"
 msgid "Both Wallets' Balances change back as if it never happened."
 msgstr "Both Wallets' Balances change back as if it never happened."
 
+#: src/features/households/household-settings.tsx
+msgid "Budget month starts on"
+msgstr "Budget month starts on"
+
+#: src/features/households/household-settings.tsx
+msgid "Budget month starts on day {startDay}"
+msgstr "Budget month starts on day {startDay}"
+
 #: src/app/(tabs)/budgets.tsx
 msgid "Budget months and Pace arrive with Budgets."
 msgstr "Budget months and Pace arrive with Budgets."
@@ -337,6 +355,11 @@ msgstr "Budget months and Pace arrive with Budgets."
 #: src/features/shell/sections.ts
 msgid "Budgets"
 msgstr "Budgets"
+
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
+msgid "Budgets and reports are in it. It's fixed once the household has an Entry."
+msgstr "Budgets and reports are in it. It's fixed once the household has an Entry."
 
 #: src/features/categories/labels.ts
 msgid "Bus"
@@ -422,6 +445,11 @@ msgstr "Continue"
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Create Cash Wallet"
 msgstr "Create Cash Wallet"
+
+#: src/features/households/household-form.tsx
+#: src/features/shell/household-pill.tsx
+msgid "Create household"
+msgstr "Create household"
 
 #: src/features/wallets/labels.ts
 msgid "Credit card"
@@ -589,10 +617,17 @@ msgstr "Edit Wallet"
 msgid "Email"
 msgstr "Email"
 
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
 #: src/features/onboarding/first-wallet-form.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Enter a three-letter currency code, like PKR or USD."
 msgstr "Enter a three-letter currency code, like PKR or USD."
+
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
+msgid "Enter a timezone like Asia/Karachi."
+msgstr "Enter a timezone like Asia/Karachi."
 
 #: src/features/entries/items-section.tsx
 msgid "Enter an amount like 150 or 150.50."
@@ -641,6 +676,11 @@ msgstr "Entries"
 msgid "Entry"
 msgstr "Entry"
 
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
+msgid "Entry dates are in it."
+msgstr "Entry dates are in it."
+
 #: src/app/activity.tsx
 msgid "Every change to the household's data. Nobody can edit it."
 msgstr "Every change to the household's data. Nobody can edit it."
@@ -685,6 +725,10 @@ msgstr "Gift"
 msgid "Give the Category a name."
 msgstr "Give the Category a name."
 
+#: src/features/households/household-settings.tsx
+msgid "Give the household a name."
+msgstr "Give the household a name."
+
 #: src/features/categories/labels.ts
 msgid "Graduation cap"
 msgstr "Graduation cap"
@@ -711,9 +755,11 @@ msgstr "Home"
 msgid "House"
 msgstr "House"
 
+#: src/app/_layout.tsx
 #: src/app/me.tsx
-msgid "Household settings, Members and your preferences arrive here."
-msgstr "Household settings, Members and your preferences arrive here."
+#: src/features/shell/household-pill.tsx
+msgid "Household settings"
+msgstr "Household settings"
 
 #: src/features/shell/household-pill.tsx
 msgid "Households"
@@ -896,12 +942,18 @@ msgstr "Me & household"
 msgid "Member"
 msgstr "Member"
 
+#: src/app/me.tsx
+msgid "Members and your preferences arrive here."
+msgstr "Members and your preferences arrive here."
+
 #: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
 
 #: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Name"
 msgstr "Name"
@@ -920,6 +972,10 @@ msgstr "New Category"
 msgid "New Contact"
 msgstr "New Contact"
 
+#: src/features/households/household-settings.tsx
+msgid "New Entries start in it. It's yours alone."
+msgstr "New Entries start in it. It's yours alone."
+
 #: src/features/shell/quick-add.tsx
 #: src/features/shell/sidebar.tsx
 #: src/features/shell/tab-bar.tsx
@@ -933,6 +989,11 @@ msgstr "New Entry"
 #: src/app/entries/new.tsx
 msgid "New Expense"
 msgstr "New Expense"
+
+#: src/app/_layout.tsx
+#: src/app/households/new.tsx
+msgid "New household"
+msgstr "New household"
 
 #: src/app/entries/new.tsx
 msgid "New Income"
@@ -998,6 +1059,10 @@ msgstr "No Repayments yet."
 msgid "No Wallets yet."
 msgstr "No Wallets yet."
 
+#: src/features/households/household-settings.tsx
+msgid "None"
+msgstr "None"
+
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
@@ -1030,6 +1095,10 @@ msgstr "Notifications"
 msgid "Offline. Changes sync when you're back online."
 msgstr "Offline. Changes sync when you're back online."
 
+#: src/features/households/household-list.tsx
+msgid "On screen now"
+msgstr "On screen now"
+
 #: src/features/sync/sync-status.tsx
 msgid "Online."
 msgstr "Online."
@@ -1037,6 +1106,10 @@ msgstr "Online."
 #: src/features/sync/sync-status.tsx
 msgid "Online. Every change synced."
 msgstr "Online. Every change synced."
+
+#: src/features/households/household-settings.tsx
+msgid "Only Admins change these."
+msgstr "Only Admins change these."
 
 #: src/features/entries/entry-detail.tsx
 msgid "Open Loan"
@@ -1084,6 +1157,7 @@ msgstr "Owed"
 msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
 
+#: src/app/household.tsx
 #: src/features/households/household-list.tsx
 #: src/features/shell/household-pill.tsx
 msgid "Personal"
@@ -1097,6 +1171,10 @@ msgstr "Phone"
 #: src/features/entries/items-section.tsx
 msgid "Pick a Category."
 msgstr "Pick a Category."
+
+#: src/features/households/household-settings.tsx
+msgid "Pick a start day from 1 to 28, so every month has it."
+msgstr "Pick a start day from 1 to 28, so every month has it."
 
 #: src/features/entries/entry-form.tsx
 #: src/features/loans/loan-form.tsx
@@ -1216,10 +1294,18 @@ msgstr "Save Loan"
 msgid "Save Repayment"
 msgstr "Save Repayment"
 
+#: src/features/households/household-settings.tsx
+msgid "Save settings"
+msgstr "Save settings"
+
 #: src/app/entries/new.tsx
 #: src/features/entries/quick-add.tsx
 msgid "Save Transfer"
 msgstr "Save Transfer"
+
+#: src/features/households/household-settings.tsx
+msgid "Saved."
+msgstr "Saved."
 
 #: src/features/entries/items-section.tsx
 msgid "Say what the Item is."
@@ -1344,9 +1430,17 @@ msgstr "The Activity log needs a connection. Try again once you're online."
 msgid "The amount is more than zero."
 msgstr "The amount is more than zero."
 
+#: src/features/households/household-settings.tsx
+msgid "The Base currency is fixed once the household has an Entry."
+msgstr "The Base currency is fixed once the household has an Entry."
+
 #: src/features/wallets/wallet-form.tsx
 msgid "The currency is fixed once the Wallet has Entries."
 msgstr "The currency is fixed once the Wallet has Entries."
+
+#: src/features/households/household-settings.tsx
+msgid "The day each Budget month starts, from 1 to 28."
+msgstr "The day each Budget month starts, from 1 to 28."
 
 #: src/features/activity/activity-list.tsx
 msgid "the household"
@@ -1403,8 +1497,14 @@ msgid "Time"
 msgstr "Time"
 
 #: src/features/activity/fields.ts
+#: src/features/households/household-form.tsx
+#: src/features/households/household-settings.tsx
 msgid "Timezone"
 msgstr "Timezone"
+
+#: src/features/households/household-settings.tsx
+msgid "Timezone: {timeZone}"
+msgstr "Timezone: {timeZone}"
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -1554,6 +1654,10 @@ msgstr "You owe: {oweTotal}"
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"
 msgstr "you@example.com"
+
+#: src/features/households/household-settings.tsx
+msgid "Your default Wallet"
+msgstr "Your default Wallet"
 
 #: src/app/onboarding.tsx
 msgid "Your first Wallet"

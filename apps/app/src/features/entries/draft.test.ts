@@ -3,7 +3,12 @@ import { describe, expect, it } from "@jest/globals";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 
-import { draftToParams, paramsToDraft, repeatEntry } from "./draft";
+import {
+	draftToParams,
+	paramsToDraft,
+	repeatEntry,
+	startingWallet,
+} from "./draft";
 import type { WalletChoice } from "./types";
 
 const wallets: WalletChoice[] = [
@@ -83,5 +88,22 @@ describe("draft route parameters", () => {
 		).toEqual({
 			walletId: "w1",
 		});
+	});
+});
+
+describe("startingWallet", () => {
+	const open: WalletChoice[] = [
+		{ id: "w1", name: "Cash", currency: "PKR", archived_at: null },
+		{ id: "w3", name: "HBL", currency: "PKR", archived_at: null },
+	];
+
+	it("starts in the default Wallet when a new Entry can go into it", () => {
+		expect(startingWallet(open, "w3")?.id).toBe("w3");
+	});
+
+	it("otherwise in the first that can", () => {
+		expect(startingWallet(open, null)?.id).toBe("w1");
+		expect(startingWallet(open, "w2")?.id).toBe("w1");
+		expect(startingWallet([], "w1")).toBeUndefined();
 	});
 });

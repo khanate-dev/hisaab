@@ -7,7 +7,7 @@ import { EntryDetail } from "@/features/entries/entry-detail";
 import { useEntryTitle } from "@/features/entries/entry-list";
 import { useDisplayName, useEntryViews } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
@@ -16,7 +16,7 @@ export default function EntryScreen() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const views = useEntryViews(household?.id);
 	const canWrite = useCanWrite(household?.id, userId) === true;
 	const view = views?.find((v) => v.entry.id === id);

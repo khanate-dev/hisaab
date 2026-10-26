@@ -13,6 +13,16 @@ jest.mock("@/features/households/use-households", () => ({
 		{ id: "h1", name: "Personal", isPersonal: true, role: "admin" },
 	],
 }));
+jest.mock("@/features/households/use-current-household", () => ({
+	useCurrentHousehold: () => ({
+		id: "h1",
+		name: "Personal",
+		personal_user_id: "u1",
+	}),
+}));
+jest.mock("@/features/households/actions", () => ({
+	setCurrentHousehold: async () => {},
+}));
 jest.mock("@/lib/session", () => ({
 	useSession: () => ({ user: { id: "u1" } }),
 }));

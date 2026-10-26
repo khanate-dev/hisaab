@@ -28,7 +28,12 @@ import { todayIn } from "@/lib/dates";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { AmountKeypad } from "./amount-keypad";
-import { orNull, recordableWallets, repeatEntry } from "./draft";
+import {
+	orNull,
+	recordableWallets,
+	repeatEntry,
+	startingWallet,
+} from "./draft";
 import { entryKindLabel } from "./labels";
 import type { Entry, EntryDraft, WalletChoice } from "./types";
 
@@ -45,6 +50,8 @@ type Props = {
 	history: readonly Entry[];
 	/** Entries go into Base-currency Wallets only until Base amounts land (#45); null before there is one. */
 	baseCurrency: string | null;
+	/** The Member's default Wallet in the household: where a new one starts, when it can. */
+	defaultWalletId?: string | null;
 	timeZone: string;
 	/** Today, YYYY-MM-DD; injected by tests. */
 	today?: string;
@@ -65,6 +72,7 @@ export const QuickAddForm = ({
 	categories,
 	history,
 	baseCurrency,
+	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
 	onSubmit,
@@ -76,8 +84,9 @@ export const QuickAddForm = ({
 	const [kind, setKind] = useState<FlowKind>(DEFAULT_KIND);
 	const [amount, setAmount] = useState("");
 	const [categoryId, setCategoryId] = useState("");
-	// The default Wallet is the household's first until a default-Wallet setting arrives with personal settings.
-	const [walletId, setWalletId] = useState(recordable[0]?.id ?? "");
+	const [walletId, setWalletId] = useState(
+		startingWallet(recordable, defaultWalletId)?.id ?? "",
+	);
 	const [occurredOn, setOccurredOn] = useState(today);
 	const [description, setDescription] = useState("");
 	const [picked, setPicked] = useState(false);

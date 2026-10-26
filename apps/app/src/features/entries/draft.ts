@@ -31,6 +31,12 @@ export const recordableWallets = (
 			(baseCurrency === null || w.currency === baseCurrency),
 	);
 
+/** Where a new Entry starts: the Member's default Wallet when one can take it, otherwise the first that can. */
+export const startingWallet = (
+	recordable: readonly WalletChoice[],
+	defaultWalletId: string | null | undefined,
+) => recordable.find((w) => w.id === defaultWalletId) ?? recordable[0];
+
 /**
  * What repeating a past Entry fills in (a Recent chip or a suggestion): its description and amount always, its
  * Category unless that's archived (then none, rather than whatever was picked before), and its Wallet if a new

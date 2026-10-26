@@ -27,4 +27,5 @@ export const schema = new Schema({
 	profiles: toPowerSyncTable(tables.profiles),
 	wallets: toPowerSyncTable(tables.wallets),
 	upload_errors: toPowerSyncTable(tables.uploadErrors, { localOnly: true }),
+	device_state: toPowerSyncTable(tables.deviceState, { localOnly: true }),
 });

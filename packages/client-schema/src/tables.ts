@@ -28,6 +28,10 @@ export const households = sqliteTable("households", {
 	base_currency: text("base_currency"),
 	/** IANA; Entry dates are in it. Set by onboarding from the device; null means "use the device's". */
 	timezone: text("timezone"),
+	/** The day each Budget month starts on, 1 to 28 (`BUDGET_MONTH_START_DAYS`). */
+	budget_month_start_day: integer("budget_month_start_day").notNull(),
+	/** Who created a shared household, and so became its first Admin; null on Personal households. */
+	created_by: text("created_by"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),
@@ -38,6 +42,8 @@ export const memberships = sqliteTable("memberships", {
 	household_id: text("household_id").notNull(),
 	user_id: text("user_id").notNull(),
 	role: text("role", { enum: ROLES }).notNull(),
+	/** The Member's own pick of Wallet for new Entries in this household; null means none picked. */
+	default_wallet_id: text("default_wallet_id"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),
@@ -177,3 +183,15 @@ export const uploadErrors = sqliteTable("upload_errors", {
 	data: text("data"),
 	created_at: text("created_at").notNull(),
 });
+
+/**
+ * Local-only: what this device remembers between launches, in one row (`DEVICE_STATE_ID`). Cleared with the
+ * rest of the local database on sign-out.
+ */
+export const deviceState = sqliteTable("device_state", {
+	id: text("id").primaryKey(),
+	/** The household last switched to here; the Personal household when it's null or no longer the User's. */
+	current_household_id: text("current_household_id"),
+});
+
+export const DEVICE_STATE_ID = "device";

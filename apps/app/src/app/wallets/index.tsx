@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { useWallets } from "@/features/wallets/use-wallets";
 import { WalletList } from "@/features/wallets/wallet-list";
@@ -13,7 +13,7 @@ import { useSignedInUserId } from "@/lib/session";
 export default function Wallets() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const [showArchived, setShowArchived] = useState(false);
 	const list = useWallets(household?.id, { archived: showArchived });
 	const canWrite = useCanWrite(household?.id, userId) === true;

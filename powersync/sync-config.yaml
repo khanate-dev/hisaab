@@ -15,10 +15,10 @@ streams:
   households:
     auto_subscribe: true
     queries:
-      - SELECT households.id, households.name, households.personal_user_id, households.base_currency, households.timezone, households.created_at
+      - SELECT households.id, households.name, households.personal_user_id, households.base_currency, households.timezone, households.budget_month_start_day, households.created_by, households.created_at
         FROM households
         WHERE households.id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
-      - SELECT memberships.id, memberships.household_id, memberships.user_id, memberships.role, memberships.created_at
+      - SELECT memberships.id, memberships.household_id, memberships.user_id, memberships.role, memberships.default_wallet_id, memberships.created_at
         FROM memberships
         WHERE memberships.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       - SELECT wallets.id, wallets.household_id, wallets.name, wallets.type, wallets.currency, wallets.archived_at, wallets.created_at

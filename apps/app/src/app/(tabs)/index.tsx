@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { EntryList } from "@/features/entries/entry-list";
 import { useEntryViews } from "@/features/entries/use-entries";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { LoansTile } from "@/features/loans/loans-tile";
 import { useLoans } from "@/features/loans/use-loans";
 import { Screen } from "@/features/shell/screen";
@@ -17,10 +17,10 @@ const RECENT_ENTRIES = 5;
 
 export default function Home() {
 	const { t } = useLingui();
-	const personal = usePersonalHousehold(useSignedInUserId());
-	const wallets = useWallets(personal?.id);
-	const recent = useEntryViews(personal?.id)?.slice(0, RECENT_ENTRIES);
-	const loans = useLoans(personal?.id);
+	const household = useCurrentHousehold(useSignedInUserId());
+	const wallets = useWallets(household?.id);
+	const recent = useEntryViews(household?.id)?.slice(0, RECENT_ENTRIES);
+	const loans = useLoans(household?.id);
 
 	return (
 		<Screen title={t`Home`}>

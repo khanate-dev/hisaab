@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import {
 	deleteLoan,
 	deleteRepayment,
@@ -23,7 +23,7 @@ export default function LoanScreen() {
 	const { t } = useLingui();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const loans = useLoans(household?.id);
 	const wallets = useWalletRows(household?.id);
 	const canWrite = useCanWrite(household?.id, userId) === true;

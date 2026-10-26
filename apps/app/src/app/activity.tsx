@@ -15,7 +15,7 @@ import {
 import { useCategories } from "@/features/categories/use-categories";
 import { useEntries } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
-import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import type { ActivityRow } from "@/lib/activity-log";
@@ -25,7 +25,7 @@ import { useSignedInUserId } from "@/lib/session";
 export default function Activity() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
-	const household = usePersonalHousehold(userId);
+	const household = useCurrentHousehold(userId);
 	const log = useActivityLog(household?.id);
 	const restore = useRestoreEntry(household?.id);
 	const canWrite = useCanWrite(household?.id, userId) === true;

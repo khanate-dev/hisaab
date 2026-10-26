@@ -4,7 +4,7 @@
 // Raw SQL writes (`db.execute`) aren't checked; the app writes through Drizzle.
 
 /** Local-only tables never upload, so their writes need no stamp. */
-const LOCAL_ONLY = new Set(["uploadErrors"]);
+const LOCAL_ONLY = new Set(["uploadErrors", "deviceState"]);
 
 /** @param {import('estree').Node} node */
 const isStamped = (node) =>

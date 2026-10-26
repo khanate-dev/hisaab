@@ -104,7 +104,7 @@ select results_eq(
 	'carol reads only her own Membership'
 );
 
--- Writes arrive with their own tickets; until then a signed-in User cannot write either table.
+-- A User creates households only as their founder (shared_households.test.sql) and joins only by Invite.
 select throws_ok(
 	$$ insert into public.households (id, name) values ('00000000-0000-7000-8000-0000000000f2', 'Sneaky') $$,
 	'42501',
@@ -119,7 +119,7 @@ select throws_ok(
 	'a User cannot add themselves to a household'
 );
 select throws_ok(
-	$$ update public.memberships set role = 'admin' where user_id = '00000000-0000-4000-8000-00000000000c' $$,
+	$$ update public.memberships set role = 'viewer' where user_id = '00000000-0000-4000-8000-00000000000c' $$,
 	'42501',
 	null,
 	'a User cannot change a Role'

@@ -7,6 +7,7 @@ export * from "./contract-version";
 export * from "./dates";
 export * from "./entries";
 export * from "./entry-order";
+export * from "./households";
 export * from "./ids";
 export * from "./items";
 export * from "./loans";

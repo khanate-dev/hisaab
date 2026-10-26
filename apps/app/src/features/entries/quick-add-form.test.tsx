@@ -132,6 +132,21 @@ describe("QuickAddForm", () => {
 		);
 	});
 
+	it("starts in the Member's default Wallet, when one is picked", async () => {
+		const { onSubmit, tap } = await setup({ defaultWalletId: "w2" });
+		await tap("New entry");
+		expect(
+			screen.getByRole("button", { name: "Wallet: HBL" }),
+		).toBeOnTheScreen();
+		for (const digit of ["5", "0"]) await tap(digit);
+		await tap("Travel", "radio");
+		await tap("Save");
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({ walletId: "w2" }),
+			"PKR",
+		);
+	});
+
 	it("offers the most frequent recent descriptions first", async () => {
 		const { tap } = await setup();
 		await tap("New entry");
