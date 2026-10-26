@@ -7,7 +7,7 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { entryKindLabel } from "./labels";
-import type { EntryView } from "./views";
+import { type EntryView, shownAmount } from "./views";
 
 /** What an Entry is called in a list: its description, else its Category, else its kind. */
 export const useEntryTitle = () => {
@@ -25,16 +25,19 @@ const EntryRow = ({
 }) => {
 	const { t } = useLingui();
 	const title = useEntryTitle()(view);
-	const { category, parent, wallet, amount } = view;
+	const { category, parent, wallet, amount, arrival } = view;
 	const categoryName = category?.name;
 	const parentName = parent?.name;
 	const walletName = wallet.name;
+	const toName = arrival?.wallet.name;
 	const where =
-		categoryName === undefined
-			? walletName
-			: parentName === undefined
-				? t`${categoryName} · ${walletName}`
-				: t`${parentName} › ${categoryName} · ${walletName}`;
+		toName !== undefined
+			? t`${walletName} → ${toName}`
+			: categoryName === undefined
+				? walletName
+				: parentName === undefined
+					? t`${categoryName} · ${walletName}`
+					: t`${parentName} › ${categoryName} · ${walletName}`;
 
 	return (
 		<Pressable
@@ -55,10 +58,10 @@ const EntryRow = ({
 				<Text variant="muted">{where}</Text>
 			</View>
 			<Text
-				className={`text-end ${isNegative(amount) ? "" : "text-good"}`}
+				className={`text-end ${arrival || isNegative(amount) ? "" : "text-good"}`}
 				variant="label"
 			>
-				{formatMoney(amount)}
+				{formatMoney(shownAmount(view))}
 			</Text>
 		</Pressable>
 	);

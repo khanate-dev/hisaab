@@ -53,6 +53,7 @@ const setup = async (
 ) => {
 	const onSubmit = jest.fn(async (_draft: EntryDraft, _currency: string) => {});
 	const onOpenFullForm = jest.fn((_draft: Partial<EntryDraft>) => {});
+	const onOpenTransfer = jest.fn(() => {});
 	const Plus = () => {
 		const [open, setOpen] = useState(false);
 		return open ? (
@@ -61,6 +62,7 @@ const setup = async (
 				categories={categories}
 				history={history}
 				onOpenFullForm={onOpenFullForm}
+				onOpenTransfer={onOpenTransfer}
 				onSubmit={onSubmit}
 				timeZone="Asia/Karachi"
 				today="2026-10-26"
@@ -81,7 +83,7 @@ const setup = async (
 		taps += 1;
 		await user.press(screen.getByRole(role, { name }));
 	};
-	return { onSubmit, onOpenFullForm, tap, taps: () => taps };
+	return { onSubmit, onOpenFullForm, onOpenTransfer, tap, taps: () => taps };
 };
 
 describe("QuickAddForm", () => {
@@ -198,6 +200,13 @@ describe("QuickAddForm", () => {
 		expect(screen.queryByRole("radio", { name: "Extra 9" })).toBeNull();
 		await tap("All Categories");
 		expect(screen.getByRole("radio", { name: "Extra 9" })).toBeOnTheScreen();
+	});
+
+	it("opens the Transfer form from the segment's Transfer", async () => {
+		const { onOpenTransfer, tap } = await setup();
+		await tap("New entry");
+		await tap("Transfer", "radio");
+		expect(onOpenTransfer).toHaveBeenCalled();
 	});
 
 	it("opens the full form for Items with what's entered so far", async () => {

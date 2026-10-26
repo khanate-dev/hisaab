@@ -43,6 +43,10 @@ msgstr "{parentName} › {name}"
 msgid "{restName}, {restAmount}"
 msgstr "{restName}, {restAmount}"
 
+#: src/features/entries/entry-list.tsx
+msgid "{walletName} → {toName}"
+msgstr "{walletName} → {toName}"
+
 #: src/features/entries/entry-detail.tsx
 msgid "{where}, {shown}"
 msgstr "{where}, {shown}"
@@ -66,6 +70,18 @@ msgstr "A new household couldn't sync"
 #: src/features/sync/sync-status.tsx
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
+
+#: src/features/entries/transfer-form.tsx
+msgid "A Transfer goes to another Wallet."
+msgstr "A Transfer goes to another Wallet."
+
+#: src/app/entries/new.tsx
+msgid "A Transfer moves money between two Wallets; add another Wallet first."
+msgstr "A Transfer moves money between two Wallets; add another Wallet first."
+
+#: src/features/wallets/adjust-balance.tsx
+msgid "Actual balance ({currency})"
+msgstr "Actual balance ({currency})"
 
 #: src/features/entries/needs-wallet.tsx
 msgid "Add a Wallet first: every Entry comes out of or goes into one."
@@ -101,10 +117,18 @@ msgstr "Add Items"
 msgid "Add Subcategory"
 msgstr "Add Subcategory"
 
+#: src/app/(tabs)/entries.tsx
+msgid "Add Transfer"
+msgstr "Add Transfer"
+
 #: src/app/wallets/index.tsx
 #: src/app/wallets/new.tsx
 msgid "Add Wallet"
 msgstr "Add Wallet"
+
+#: src/features/wallets/adjust-balance.tsx
+msgid "Adjust balance"
+msgstr "Adjust balance"
 
 #: src/features/households/household-list.tsx
 msgid "Admin"
@@ -124,10 +148,12 @@ msgstr "All Wallets"
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Amount"
 msgstr "Amount"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Amount ({currency})"
 msgstr "Amount ({currency})"
 
@@ -184,6 +210,10 @@ msgstr "Bank"
 #: src/features/wallets/balance.tsx
 msgid "Below zero"
 msgstr "Below zero"
+
+#: src/features/entries/entry-detail.tsx
+msgid "Both Wallets' Balances change back as if it never happened."
+msgstr "Both Wallets' Balances change back as if it never happened."
 
 #: src/app/(tabs)/budgets.tsx
 msgid "Budget months and Pace arrive with Budgets."
@@ -285,6 +315,7 @@ msgstr "Cyan"
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Date"
 msgstr "Date"
 
@@ -332,6 +363,7 @@ msgstr "Deleting a membership couldn't sync"
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Description"
 msgstr "Description"
 
@@ -385,6 +417,10 @@ msgstr "Edit Entry"
 msgid "Edit this Item"
 msgstr "Edit this Item"
 
+#: src/app/entries/[id]/edit.tsx
+msgid "Edit Transfer"
+msgstr "Edit Transfer"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/[id]/edit.tsx
 msgid "Edit Wallet"
@@ -408,13 +444,21 @@ msgstr "Enter an amount like 150 or 150.50."
 msgid "Enter an amount like 1500 or 1500.50."
 msgstr "Enter an amount like 1500 or 1500.50."
 
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
+msgid "Enter an amount more than zero, like 1500."
+msgstr "Enter an amount more than zero, like 1500."
+
+#: src/features/entries/form-checks.ts
 msgid "Enter the date as YYYY-MM-DD, like {today}."
 msgstr "Enter the date as YYYY-MM-DD, like {today}."
 
 #: src/features/entries/entry-form.tsx
 msgid "Enter the time as HH:MM, like 18:30, or leave it empty."
 msgstr "Enter the time as HH:MM, like 18:30, or leave it empty."
+
+#: src/features/wallets/adjust-balance.tsx
+msgid "Enter what the Wallet really holds, like 1500 or -250."
+msgstr "Enter what the Wallet really holds, like 1500 or -250."
 
 #: src/app/(tabs)/entries.tsx
 #: src/features/shell/sections.ts
@@ -432,16 +476,23 @@ msgstr "Entry"
 msgid "Expense"
 msgstr "Expense"
 
+#: src/features/entries/quick-add.tsx
+msgid "Expense or Income instead"
+msgstr "Expense or Income instead"
+
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Fills in its Category, Wallet and amount"
 msgstr "Fills in its Category, Wallet and amount"
 
+#: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "From"
 msgstr "From"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "From Wallet"
 msgstr "From Wallet"
 
@@ -500,6 +551,7 @@ msgid "In credit"
 msgstr "In credit"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "In the household's timezone, {timeZone}."
 msgstr "In the household's timezone, {timeZone}."
 
@@ -550,11 +602,15 @@ msgstr "Item Category"
 msgid "Items"
 msgstr "Items"
 
+#: src/features/wallets/adjust-balance.tsx
+msgid "Its Balance is {now}. What does it really hold?"
+msgstr "Its Balance is {now}. What does it really hold?"
+
 #: src/features/entries/entry-detail.tsx
 msgid "Its Wallet's Balance changes back as if it never happened."
 msgstr "Its Wallet's Balance changes back as if it never happened."
 
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/form-checks.ts
 #: src/features/entries/items-section.tsx
 msgid "Keep the description to 200 characters or fewer."
 msgstr "Keep the description to 200 characters or fewer."
@@ -563,7 +619,7 @@ msgstr "Keep the description to 200 characters or fewer."
 msgid "Keep the name to 60 characters or fewer."
 msgstr "Keep the name to 60 characters or fewer."
 
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/form-checks.ts
 msgid "Keep the notes to 1000 characters or fewer."
 msgstr "Keep the notes to 1000 characters or fewer."
 
@@ -643,6 +699,10 @@ msgstr "New Income"
 msgid "New Subcategory"
 msgstr "New Subcategory"
 
+#: src/app/entries/new.tsx
+msgid "New Transfer"
+msgstr "New Transfer"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/new.tsx
 msgid "New Wallet"
@@ -679,6 +739,7 @@ msgstr "No Wallets yet."
 
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Notes"
 msgstr "Notes"
 
@@ -718,6 +779,7 @@ msgid "Optional, say \"2 kg\"; it doesn't change the amount."
 msgstr "Optional, say \"2 kg\"; it doesn't change the amount."
 
 #: src/features/entries/quick-add-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "Optional."
 msgstr "Optional."
 
@@ -751,6 +813,10 @@ msgstr "Pick a Category."
 msgid "Pick a Wallet."
 msgstr "Pick a Wallet."
 
+#: src/features/entries/transfer-form.tsx
+msgid "Pick the Wallet it leaves and the one it goes to."
+msgstr "Pick the Wallet it leaves and the one it goes to."
+
 #: src/features/categories/labels.ts
 msgid "Plane"
 msgstr "Plane"
@@ -758,6 +824,10 @@ msgstr "Plane"
 #: src/features/entries/items-section.tsx
 msgid "Quantity"
 msgstr "Quantity"
+
+#: src/features/entries/entry-detail.tsx
+msgid "Received"
+msgstr "Received"
 
 #: src/app/(tabs)/index.tsx
 msgid "Recent Entries"
@@ -804,6 +874,10 @@ msgstr "Rest"
 msgid "Save"
 msgstr "Save"
 
+#: src/features/wallets/adjust-balance.tsx
+msgid "Save adjustment"
+msgstr "Save adjustment"
+
 #: src/app/entries/new.tsx
 msgid "Save Entry"
 msgstr "Save Entry"
@@ -811,6 +885,11 @@ msgstr "Save Entry"
 #: src/features/entries/items-section.tsx
 msgid "Save Item"
 msgstr "Save Item"
+
+#: src/app/entries/new.tsx
+#: src/features/entries/quick-add.tsx
+msgid "Save Transfer"
+msgstr "Save Transfer"
 
 #: src/features/entries/items-section.tsx
 msgid "Say what the Item is."
@@ -882,10 +961,15 @@ msgid "Syncing your households…"
 msgstr "Syncing your households…"
 
 #: src/features/categories/category-form.tsx
-#: src/features/entries/entry-form.tsx
+#: src/features/entries/form-checks.ts
 #: src/features/entries/quick-add-form.tsx
+#: src/features/wallets/adjust-balance.tsx
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
+
+#: src/features/wallets/adjust-balance.tsx
+msgid "That's already its Balance; there's nothing to adjust."
+msgstr "That's already its Balance; there's nothing to adjust."
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
@@ -917,6 +1001,10 @@ msgstr "This Entry isn't here. It may have been deleted, or not synced yet."
 msgid "This is how the people you share a household with will see you."
 msgstr "This is how the people you share a household with will see you."
 
+#: src/features/wallets/adjust-balance.tsx
+msgid "This records an adjustment of {shownGap}. It isn't spending or income, so budgets and reports leave it out."
+msgstr "This records an adjustment of {shownGap}. It isn't spending or income, so budgets and reports leave it out."
+
 #: src/features/update/update-required.tsx
 msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
 msgstr "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
@@ -929,6 +1017,15 @@ msgstr "This Wallet isn't here. It may not have synced yet."
 msgid "Time"
 msgstr "Time"
 
+#: src/features/entries/entry-detail.tsx
+#: src/features/entries/transfer-form.tsx
+msgid "To"
+msgstr "To"
+
+#: src/features/entries/transfer-form.tsx
+msgid "To Wallet"
+msgstr "To Wallet"
+
 #: src/features/entries/quick-add-form.tsx
 msgid "Today"
 msgstr "Today"
@@ -936,6 +1033,10 @@ msgstr "Today"
 #: src/features/entries/entry-form.tsx
 msgid "Total"
 msgstr "Total"
+
+#: src/features/entries/labels.ts
+msgid "Transfer"
+msgstr "Transfer"
 
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"

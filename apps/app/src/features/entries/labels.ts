@@ -7,6 +7,7 @@ const ENTRY_KIND_LABELS: Record<EntryKind, MessageDescriptor> = {
 	balance_adjustment: msg`Balance adjustment`,
 	expense: msg`Expense`,
 	income: msg`Income`,
+	transfer: msg`Transfer`,
 };
 
 /** What an Entry's kind is called; a kind from a newer build is just an Entry. */

@@ -1,7 +1,13 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { walletBalances } from "./balances";
+import {
+	adjustmentTo,
+	countsInReports,
+	effectOn,
+	walletBalances,
+	walletEffects,
+} from "./balances";
 import { addMoney, moneyEquals, parseMoney, sumMoney } from "./money";
 
 // ADR-0002: a Wallet's Balance is its opening Balance adjustment plus every Entry touching it; never stored.
@@ -110,5 +116,125 @@ describe("walletBalances", () => {
 		);
 		expect(balances.get("cash")?.toString()).toBe("0");
 		expect(balances.has("elsewhere")).toBe(false);
+	});
+});
+
+// Transfers between the household's PKR Wallets: what leaves one arrives in the other.
+const positiveText = fc
+	.integer({ min: 1, max: 10_000_000 })
+	.map((units) => (units / 100).toFixed(2));
+const transfer = fc
+	.tuple(fc.constantFrom("cash", "bank"), positiveText)
+	.map(([from, moved]) => ({
+		wallet_id: from,
+		amount: `-${moved}`,
+		to_wallet_id: from === "cash" ? "bank" : "cash",
+		to_amount: moved,
+	}));
+
+describe("Transfers", () => {
+	it("conserve the household's total: Transfers between its Wallets add up to nothing", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				fc.array(transfer, { maxLength: 20 }),
+				(list, moves) => {
+					const before = walletBalances(wallets, list);
+					const after = walletBalances(wallets, [...list, ...moves]);
+					const pkrTotal = (balances: ReturnType<typeof walletBalances>) =>
+						addMoney(balanceOf(balances, "cash"), balanceOf(balances, "bank"));
+					expect(moneyEquals(pkrTotal(before), pkrTotal(after))).toBe(true);
+					expect(
+						moneyEquals(balanceOf(before, "card"), balanceOf(after, "card")),
+					).toBe(true);
+				},
+			),
+		);
+	});
+
+	it("touch both their Wallets, and other Entries only theirs", () => {
+		fc.assert(
+			fc.property(fc.oneof(entry, transfer), (e) => {
+				const effects = walletEffects(e);
+				const isTransfer = "to_wallet_id" in e;
+				expect(effects).toHaveLength(isTransfer ? 2 : 1);
+				for (const { walletId, amount } of effects)
+					expect(effectOn(e, walletId)).toBe(amount);
+			}),
+		);
+	});
+});
+
+describe("adjustmentTo", () => {
+	it("is exactly the gap that brings the Balance to the actual amount", () => {
+		fc.assert(
+			fc.property(amountText, amountText, (balance, actual) => {
+				const from = parseMoney(balance, "PKR");
+				const to = parseMoney(actual, "PKR");
+				expect(moneyEquals(addMoney(from, adjustmentTo(from, to)), to)).toBe(
+					true,
+				);
+			}),
+		);
+	});
+});
+
+describe("countsInReports", () => {
+	it("counts exactly spending and income, never Transfers, Balance adjustments or anything else", () => {
+		fc.assert(
+			fc.property(
+				fc.oneof(
+					fc.constantFrom(
+						"expense",
+						"income",
+						"transfer",
+						"balance_adjustment",
+					),
+					fc.string(),
+				),
+				(kind) => {
+					expect(countsInReports(kind)).toBe(
+						kind === "expense" || kind === "income",
+					);
+				},
+			),
+		);
+	});
+});
+
+describe("a Transfer between currencies", () => {
+	it("takes what left out of one Wallet and puts what arrived into the other", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				positiveText,
+				positiveText,
+				(list, left, arrived) => {
+					const move = {
+						wallet_id: "bank",
+						amount: `-${left}`,
+						to_wallet_id: "card",
+						to_amount: arrived,
+					};
+					const before = walletBalances(wallets, list);
+					const after = walletBalances(wallets, [...list, move]);
+					expect(
+						moneyEquals(
+							balanceOf(after, "bank"),
+							addMoney(
+								balanceOf(before, "bank"),
+								parseMoney(`-${left}`, "PKR"),
+							),
+						),
+					).toBe(true);
+					expect(
+						moneyEquals(
+							balanceOf(after, "card"),
+							addMoney(balanceOf(before, "card"), parseMoney(arrived, "USD")),
+						),
+					).toBe(true);
+				},
+			),
+		);
 	});
 });

@@ -72,10 +72,15 @@ export const categories = sqliteTable("categories", {
 export const entries = sqliteTable("entries", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
+	/** The Wallet whose Balance it changes; for a Transfer, the one the money leaves. */
 	wallet_id: text("wallet_id").notNull(),
+	/** A Transfer's other Wallet, the one the money arrives in. */
+	to_wallet_id: text("to_wallet_id"),
 	kind: text("kind", { enum: ENTRY_KINDS }).notNull(),
 	/** Exact decimal text: the signed change to the Wallet's Balance. Parse with parseMoney; never SUM it in SQL. */
 	amount: text("amount").notNull(),
+	/** What a Transfer brings into `to_wallet_id`, in that Wallet's currency; exact decimal text, positive. */
+	to_amount: text("to_amount"),
 	/** The date in the household's timezone, YYYY-MM-DD. */
 	occurred_on: text("occurred_on").notNull(),
 	/** Optional wall-clock time in the household's timezone, HH:MM. */

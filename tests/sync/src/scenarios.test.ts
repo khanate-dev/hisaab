@@ -316,6 +316,77 @@ describe("sync scenarios", () => {
 		expect(household.data?.base_currency).toBe("PKR");
 	});
 
+	it("a Transfer and a Balance adjustment upload, and both can be edited or deleted", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const stamp = stamped({})._metadata;
+		const [cash, bank, transferId, adjustmentId] = [
+			uuidv7(),
+			uuidv7(),
+			uuidv7(),
+			uuidv7(),
+		];
+		const now = new Date().toISOString();
+
+		await device.writeTransaction(async (tx) => {
+			for (const [id, name] of [
+				[cash, "Cash"],
+				[bank, "HBL"],
+			] as const)
+				await tx.execute(
+					"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, ?, 'cash', 'PKR', ?, ?)",
+					[id, personal.id, name, now, stamp],
+				);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, to_wallet_id, kind, amount, to_amount, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, ?, 'transfer', '-5000', '5000', '2026-10-26', ?, ?, ?)`,
+				[transferId, personal.id, cash, bank, user.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'balance_adjustment', '-250', '2026-10-26', ?, ?, ?)`,
+				[adjustmentId, personal.id, bank, user.id, now, stamp],
+			);
+		});
+		await device.execute(
+			"UPDATE entries SET amount = '-6000', to_amount = '6000', _metadata = ? WHERE id = ?",
+			[stamp, transferId],
+		);
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const transfer = await adminClient()
+			.from("entries")
+			.select("wallet_id, to_wallet_id, amount::text, to_amount::text")
+			.eq("id", transferId)
+			.single();
+		expect(transfer.data).toEqual({
+			wallet_id: cash,
+			to_wallet_id: bank,
+			amount: "-6000",
+			to_amount: "6000",
+		});
+
+		await device.execute("DELETE FROM entries WHERE id IN (?, ?)", [
+			transferId,
+			adjustmentId,
+		]);
+		await waitForUploads(device);
+		expect(await uploadErrors(device)).toEqual([]);
+		const left = await adminClient()
+			.from("entries")
+			.select("id")
+			.in("id", [transferId, adjustmentId]);
+		expect(left.data).toEqual([]);
+	});
+
 	it("an itemized Expense uploads with its Items, keeps its amount to their sum, and follows their edits and its deletion", async () => {
 		const user = await signInNewUser();
 		const device = await connectClient(user);

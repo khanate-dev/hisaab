@@ -1,8 +1,13 @@
 import { entries, wallets } from "@hisaab/client-schema";
-import { balanceHistory, walletBalances, zeroMoney } from "@hisaab/domain";
+import {
+	balanceHistory,
+	effectOn,
+	walletBalances,
+	zeroMoney,
+} from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import { useMemo } from "react";
 
 import { db } from "@/lib/powersync";
@@ -38,7 +43,12 @@ export const useWallets = (
 	const entryRows = useQuery(
 		toCompilableQuery(
 			db
-				.select({ wallet_id: entries.wallet_id, amount: entries.amount })
+				.select({
+					wallet_id: entries.wallet_id,
+					amount: entries.amount,
+					to_wallet_id: entries.to_wallet_id,
+					to_amount: entries.to_amount,
+				})
 				.from(entries)
 				.where(eq(entries.household_id, id)),
 		),
@@ -76,18 +86,33 @@ export const useWallet = (walletId: string) => {
 				.select({
 					id: entries.id,
 					kind: entries.kind,
+					wallet_id: entries.wallet_id,
 					amount: entries.amount,
+					to_wallet_id: entries.to_wallet_id,
+					to_amount: entries.to_amount,
 					occurred_on: entries.occurred_on,
+					occurred_time: entries.occurred_time,
 					created_at: entries.created_at,
 				})
 				.from(entries)
-				.where(eq(entries.wallet_id, walletId)),
+				// A Transfer touches this Wallet whichever side it's on.
+				.where(
+					or(
+						eq(entries.wallet_id, walletId),
+						eq(entries.to_wallet_id, walletId),
+					),
+				),
 		),
 	).data;
 
 	return useMemo(() => {
 		if (!wallet) return undefined;
-		const steps = balanceHistory(entryRows, wallet.currency);
+		// Each Entry as it touched this Wallet: a Transfer out of it, or into it.
+		const touches = entryRows.map((entry) => ({
+			...entry,
+			amount: effectOn(entry, walletId) ?? "0",
+		}));
+		const steps = balanceHistory(touches, wallet.currency);
 		const history: HistoryRow[] = steps.map(({ entry, amount, balance }) => ({
 			entryId: entry.id,
 			occurredOn: entry.occurred_on,
@@ -107,7 +132,7 @@ export const useWallet = (walletId: string) => {
 			history,
 			hasEntries: entryRows.length > 0,
 		};
-	}, [wallet, entryRows]);
+	}, [wallet, entryRows, walletId]);
 };
 
 /**

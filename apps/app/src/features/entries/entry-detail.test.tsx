@@ -109,7 +109,7 @@ describe("EntryDetail", () => {
 		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
 	});
 
-	it("offers no edit or delete for a Balance adjustment", async () => {
+	it("deletes a Balance adjustment, which is re-recorded rather than edited", async () => {
 		await setup({
 			view: view({
 				kind: "balance_adjustment",
@@ -118,6 +118,40 @@ describe("EntryDetail", () => {
 			}),
 		});
 		expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
-		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+		expect(screen.getByRole("button", { name: "Delete" })).toBeOnTheScreen();
+	});
+
+	it("shows a Transfer's two Wallets and, between currencies, what arrived", async () => {
+		const [transfer] = toEntryViews(
+			[
+				makeEntry("e1", {
+					kind: "transfer",
+					category_id: null,
+					wallet_id: "w1",
+					to_wallet_id: "w9",
+					amount: "-28000",
+					to_amount: "100",
+				}),
+			],
+			categories,
+			[
+				...wallets,
+				{ id: "w9", name: "Dollars", currency: "USD", archived_at: null },
+			],
+		);
+		if (!transfer) throw new Error("no view");
+		await setup({ view: transfer });
+		expect(screen.getByLabelText("From")).toHaveAccessibilityValue({
+			text: "Cash",
+		});
+		expect(screen.getByLabelText("To")).toHaveAccessibilityValue({
+			text: "Dollars",
+		});
+		expect(screen.getByLabelText("Received")).toHaveAccessibilityValue({
+			text: formatMoney(parseMoney("100", "USD")),
+		});
+		expect(screen.getByLabelText("Transfer")).toHaveAccessibilityValue({
+			text: formatMoney(parseMoney("28000", "PKR")),
+		});
 	});
 });
