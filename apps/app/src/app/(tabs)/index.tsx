@@ -6,6 +6,8 @@ import { Text } from "@/components/ui/text";
 import { EntryList } from "@/features/entries/entry-list";
 import { useEntryViews } from "@/features/entries/use-entries";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
+import { LoansTile } from "@/features/loans/loans-tile";
+import { useLoans } from "@/features/loans/use-loans";
 import { Screen } from "@/features/shell/screen";
 import { WalletList } from "@/features/wallets/wallet-list";
 import { useWallets } from "@/features/wallets/use-wallets";
@@ -18,6 +20,7 @@ export default function Home() {
 	const personal = usePersonalHousehold(useSignedInUserId());
 	const wallets = useWallets(personal?.id);
 	const recent = useEntryViews(personal?.id)?.slice(0, RECENT_ENTRIES);
+	const loans = useLoans(personal?.id);
 
 	return (
 		<Screen title={t`Home`}>
@@ -32,6 +35,12 @@ export default function Home() {
 			>
 				{t`All Wallets`}
 			</Button>
+			{loans !== undefined && (
+				<LoansTile
+					loans={loans}
+					onOpen={() => router.push("/loans")}
+				/>
+			)}
 			<Text variant="title">{t`Recent Entries`}</Text>
 			{recent !== undefined && (
 				<EntryList

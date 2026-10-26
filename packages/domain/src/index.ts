@@ -9,5 +9,6 @@ export * from "./entries";
 export * from "./entry-order";
 export * from "./ids";
 export * from "./items";
+export * from "./loans";
 export * from "./money";
 export * from "./upcasters";

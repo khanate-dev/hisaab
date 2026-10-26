@@ -60,6 +60,18 @@ export default function MeAndHousehold() {
 			>
 				{t`Activity log`}
 			</Button>
+			<Button
+				onPress={() => router.push("/loans")}
+				variant="secondary"
+			>
+				{t`Loans`}
+			</Button>
+			<Button
+				onPress={() => router.push("/contacts")}
+				variant="secondary"
+			>
+				{t`Contacts`}
+			</Button>
 			<SyncStatusSheet />
 			<Button
 				onPress={() => void supabase.auth.signOut()}

@@ -48,6 +48,11 @@ export default function EntryScreen() {
 					leaveTo("/entries");
 				}}
 				onEdit={() => router.push(`/entries/${view.entry.id}/edit`)}
+				onOpenLoan={
+					view.entry.loan_id === null
+						? undefined
+						: () => router.push(`/loans/${view.entry.loan_id}`)
+				}
 				recordedBy={recordedBy}
 				view={view}
 			/>

@@ -17,7 +17,7 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { useEntryTitle } from "./entry-list";
-import { isEditableKind } from "./draft";
+import { isDeletableKind, isEditableKind } from "./draft";
 import { entryKindLabel, useItemNames } from "./labels";
 import { type EntryView, shownAmount } from "./views";
 
@@ -29,6 +29,8 @@ type Props = {
 	canEdit: boolean;
 	onEdit: () => void;
 	onDelete: () => Promise<void>;
+	/** Opens the Loan a principal or Repayment belongs to. */
+	onOpenLoan?: (() => void) | undefined;
 };
 
 /** A labelled value, read as one: "Category, Food › Groceries". */
@@ -59,6 +61,7 @@ export const EntryDetail = ({
 	canEdit,
 	onEdit,
 	onDelete,
+	onOpenLoan,
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const title = useEntryTitle()(view);
@@ -190,29 +193,46 @@ export const EntryDetail = ({
 							{t`Edit`}
 						</Button>
 					)}
-					<Dialog>
-						<DialogTrigger asChild>
-							<Button variant="secondary">{t`Delete`}</Button>
-						</DialogTrigger>
-						<DialogContent>
-							<DialogTitle>{t`Delete ${title}?`}</DialogTitle>
-							<DialogDescription>
-								{arrival
-									? t`Both Wallets' Balances change back as if it never happened.`
-									: t`Its Wallet's Balance changes back as if it never happened.`}
-							</DialogDescription>
-							<DialogFooter>
-								<DialogClose asChild>
-									<Button variant="secondary">{t`Cancel`}</Button>
-								</DialogClose>
-								<DialogClose asChild>
-									<Button
-										onPress={() => void onDelete()}
-									>{t`Delete Entry`}</Button>
-								</DialogClose>
-							</DialogFooter>
-						</DialogContent>
-					</Dialog>
+					{onOpenLoan && (
+						<Button
+							onPress={onOpenLoan}
+							variant="secondary"
+						>
+							{t`Open Loan`}
+						</Button>
+					)}
+					{isDeletableKind(entry.kind) ? (
+						<Dialog>
+							<DialogTrigger asChild>
+								<Button variant="secondary">{t`Delete`}</Button>
+							</DialogTrigger>
+							<DialogContent>
+								<DialogTitle>{t`Delete ${title}?`}</DialogTitle>
+								<DialogDescription>
+									{arrival
+										? t`Both Wallets' Balances change back as if it never happened.`
+										: t`Its Wallet's Balance changes back as if it never happened.`}
+								</DialogDescription>
+								<DialogFooter>
+									<DialogClose asChild>
+										<Button variant="secondary">{t`Cancel`}</Button>
+									</DialogClose>
+									<DialogClose asChild>
+										<Button
+											onPress={() => void onDelete()}
+										>{t`Delete Entry`}</Button>
+									</DialogClose>
+								</DialogFooter>
+							</DialogContent>
+						</Dialog>
+					) : (
+						<Text
+							role="note"
+							variant="muted"
+						>
+							{t`A Loan's principal is deleted along with its Loan.`}
+						</Text>
+					)}
 				</View>
 			)}
 		</View>

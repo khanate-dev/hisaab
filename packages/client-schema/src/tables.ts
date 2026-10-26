@@ -1,6 +1,11 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { CATEGORY_KINDS, ENTRY_KINDS, WALLET_TYPES } from "./kinds";
+import {
+	CATEGORY_KINDS,
+	ENTRY_KINDS,
+	LOAN_DIRECTIONS,
+	WALLET_TYPES,
+} from "./kinds";
 import { ROLES } from "./roles";
 import { DELETED_COLUMN, STAMP_COLUMN } from "./stamp";
 
@@ -76,6 +81,33 @@ export const categories = sqliteTable("categories", {
 	_deleted: deleteFlag(),
 });
 
+/** A person outside the app, in a household's reusable list, who can be a Loan's counterparty (CONTEXT.md). */
+export const contacts = sqliteTable("contacts", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	name: text("name").notNull(),
+	archived_at: text("archived_at"),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** Money Lent to or Borrowed from a Contact; its principal and Repayments are Entries, its outstanding derived. */
+export const loans = sqliteTable("loans", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	contact_id: text("contact_id").notNull(),
+	direction: text("direction", { enum: LOAN_DIRECTIONS }).notNull(),
+	/** YYYY-MM-DD; optional. */
+	due_on: text("due_on"),
+	/** Settled by writing off what's left. */
+	written_off_at: text("written_off_at"),
+	notes: text("notes"),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 export const entries = sqliteTable("entries", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
@@ -83,6 +115,8 @@ export const entries = sqliteTable("entries", {
 	wallet_id: text("wallet_id").notNull(),
 	/** A Transfer's other Wallet, the one the money arrives in. */
 	to_wallet_id: text("to_wallet_id"),
+	/** The Loan a principal or Repayment belongs to. */
+	loan_id: text("loan_id"),
 	kind: text("kind", { enum: ENTRY_KINDS }).notNull(),
 	/** Exact decimal text: the signed change to the Wallet's Balance. Parse with parseMoney; never SUM it in SQL. */
 	amount: text("amount").notNull(),
