@@ -1,4 +1,3 @@
-import { isTimeZone } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
@@ -7,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useSave } from "@/features/entries/form-checks";
-import { toCurrencyCode } from "@/lib/currency";
 
 import type { HouseholdDraft } from "./actions";
-
-/** A household's name fits in 100 characters (the `households.name` check). */
-export const HOUSEHOLD_NAME_MAX = 100;
+import {
+	CurrencyAndTimeZoneFields,
+	HOUSEHOLD_NAME_MAX,
+	useHouseholdChecks,
+} from "./household-fields";
 
 type Props = {
 	/** The device's currency and timezone, as a start. */
@@ -29,19 +29,15 @@ export const HouseholdForm = ({
 }: Props) => {
 	const { t } = useLingui();
 	const { busy, error, setError, save } = useSave();
+	const check = useHouseholdChecks();
 	const [name, setName] = useState("");
 	const [currency, setCurrency] = useState(defaultCurrency);
 	const [timeZone, setTimeZone] = useState(defaultTimeZone);
 
 	const submit = async () => {
-		const baseCurrency = toCurrencyCode(currency);
-		if (baseCurrency === null)
-			return setError(t`Enter a three-letter currency code, like PKR or USD.`);
-		if (!isTimeZone(timeZone.trim()))
-			return setError(t`Enter a timezone like Asia/Karachi.`);
-		await save(() =>
-			onSubmit({ name: name.trim(), baseCurrency, timeZone: timeZone.trim() }),
-		);
+		const checked = check(currency, timeZone);
+		if ("error" in checked) return setError(checked.error);
+		await save(() => onSubmit({ name: name.trim(), ...checked }));
 	};
 
 	return (
@@ -52,20 +48,11 @@ export const HouseholdForm = ({
 				onChangeText={setName}
 				value={name}
 			/>
-			<Input
-				autoCapitalize="characters"
-				hint={t`Budgets and reports are in it. It's fixed once the household has an Entry.`}
-				label={t`Base currency`}
-				maxLength={3}
-				onChangeText={setCurrency}
-				value={currency}
-			/>
-			<Input
-				autoCapitalize="none"
-				hint={t`Entry dates are in it.`}
-				label={t`Timezone`}
-				onChangeText={setTimeZone}
-				value={timeZone}
+			<CurrencyAndTimeZoneFields
+				currency={currency}
+				onCurrencyChange={setCurrency}
+				onTimeZoneChange={setTimeZone}
+				timeZone={timeZone}
 			/>
 			{error !== null && (
 				<Text

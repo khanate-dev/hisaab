@@ -41,6 +41,33 @@ describe("parseBudgetMonthStartDay", () => {
 });
 
 describe("isTimeZone", () => {
+	it("refuses empty names and names with space around them", () => {
+		fc.assert(
+			fc.property(
+				fc.constantFrom("Asia/Karachi", "UTC", ""),
+				fc.constantFrom(" ", "\t", "\n"),
+				fc.boolean(),
+				(name, space, before) => {
+					expect(
+						isTimeZone(before ? `${space}${name}` : `${name}${space}`),
+					).toBe(false);
+				},
+			),
+		);
+		expect(isTimeZone("")).toBe(false);
+	});
+
+	it("refuses names no runtime knows", () => {
+		fc.assert(
+			fc.property(
+				fc.stringMatching(/^[A-Z][a-z]{3,8}\/Nowhere[a-z]{0,4}$/),
+				(name) => {
+					expect(isTimeZone(name)).toBe(false);
+				},
+			),
+		);
+	});
+
 	it("knows IANA timezones and nothing else", () => {
 		expect(isTimeZone("Asia/Karachi")).toBe(true);
 		expect(isTimeZone("UTC")).toBe(true);

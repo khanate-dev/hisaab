@@ -306,8 +306,7 @@ msgid "Bank"
 msgstr "Bank"
 
 #: src/features/activity/fields.ts
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "Base currency"
 msgstr "Base currency"
 
@@ -356,8 +355,7 @@ msgstr "Budget months and Pace arrive with Budgets."
 msgid "Budgets"
 msgstr "Budgets"
 
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "Budgets and reports are in it. It's fixed once the household has an Entry."
 msgstr "Budgets and reports are in it. It's fixed once the household has an Entry."
 
@@ -617,15 +615,13 @@ msgstr "Edit Wallet"
 msgid "Email"
 msgstr "Email"
 
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 #: src/features/onboarding/first-wallet-form.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Enter a three-letter currency code, like PKR or USD."
 msgstr "Enter a three-letter currency code, like PKR or USD."
 
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "Enter a timezone like Asia/Karachi."
 msgstr "Enter a timezone like Asia/Karachi."
 
@@ -676,8 +672,7 @@ msgstr "Entries"
 msgid "Entry"
 msgstr "Entry"
 
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "Entry dates are in it."
 msgstr "Entry dates are in it."
 
@@ -1430,7 +1425,7 @@ msgstr "The Activity log needs a connection. Try again once you're online."
 msgid "The amount is more than zero."
 msgstr "The amount is more than zero."
 
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "The Base currency is fixed once the household has an Entry."
 msgstr "The Base currency is fixed once the household has an Entry."
 
@@ -1497,8 +1492,7 @@ msgid "Time"
 msgstr "Time"
 
 #: src/features/activity/fields.ts
-#: src/features/households/household-form.tsx
-#: src/features/households/household-settings.tsx
+#: src/features/households/household-fields.tsx
 msgid "Timezone"
 msgstr "Timezone"
 

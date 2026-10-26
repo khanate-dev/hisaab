@@ -1,5 +1,5 @@
 import type { households } from "@hisaab/client-schema";
-import { isTimeZone, parseBudgetMonthStartDay } from "@hisaab/domain";
+import { parseBudgetMonthStartDay } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
@@ -11,10 +11,13 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import { useSave } from "@/features/entries/form-checks";
 import type { WalletChoice } from "@/features/entries/types";
-import { toCurrencyCode } from "@/lib/currency";
 
 import type { HouseholdSettings as Settings } from "./actions";
-import { HOUSEHOLD_NAME_MAX } from "./household-form";
+import {
+	CurrencyAndTimeZoneFields,
+	HOUSEHOLD_NAME_MAX,
+	useHouseholdChecks,
+} from "./household-fields";
 
 type Household = typeof households.$inferSelect;
 
@@ -52,6 +55,7 @@ export const HouseholdSettingsForm = ({
 }: Props) => {
 	const { t } = useLingui();
 	const { busy, error, setError, save } = useSave();
+	const check = useHouseholdChecks();
 	const [saved, setSaved] = useState(false);
 	const [name, setName] = useState(household.name);
 	const [currency, setCurrency] = useState(household.base_currency ?? "");
@@ -66,22 +70,19 @@ export const HouseholdSettingsForm = ({
 
 	const submit = async () => {
 		setSaved(false);
-		const baseCurrency = toCurrencyCode(currency);
-		if (baseCurrency === null)
-			return setError(t`Enter a three-letter currency code, like PKR or USD.`);
+		const checked = check(currency, timeZone);
+		if ("error" in checked) return setError(checked.error);
 		const budgetMonthStartDay = parseBudgetMonthStartDay(startDay);
 		if (budgetMonthStartDay === null)
 			return setError(t`Pick a start day from 1 to 28, so every month has it.`);
-		if (!isTimeZone(timeZone.trim()))
-			return setError(t`Enter a timezone like Asia/Karachi.`);
 		if (!isPersonal && name.trim() === "")
 			return setError(t`Give the household a name.`);
 		await save(async () => {
 			await onSave({
 				...(!isPersonal && { name: name.trim() }),
-				baseCurrency,
+				baseCurrency: checked.baseCurrency,
 				budgetMonthStartDay,
-				timeZone: timeZone.trim(),
+				timeZone: checked.timeZone,
 			});
 			setSaved(true);
 		});
@@ -99,19 +100,12 @@ export const HouseholdSettingsForm = ({
 							value={name}
 						/>
 					)}
-					<Input
-						aria-disabled={currencyLocked}
-						autoCapitalize="characters"
-						editable={!currencyLocked}
-						hint={
-							currencyLocked
-								? t`The Base currency is fixed once the household has an Entry.`
-								: t`Budgets and reports are in it. It's fixed once the household has an Entry.`
-						}
-						label={t`Base currency`}
-						maxLength={3}
-						onChangeText={setCurrency}
-						value={currency}
+					<CurrencyAndTimeZoneFields
+						currency={currency}
+						currencyLocked={currencyLocked}
+						onCurrencyChange={setCurrency}
+						onTimeZoneChange={setTimeZone}
+						timeZone={timeZone}
 					/>
 					<Input
 						hint={t`The day each Budget month starts, from 1 to 28.`}
@@ -120,13 +114,6 @@ export const HouseholdSettingsForm = ({
 						maxLength={2}
 						onChangeText={setStartDay}
 						value={startDay}
-					/>
-					<Input
-						autoCapitalize="none"
-						hint={t`Entry dates are in it.`}
-						label={t`Timezone`}
-						onChangeText={setTimeZone}
-						value={timeZone}
 					/>
 					{error !== null && (
 						<Text

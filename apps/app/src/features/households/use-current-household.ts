@@ -10,6 +10,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
+import { isPersonalHousehold } from "./is-personal";
 
 /**
  * The household on screen: the one last switched to on this device while the User still belongs to it, otherwise
@@ -46,6 +47,6 @@ export const useCurrentHousehold = (userId: string) => {
 	const rows = mine.map((row) => row.household);
 	return (
 		rows.find((household) => household.id === current) ??
-		rows.find((household) => household.personal_user_id === userId)
+		rows.find((household) => isPersonalHousehold(household, userId))
 	);
 };

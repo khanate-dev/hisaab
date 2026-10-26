@@ -16,6 +16,7 @@ import { HouseholdList } from "@/features/households/household-list";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { useHouseholds } from "@/features/households/use-households";
 import { useSession } from "@/lib/session";
+import { isPersonalHousehold } from "@/features/households/is-personal";
 
 /** The household pill: shows the household on screen and opens the switcher sheet. */
 export const HouseholdPill = () => {
@@ -25,7 +26,7 @@ export const HouseholdPill = () => {
 	const current = useCurrentHousehold(userId);
 	const [open, setOpen] = useState(false);
 	const name =
-		current === undefined || current.personal_user_id === userId
+		current === undefined || isPersonalHousehold(current, userId)
 			? t`Personal`
 			: current.name;
 

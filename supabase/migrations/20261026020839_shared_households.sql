@@ -76,10 +76,11 @@ alter table public.memberships add constraint memberships_default_wallet_id_hous
 	on delete set null (default_wallet_id);
 create index memberships_default_wallet_id_idx on public.memberships (default_wallet_id);
 
+-- Admins and Members only: Viewers record no Entries, so they have no default Wallet to pick.
 create policy "Members pick their own default Wallet" on public.memberships
 	for update to authenticated
-	using (user_id = (select auth.uid()))
-	with check (user_id = (select auth.uid()));
+	using (user_id = (select auth.uid()) and role <> 'viewer')
+	with check (user_id = (select auth.uid()) and role <> 'viewer');
 
 -- A Membership stays whose and where it is, and its Role changes only with Members and Roles (#42).
 create function private.keep_membership_origin() returns trigger

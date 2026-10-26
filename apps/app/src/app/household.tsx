@@ -13,6 +13,7 @@ import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import { deviceTimeZone } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
+import { isPersonalHousehold } from "@/features/households/is-personal";
 
 export default function HouseholdSettings() {
 	const { t } = useLingui();
@@ -23,7 +24,7 @@ export default function HouseholdSettings() {
 	const wallets = useWalletRows(household?.id);
 	if (!household || !membership || hasEntries === undefined || !wallets)
 		return null;
-	const isPersonal = household.personal_user_id === userId;
+	const isPersonal = isPersonalHousehold(household, userId);
 
 	return (
 		<Screen title={isPersonal ? t`Personal` : household.name}>

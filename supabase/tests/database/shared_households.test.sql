@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000008a1', 'founder@example.com'),
@@ -114,6 +114,14 @@ select throws_ok(
 select pg_temp.act_as('00000000-0000-4000-8000-0000000008b1');
 select is(pg_temp.affected($$ update public.memberships set default_wallet_id = null
 	where id = '00000000-0000-7000-8000-0000000008e1' $$), 0, 'nobody picks someone else''s default Wallet');
+
+reset role;
+insert into public.memberships (id, household_id, user_id, role) values
+	('00000000-0000-7000-8000-0000000008e4', '00000000-0000-7000-8000-0000000008f1',
+	 '00000000-0000-4000-8000-0000000008b1', 'viewer');
+select pg_temp.act_as('00000000-0000-4000-8000-0000000008b1');
+select is(pg_temp.affected($$ update public.memberships set default_wallet_id = '00000000-0000-7000-8000-0000000008c1'
+	where id = '00000000-0000-7000-8000-0000000008e4' $$), 0, 'a Viewer, who records nothing, picks no default Wallet');
 
 reset role;
 delete from public.wallets where id = '00000000-0000-7000-8000-0000000008c1';

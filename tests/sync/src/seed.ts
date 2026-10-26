@@ -21,8 +21,10 @@ export const seedHouseholds = async () => {
 
 	const admin = adminClient();
 	const households = await admin.from("households").insert([
-		{ id: family, name: "Family" },
-		{ id: side, name: "Side" },
+		{ id: family, name: "Family", created_by: alice.id },
+		{ id: side, name: "Side", created_by: bob.id },
+		// Created by dave but never joined: RLS lets its founder read it, the streams send it nobody.
+		{ id: uuidv7(), name: "Founding", created_by: dave.id },
 	]);
 	if (households.error) throw households.error;
 	const memberships = await admin.from("memberships").insert([
@@ -58,6 +60,19 @@ export const seedHouseholds = async () => {
 		{ household: family, author: alice.id },
 		{ household: side, author: bob.id },
 	]);
+	// bob starts his family Entries in its Cash Wallet.
+	const familyWallet = await admin
+		.from("wallets")
+		.select("id")
+		.eq("household_id", family)
+		.single();
+	if (familyWallet.error) throw familyWallet.error;
+	const defaulted = await admin
+		.from("memberships")
+		.update({ default_wallet_id: familyWallet.data.id })
+		.eq("household_id", family)
+		.eq("user_id", bob.id);
+	if (defaulted.error) throw defaulted.error;
 
 	return { users, households: { family, side } };
 };

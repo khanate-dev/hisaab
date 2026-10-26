@@ -22,6 +22,8 @@ export const useEntryData = () => {
 	if (
 		!household ||
 		canWrite === undefined ||
+		// The Member's default Wallet seeds the forms' first Wallet, so it has to be in before they start.
+		membership === undefined ||
 		!categories ||
 		!history ||
 		!wallets
