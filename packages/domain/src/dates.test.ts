@@ -1,7 +1,12 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { calendarDateIn, isCalendarDate, isTimeOfDay } from "./dates";
+import {
+	calendarDateIn,
+	isCalendarDate,
+	isTimeOfDay,
+	shiftCalendarDate,
+} from "./dates";
 
 // Entry dates are calendar dates in the household's timezone (spec §3.3).
 
@@ -97,6 +102,32 @@ describe("isTimeOfDay", () => {
 					expect(isTimeOfDay(text)).toBe(h < 24 && m < 60);
 				},
 			),
+		);
+	});
+});
+
+describe("shiftCalendarDate", () => {
+	const date = instant.map((at) => at.toISOString().slice(0, 10));
+	const days = fc.integer({ min: -400, max: 400 });
+
+	it("lands on a real date, and shifting back returns", () => {
+		fc.assert(
+			fc.property(date, days, (from, n) => {
+				const shifted = shiftCalendarDate(from, n);
+				expect(isCalendarDate(shifted)).toBe(true);
+				expect(shiftCalendarDate(shifted, -n)).toBe(from);
+			}),
+		);
+	});
+
+	it("moves by exactly that many days", () => {
+		fc.assert(
+			fc.property(date, days, (from, n) => {
+				const gap =
+					Date.parse(`${shiftCalendarDate(from, n)}T00:00:00Z`) -
+					Date.parse(`${from}T00:00:00Z`);
+				expect(gap).toBe(n * DAY);
+			}),
 		);
 	});
 });

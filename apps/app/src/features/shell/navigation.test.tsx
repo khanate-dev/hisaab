@@ -35,7 +35,7 @@ const renderShell = async () => {
 		{
 			"(tabs)/_layout": () => (
 				<WithI18n>
-					<TabsLayout />
+					<TabsLayout quickAdd={() => <Text>Quick-add</Text>} />
 					<PortalHost />
 				</WithI18n>
 			),

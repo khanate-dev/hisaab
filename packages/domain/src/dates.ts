@@ -45,3 +45,15 @@ export const calendarDateIn = (instant: Date, timeZone: string) => {
 	});
 	return `${year}-${month}-${day}`;
 };
+
+/** The calendar date `days` after (or, negative, before) another: 2026-03-01 is one day after 2026-02-28. */
+export const shiftCalendarDate = (date: string, days: number) => {
+	const [year, month, day] = date.split("-").map(Number) as [
+		number,
+		number,
+		number,
+	];
+	return new Date(Date.UTC(year, month - 1, day + days))
+		.toISOString()
+		.slice(0, 10);
+};

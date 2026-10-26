@@ -1,10 +1,5 @@
-import { FLOW_KINDS, type FlowKind } from "@hisaab/domain";
-import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import { router } from "expo-router";
 import { createContext, type ReactNode, use, useMemo, useState } from "react";
-import { View } from "react-native";
 
 import {
 	Dialog,
@@ -24,33 +19,16 @@ const QuickAddContext = createContext<QuickAdd>({ open: () => {} });
 /** Opens quick-add: a sheet on phones, a centred dialog on wide web (Navigation ticket, #17). */
 export const useQuickAdd = () => use(QuickAddContext);
 
-/** Until the quick-add keypad lands (#35), quick-add opens the full Entry form. */
-const RECORD_LABELS: Record<FlowKind, MessageDescriptor> = {
-	expense: msg`Record an Expense`,
-	income: msg`Record an Income`,
-};
+/** What quick-add shows; `close` closes the sheet or dialog. The shell hosts it, the Entries feature supplies it. */
+export type QuickAddContent = (close: () => void) => ReactNode;
 
-const Body = ({ onChoose }: { onChoose: () => void }) => {
-	const { i18n } = useLingui();
-	return (
-		<View className="gap-3">
-			{FLOW_KINDS.map((kind, index) => (
-				<Button
-					key={kind}
-					onPress={() => {
-						onChoose();
-						router.push(`/entries/new?kind=${kind}`);
-					}}
-					variant={index === 0 ? "primary" : "secondary"}
-				>
-					{i18n._(RECORD_LABELS[kind])}
-				</Button>
-			))}
-		</View>
-	);
-};
-
-export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
+export const QuickAddProvider = ({
+	children,
+	content,
+}: {
+	children: ReactNode;
+	content: QuickAddContent;
+}) => {
 	const { t } = useLingui();
 	const wide = useIsWide();
 	const [isOpen, setOpen] = useState(false);
@@ -66,7 +44,7 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
 				>
 					<DialogContent>
 						<DialogTitle>{t`New entry`}</DialogTitle>
-						<Body onChoose={() => setOpen(false)} />
+						{content(() => setOpen(false))}
 						<DialogClose asChild>
 							<Button variant="secondary">{t`Close`}</Button>
 						</DialogClose>
@@ -79,7 +57,7 @@ export const QuickAddProvider = ({ children }: { children: ReactNode }) => {
 				>
 					<SheetContent>
 						<SheetTitle>{t`New entry`}</SheetTitle>
-						<Body onChoose={() => setOpen(false)} />
+						{content(() => setOpen(false))}
 					</SheetContent>
 				</Sheet>
 			)}

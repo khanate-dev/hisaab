@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import {
 	descriptionSuggestions,
+	frequentCategories,
 	isFlowKind,
 	magnitude,
+	recentDescriptions,
 	signedAmount,
 } from "./entries";
 import { newestFirst } from "./entry-order";
@@ -123,6 +125,110 @@ describe("descriptionSuggestions", () => {
 					new Set(found.map((e) => e.description?.trim().toLowerCase())),
 				).toEqual(expected);
 			}),
+		);
+	});
+});
+
+describe("recentDescriptions", () => {
+	const normal = (d: string | null) => d?.trim().toLowerCase() ?? "";
+
+	it("offers each of the kind's recent descriptions once, as its latest Entry, up to the limit", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				flowKind,
+				fc.integer({ min: 1, max: 6 }),
+				(list, kind, limit) => {
+					const chips = recentDescriptions(list, kind, { limit });
+					expect(chips.length).toBeLessThanOrEqual(limit);
+					const keys = chips.map((c) => normal(c.description));
+					expect(new Set(keys).size).toBe(keys.length);
+					for (const chip of chips) {
+						expect(chip.kind).toBe(kind);
+						expect(normal(chip.description)).not.toBe("");
+						const same = list.filter(
+							(e) =>
+								e.kind === kind &&
+								normal(e.description) === normal(chip.description),
+						);
+						expect(same.toSorted(newestFirst)[0]).toBe(chip);
+					}
+				},
+			),
+		);
+	});
+
+	it("puts the more frequent descriptions first", () => {
+		fc.assert(
+			fc.property(entries, flowKind, (list, kind) => {
+				const chips = recentDescriptions(list, kind, { limit: 25, window: 25 });
+				const count = (d: string | null) =>
+					list.filter(
+						(e) => e.kind === kind && normal(e.description) === normal(d),
+					).length;
+				const counts = chips.map((c) => count(c.description));
+				expect(counts).toEqual(counts.toSorted((a, b) => b - a));
+			}),
+		);
+	});
+
+	it("only looks at the latest Entries", () => {
+		fc.assert(
+			fc.property(
+				entries,
+				flowKind,
+				fc.integer({ min: 1, max: 10 }),
+				(list, kind, window) => {
+					const latest = list
+						.filter((e) => e.kind === kind && normal(e.description) !== "")
+						.toSorted(newestFirst)
+						.slice(0, window);
+					for (const chip of recentDescriptions(list, kind, {
+						window,
+						limit: 25,
+					}))
+						expect(latest).toContain(chip);
+				},
+			),
+		);
+	});
+});
+
+describe("frequentCategories", () => {
+	const categorized = fc.uniqueArray(
+		fc.record({
+			id: fc.uuid(),
+			kind: flowKind,
+			category_id: fc.option(fc.constantFrom("c1", "c2", "c3", "c4"), {
+				nil: null,
+			}),
+			occurred_on: fc
+				.integer({ min: 1, max: 28 })
+				.map((d) => `2026-10-${String(d).padStart(2, "0")}`),
+			created_at: fc
+				.integer({ min: 0, max: 1000 })
+				.map((s) => new Date(Date.UTC(2026, 9, 1, 0, 0, s)).toISOString()),
+		}),
+		{ selector: (e) => e.id, maxLength: 25 },
+	);
+
+	it("lists each Category the kind's recent Entries used once, most used first, up to the limit", () => {
+		fc.assert(
+			fc.property(
+				categorized,
+				flowKind,
+				fc.integer({ min: 1, max: 5 }),
+				(list, kind, limit) => {
+					const ids = frequentCategories(list, kind, { limit, window: 25 });
+					expect(ids.length).toBeLessThanOrEqual(limit);
+					expect(new Set(ids).size).toBe(ids.length);
+					const uses = (id: string) =>
+						list.filter((e) => e.kind === kind && e.category_id === id).length;
+					for (const id of ids) expect(uses(id)).toBeGreaterThan(0);
+					const counts = ids.map(uses);
+					expect(counts).toEqual(counts.toSorted((a, b) => b - a));
+				},
+			),
 		);
 	});
 });

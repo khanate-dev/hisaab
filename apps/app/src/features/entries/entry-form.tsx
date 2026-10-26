@@ -22,6 +22,7 @@ import { Text } from "@/components/ui/text";
 import type { Category } from "@/features/categories/types";
 import { todayIn } from "@/lib/dates";
 
+import { orNull, recordableWallets, repeatEntry } from "./draft";
 import { entryKindLabel } from "./labels";
 import type { Entry, EntryDraft, WalletChoice } from "./types";
 
@@ -30,9 +31,8 @@ const DEFAULT_KIND: FlowKind = "expense";
 type Props = {
 	/** The Entry being edited; absent when recording one. Its kind is fixed. */
 	entry?: Entry;
-	/** Where a new Entry starts. */
-	kind?: FlowKind;
-	walletId?: string;
+	/** Where a new Entry starts, say what quick-add had when Items opened the full form. */
+	initial?: Partial<EntryDraft>;
 	/** The household's Wallets, archived ones included: active ones are offered. */
 	wallets: readonly WalletChoice[];
 	categories: readonly Category[];
@@ -51,16 +51,13 @@ type Props = {
 	onSubmit: (draft: EntryDraft, currency: string) => Promise<void>;
 };
 
-const orNull = (text: string) => (text.trim() === "" ? null : text.trim());
-
 /**
  * Record or edit an Expense or Income: how much, from or into which Wallet, its Category, a description (with
  * suggestions from past Entries), the date in the household's timezone, an optional time, and notes (spec §3.3).
  */
 export const EntryForm = ({
 	entry,
-	kind: startKind = DEFAULT_KIND,
-	walletId: startWalletId,
+	initial = {},
 	wallets,
 	categories,
 	history,
@@ -72,11 +69,9 @@ export const EntryForm = ({
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const walletOf = (id: string | undefined) => wallets.find((w) => w.id === id);
-	const recordable = (w: WalletChoice) =>
-		w.archived_at === null &&
-		(baseCurrency === null || w.currency === baseCurrency);
-	const active = wallets.filter(recordable);
-	const linked = walletOf(startWalletId);
+	const active = recordableWallets(wallets, baseCurrency);
+	const recordable = (w: WalletChoice) => active.includes(w);
+	const linked = walletOf(initial.walletId);
 	// An Entry keeps its own Wallet even after it's archived; a new one only starts in a Wallet it can go into.
 	const startWallet =
 		walletOf(entry?.wallet_id) ??
@@ -85,18 +80,26 @@ export const EntryForm = ({
 	const [kind, setKind] = useState<FlowKind>(
 		entry?.kind === "income" || entry?.kind === "expense"
 			? entry.kind
-			: startKind,
+			: (initial.kind ?? DEFAULT_KIND),
 	);
 	const [amount, setAmount] = useState(
 		entry && startWallet
 			? magnitude(parseMoney(entry.amount, startWallet.currency)).toString()
-			: "",
+			: (initial.amount ?? ""),
 	);
 	const [walletId, setWalletId] = useState(startWallet?.id ?? "");
-	const [categoryId, setCategoryId] = useState(entry?.category_id ?? "");
-	const [description, setDescription] = useState(entry?.description ?? "");
-	const [picked, setPicked] = useState(entry !== undefined);
-	const [occurredOn, setOccurredOn] = useState(entry?.occurred_on ?? today);
+	const [categoryId, setCategoryId] = useState(
+		entry?.category_id ?? initial.categoryId ?? "",
+	);
+	const [description, setDescription] = useState(
+		entry?.description ?? initial.description ?? "",
+	);
+	const [picked, setPicked] = useState(
+		entry !== undefined || initial.description != null,
+	);
+	const [occurredOn, setOccurredOn] = useState(
+		entry?.occurred_on ?? initial.occurredOn ?? today,
+	);
 	const [occurredTime, setOccurredTime] = useState(entry?.occurred_time ?? "");
 	const [notes, setNotes] = useState(entry?.notes ?? "");
 	const [error, setError] = useState<string | null>(null);
@@ -140,15 +143,12 @@ export const EntryForm = ({
 	};
 
 	const applySuggestion = (past: Entry) => {
-		setDescription(past.description ?? "");
+		const filled = repeatEntry(past, categories, wallets, baseCurrency);
+		setDescription(filled.description ?? "");
 		setPicked(true);
-		const category = categories.find((c) => c.id === past.category_id);
-		if (category && category.archived_at === null) setCategoryId(category.id);
-		const wallet = walletOf(past.wallet_id);
-		if (wallet && recordable(wallet)) {
-			setWalletId(wallet.id);
-			setAmount(magnitude(parseMoney(past.amount, wallet.currency)).toString());
-		}
+		setAmount(filled.amount);
+		setCategoryId(filled.categoryId);
+		if (filled.walletId) setWalletId(filled.walletId);
 	};
 
 	const submit = async () => {

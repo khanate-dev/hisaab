@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	addMoney,
+	currencyDecimals,
 	isNegative,
 	isZero,
 	Money,
@@ -155,5 +156,55 @@ describe("Money", () => {
 	it("never becomes a float", () => {
 		expect(Money).toBeDefined();
 		expect(typeof parseMoney("1.5", "PKR").toString()).toBe("string");
+	});
+});
+
+describe("currencyDecimals", () => {
+	it.each([
+		["PKR", 2],
+		["USD", 2],
+		["JPY", 0],
+		["KWD", 3],
+	])("%s has %i", (currency, decimals) => {
+		expect(currencyDecimals(currency)).toBe(decimals);
+	});
+
+	it("is 2 for any currency ISO 4217 doesn't list otherwise", () => {
+		const listed = [
+			"BIF",
+			"CLP",
+			"DJF",
+			"GNF",
+			"ISK",
+			"JPY",
+			"KMF",
+			"KRW",
+			"PYG",
+			"RWF",
+			"UGX",
+			"UYI",
+			"VND",
+			"VUV",
+			"XAF",
+			"XOF",
+			"XPF",
+			"BHD",
+			"IQD",
+			"JOD",
+			"KWD",
+			"LYD",
+			"OMR",
+			"TND",
+		];
+		fc.assert(
+			fc.property(
+				fc
+					.stringMatching(/^[A-Z]{3}$/)
+					.filter((code) => !listed.includes(code)),
+				(code) => {
+					expect(currencyDecimals(code)).toBe(2);
+				},
+			),
+		);
 	});
 });

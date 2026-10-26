@@ -55,7 +55,7 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
-#: src/app/entries/new.tsx
+#: src/features/entries/needs-wallet.tsx
 msgid "Add a Wallet first: every Entry comes out of or goes into one."
 msgstr "Add a Wallet first: every Entry comes out of or goes into one."
 
@@ -86,6 +86,10 @@ msgstr "Add Wallet"
 msgid "Admin"
 msgstr "Admin"
 
+#: src/features/entries/quick-add-form.tsx
+msgid "All Categories"
+msgstr "All Categories"
+
 #: src/app/(tabs)/index.tsx
 msgid "All Entries"
 msgstr "All Entries"
@@ -95,6 +99,7 @@ msgid "All Wallets"
 msgstr "All Wallets"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Amount"
 msgstr "Amount"
 
@@ -198,6 +203,7 @@ msgstr "Categories"
 #: src/app/categories/[id].tsx
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Category"
 msgstr "Category"
 
@@ -249,8 +255,17 @@ msgstr "Cyan"
 
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Date"
 msgstr "Date"
+
+#: src/features/entries/quick-add-form.tsx
+msgid "Date: {dateName}"
+msgstr "Date: {dateName}"
+
+#: src/features/entries/amount-keypad.tsx
+msgid "Decimal point"
+msgstr "Decimal point"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/entries/entry-detail.tsx
@@ -273,6 +288,10 @@ msgstr "Delete Category"
 msgid "Delete Entry"
 msgstr "Delete Entry"
 
+#: src/features/entries/amount-keypad.tsx
+msgid "Delete last digit"
+msgstr "Delete last digit"
+
 #: src/features/sync/sync-status.tsx
 msgid "Deleting a household couldn't sync"
 msgstr "Deleting a household couldn't sync"
@@ -283,6 +302,7 @@ msgstr "Deleting a membership couldn't sync"
 
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Description"
 msgstr "Description"
 
@@ -376,6 +396,7 @@ msgid "Expense"
 msgstr "Expense"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Fills in its Category, Wallet and amount"
 msgstr "Fills in its Category, Wallet and amount"
 
@@ -474,6 +495,10 @@ msgstr "It leaves your Wallets list. Its Entries and Balance stay, and you can b
 msgid "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 msgstr "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 
+#: src/features/entries/quick-add-form.tsx
+msgid "Items"
+msgstr "Items"
+
 #: src/features/entries/entry-detail.tsx
 msgid "Its Wallet's Balance changes back as if it never happened."
 msgstr "Its Wallet's Balance changes back as if it never happened."
@@ -491,6 +516,7 @@ msgid "Keep the notes to 1000 characters or fewer."
 msgstr "Keep the notes to 1000 characters or fewer."
 
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Kind"
 msgstr "Kind"
 
@@ -631,6 +657,10 @@ msgstr "Online. Every change synced."
 msgid "Optional, as HH:MM."
 msgstr "Optional, as HH:MM."
 
+#: src/features/entries/quick-add-form.tsx
+msgid "Optional."
+msgstr "Optional."
+
 #: src/features/categories/labels.ts
 msgid "Orange"
 msgstr "Orange"
@@ -664,14 +694,6 @@ msgstr "Plane"
 msgid "Recent Entries"
 msgstr "Recent Entries"
 
-#: src/features/shell/quick-add.tsx
-msgid "Record an Expense"
-msgstr "Record an Expense"
-
-#: src/features/shell/quick-add.tsx
-msgid "Record an Income"
-msgstr "Record an Income"
-
 #: src/features/entries/entry-detail.tsx
 msgid "Recorded by"
 msgstr "Recorded by"
@@ -692,6 +714,7 @@ msgstr "Reports arrive once there are Entries to report on."
 #: src/app/categories/[id].tsx
 #: src/app/entries/[id]/edit.tsx
 #: src/app/wallets/[id]/edit.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Save"
 msgstr "Save"
 
@@ -766,6 +789,7 @@ msgstr "Syncing your households…"
 
 #: src/features/categories/category-form.tsx
 #: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
 
@@ -806,6 +830,10 @@ msgstr "This Wallet isn't here. It may not have synced yet."
 msgid "Time"
 msgstr "Time"
 
+#: src/features/entries/quick-add-form.tsx
+msgid "Today"
+msgstr "Today"
+
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"
 msgstr "Type"
@@ -835,6 +863,10 @@ msgstr "Update required"
 msgid "Viewer"
 msgstr "Viewer"
 
+#: src/features/entries/quick-add.tsx
+msgid "Viewers see Entries but don't record them."
+msgstr "Viewers see Entries but don't record them."
+
 #: src/features/categories/labels.ts
 msgid "Violet"
 msgstr "Violet"
@@ -843,8 +875,13 @@ msgstr "Violet"
 #: src/app/wallets/[id]/index.tsx
 #: src/features/categories/labels.ts
 #: src/features/entries/entry-detail.tsx
+#: src/features/entries/quick-add-form.tsx
 msgid "Wallet"
 msgstr "Wallet"
+
+#: src/features/entries/quick-add-form.tsx
+msgid "Wallet: {walletName}"
+msgstr "Wallet: {walletName}"
 
 #: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
@@ -872,6 +909,10 @@ msgstr "Wrench"
 #: src/features/categories/labels.ts
 msgid "Yellow"
 msgstr "Yellow"
+
+#: src/features/entries/quick-add-form.tsx
+msgid "Yesterday"
+msgstr "Yesterday"
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"
