@@ -3,18 +3,20 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(28);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000004a1', 'member@example.com'),
 	('00000000-0000-4000-8000-0000000004b1', 'viewer@example.com'),
-	('00000000-0000-4000-8000-0000000004c1', 'stranger@example.com');
+	('00000000-0000-4000-8000-0000000004c1', 'stranger@example.com'),
+	('00000000-0000-4000-8000-0000000004a2', 'admin@example.com');
 insert into public.households (id, name) values
 	('00000000-0000-7000-8000-0000000004f1', 'Family'),
 	('00000000-0000-7000-8000-0000000004f2', 'Elsewhere');
 insert into public.memberships (id, household_id, user_id, role) values
 	('00000000-0000-7000-8000-0000000004e1', '00000000-0000-7000-8000-0000000004f1', '00000000-0000-4000-8000-0000000004a1', 'member'),
-	('00000000-0000-7000-8000-0000000004e2', '00000000-0000-7000-8000-0000000004f1', '00000000-0000-4000-8000-0000000004b1', 'viewer');
+	('00000000-0000-7000-8000-0000000004e2', '00000000-0000-7000-8000-0000000004f1', '00000000-0000-4000-8000-0000000004b1', 'viewer'),
+	('00000000-0000-7000-8000-0000000004e3', '00000000-0000-7000-8000-0000000004f1', '00000000-0000-4000-8000-0000000004a2', 'admin');
 insert into public.wallets (id, household_id, name, type, currency) values
 	('00000000-0000-7000-8000-0000000004c1', '00000000-0000-7000-8000-0000000004f1', 'Cash', 'cash', 'PKR');
 
@@ -89,7 +91,26 @@ select throws_ok(
 	'23503', null, 'a Category an Item is in can''t be deleted'
 );
 
+-- The Expense's amount follows its Items, whichever arrives last.
+select is((select amount from public.entries where id = '00000000-0000-7000-8000-0000000004d1'), -450::numeric,
+	'an Expense takes its amount from its Items');
+select is(pg_temp.affected($$ update public.entries set amount = -1, notes = 'Shop' where id = '00000000-0000-7000-8000-0000000004d1' $$), 1,
+	'a Member edits an itemized Expense');
+select is((select amount from public.entries where id = '00000000-0000-7000-8000-0000000004d1'), -450::numeric,
+	'an itemized Expense keeps the amount its Items add up to');
+select throws_ok(
+	$$ update public.entries set kind = 'income', amount = 450 where id = '00000000-0000-7000-8000-0000000004d1' $$,
+	'23514', null, 'an Expense with Items stays an Expense'
+);
+
 -- Viewers, outsiders and anon. (Former members join with account deletion, #64.)
+select pg_temp.act_as('00000000-0000-4000-8000-0000000004b1');
+select throws_ok(
+	pg_temp.item('00000000-0000-7000-8000-0000000004b2', '00000000-0000-7000-8000-0000000004d1',
+		pg_temp.category('00000000-0000-7000-8000-0000000004f1', 'Groceries')),
+	'42501', null, 'a Viewer can''t add an Item'
+);
+select is(pg_temp.affected($$ update public.entry_items set description = 'Mine' $$), 0, 'a Viewer can''t edit an Item');
 select pg_temp.act_as('00000000-0000-4000-8000-0000000004b1');
 select is((select count(*)::int from public.entry_items), 2, 'a Viewer reads the household''s Items');
 select is(pg_temp.affected($$ delete from public.entry_items where id = '00000000-0000-7000-8000-0000000004a1' $$), 0,
@@ -98,13 +119,31 @@ select pg_temp.act_as('00000000-0000-4000-8000-0000000004c1');
 select is((select count(*)::int from public.entry_items), 0, 'someone outside the household can''t read its Items');
 select is(pg_temp.affected($$ update public.entry_items set description = 'Mine' $$), 0,
 	'someone outside the household can''t edit its Items');
+select is(pg_temp.affected($$ delete from public.entry_items $$), 0,
+	'someone outside the household can''t remove its Items');
+select throws_ok(
+	pg_temp.item('00000000-0000-7000-8000-0000000004c2', '00000000-0000-7000-8000-0000000004d1',
+		'00000000-0000-7000-8000-0000000004c9'),
+	'42501', null, 'someone outside the household can''t add an Item to it'
+);
 select set_config('role', 'anon', true);
 select throws_ok($$ select * from public.entry_items $$, '42501', null, 'anon cannot read Items');
+select throws_ok($$ delete from public.entry_items $$, '42501', null, 'anon cannot remove Items');
 select set_config('role', 'postgres', true);
 
+select pg_temp.act_as('00000000-0000-4000-8000-0000000004a2');
+select lives_ok(
+	pg_temp.item('00000000-0000-7000-8000-0000000004a7', '00000000-0000-7000-8000-0000000004d1',
+		pg_temp.category('00000000-0000-7000-8000-0000000004f1', 'Groceries'), 30),
+	'an Admin adds an Item'
+);
+select is(pg_temp.affected($$ delete from public.entry_items where id = '00000000-0000-7000-8000-0000000004a7' $$), 1,
+	'an Admin removes an Item');
 select pg_temp.act_as('00000000-0000-4000-8000-0000000004a1');
 select is(pg_temp.affected($$ delete from public.entry_items where id = '00000000-0000-7000-8000-0000000004a2' $$), 1,
 	'a Member removes an Item');
+select is((select amount from public.entries where id = '00000000-0000-7000-8000-0000000004d1'), -100::numeric,
+	'removing an Item takes it off the Expense''s amount');
 select pg_temp.act_as('00000000-0000-4000-8000-0000000004a1');
 delete from public.entries where id = '00000000-0000-7000-8000-0000000004d1';
 select is((select count(*)::int from public.entry_items where entry_id = '00000000-0000-7000-8000-0000000004d1'), 0,

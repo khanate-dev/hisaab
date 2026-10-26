@@ -4,7 +4,7 @@ import { usePersonalHousehold } from "@/features/households/use-personal-househo
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import { useSignedInUserId } from "@/lib/session";
 
-import { useEntries, useEntryItems } from "./use-entries";
+import { useEntries } from "./use-entries";
 
 /**
  * Everything recording or editing an Entry needs, for the household on screen: undefined until it has all loaded,
@@ -17,15 +17,13 @@ export const useEntryData = () => {
 	const categories = useCategories(household?.id);
 	const history = useEntries(household?.id);
 	const wallets = useWalletRows(household?.id);
-	const items = useEntryItems(household?.id);
 	if (
 		!household ||
 		canWrite === undefined ||
 		!categories ||
 		!history ||
-		!wallets ||
-		!items
+		!wallets
 	)
 		return undefined;
-	return { userId, household, canWrite, categories, history, wallets, items };
+	return { userId, household, canWrite, categories, history, wallets };
 };

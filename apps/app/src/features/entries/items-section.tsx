@@ -15,15 +15,15 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import { formatMoney } from "@/lib/format";
+import { newId } from "@/lib/ids";
 
+import { useItemNames } from "./labels";
 import type { ItemDraft } from "./types";
 
-/** An Item being split out, with a key for the list (Items have no id until they're saved). */
-export type SplitItem = ItemDraft & { key: string };
-
 type Props = {
-	items: readonly SplitItem[];
-	onChange: (items: SplitItem[]) => void;
+	/** The Items added so far, the Rest left out: it's what they leave of the total. */
+	items: readonly ItemDraft[];
+	onChange: (items: ItemDraft[]) => void;
 	/** The receipt total as typed, and its Wallet's currency. */
 	total: string;
 	currency: string;
@@ -32,12 +32,12 @@ type Props = {
 	/** The Expense list, as the Category picker shows it. */
 	categoryChoices: readonly { value: string; label: string }[];
 	/** Open the editor for a first Item straight away, say when quick-add's Items chip opened the form. */
-	startSplitting?: boolean;
-	newKey: () => string;
+	startAdding?: boolean;
 };
 
-type Editing = {
-	index: number | null;
+/** The Item editor's fields, and which Item it edits (none: a new one). */
+type Editor = {
+	id: string | null;
 	description: string;
 	amount: string;
 	quantity: string;
@@ -45,8 +45,8 @@ type Editing = {
 };
 
 /**
- * An Expense's Items, total first (spec §4.3): split out only the Items you want; the dashed Rest holds what's left
- * and is saved as "Other <category>". Items keep the order they were added in; removing one offers Undo.
+ * An Expense's Items, total first (spec §4.3): add only the Items you want; the dashed Rest holds what's left and is
+ * saved as "Other <category>". Items keep the order they were added in; removing one offers Undo.
  */
 export const ItemsSection = ({
 	items,
@@ -55,40 +55,40 @@ export const ItemsSection = ({
 	currency,
 	category,
 	categoryChoices,
-	startSplitting = false,
-	newKey,
+	startAdding = false,
 }: Props) => {
 	const { t } = useLingui();
-	const fresh = (): Editing => ({
-		index: null,
+	const names = useItemNames();
+	const blankEditor = (): Editor => ({
+		id: null,
 		description: "",
 		amount: "",
 		quantity: "",
 		categoryId: category?.id ?? "",
 	});
-	const [editing, setEditing] = useState<Editing | null>(
-		startSplitting ? fresh() : null,
+	const [editor, setEditor] = useState<Editor | null>(
+		startAdding ? blankEditor() : null,
 	);
 	const [removed, setRemoved] = useState<{
-		item: SplitItem;
+		item: ItemDraft;
 		index: number;
 	} | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const labelOf = (id: string) =>
+	const categoryLabel = (id: string) =>
 		categoryChoices.find((c) => c.value === id)?.label ?? "";
 	const receipt = isDecimalAmount(total.trim())
 		? parseMoney(total.trim(), currency)
 		: null;
-	const split = itemize(
+	const itemized = itemize(
 		receipt ?? parseMoney("0", currency),
 		items.map((item) => parseMoney(item.amount, currency)),
 	);
 
 	const saveItem = () => {
-		if (!editing) return;
-		const description = editing.description.trim();
-		const amount = editing.amount.trim();
+		if (!editor) return;
+		const description = editor.description.trim();
+		const amount = editor.amount.trim();
 		if (description === "") return setError(t`Say what the Item is.`);
 		if (description.length > 200)
 			return setError(t`Keep the description to 200 characters or fewer.`);
@@ -97,29 +97,27 @@ export const ItemsSection = ({
 		const money = parseMoney(amount, currency);
 		if (isNegative(money) || isZero(money))
 			return setError(t`The amount is more than zero.`);
-		if (editing.quantity.trim().length > 40)
+		if (editor.quantity.trim().length > 40)
 			return setError(t`Keep the quantity to 40 characters or fewer.`);
 		// Opened before the Expense had a Category, an Item takes the Expense's once there is one.
-		const categoryId = editing.categoryId || (category?.id ?? "");
+		const categoryId = editor.categoryId || (category?.id ?? "");
 		if (!categoryChoices.some((c) => c.value === categoryId))
 			return setError(t`Pick a Category.`);
-		const item: SplitItem = {
-			key:
-				editing.index === null
-					? newKey()
-					: (items[editing.index]?.key ?? newKey()),
+		const item: ItemDraft = {
+			id: editor.id ?? newId(),
 			description,
 			amount,
-			quantity: editing.quantity.trim() === "" ? null : editing.quantity.trim(),
+			quantity: editor.quantity.trim() === "" ? null : editor.quantity.trim(),
 			categoryId,
+			rest: false,
 		};
 		onChange(
-			editing.index === null
+			editor.id === null
 				? [...items, item]
-				: items.map((old, index) => (index === editing.index ? item : old)),
+				: items.map((old) => (old.id === editor.id ? item : old)),
 		);
 		setError(null);
-		setEditing(null);
+		setEditor(null);
 		setRemoved(null);
 	};
 
@@ -140,10 +138,10 @@ export const ItemsSection = ({
 		setRemoved(null);
 	};
 
-	const categoryName = category?.name ?? "";
+	const restName = names.rest(category?.name);
+	const restAmount = formatMoney(itemized.rest);
+	const grownTotal = formatMoney(itemized.total);
 	const removedName = removed?.item.description ?? "";
-	const grownTotal = formatMoney(split.total);
-	const restAmount = formatMoney(split.rest);
 
 	return (
 		<View className="gap-2">
@@ -151,20 +149,19 @@ export const ItemsSection = ({
 			{items.length > 0 && (
 				<View role="list">
 					{items.map((item, index) => {
-						const { description, quantity } = item;
-						const where = labelOf(item.categoryId);
+						const { description } = item;
 						return (
 							<View
 								className="flex-row items-center gap-2 border-b-2 border-border py-1"
-								key={item.key}
+								key={item.id}
 								role="listitem"
 							>
 								<Pressable
 									accessibilityHint={t`Edit this Item`}
 									className="min-h-12 shrink grow justify-center"
 									onPress={() =>
-										setEditing({
-											index,
+										setEditor({
+											id: item.id,
 											description: item.description,
 											amount: item.amount,
 											quantity: item.quantity ?? "",
@@ -174,11 +171,9 @@ export const ItemsSection = ({
 									role="button"
 								>
 									<Text variant="label">
-										{quantity === null
-											? description
-											: t`${description} × ${quantity}`}
+										{names.item(item.description, item.quantity)}
 									</Text>
-									<Text variant="muted">{where}</Text>
+									<Text variant="muted">{categoryLabel(item.categoryId)}</Text>
 								</Pressable>
 								<Text variant="label">
 									{formatMoney(parseMoney(item.amount, currency))}
@@ -192,22 +187,20 @@ export const ItemsSection = ({
 							</View>
 						);
 					})}
-					{!split.over && !isZero(split.rest) && (
+					{!itemized.over && !isZero(itemized.rest) && (
 						<View
 							accessibilityLabel={t`Rest`}
-							accessibilityValue={{
-								text: t`Other ${categoryName}, ${restAmount}`,
-							}}
+							accessibilityValue={{ text: t`${restName}, ${restAmount}` }}
 							accessible
 							className="mt-1 flex-row items-center justify-between gap-2 rounded-control border-2 border-dashed border-border ps-3 pe-3 py-2"
 						>
-							<Text variant="muted">{t`Other ${categoryName}`}</Text>
-							<Text variant="muted">{formatMoney(split.rest)}</Text>
+							<Text variant="muted">{restName}</Text>
+							<Text variant="muted">{restAmount}</Text>
 						</View>
 					)}
 				</View>
 			)}
-			{split.over && items.length > 0 && (
+			{itemized.over && items.length > 0 && (
 				<Text
 					className="text-warn"
 					role="alert"
@@ -226,35 +219,33 @@ export const ItemsSection = ({
 					<Chip onPress={undo}>{t`Undo`}</Chip>
 				</View>
 			)}
-			{editing ? (
+			{editor ? (
 				<View className="gap-3 rounded-control border-2 border-border p-3">
 					<Input
 						label={t`Item`}
 						onChangeText={(description) =>
-							setEditing({ ...editing, description })
+							setEditor({ ...editor, description })
 						}
-						value={editing.description}
+						value={editor.description}
 					/>
 					<Input
 						inputMode="decimal"
 						label={t`Item amount (${currency})`}
-						onChangeText={(amount) => setEditing({ ...editing, amount })}
-						value={editing.amount}
+						onChangeText={(amount) => setEditor({ ...editor, amount })}
+						value={editor.amount}
 					/>
 					<Input
 						hint={t`Optional, say "2 kg"; it doesn't change the amount.`}
 						label={t`Quantity`}
-						onChangeText={(quantity) => setEditing({ ...editing, quantity })}
-						value={editing.quantity}
+						onChangeText={(quantity) => setEditor({ ...editor, quantity })}
+						value={editor.quantity}
 					/>
 					<RadioGroup
 						compact
 						label={t`Item Category`}
-						onValueChange={(categoryId) =>
-							setEditing({ ...editing, categoryId })
-						}
+						onValueChange={(categoryId) => setEditor({ ...editor, categoryId })}
 						options={categoryChoices}
-						value={editing.categoryId}
+						value={editor.categoryId}
 					/>
 					{error !== null && (
 						<Text
@@ -266,11 +257,11 @@ export const ItemsSection = ({
 					)}
 					<View className="flex-row flex-wrap gap-2">
 						<Button onPress={saveItem}>
-							{editing.index === null ? t`Add Item` : t`Save Item`}
+							{editor.id === null ? t`Add Item` : t`Save Item`}
 						</Button>
 						<Button
 							onPress={() => {
-								setEditing(null);
+								setEditor(null);
 								setError(null);
 							}}
 							variant="secondary"
@@ -282,11 +273,11 @@ export const ItemsSection = ({
 			) : (
 				<Chip
 					onPress={() => {
-						setEditing(fresh());
+						setEditor(blankEditor());
 						setRemoved(null);
 					}}
 				>
-					{items.length === 0 ? t`Split into Items` : t`Add another Item`}
+					{items.length === 0 ? t`Add Items` : t`Add another Item`}
 				</Chip>
 			)}
 		</View>

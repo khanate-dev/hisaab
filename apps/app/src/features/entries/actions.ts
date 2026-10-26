@@ -25,7 +25,10 @@ const columns = (draft: EntryDraft, currency: string) => ({
 	notes: draft.notes,
 });
 
-/** An Entry's Items, replaced wholesale and kept in the order they were added. */
+/**
+ * An Entry's Items as the draft has them, kept by id: changed ones updated, new ones added, dropped ones removed, so
+ * concurrent edits meet on the same rows (last writer wins per row, ADR-0007) and a kept Item isn't re-added.
+ */
 const writeItems = async (
 	tx: Transaction,
 	householdId: string,
@@ -33,22 +36,38 @@ const writeItems = async (
 	draft: EntryDraft,
 	currency: string,
 ) => {
-	await tx.delete(entryItems).where(eq(entryItems.entry_id, entryId));
-	const createdAt = nowIso();
+	const saved = await tx
+		.select({ id: entryItems.id })
+		.from(entryItems)
+		.where(eq(entryItems.entry_id, entryId));
+	const kept = new Set(draft.items.map((item) => item.id));
+	for (const { id } of saved)
+		if (!kept.has(id)) await tx.delete(entryItems).where(eq(entryItems.id, id));
+	const existing = new Set(saved.map(({ id }) => id));
 	for (const [position, item] of draft.items.entries()) {
-		await tx.insert(entryItems).values(
-			stamped({
-				id: newId(),
-				household_id: householdId,
-				entry_id: entryId,
-				position,
-				description: item.description,
-				amount: parseMoney(item.amount, currency).toString(),
-				quantity: item.quantity,
-				category_id: item.categoryId,
-				created_at: createdAt,
-			}),
-		);
+		const values = {
+			position,
+			description: item.description,
+			amount: parseMoney(item.amount, currency).toString(),
+			quantity: item.quantity,
+			category_id: item.categoryId,
+			rest: item.rest,
+		};
+		if (existing.has(item.id))
+			await tx
+				.update(entryItems)
+				.set(stamped(values))
+				.where(eq(entryItems.id, item.id));
+		else
+			await tx.insert(entryItems).values(
+				stamped({
+					id: item.id,
+					household_id: householdId,
+					entry_id: entryId,
+					...values,
+					created_at: nowIso(),
+				}),
+			);
 	}
 };
 
@@ -76,8 +95,8 @@ export const createEntry = async (
 };
 
 export const updateEntry = async (
-	entryId: string,
 	householdId: string,
+	entryId: string,
 	draft: EntryDraft,
 	currency: string,
 ) => {

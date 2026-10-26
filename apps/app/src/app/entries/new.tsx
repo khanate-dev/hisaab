@@ -31,7 +31,7 @@ export default function NewEntry() {
 					categories={categories}
 					history={history}
 					initial={initial}
-					split={params.split === "1"}
+					itemize={params.items === "1"}
 					onSubmit={async (draft, currency) => {
 						await createEntry(household.id, userId, draft, currency);
 						leaveTo("/entries");

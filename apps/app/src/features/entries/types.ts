@@ -9,10 +9,14 @@ export type EntryItem = typeof entryItems.$inferSelect;
 
 /** One Item as saved: how much (positive text, in the Expense's Wallet's currency), its Category, an optional quantity. */
 export type ItemDraft = {
+	/** Kept across edits, so concurrent edits of an Expense meet on the same rows (ADR-0007). */
+	id: string;
 	description: string;
 	amount: string;
 	quantity: string | null;
 	categoryId: string;
+	/** The Rest: what the other Items left of the receipt total. */
+	rest: boolean;
 };
 
 /** What the Entry form edits: an Expense or Income, its amount as typed (how much, unsigned). */

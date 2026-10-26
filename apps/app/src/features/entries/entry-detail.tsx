@@ -17,7 +17,7 @@ import { CategoryBadge } from "@/features/categories/category-badge";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { useEntryTitle } from "./entry-list";
-import { entryKindLabel } from "./labels";
+import { entryKindLabel, useItemNames } from "./labels";
 import type { EntryView } from "./views";
 
 type Props = {
@@ -61,6 +61,7 @@ export const EntryDetail = ({
 }: Props) => {
 	const { t, i18n } = useLingui();
 	const title = useEntryTitle()(view);
+	const names = useItemNames();
 	const { entry, category, parent, wallet, amount } = view;
 	const editable =
 		canEdit && (entry.kind === "expense" || entry.kind === "income");
@@ -119,10 +120,7 @@ export const EntryDetail = ({
 							({ item, amount: itemAmount, category: itemCategory }) => {
 								const { description, quantity } = item;
 								const where = itemCategory?.name ?? "";
-								const name =
-									quantity === null
-										? description
-										: t`${description} × ${quantity}`;
+								const name = names.item(description, quantity);
 								const shown = formatMoney(itemAmount);
 								return (
 									<View

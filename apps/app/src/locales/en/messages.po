@@ -15,8 +15,7 @@ msgstr "{categoryName} · {walletName}"
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
 
-#: src/features/entries/entry-detail.tsx
-#: src/features/entries/items-section.tsx
+#: src/features/entries/labels.ts
 msgid "{description} × {quantity}"
 msgstr "{description} × {quantity}"
 
@@ -39,6 +38,10 @@ msgstr "{parentName} › {categoryName} · {walletName}"
 #: src/features/entries/entry-form.tsx
 msgid "{parentName} › {name}"
 msgstr "{parentName} › {name}"
+
+#: src/features/entries/items-section.tsx
+msgid "{restName}, {restAmount}"
+msgstr "{restName}, {restAmount}"
 
 #: src/features/entries/entry-detail.tsx
 msgid "{where}, {shown}"
@@ -88,6 +91,10 @@ msgstr "Add Income"
 #: src/features/entries/items-section.tsx
 msgid "Add Item"
 msgstr "Add Item"
+
+#: src/features/entries/items-section.tsx
+msgid "Add Items"
+msgstr "Add Items"
 
 #: src/app/categories/[id].tsx
 #: src/app/categories/new.tsx
@@ -224,6 +231,10 @@ msgstr "Categories"
 #: src/features/entries/quick-add-form.tsx
 msgid "Category"
 msgstr "Category"
+
+#: src/features/entries/entry-form.tsx
+msgid "Change the total"
+msgstr "Change the total"
 
 #: src/components/ui/sheet.tsx
 #: src/features/shell/quick-add.tsx
@@ -714,14 +725,9 @@ msgstr "Optional."
 msgid "Orange"
 msgstr "Orange"
 
-#: src/features/entries/entry-form.tsx
-#: src/features/entries/items-section.tsx
+#: src/features/entries/labels.ts
 msgid "Other {categoryName}"
 msgstr "Other {categoryName}"
-
-#: src/features/entries/items-section.tsx
-msgid "Other {categoryName}, {restAmount}"
-msgstr "Other {categoryName}, {restAmount}"
 
 #: src/features/wallets/balance.tsx
 msgid "Owed"
@@ -787,6 +793,7 @@ msgid "Reports arrive once there are Entries to report on."
 msgstr "Reports arrive once there are Entries to report on."
 
 #: src/features/entries/items-section.tsx
+#: src/features/entries/labels.ts
 msgid "Rest"
 msgstr "Rest"
 
@@ -862,10 +869,6 @@ msgstr "Skip"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/features/entries/items-section.tsx
-msgid "Split into Items"
-msgstr "Split into Items"
-
 #: src/features/shell/household-pill.tsx
 msgid "Switch household: {name}"
 msgstr "Switch household: {name}"
@@ -929,6 +932,10 @@ msgstr "Time"
 #: src/features/entries/quick-add-form.tsx
 msgid "Today"
 msgstr "Today"
+
+#: src/features/entries/entry-form.tsx
+msgid "Total"
+msgstr "Total"
 
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"

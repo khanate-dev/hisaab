@@ -16,18 +16,29 @@ import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
 
+import { Pencil } from "lucide-react-native";
+
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import type { Category } from "@/features/categories/types";
 import { todayIn } from "@/lib/dates";
+import { formatMoney } from "@/lib/format";
 import { newId } from "@/lib/ids";
 
 import { orNull, recordableWallets, repeatEntry } from "./draft";
-import { entryKindLabel } from "./labels";
-import { ItemsSection, type SplitItem } from "./items-section";
-import type { Entry, EntryDraft, EntryItem, WalletChoice } from "./types";
+import { entryKindLabel, useItemNames } from "./labels";
+import { ItemsSection } from "./items-section";
+import type {
+	Entry,
+	EntryDraft,
+	EntryItem,
+	ItemDraft,
+	WalletChoice,
+} from "./types";
 
 const DEFAULT_KIND: FlowKind = "expense";
 
@@ -38,8 +49,8 @@ type Props = {
 	initial?: Partial<EntryDraft>;
 	/** The edited Expense's Items, if it has any. */
 	items?: readonly EntryItem[];
-	/** Open straight onto splitting the Expense into Items (quick-add's Items chip). */
-	split?: boolean;
+	/** Open straight onto adding the Expense's Items (quick-add's Items chip). */
+	itemize?: boolean;
 	/** The household's Wallets, archived ones included: active ones are offered. */
 	wallets: readonly WalletChoice[];
 	categories: readonly Category[];
@@ -66,7 +77,7 @@ export const EntryForm = ({
 	entry,
 	initial = {},
 	items: savedItems = [],
-	split = false,
+	itemize: startItemizing = false,
 	wallets,
 	categories,
 	history,
@@ -111,17 +122,23 @@ export const EntryForm = ({
 	);
 	const [occurredTime, setOccurredTime] = useState(entry?.occurred_time ?? "");
 	const [notes, setNotes] = useState(entry?.notes ?? "");
-	const [splitItems, setSplitItems] = useState<SplitItem[]>(() =>
+	// The saved Rest isn't one of the Items added: it's recomputed from them, keeping its id.
+	const savedRest = savedItems.find((item) => item.rest);
+	const [items, setItems] = useState<ItemDraft[]>(() =>
 		savedItems
+			.filter((item) => !item.rest)
 			.toSorted((a, b) => a.position - b.position)
 			.map((item) => ({
-				key: item.id,
+				id: item.id,
 				description: item.description,
 				amount: item.amount,
 				quantity: item.quantity,
 				categoryId: item.category_id,
+				rest: false,
 			})),
 	);
+	const [changingTotal, setChangingTotal] = useState(false);
+	const names = useItemNames();
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 
@@ -194,22 +211,21 @@ export const EntryForm = ({
 		if (notes.trim().length > 1000)
 			return setError(t`Keep the notes to 1000 characters or fewer.`);
 		// Once an Expense has Items its total is their sum: the Rest becomes "Other <category>" (spec §4.3).
-		const categoryName =
-			categories.find((c) => c.id === categoryId)?.name ?? "";
 		const itemized =
 			kind === "expense"
 				? withRest(
 						money,
-						splitItems.map((item) => ({
+						items.map((item) => ({
 							...item,
 							amount: parseMoney(item.amount, wallet.currency),
 						})),
 						(rest) => ({
-							key: "rest",
-							description: t`Other ${categoryName}`,
+							id: savedRest?.id ?? newId(),
+							description: names.rest(chosenCategory?.name),
 							amount: rest,
 							quantity: null,
 							categoryId,
+							rest: true,
 						}),
 					)
 				: { total: money, items: [] };
@@ -226,14 +242,10 @@ export const EntryForm = ({
 					occurredTime: time,
 					description: orNull(description),
 					notes: orNull(notes),
-					items: itemized.items.map(
-						({ description, amount, quantity, categoryId }) => ({
-							description,
-							amount: amount.toString(),
-							quantity,
-							categoryId,
-						}),
-					),
+					items: itemized.items.map((item) => ({
+						...item,
+						amount: item.amount.toString(),
+					})),
 				},
 				wallet.currency,
 			);
@@ -246,6 +258,16 @@ export const EntryForm = ({
 	};
 
 	const currency = walletOf(walletId)?.currency;
+	const chosenCategory = categories.find((c) => c.id === categoryId);
+	// The total the Items make, shown once there are some: the receipt total, or their sum when they run over it.
+	const shownTotal =
+		currency !== undefined && isDecimalAmount(amount.trim())
+			? withRest(
+					parseMoney(amount.trim(), currency),
+					items.map((item) => ({ amount: parseMoney(item.amount, currency) })),
+					(rest) => ({ amount: rest }),
+				).total
+			: null;
 
 	return (
 		<View className="gap-4">
@@ -262,12 +284,39 @@ export const EntryForm = ({
 			) : (
 				<Text variant="label">{i18n._(entryKindLabel(kind))}</Text>
 			)}
-			<Input
-				inputMode="decimal"
-				label={currency ? t`Amount (${currency})` : t`Amount`}
-				onChangeText={setAmount}
-				value={amount}
-			/>
+			{/* Once there are Items the total is a box, the Items' sum when they run over it; the pencil changes it. */}
+			{kind === "expense" &&
+			items.length > 0 &&
+			!changingTotal &&
+			shownTotal ? (
+				<View className="flex-row items-center justify-between gap-3 rounded-control border-3 border-border p-3">
+					<View
+						accessibilityLabel={t`Total`}
+						accessibilityValue={{ text: formatMoney(shownTotal) }}
+						accessible
+						className="gap-0.5"
+					>
+						<Text variant="muted">{t`Total`}</Text>
+						<Text variant="figure">{formatMoney(shownTotal)}</Text>
+					</View>
+					<Chip
+						accessibilityLabel={t`Change the total`}
+						onPress={() => setChangingTotal(true)}
+					>
+						<Icon
+							as={Pencil}
+							size={18}
+						/>
+					</Chip>
+				</View>
+			) : (
+				<Input
+					inputMode="decimal"
+					label={currency ? t`Amount (${currency})` : t`Amount`}
+					onChangeText={setAmount}
+					value={amount}
+				/>
+			)}
 			<View className="gap-2">
 				<Text variant="label">{kind === "expense" ? t`From` : t`Into`}</Text>
 				<RadioGroup
@@ -291,15 +340,14 @@ export const EntryForm = ({
 					value={categoryId}
 				/>
 			</View>
-			{kind === "expense" && (
+			{kind === "expense" && currency !== undefined && (
 				<ItemsSection
-					category={categories.find((c) => c.id === categoryId)}
+					category={chosenCategory}
 					categoryChoices={categoryChoices}
-					currency={currency ?? baseCurrency ?? ""}
-					items={splitItems}
-					newKey={newId}
-					onChange={setSplitItems}
-					startSplitting={split}
+					currency={currency}
+					items={items}
+					onChange={setItems}
+					startAdding={startItemizing}
 					total={amount}
 				/>
 			)}

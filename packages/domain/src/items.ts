@@ -8,8 +8,8 @@ import {
 	zeroMoney,
 } from "./money";
 
-// Itemized Expenses, total first (spec §4.3): the typed amount is the receipt total, the Items split out of it, and
-// what's left is the Rest. Once an Expense has Items, its total is their sum.
+// Itemized Expenses, total first (spec §4.3): the typed amount is the receipt total, the Items are taken out of it,
+// and what's left is the Rest. Once an Expense has Items, its total is their sum.
 
 export type Itemized = {
 	/** The Expense's total: the receipt total, or the Items' sum when they ran over it. */
@@ -25,15 +25,15 @@ export const itemize = (
 	receiptTotal: Money,
 	items: readonly Money[],
 ): Itemized => {
-	const split = sumMoney(items, receiptTotal.currency);
-	const rest = addMoney(receiptTotal, negateMoney(split));
+	const itemsTotal = sumMoney(items, receiptTotal.currency);
+	const rest = addMoney(receiptTotal, negateMoney(itemsTotal));
 	return isNegative(rest)
-		? { total: split, rest: zeroMoney(receiptTotal.currency), over: true }
+		? { total: itemsTotal, rest: zeroMoney(receiptTotal.currency), over: true }
 		: { total: receiptTotal, rest, over: false };
 };
 
 /**
- * The Items to save: those split out, then a non-zero Rest as one more Item (`restItem` makes it, say "Other
+ * The Items to save: those added, then a non-zero Rest as one more Item (`restItem` makes it, say "Other
  * Groceries" in the Expense's Category), so the Items always add up to the total.
  */
 export const withRest = <T extends { amount: Money }>(

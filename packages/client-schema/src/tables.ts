@@ -102,6 +102,8 @@ export const entryItems = sqliteTable("entry_items", {
 	/** Informational only, say "2 kg". */
 	quantity: text("quantity"),
 	category_id: text("category_id").notNull(),
+	/** The Rest (CONTEXT.md): what the other Items left of the receipt total, saved as "Other <category>". */
+	rest: integer("rest", { mode: "boolean" }).notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 });

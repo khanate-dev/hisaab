@@ -51,9 +51,7 @@ describe("EntryList", () => {
 			/>,
 		);
 		const rows = screen.getAllByRole("button");
-		expect(rows.map((row) => row.props.accessibilityLabel ?? "")).toHaveLength(
-			4,
-		);
+		expect(rows).toHaveLength(4);
 		expect(rows[0]).toHaveTextContent(/Milk/);
 		expect(rows[1]).toHaveTextContent(/Salary/);
 		expect(rows[2]).toHaveTextContent(/Bread.*Food › Groceries · Cash/);

@@ -32,7 +32,7 @@ export const useEntries = (
 	);
 };
 
-/** Every Item of the household's Expenses; undefined until the first read lands. */
+/** Every Item of the household's Expenses, for the Entries list; undefined until the first read lands. */
 export const useEntryItems = (
 	householdId: string | undefined,
 ): EntryItem[] | undefined =>
@@ -47,6 +47,45 @@ export const useEntryItems = (
 		),
 		householdId !== undefined,
 	);
+
+/** One Expense's Items, for editing it; undefined until the first read lands. */
+export const useItemsOf = (entryId: string): EntryItem[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db.select().from(entryItems).where(eq(entryItems.entry_id, entryId)),
+			),
+		),
+	);
+
+/** Whether anything is recorded in a Category (an Entry or an Item), so it's archived, never deleted; undefined while loading. */
+export const useCategoryInUse = (categoryId: string): boolean | undefined => {
+	const entry = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: entries.id })
+					.from(entries)
+					.where(eq(entries.category_id, categoryId))
+					.limit(1),
+			),
+		),
+	);
+	const item = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: entryItems.id })
+					.from(entryItems)
+					.where(eq(entryItems.category_id, categoryId))
+					.limit(1),
+			),
+		),
+	);
+	return entry === undefined || item === undefined
+		? undefined
+		: entry.length + item.length > 0;
+};
 
 /** A User's display name, for "Recorded by"; undefined until their profile has synced. */
 export const useDisplayName = (userId: string | undefined) =>

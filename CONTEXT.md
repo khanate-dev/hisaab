@@ -72,8 +72,11 @@ An Entry for money arriving in a Wallet, with a date, a description and a Catego
 _Avoid_: Earning, receipt
 
 **Item**:
-One line of an Expense: a description, an amount and an optional informational quantity, optionally in its own Category. Once an Expense has Items, its total is their sum.
+One line of an Expense: a description, an amount and an optional informational quantity, in its own Category (the Expense's unless changed). Once an Expense has Items, its total is their sum.
 _Avoid_: Line item, split
+
+**Rest**:
+What the Items of an Expense leave of its receipt total. It's saved as one more Item, "Other <category>", in the Expense's Category, so the Items always add up to the total.
 
 **Attachment**:
 An image or PDF kept on an Entry as evidence, such as a receipt, bill, transfer screenshot or loan agreement. An Entry has at most five.

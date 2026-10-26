@@ -32,7 +32,7 @@ streams:
         FROM entries
         WHERE entries.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
-      - SELECT entry_items.id, entry_items.household_id, entry_items.entry_id, entry_items.position, entry_items.description, entry_items.amount, entry_items.quantity, entry_items.category_id, entry_items.created_at
+      - SELECT entry_items.id, entry_items.household_id, entry_items.entry_id, entry_items.position, entry_items.description, entry_items.amount, entry_items.quantity, entry_items.category_id, entry_items.rest, entry_items.created_at
         FROM entry_items
         WHERE entry_items.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 

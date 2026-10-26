@@ -316,7 +316,7 @@ describe("sync scenarios", () => {
 		expect(household.data?.base_currency).toBe("PKR");
 	});
 
-	it("an itemized Expense uploads with its Items, which follow its edits and its deletion", async () => {
+	it("an itemized Expense uploads with its Items, keeps its amount to their sum, and follows their edits and its deletion", async () => {
 		const user = await signInNewUser();
 		const device = await connectClient(user);
 		const personal = await vi.waitFor(
@@ -338,23 +338,27 @@ describe("sync scenarios", () => {
 		const stamp = stamped({})._metadata;
 		const [walletId, expenseId] = [uuidv7(), uuidv7()];
 		const now = new Date().toISOString();
+		const [milkId, restId] = [uuidv7(), uuidv7()];
 		const item = (
 			tx: { execute: typeof device.execute },
+			id: string,
 			position: number,
 			description: string,
 			amount: string,
+			rest: boolean,
 		) =>
 			tx.execute(
-				`INSERT INTO entry_items (id, household_id, entry_id, position, description, amount, category_id, created_at, _metadata)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				`INSERT INTO entry_items (id, household_id, entry_id, position, description, amount, category_id, rest, created_at, _metadata)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				[
-					uuidv7(),
+					id,
 					personal.id,
 					expenseId,
 					position,
 					description,
 					amount,
 					groceries.id,
+					rest ? 1 : 0,
 					now,
 					stamp,
 				],
@@ -370,24 +374,34 @@ describe("sync scenarios", () => {
 				VALUES (?, ?, ?, 'expense', '-500', ?, '2026-10-26', ?, ?, ?)`,
 				[expenseId, personal.id, walletId, groceries.id, user.id, now, stamp],
 			);
-			await item(tx, 0, "Milk", "120");
-			await item(tx, 1, "Other Groceries", "380");
+			await item(tx, milkId, 0, "Milk", "120", false);
+			await item(tx, restId, 1, "Other Groceries", "380", true);
 		});
-		// Edited: the Items are replaced, as the app does.
+		// Edited as the app does: the kept Item updated in place, the Rest dropped. The Entry row isn't touched, yet
+		// the server takes the Expense's amount from its Items.
 		await device.writeTransaction(async (tx) => {
-			await tx.execute("DELETE FROM entry_items WHERE entry_id = ?", [
-				expenseId,
-			]);
-			await item(tx, 0, "Milk", "500");
+			await tx.execute("DELETE FROM entry_items WHERE id = ?", [restId]);
+			await tx.execute(
+				"UPDATE entry_items SET amount = '500', _metadata = ? WHERE id = ?",
+				[stamp, milkId],
+			);
 		});
 		await waitForUploads(device);
 		expect(await uploadErrors(device)).toEqual([]);
 		const items = await adminClient()
 			.from("entry_items")
-			.select("description, amount::text")
+			.select("id, description, amount::text, rest")
 			.eq("entry_id", expenseId);
 		if (items.error) throw items.error;
-		expect(items.data).toEqual([{ description: "Milk", amount: "500" }]);
+		expect(items.data).toEqual([
+			{ id: milkId, description: "Milk", amount: "500", rest: false },
+		]);
+		const expense = await adminClient()
+			.from("entries")
+			.select("amount::text")
+			.eq("id", expenseId)
+			.single();
+		expect(expense.data?.amount).toBe("-500");
 
 		await device.writeTransaction(async (tx) => {
 			await tx.execute("DELETE FROM entry_items WHERE entry_id = ?", [

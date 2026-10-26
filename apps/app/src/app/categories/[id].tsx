@@ -12,7 +12,7 @@ import {
 import { CategoryActions } from "@/features/categories/category-actions";
 import { CategoryForm } from "@/features/categories/category-form";
 import { useCategories } from "@/features/categories/use-categories";
-import { useEntries, useEntryItems } from "@/features/entries/use-entries";
+import { useCategoryInUse } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import { Screen } from "@/features/shell/screen";
@@ -26,8 +26,7 @@ export default function CategoryScreen() {
 	const household = usePersonalHousehold(userId);
 	const all = useCategories(household?.id);
 	const canWrite = useCanWrite(household?.id, userId);
-	const entries = useEntries(household?.id);
-	const items = useEntryItems(household?.id);
+	const recordedIn = useCategoryInUse(id) ?? true;
 	const category = all?.find((c) => c.id === id);
 
 	// Viewers only look at Categories, in the lists.
@@ -47,10 +46,6 @@ export default function CategoryScreen() {
 	}
 	const parent = all.find((c) => c.id === category.parent_id) ?? null;
 	const hasSubcategories = all.some((c) => c.parent_id === category.id);
-	// Entries recorded in it put it in use too; the server refuses deleting it either way.
-	const recordedIn =
-		(entries?.some((e) => e.category_id === category.id) ?? true) ||
-		(items?.some((i) => i.category_id === category.id) ?? true);
 
 	return (
 		<Screen title={category.name}>
