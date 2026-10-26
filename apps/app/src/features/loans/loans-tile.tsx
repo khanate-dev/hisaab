@@ -30,8 +30,8 @@ export const LoansTile = ({
 	const { t } = useLingui();
 	const open = loans.filter((loan) => !loan.settled);
 	if (open.length === 0) return null;
-	const owedToYou = open.filter((loan) => loan.direction === "lent");
-	const youOwe = open.filter((loan) => loan.direction === "borrowed");
+	const owedToYou = open.filter((loan) => loan.loan.direction === "lent");
+	const youOwe = open.filter((loan) => loan.loan.direction === "borrowed");
 	const owedTotal = totals(owedToYou);
 	const oweTotal = totals(youOwe);
 	return (

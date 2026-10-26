@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(31);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000007a1', 'member@example.com'),
@@ -71,6 +71,14 @@ select throws_ok(
 	           'repayment', 10, '2026-10-26', '00000000-0000-4000-8000-0000000007a1') $$,
 	'23514', null, 'a Repayment belongs to a Loan'
 );
+select throws_ok(pg_temp.loan_entry('00000000-0000-7000-8000-0000000007e8', 'repayment', 800, '00000000-0000-7000-8000-0000000007d1'),
+	'23514', null, 'Repayments never add up to more than the Loan');
+select throws_ok(
+	$$ update public.entries set amount = -200 where id = '00000000-0000-7000-8000-0000000007e1' $$,
+	'23514', null, 'nor does a principal shrink below what''s been repaid'
+);
+select lives_ok(pg_temp.loan_entry('00000000-0000-7000-8000-0000000007e9', 'repayment', 700, '00000000-0000-7000-8000-0000000007d1'),
+	'a Repayment of exactly what''s outstanding settles it');
 select throws_ok(
 	$$ update public.loans set direction = 'borrowed' where id = '00000000-0000-7000-8000-0000000007d1' $$,
 	'42501', null, 'a Loan stays Lent or Borrowed'
@@ -91,18 +99,44 @@ select throws_ok(
 	'42501', null, 'a Viewer can''t add a Contact'
 );
 select is(pg_temp.affected($$ update public.loans set notes = 'x' $$), 0, 'a Viewer can''t edit a Loan');
+select is(pg_temp.affected($$ update public.contacts set name = 'x' $$), 0, 'a Viewer can''t edit a Contact');
+select is(pg_temp.affected($$ delete from public.contacts $$), 0, 'a Viewer can''t delete a Contact');
+select is(pg_temp.affected($$ delete from public.loans $$), 0, 'a Viewer can''t delete a Loan');
+select throws_ok(
+	$$ insert into public.loans (id, household_id, contact_id, direction)
+	   values ('00000000-0000-7000-8000-0000000007d8', '00000000-0000-7000-8000-0000000007f1',
+	           '00000000-0000-7000-8000-0000000007b1', 'lent') $$,
+	'42501', null, 'a Viewer can''t record a Loan'
+);
 select pg_temp.act_as('00000000-0000-4000-8000-0000000007c1');
 select is((select count(*)::int from public.contacts where household_id = '00000000-0000-7000-8000-0000000007f1'), 0,
 	'someone outside the household can''t read its Contacts');
 select is(pg_temp.affected($$ delete from public.loans $$), 0, 'someone outside the household can''t delete its Loans');
+select throws_ok(
+	$$ insert into public.contacts (id, household_id, name)
+	   values ('00000000-0000-7000-8000-0000000007b9', '00000000-0000-7000-8000-0000000007f1', 'Mine') $$,
+	'42501', null, 'someone outside the household can''t add a Contact to it'
+);
+select throws_ok(
+	$$ insert into public.loans (id, household_id, contact_id, direction)
+	   values ('00000000-0000-7000-8000-0000000007d9', '00000000-0000-7000-8000-0000000007f1',
+	           '00000000-0000-7000-8000-0000000007b1', 'lent') $$,
+	'42501', null, 'someone outside the household can''t record a Loan in it'
+);
 select set_config('role', 'anon', true);
 select throws_ok($$ select * from public.loans $$, '42501', null, 'anon can''t read Loans');
+select throws_ok($$ select * from public.contacts $$, '42501', null, 'anon can''t read Contacts');
 
 -- An Admin deletes a Loan once its Entries are gone.
 select pg_temp.act_as('00000000-0000-4000-8000-0000000007a2');
 delete from public.entries where loan_id = '00000000-0000-7000-8000-0000000007d2';
 select is(pg_temp.affected($$ delete from public.loans where id = '00000000-0000-7000-8000-0000000007d2' $$), 1,
 	'an Admin deletes a Loan with its Entries gone');
+
+-- A Loan's principal comes back only with its Loan.
+select pg_temp.act_as('00000000-0000-4000-8000-0000000007a1');
+select throws_ok($$ select public.restore_entry('00000000-0000-7000-8000-0000000007e3') $$, '23514', null,
+	'a Loan''s principal isn''t restored on its own');
 
 select * from finish();
 rollback;

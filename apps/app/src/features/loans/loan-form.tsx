@@ -11,6 +11,7 @@ import { useState } from "react";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
+import { CONTACT_NAME_MAX } from "@/features/contacts/limits";
 import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
@@ -65,8 +66,13 @@ export const LoanForm = ({
 
 	const submit = async () => {
 		const name = newName.trim();
-		if (contactId === NEW_CONTACT && (name === "" || name.length > 80))
-			return setError(t`Name the Contact, in 80 characters or fewer.`);
+		if (
+			contactId === NEW_CONTACT &&
+			(name === "" || name.length > CONTACT_NAME_MAX)
+		)
+			return setError(
+				t`Name the Contact, in ${CONTACT_NAME_MAX} characters or fewer.`,
+			);
 		if (!wallet) return setError(t`Pick a Wallet.`);
 		const typed = amount.trim();
 		const money = isDecimalAmount(typed)

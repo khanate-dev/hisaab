@@ -12,6 +12,7 @@ import { render } from "@/test/render";
 import type { LoanDraft } from "./actions";
 import { LoanDetail } from "./loan-detail";
 import { LoanForm } from "./loan-form";
+import { LoanList } from "./loan-list";
 import { LoansTile } from "./loans-tile";
 import type { LoanView } from "./use-loans";
 
@@ -42,7 +43,6 @@ const view = (overrides: Partial<LoanView> = {}): LoanView => ({
 		_metadata: null,
 		_deleted: null,
 	},
-	direction: "lent",
 	contact: ali,
 	principal: makeEntry("e1", {
 		kind: "loan_principal",
@@ -58,6 +58,7 @@ const view = (overrides: Partial<LoanView> = {}): LoanView => ({
 			loan_id: "l1",
 		}),
 	],
+	principalAmount: parseMoney("1000", "PKR"),
 	currency: "PKR",
 	outstanding: parseMoney("700", "PKR"),
 	settled: false,
@@ -137,6 +138,14 @@ describe("LoanDetail", () => {
 					occurredOn: string;
 				}) => {},
 			),
+			onEdit: jest.fn(
+				async (_c: {
+					amount: string;
+					dueOn: string | null;
+					notes: string | null;
+				}) => {},
+			),
+			onDeleteRepayment: jest.fn(async (_id: string) => {}),
 			onWriteOff: jest.fn(async (_w: boolean) => {}),
 			onDelete: jest.fn(async () => {}),
 		};
@@ -161,7 +170,48 @@ describe("LoanDetail", () => {
 		expect(screen.getByLabelText("Outstanding")).toHaveAccessibilityValue({
 			text: formatMoney(parseMoney("700", "PKR")),
 		});
-		expect(screen.getAllByRole("listitem")).toHaveLength(1);
+		const paid = formatMoney(parseMoney("300", "PKR"));
+		expect(
+			screen.getByRole("button", { name: `Delete the ${paid} Repayment` }),
+		).toBeOnTheScreen();
+	});
+
+	it("deletes a Repayment", async () => {
+		const { onDeleteRepayment, user } = await setup();
+		const paid = formatMoney(parseMoney("300", "PKR"));
+		await user.press(
+			screen.getByRole("button", { name: `Delete the ${paid} Repayment` }),
+		);
+		expect(onDeleteRepayment).toHaveBeenCalledWith("e2");
+	});
+
+	it("won't record a Repayment of more than what's outstanding", async () => {
+		const { onRepay, user } = await setup();
+		await user.press(screen.getByRole("button", { name: "Record Repayment" }));
+		await user.type(screen.getByLabelText("Repayment (PKR)"), "701");
+		await user.press(screen.getByRole("button", { name: "Save Repayment" }));
+		expect(screen.getByRole("alert")).toHaveTextContent(/more than the/i);
+		expect(onRepay).not.toHaveBeenCalled();
+	});
+
+	it("edits the Loan, never below what's been repaid", async () => {
+		const { onEdit, user } = await setup();
+		await user.press(screen.getByRole("button", { name: "Edit Loan" }));
+		const amount = screen.getByLabelText("Lent (PKR)");
+		await user.clear(amount);
+		await user.type(amount, "200");
+		await user.press(screen.getByRole("button", { name: "Save Loan" }));
+		expect(screen.getByRole("alert")).toHaveTextContent(/already repaid/i);
+		expect(onEdit).not.toHaveBeenCalled();
+		await user.clear(amount);
+		await user.type(amount, "1200");
+		await user.clear(screen.getByLabelText("Due"));
+		await user.press(screen.getByRole("button", { name: "Save Loan" }));
+		expect(onEdit).toHaveBeenCalledWith({
+			amount: "1200",
+			dueOn: null,
+			notes: null,
+		});
 	});
 
 	it("records a Repayment into a Wallet", async () => {
@@ -233,7 +283,10 @@ describe("LoansTile", () => {
 			<LoansTile
 				loans={[
 					view(),
-					view({ direction: "borrowed", outstanding: parseMoney("50", "PKR") }),
+					view({
+						loan: { ...view().loan, direction: "borrowed" },
+						outstanding: parseMoney("50", "PKR"),
+					}),
 				]}
 				onOpen={onOpen}
 			/>,
@@ -243,5 +296,32 @@ describe("LoansTile", () => {
 		expect(tile).toHaveTextContent(/You owe/);
 		await userEvent.press(tile);
 		expect(onOpen).toHaveBeenCalled();
+	});
+});
+
+describe("LoanList", () => {
+	it("lists each Loan with what's outstanding and opens it", async () => {
+		const onOpen = jest.fn();
+		await render(
+			<LoanList
+				loans={[view()]}
+				onOpen={onOpen}
+			/>,
+		);
+		const left = formatMoney(parseMoney("700", "PKR"));
+		const loan = screen.getByRole("button", { name: /Ali/ });
+		expect(loan).toHaveTextContent(`${left} outstanding`, { exact: false });
+		await userEvent.press(loan);
+		expect(onOpen).toHaveBeenCalledWith("l1");
+	});
+
+	it("says when there are none", async () => {
+		await render(
+			<LoanList
+				loans={[]}
+				onOpen={() => {}}
+			/>,
+		);
+		expect(screen.getByRole("status")).toHaveTextContent("No Loans yet.");
 	});
 });

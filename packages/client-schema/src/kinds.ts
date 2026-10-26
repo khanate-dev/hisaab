@@ -22,6 +22,5 @@ export type EntryKind = (typeof ENTRY_KINDS)[number];
 export const CATEGORY_KINDS = ["expense", "income"] as const;
 export type CategoryKind = (typeof CATEGORY_KINDS)[number];
 
-/** Which way a Loan went (CONTEXT.md, Loan). Mirrors the `loans.direction` check. */
-export const LOAN_DIRECTIONS = ["lent", "borrowed"] as const;
-export type LoanDirection = (typeof LOAN_DIRECTIONS)[number];
+/** Which way a Loan went: the domain's, so its rules and the schema agree. */
+export { LOAN_DIRECTIONS, type LoanDirection } from "@hisaab/domain";

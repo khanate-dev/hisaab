@@ -6,7 +6,7 @@ import {
 	stamped,
 	stampedDelete,
 } from "@hisaab/client-schema";
-import { magnitude, negateMoney, parseMoney } from "@hisaab/domain";
+import { loanEntryAmount, parseMoney } from "@hisaab/domain";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
@@ -29,17 +29,13 @@ export type LoanDraft = {
 const PRINCIPAL = "loan_principal" as const;
 const REPAYMENT = "repayment" as const;
 
-/** A Loan's principal or a Repayment: signed by its effect on the Wallet, the way the Loan went. */
+/** A principal or Repayment amount as typed (positive), signed the way the Loan went. */
 const signed = (
 	direction: LoanDirection,
 	kind: typeof PRINCIPAL | typeof REPAYMENT,
 	amount: string,
 	currency: string,
-) => {
-	const howMuch = magnitude(parseMoney(amount, currency));
-	const leaves = (direction === "lent") === (kind === PRINCIPAL);
-	return (leaves ? negateMoney(howMuch) : howMuch).toString();
-};
+) => loanEntryAmount(direction, kind, parseMoney(amount, currency)).toString();
 
 /** The Loan, its principal Entry and, if new, its Contact, in one local transaction. */
 export const createLoan = async (
@@ -130,4 +126,32 @@ export const deleteLoan = async (loanId: string) => {
 			.where(eq(entries.loan_id, loanId));
 		await tx.update(loans).set(stampedDelete()).where(eq(loans.id, loanId));
 	});
+};
+
+/** A Loan's own details and its principal: the amount (as typed, positive), when it's due, and its notes. */
+export const updateLoan = async (
+	loan: { id: string; direction: LoanDirection },
+	principalId: string,
+	changes: { amount: string; dueOn: string | null; notes: string | null },
+	currency: string,
+) => {
+	await db.transaction(async (tx) => {
+		await tx
+			.update(loans)
+			.set(stamped({ due_on: changes.dueOn, notes: changes.notes }))
+			.where(eq(loans.id, loan.id));
+		await tx
+			.update(entries)
+			.set(
+				stamped({
+					amount: signed(loan.direction, PRINCIPAL, changes.amount, currency),
+				}),
+			)
+			.where(eq(entries.id, principalId));
+	});
+};
+
+/** One Repayment, recorded by mistake; the Loan's outstanding goes back up. */
+export const deleteRepayment = async (entryId: string) => {
+	await db.update(entries).set(stampedDelete()).where(eq(entries.id, entryId));
 };

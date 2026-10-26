@@ -18,13 +18,6 @@ export const createContact = async (householdId: string, name: string) => {
 	return id;
 };
 
-export const renameContact = async (contactId: string, name: string) => {
-	await db
-		.update(contacts)
-		.set(stamped({ name: name.trim() }))
-		.where(eq(contacts.id, contactId));
-};
-
 /** Archived, never deleted, once a Loan names them; they leave the list but their Loans keep them. */
 export const setContactArchived = async (
 	contactId: string,

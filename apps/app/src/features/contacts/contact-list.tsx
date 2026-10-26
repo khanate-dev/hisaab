@@ -3,6 +3,7 @@ import { useState } from "react";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
+import { CONTACT_NAME_MAX } from "@/features/contacts/limits";
 import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -25,8 +26,10 @@ export const ContactList = ({ contacts, canEdit, onAdd, onArchive }: Props) => {
 
 	const add = async () => {
 		const trimmed = name.trim();
-		if (trimmed === "" || trimmed.length > 80)
-			return setError(t`Name the Contact, in 80 characters or fewer.`);
+		if (trimmed === "" || trimmed.length > CONTACT_NAME_MAX)
+			return setError(
+				t`Name the Contact, in ${CONTACT_NAME_MAX} characters or fewer.`,
+			);
 		setError(null);
 		await onAdd(trimmed);
 		setName("");

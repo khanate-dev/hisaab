@@ -10,7 +10,23 @@ import {
 // Loans (spec §3.2): Lent to or Borrowed from a Contact. The principal and each Repayment are Entries, signed by
 // their effect on the Wallet; what's outstanding is derived from them, never stored. No interest is modelled.
 
-export type LoanDirection = "lent" | "borrowed";
+/** Which way a Loan went (CONTEXT.md, Loan). Mirrors the `loans.direction` check. */
+export const LOAN_DIRECTIONS = ["lent", "borrowed"] as const;
+export type LoanDirection = (typeof LOAN_DIRECTIONS)[number];
+
+/**
+ * A Loan's principal or a Repayment as an Entry amount, signed by its effect on the Wallet: money Lent leaves and
+ * comes back; money Borrowed arrives and goes back.
+ */
+export const loanEntryAmount = (
+	direction: LoanDirection,
+	kind: "loan_principal" | "repayment",
+	howMuch: Money,
+): Money => {
+	const size = isNegative(howMuch) ? negateMoney(howMuch) : howMuch;
+	const leaves = (direction === "lent") === (kind === "loan_principal");
+	return leaves ? negateMoney(size) : size;
+};
 
 /** A Loan's Entries as the outstanding amount needs them: their signed amounts. */
 type LoanEntry = { amount: string };

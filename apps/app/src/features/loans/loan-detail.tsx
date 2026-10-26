@@ -1,16 +1,11 @@
-import {
-	isDecimalAmount,
-	isNegative,
-	isZero,
-	magnitude,
-	parseMoney,
-} from "@hisaab/domain";
+import { magnitude, parseMoney } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import {
 	Dialog,
 	DialogClose,
@@ -20,20 +15,18 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
-import { recordableWallets } from "@/features/entries/draft";
-import { useCommonChecks, useSave } from "@/features/entries/form-checks";
 import type { WalletChoice } from "@/features/entries/types";
 import { formatDate, formatMoney } from "@/lib/format";
 
+import { LoanEditForm } from "./loan-edit-form";
+import { RepaymentForm } from "./repayment-form";
 import type { LoanView } from "./use-loans";
 
 type Props = {
 	view: LoanView;
 	wallets: readonly WalletChoice[];
-	/** Admins and Members record Repayments, write off and delete; Viewers only look. */
+	/** Admins and Members record Repayments, edit, write off and delete; Viewers only look. */
 	canEdit: boolean;
 	today: string;
 	onRepay: (repayment: {
@@ -41,8 +34,50 @@ type Props = {
 		amount: string;
 		occurredOn: string;
 	}) => Promise<void>;
+	onEdit: (changes: {
+		amount: string;
+		dueOn: string | null;
+		notes: string | null;
+	}) => Promise<void>;
+	onDeleteRepayment: (entryId: string) => Promise<void>;
 	onWriteOff: (writtenOff: boolean) => Promise<void>;
 	onDelete: () => Promise<void>;
+};
+
+/** A confirmed action: its button opens a dialog that says what happens before anything does. */
+const Confirm = ({
+	trigger,
+	title,
+	description,
+	action,
+	onConfirm,
+}: {
+	trigger: string;
+	title: string;
+	description: string;
+	action: string;
+	onConfirm: () => void;
+}) => {
+	const { t } = useLingui();
+	return (
+		<Dialog>
+			<DialogTrigger asChild>
+				<Button variant="secondary">{trigger}</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogTitle>{title}</DialogTitle>
+				<DialogDescription>{description}</DialogDescription>
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button variant="secondary">{t`Cancel`}</Button>
+					</DialogClose>
+					<DialogClose asChild>
+						<Button onPress={onConfirm}>{action}</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
 };
 
 /** A Loan: who, which way, how much is still outstanding, and its Repayments (spec §3.2). */
@@ -52,84 +87,65 @@ export const LoanDetail = ({
 	canEdit,
 	today,
 	onRepay,
+	onEdit,
+	onDeleteRepayment,
 	onWriteOff,
 	onDelete,
 }: Props) => {
 	const { t } = useLingui();
-	const checks = useCommonChecks();
-	const { busy, error, setError, save } = useSave();
 	const {
 		loan,
-		direction,
 		contact,
-		principal,
 		repayments,
 		currency,
 		outstanding,
 		settled,
+		principalAmount,
 	} = view;
-	// Repayments go to or from any Wallet in the Loan's currency.
-	const repayable = recordableWallets(wallets, currency);
 	const [repaying, setRepaying] = useState(false);
-	const [walletId, setWalletId] = useState(repayable[0]?.id ?? "");
-	const [amount, setAmount] = useState("");
-	const [occurredOn, setOccurredOn] = useState(today);
-
+	const [editing, setEditing] = useState(false);
+	const lent = loan.direction === "lent";
 	const name = contact?.name ?? t`someone`;
-	const lent = principal
-		? formatMoney(magnitude(parseMoney(principal.amount, currency)))
-		: "";
+	const howMuch = formatMoney(principalAmount);
 	const left = formatMoney(outstanding);
 	const writtenOff = loan.written_off_at !== null;
+	const standing = !settled ? left : writtenOff ? t`Written off` : t`Settled`;
 	const due = loan.due_on === null ? null : formatDate(loan.due_on);
-
-	const repay = async () => {
-		const typed = amount.trim();
-		const money = isDecimalAmount(typed) ? parseMoney(typed, currency) : null;
-		if (!money || isNegative(money) || isZero(money))
-			return setError(t`Enter an amount more than zero, like 500.`);
-		if (!repayable.some((w) => w.id === walletId))
-			return setError(t`Pick a Wallet.`);
-		const problem = checks({ occurredOn, description: "", notes: "", today });
-		if (problem) return setError(problem);
-		await save(async () => {
-			await onRepay({ walletId, amount: typed, occurredOn: occurredOn.trim() });
-			setAmount("");
-			setRepaying(false);
-		});
-	};
 
 	return (
 		<View className="gap-4">
 			<Card>
 				<Text variant="muted">
-					{direction === "lent"
-						? t`Lent ${lent} to ${name}`
-						: t`Borrowed ${lent} from ${name}`}
+					{lent
+						? t`Lent ${howMuch} to ${name}`
+						: t`Borrowed ${howMuch} from ${name}`}
 				</Text>
 				<View
 					accessibilityLabel={t`Outstanding`}
-					accessibilityValue={{
-						text: settled ? (writtenOff ? t`Written off` : t`Settled`) : left,
-					}}
+					accessibilityValue={{ text: standing }}
 					accessible
 					className="gap-0.5"
 				>
 					<Text variant="muted">{t`Outstanding`}</Text>
-					<Text variant="figure">
-						{settled ? (writtenOff ? t`Written off` : t`Settled`) : left}
-					</Text>
+					<Text variant="figure">{standing}</Text>
 				</View>
 				{due !== null && <Text variant="muted">{t`Due ${due}`}</Text>}
+				{loan.notes !== null && <Text variant="muted">{loan.notes}</Text>}
 			</Card>
 
-			{canEdit && (
+			{canEdit && !repaying && !editing && (
 				<View className="flex-row flex-wrap gap-3">
-					{!settled && !repaying && (
+					{!settled && (
 						<Button
 							onPress={() => setRepaying(true)}
 						>{t`Record Repayment`}</Button>
 					)}
+					<Button
+						onPress={() => setEditing(true)}
+						variant="secondary"
+					>
+						{t`Edit Loan`}
+					</Button>
 					{writtenOff ? (
 						<Button
 							onPress={() => void onWriteOff(false)}
@@ -139,95 +155,47 @@ export const LoanDetail = ({
 						</Button>
 					) : (
 						!settled && (
-							<Dialog>
-								<DialogTrigger asChild>
-									<Button variant="secondary">{t`Write off`}</Button>
-								</DialogTrigger>
-								<DialogContent>
-									<DialogTitle>{t`Write off ${left}?`}</DialogTitle>
-									<DialogDescription>
-										{t`The Loan is settled without it. Its Repayments stay, and you can undo this.`}
-									</DialogDescription>
-									<DialogFooter>
-										<DialogClose asChild>
-											<Button variant="secondary">{t`Cancel`}</Button>
-										</DialogClose>
-										<DialogClose asChild>
-											<Button
-												onPress={() => void onWriteOff(true)}
-											>{t`Write off`}</Button>
-										</DialogClose>
-									</DialogFooter>
-								</DialogContent>
-							</Dialog>
+							<Confirm
+								action={t`Write off`}
+								description={t`The Loan is settled without it. Its Repayments stay, and you can undo this.`}
+								onConfirm={() => void onWriteOff(true)}
+								title={t`Write off ${left}?`}
+								trigger={t`Write off`}
+							/>
 						)
 					)}
-					<Dialog>
-						<DialogTrigger asChild>
-							<Button variant="secondary">{t`Delete Loan`}</Button>
-						</DialogTrigger>
-						<DialogContent>
-							<DialogTitle>{t`Delete this Loan?`}</DialogTitle>
-							<DialogDescription>
-								{t`Its principal and Repayments go with it, and their Wallets' Balances change back.`}
-							</DialogDescription>
-							<DialogFooter>
-								<DialogClose asChild>
-									<Button variant="secondary">{t`Cancel`}</Button>
-								</DialogClose>
-								<DialogClose asChild>
-									<Button
-										onPress={() => void onDelete()}
-									>{t`Delete Loan`}</Button>
-								</DialogClose>
-							</DialogFooter>
-						</DialogContent>
-					</Dialog>
+					<Confirm
+						action={t`Delete Loan`}
+						description={t`Its principal and Repayments go with it, and their Wallets' Balances change back.`}
+						onConfirm={() => void onDelete()}
+						title={t`Delete this Loan?`}
+						trigger={t`Delete Loan`}
+					/>
 				</View>
 			)}
 
 			{repaying && (
-				<View className="gap-3 rounded-control border-2 border-border p-3">
-					<RadioGroup
-						label={direction === "lent" ? t`Into Wallet` : t`From Wallet`}
-						onValueChange={setWalletId}
-						options={repayable.map((w) => ({ value: w.id, label: w.name }))}
-						value={walletId}
-					/>
-					<Input
-						inputMode="decimal"
-						label={t`Repayment (${currency})`}
-						onChangeText={setAmount}
-						value={amount}
-					/>
-					<Input
-						label={t`Date`}
-						onChangeText={setOccurredOn}
-						value={occurredOn}
-					/>
-					{error !== null && (
-						<Text
-							className="text-bad"
-							role="alert"
-						>
-							{error}
-						</Text>
-					)}
-					<View className="flex-row flex-wrap gap-2">
-						<Button
-							disabled={busy}
-							onPress={() => void repay()}
-						>
-							{t`Save Repayment`}
-						</Button>
-						<Button
-							onPress={() => setRepaying(false)}
-							variant="secondary"
-						>
-							{t`Cancel`}
-						</Button>
-					</View>
-				</View>
+				<RepaymentForm
+					lent={lent}
+					onCancel={() => setRepaying(false)}
+					onSubmit={async (repayment) => {
+						await onRepay(repayment);
+						setRepaying(false);
+					}}
+					outstanding={outstanding}
+					today={today}
+					wallets={wallets}
+				/>
+			)}
+			{editing && (
+				<LoanEditForm
+					onCancel={() => setEditing(false)}
+					onSubmit={async (changes) => {
+						await onEdit(changes);
+						setEditing(false);
+					}}
+					view={view}
+				/>
 			)}
 
 			<Text variant="title">{t`Repayments`}</Text>
@@ -247,14 +215,26 @@ export const LoanDetail = ({
 						);
 						return (
 							<View
-								accessibilityLabel={t`${paid} on ${day}`}
-								accessible
-								className="flex-row justify-between border-b-2 border-border py-2"
+								className="min-h-12 flex-row items-center justify-between gap-3 border-b-2 border-border py-2"
 								key={repayment.id}
 								role="listitem"
 							>
-								<Text variant="label">{day}</Text>
-								<Text variant="label">{paid}</Text>
+								<View
+									accessibilityLabel={t`${paid} on ${day}`}
+									accessible
+									className="shrink grow flex-row justify-between gap-3"
+								>
+									<Text variant="label">{day}</Text>
+									<Text variant="label">{paid}</Text>
+								</View>
+								{canEdit && (
+									<Chip
+										accessibilityLabel={t`Delete the ${paid} Repayment`}
+										onPress={() => void onDeleteRepayment(repayment.id)}
+									>
+										{t`Delete`}
+									</Chip>
+								)}
 							</View>
 						);
 					})}

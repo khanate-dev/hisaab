@@ -6,8 +6,10 @@ import { useCanWrite } from "@/features/households/use-can-write";
 import { usePersonalHousehold } from "@/features/households/use-personal-household";
 import {
 	deleteLoan,
+	deleteRepayment,
 	recordRepayment,
 	setWrittenOff,
+	updateLoan,
 } from "@/features/loans/actions";
 import { LoanDetail } from "@/features/loans/loan-detail";
 import { useLoans } from "@/features/loans/use-loans";
@@ -49,6 +51,10 @@ export default function LoanScreen() {
 					await deleteLoan(view.loan.id);
 					leaveTo("/loans");
 				}}
+				onDeleteRepayment={deleteRepayment}
+				onEdit={(changes) =>
+					updateLoan(view.loan, view.principal.id, changes, view.currency)
+				}
 				onRepay={(repayment) =>
 					recordRepayment(
 						household.id,

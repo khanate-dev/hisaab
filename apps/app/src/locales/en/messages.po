@@ -27,11 +27,11 @@ msgstr "{description} × {quantity}"
 msgid "{label}: {was} → {now}"
 msgstr "{label}: {was} → {now}"
 
-#: src/app/loans/index.tsx
+#: src/features/loans/loan-list.tsx
 msgid "{lent}, {left} outstanding"
 msgstr "{lent}, {left} outstanding"
 
-#: src/app/loans/index.tsx
+#: src/features/loans/loan-list.tsx
 msgid "{lent}, settled"
 msgstr "{lent}, settled"
 
@@ -67,7 +67,7 @@ msgstr "{restName}, {restAmount}"
 msgid "{walletName} → {toName}"
 msgstr "{walletName} → {toName}"
 
-#: src/app/loans/index.tsx
+#: src/features/loans/loan-list.tsx
 msgid "{way} · {name}"
 msgstr "{way} · {name}"
 
@@ -313,9 +313,13 @@ msgstr "Below zero"
 msgid "Borrowed"
 msgstr "Borrowed"
 
+#: src/features/loans/loan-edit-form.tsx
+msgid "Borrowed ({currency})"
+msgstr "Borrowed ({currency})"
+
 #: src/features/loans/loan-detail.tsx
-msgid "Borrowed {lent} from {name}"
-msgstr "Borrowed {lent} from {name}"
+msgid "Borrowed {howMuch} from {name}"
+msgstr "Borrowed {howMuch} from {name}"
 
 #: src/features/loans/loan-form.tsx
 msgid "Borrowed from"
@@ -342,6 +346,8 @@ msgstr "Bus"
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/items-section.tsx
 #: src/features/loans/loan-detail.tsx
+#: src/features/loans/loan-edit-form.tsx
+#: src/features/loans/repayment-form.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -440,8 +446,8 @@ msgstr "Cyan"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
-#: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-form.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Date"
 msgstr "Date"
 
@@ -455,6 +461,7 @@ msgstr "Decimal point"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/entries/entry-detail.tsx
+#: src/features/loans/loan-detail.tsx
 msgid "Delete"
 msgstr "Delete"
 
@@ -481,6 +488,10 @@ msgstr "Delete last digit"
 #: src/features/loans/loan-detail.tsx
 msgid "Delete Loan"
 msgstr "Delete Loan"
+
+#: src/features/loans/loan-detail.tsx
+msgid "Delete the {paid} Repayment"
+msgstr "Delete the {paid} Repayment"
 
 #: src/features/loans/loan-detail.tsx
 msgid "Delete this Loan?"
@@ -534,6 +545,7 @@ msgstr "Dismiss: new household"
 msgid "Dismiss: new membership"
 msgstr "Dismiss: new membership"
 
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Due"
 msgstr "Due"
@@ -555,6 +567,10 @@ msgstr "Edit"
 #: src/app/entries/[id]/edit.tsx
 msgid "Edit Entry"
 msgstr "Edit Entry"
+
+#: src/features/loans/loan-detail.tsx
+msgid "Edit Loan"
+msgstr "Edit Loan"
 
 #: src/features/entries/items-section.tsx
 msgid "Edit this Item"
@@ -588,11 +604,12 @@ msgid "Enter an amount like 1500 or 1500.50."
 msgstr "Enter an amount like 1500 or 1500.50."
 
 #: src/features/entries/transfer-form.tsx
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Enter an amount more than zero, like 1500."
 msgstr "Enter an amount more than zero, like 1500."
 
-#: src/features/loans/loan-detail.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Enter an amount more than zero, like 500."
 msgstr "Enter an amount more than zero, like 500."
 
@@ -600,6 +617,7 @@ msgstr "Enter an amount more than zero, like 500."
 msgid "Enter the date as YYYY-MM-DD, like {today}."
 msgstr "Enter the date as YYYY-MM-DD, like {today}."
 
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Enter the due date as YYYY-MM-DD, or leave it empty."
 msgstr "Enter the due date as YYYY-MM-DD, or leave it empty."
@@ -650,8 +668,8 @@ msgstr "From"
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
-#: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-form.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "From Wallet"
 msgstr "From Wallet"
 
@@ -730,10 +748,14 @@ msgid "Into"
 msgstr "Into"
 
 #: src/features/entries/entry-form.tsx
-#: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-form.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Into Wallet"
 msgstr "Into Wallet"
+
+#: src/features/loans/loan-edit-form.tsx
+msgid "It can't be less than the {repaidText} already repaid."
+msgstr "It can't be less than the {repaidText} already repaid."
 
 #: src/features/categories/category-actions.tsx
 msgid "It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time."
@@ -792,6 +814,7 @@ msgid "Keep the name to 60 characters or fewer."
 msgstr "Keep the name to 60 characters or fewer."
 
 #: src/features/entries/form-checks.ts
+#: src/features/loans/loan-edit-form.tsx
 msgid "Keep the notes to 1000 characters or fewer."
 msgstr "Keep the notes to 1000 characters or fewer."
 
@@ -809,9 +832,13 @@ msgstr "Kind"
 msgid "Lent"
 msgstr "Lent"
 
+#: src/features/loans/loan-edit-form.tsx
+msgid "Lent ({currency})"
+msgstr "Lent ({currency})"
+
 #: src/features/loans/loan-detail.tsx
-msgid "Lent {lent} to {name}"
-msgstr "Lent {lent} to {name}"
+msgid "Lent {howMuch} to {name}"
+msgstr "Lent {howMuch} to {name}"
 
 #: src/features/loans/loan-form.tsx
 msgid "Lent to"
@@ -881,8 +908,8 @@ msgstr "Name"
 
 #: src/features/contacts/contact-list.tsx
 #: src/features/loans/loan-form.tsx
-msgid "Name the Contact, in 80 characters or fewer."
-msgstr "Name the Contact, in 80 characters or fewer."
+msgid "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
+msgstr "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
 
 #: src/app/_layout.tsx
 #: src/app/categories/new.tsx
@@ -947,7 +974,7 @@ msgstr "No Contacts yet."
 msgid "No Entries yet."
 msgstr "No Entries yet."
 
-#: src/app/loans/index.tsx
+#: src/features/loans/loan-list.tsx
 msgid "No Loans yet."
 msgstr "No Loans yet."
 
@@ -975,6 +1002,7 @@ msgstr "No Wallets yet."
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Notes"
 msgstr "Notes"
@@ -1022,6 +1050,7 @@ msgstr "Opens your Loans"
 msgid "Optional, as HH:MM."
 msgstr "Optional, as HH:MM."
 
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Optional, as YYYY-MM-DD."
 msgstr "Optional, as YYYY-MM-DD."
@@ -1070,8 +1099,8 @@ msgid "Pick a Category."
 msgstr "Pick a Category."
 
 #: src/features/entries/entry-form.tsx
-#: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-form.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Pick a Wallet."
 msgstr "Pick a Wallet."
 
@@ -1129,7 +1158,7 @@ msgstr "Removed {removedName}."
 msgid "Repayment"
 msgstr "Repayment"
 
-#: src/features/loans/loan-detail.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Repayment ({currency})"
 msgstr "Repayment ({currency})"
 
@@ -1178,11 +1207,12 @@ msgstr "Save Entry"
 msgid "Save Item"
 msgstr "Save Item"
 
+#: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Save Loan"
 msgstr "Save Loan"
 
-#: src/features/loans/loan-detail.tsx
+#: src/features/loans/repayment-form.tsx
 msgid "Save Repayment"
 msgstr "Save Repayment"
 
@@ -1253,8 +1283,8 @@ msgstr "Sits under"
 msgid "Skip"
 msgstr "Skip"
 
-#: src/app/loans/index.tsx
 #: src/features/loans/loan-detail.tsx
+#: src/features/loans/loan-list.tsx
 msgid "someone"
 msgstr "someone"
 
@@ -1300,6 +1330,10 @@ msgstr "That Entry couldn't be restored. Try again once you're online."
 #: src/features/wallets/adjust-balance.tsx
 msgid "That's already its Balance; there's nothing to adjust."
 msgstr "That's already its Balance; there's nothing to adjust."
+
+#: src/features/loans/repayment-form.tsx
+msgid "That's more than the {most} outstanding."
+msgstr "That's more than the {most} outstanding."
 
 #: src/app/activity.tsx
 msgid "The Activity log needs a connection. Try again once you're online."
@@ -1424,6 +1458,10 @@ msgstr "Undo"
 #: src/features/loans/loan-detail.tsx
 msgid "Undo write-off"
 msgstr "Undo write-off"
+
+#: src/features/loans/repayment-form.tsx
+msgid "Up to {most}."
+msgstr "Up to {most}."
 
 #: src/features/update/update-required.tsx
 msgid "Update Hisaab from your app store, then open it again."

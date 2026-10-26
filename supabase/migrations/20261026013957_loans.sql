@@ -52,23 +52,37 @@ create policy "Admins and Members delete Loans" on public.loans
 revoke all on public.loans from anon, authenticated;
 grant select, insert, update, delete on public.loans to authenticated;
 
--- Contacts and Loans stay in their household (ADR-0001), and a Loan stays Lent or Borrowed.
+-- A Contact stays in its household (ADR-0001); whole-row updates must leave its origin alone.
+create function private.keep_contact_origin() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+	if new.id is distinct from old.id or new.household_id is distinct from old.household_id
+		or new.created_at is distinct from old.created_at then
+		raise exception 'id, household_id and created_at cannot change' using errcode = '42501';
+	end if;
+	return new;
+end;
+$$;
+revoke all on function private.keep_contact_origin() from public;
+create trigger keep_contact_origin before update on public.contacts
+	for each row execute function private.keep_contact_origin();
+
+-- A Loan stays in its household and stays Lent or Borrowed.
 create function private.keep_loan_origin() returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
 	if new.id is distinct from old.id or new.household_id is distinct from old.household_id
-		or new.created_at is distinct from old.created_at
-		or (tg_table_name = 'loans' and to_jsonb(new) ->> 'direction' is distinct from to_jsonb(old) ->> 'direction') then
-		raise exception 'id, household_id, created_at and a Loan''s direction cannot change' using errcode = '42501';
+		or new.created_at is distinct from old.created_at or new.direction is distinct from old.direction then
+		raise exception 'id, household_id, created_at and direction cannot change' using errcode = '42501';
 	end if;
 	return new;
 end;
 $$;
 revoke all on function private.keep_loan_origin() from public;
-create trigger keep_contact_origin before update on public.contacts
-	for each row execute function private.keep_loan_origin();
 create trigger keep_loan_origin before update on public.loans
 	for each row execute function private.keep_loan_origin();
 
@@ -97,7 +111,8 @@ alter table public.entries add constraint entries_kind_shape check (
 		and to_wallet_id is null and to_amount is null and amount <> 0)
 );
 
--- Money Lent leaves the Wallet and its Repayments come back; money Borrowed arrives and its Repayments leave.
+-- Money Lent leaves the Wallet and its Repayments come back; money Borrowed arrives and its Repayments leave. And no
+-- Entry takes a Loan past zero: Repayments never add up to more than the principal, whichever order they arrive in.
 create function private.keep_loan_entry_signed() returns trigger
 language plpgsql security definer
 set search_path = ''
@@ -105,17 +120,25 @@ as $$
 declare
 	loan_direction text;
 	leaves boolean;
+	net numeric;
 begin
 	if new.loan_id is null then
 		return new;
 	end if;
-	select direction into loan_direction from public.loans where id = new.loan_id and household_id = new.household_id;
+	select direction into loan_direction from public.loans where id = new.loan_id and household_id = new.household_id
+	for update;
 	if not found then
 		return new;
 	end if;
 	leaves := (loan_direction = 'lent') = (new.kind = 'loan_principal');
 	if (leaves and new.amount >= 0) or (not leaves and new.amount <= 0) then
 		raise exception 'A Loan''s principal and Repayments go the way it was Lent or Borrowed' using errcode = '23514';
+	end if;
+	select coalesce(sum(amount), 0) + new.amount into net from public.entries
+	where loan_id = new.loan_id and household_id = new.household_id and id <> new.id;
+	-- The Entries' sum is minus what's outstanding on money Lent, and plus it on money Borrowed.
+	if (loan_direction = 'lent' and net > 0) or (loan_direction = 'borrowed' and net < 0) then
+		raise exception 'Repayments add up to more than the Loan' using errcode = '23514';
 	end if;
 	return new;
 end;
@@ -124,6 +147,41 @@ revoke all on function private.keep_loan_entry_signed() from public;
 create trigger keep_loan_entry_signed
 	before insert or update of kind, amount, loan_id on public.entries
 	for each row execute function private.keep_loan_entry_signed();
+
+-- A Loan's principal comes back only with its Loan, never on its own (the Loan has one already, or is gone).
+create or replace function public.restore_entry(entry_id uuid) returns void
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+	deletion public.activity_log;
+	item public.activity_log;
+begin
+	select * into deletion from public.activity_log
+	where table_name = 'entries' and row_id = entry_id and action = 'delete' and private.can_write(household_id)
+	order by synced_at desc, id desc limit 1;
+	if not found then
+		raise exception 'There''s no deleted Entry to restore here' using errcode = '42501';
+	end if;
+	if deletion.before ->> 'kind' = 'loan_principal' then
+		raise exception 'A Loan''s principal comes back only with its Loan' using errcode = '23514';
+	end if;
+	if exists (select 1 from public.entries where id = entry_id) then
+		raise exception 'The Entry is already back' using errcode = '23505';
+	end if;
+	perform set_config('hisaab.restoring', 'on', true);
+	-- The row as it was; a column added since comes back null (ADR-0009: a contract change upcasts old rows here).
+	insert into public.entries select * from jsonb_populate_record(null::public.entries, deletion.before);
+	for item in
+		select * from public.activity_log
+		where table_name = 'entry_items' and action = 'delete' and transaction_id = deletion.transaction_id
+			and before ->> 'entry_id' = entry_id::text
+	loop
+		insert into public.entry_items select * from jsonb_populate_record(null::public.entry_items, item.before);
+	end loop;
+	perform set_config('hisaab.restoring', 'off', true);
+end;
+$$;
 
 create trigger log_activity after insert or update or delete on public.contacts
 	for each row execute function private.log_activity();

@@ -2,7 +2,10 @@ import {
 	isCalendarDate,
 	isDecimalAmount,
 	isFlowKind,
+	isNegative,
+	isZero,
 	magnitude,
+	type Money,
 	parseMoney,
 } from "@hisaab/domain";
 
@@ -98,3 +101,14 @@ export const isEditableKind = (kind: string) =>
 
 /** A Loan's principal goes only with its Loan; every other Entry can be deleted on its own. */
 export const isDeletableKind = (kind: string) => kind !== "loan_principal";
+
+/** What's typed as an amount, as Money when it's a decimal more than zero; null otherwise. */
+export const positiveMoney = (
+	typed: string,
+	currency: string,
+): Money | null => {
+	const text = typed.trim();
+	if (!isDecimalAmount(text)) return null;
+	const money = parseMoney(text, currency);
+	return isNegative(money) || isZero(money) ? null : money;
+};

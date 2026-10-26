@@ -1,7 +1,12 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { isSettled, type LoanDirection, loanOutstanding } from "./loans";
+import {
+	isSettled,
+	type LoanDirection,
+	loanEntryAmount,
+	loanOutstanding,
+} from "./loans";
 import {
 	addMoney,
 	isNegative,
@@ -92,6 +97,36 @@ describe("isSettled", () => {
 					expect(isSettled(outstanding, writtenOff)).toBe(
 						writtenOff || units <= 0,
 					);
+				},
+			),
+		);
+	});
+});
+
+describe("loanEntryAmount", () => {
+	it("sends a principal and its Repayments opposite ways, and outstanding is the principal less the Repayments", () => {
+		fc.assert(
+			fc.property(
+				direction,
+				positive,
+				fc.array(positive, { maxLength: 8 }),
+				(way, principal, repaid) => {
+					const lent = loanEntryAmount(way, "loan_principal", money(principal));
+					const back = repaid.map((r) =>
+						loanEntryAmount(way, "repayment", money(r)),
+					);
+					expect(isNegative(lent)).toBe(way === "lent");
+					for (const r of back) expect(isNegative(r)).toBe(way === "borrowed");
+					const entries = [lent, ...back].map((amount) => ({
+						amount: amount.toString(),
+					}));
+					const expected = addMoney(
+						money(principal),
+						negateMoney(sumMoney(repaid.map(money), "PKR")),
+					);
+					expect(
+						moneyEquals(loanOutstanding(way, "PKR", entries), expected),
+					).toBe(true);
 				},
 			),
 		);

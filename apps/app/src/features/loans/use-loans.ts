@@ -1,9 +1,11 @@
-import { entries, type LoanDirection, loans } from "@hisaab/client-schema";
+import { entries, loans } from "@hisaab/client-schema";
 import {
 	isSettled,
 	loanOutstanding,
+	magnitude,
 	type Money,
 	newestFirst,
+	parseMoney,
 } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
@@ -22,9 +24,10 @@ export type Loan = typeof loans.$inferSelect;
 /** A Loan with what it's derived from: its Contact, principal, Repayments, currency, and what's outstanding. */
 export type LoanView = {
 	loan: Loan;
-	direction: LoanDirection;
 	contact: Contact | undefined;
-	principal: Entry | undefined;
+	principal: Entry;
+	/** How much was Lent or Borrowed, positive. */
+	principalAmount: Money;
 	/** Newest first. */
 	repayments: Entry[];
 	/** The principal's Wallet's currency; Repayments are in it too. */
@@ -74,9 +77,9 @@ export const useLoans = (
 			return [
 				{
 					loan,
-					direction: loan.direction,
 					contact: contacts.find((c) => c.id === loan.contact_id),
 					principal,
+					principalAmount: magnitude(parseMoney(principal.amount, currency)),
 					repayments: own
 						.filter((entry) => entry.kind === "repayment")
 						.toSorted(newestFirst),
