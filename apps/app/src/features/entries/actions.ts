@@ -1,4 +1,9 @@
-import { entries, entryItems, stamped } from "@hisaab/client-schema";
+import {
+	entries,
+	entryItems,
+	stamped,
+	stampedDelete,
+} from "@hisaab/client-schema";
 import {
 	magnitude,
 	type Money,
@@ -48,7 +53,11 @@ const writeItems = async (
 		.where(eq(entryItems.entry_id, entryId));
 	const kept = new Set(draft.items.map((item) => item.id));
 	for (const { id } of saved)
-		if (!kept.has(id)) await tx.delete(entryItems).where(eq(entryItems.id, id));
+		if (!kept.has(id))
+			await tx
+				.update(entryItems)
+				.set(stampedDelete())
+				.where(eq(entryItems.id, id));
 	const existing = new Set(saved.map(({ id }) => id));
 	for (const [position, item] of draft.items.entries()) {
 		const values = {
@@ -115,11 +124,20 @@ export const updateEntry = async (
 	});
 };
 
-/** Its Items go first, so no Item is ever queued without its Entry. */
+/**
+ * The Entry goes first: the server removes its Items with it, in one change the Activity log can restore together.
+ * Its Items then go from this device too; their deletes find nothing left on the server, which is fine.
+ */
 export const deleteEntry = async (entryId: string) => {
 	await db.transaction(async (tx) => {
-		await tx.delete(entryItems).where(eq(entryItems.entry_id, entryId));
-		await tx.delete(entries).where(eq(entries.id, entryId));
+		await tx
+			.update(entries)
+			.set(stampedDelete())
+			.where(eq(entries.id, entryId));
+		await tx
+			.update(entryItems)
+			.set(stampedDelete())
+			.where(eq(entryItems.entry_id, entryId));
 	});
 };
 

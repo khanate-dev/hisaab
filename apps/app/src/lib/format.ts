@@ -28,3 +28,10 @@ export const formatDate = (isoDate: string) => {
 		new Date(year ?? 0, (month ?? 1) - 1, day ?? 1),
 	);
 };
+
+/** An instant, say when a change reached the server, as a date and time in the device's locale and timezone. */
+export const formatDateTime = (iso: string) =>
+	new Intl.DateTimeFormat(undefined, {
+		dateStyle: "medium",
+		timeStyle: "short",
+	}).format(new Date(iso));

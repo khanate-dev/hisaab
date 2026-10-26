@@ -11,7 +11,7 @@ import {
 	waitForUploads,
 } from "./powersync";
 import { seedHousehold } from "./seed";
-import { adminClient, signInNewUser } from "./users";
+import { adminClient, signInNewUser, userClient } from "./users";
 
 // Offline and conflict scenarios (ADR-0010), driven through the upload connector the app ships.
 
@@ -314,6 +314,81 @@ describe("sync scenarios", () => {
 			.eq("id", personal.id)
 			.single();
 		expect(household.data?.base_currency).toBe("PKR");
+	});
+
+	it("the Activity log keeps an uploaded change's device time, and a deleted Entry comes back from it", async () => {
+		const user = await signInNewUser();
+		const device = await connectClient(user);
+		const personal = await vi.waitFor(
+			() =>
+				device.get<{ id: string }>(
+					"SELECT id FROM households WHERE personal_user_id = ?",
+					[user.id],
+				),
+			{ timeout: 10_000 },
+		);
+		const madeAt = new Date("2026-10-26T13:30:00.000Z");
+		const stamp = stamped({}, CONTRACT_VERSION, madeAt)._metadata;
+		const [walletId, entryId] = [uuidv7(), uuidv7()];
+		const now = new Date().toISOString();
+		await device.writeTransaction(async (tx) => {
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, personal.id, now, stamp],
+			);
+			await tx.execute(
+				`INSERT INTO entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by, created_at, _metadata)
+				VALUES (?, ?, ?, 'balance_adjustment', '12345678901234.5678', '2026-10-26', ?, ?, ?)`,
+				[entryId, personal.id, walletId, user.id, now, stamp],
+			);
+		});
+		await waitForUploads(device);
+		const logged = await adminClient()
+			.from("activity_log")
+			.select("actor_id, device_time, after")
+			.eq("row_id", entryId)
+			.eq("action", "insert")
+			.single();
+		if (logged.error) throw logged.error;
+		expect(logged.data.actor_id).toBe(user.id);
+		expect(new Date(logged.data.device_time ?? "").toISOString()).toBe(
+			madeAt.toISOString(),
+		);
+		// Money stays exact in the log: text, never a rounded JSON number.
+		expect((logged.data.after as { amount: unknown }).amount).toBe(
+			"12345678901234.5678",
+		);
+
+		// Deleted as the app deletes: stamped, so the deletion too says when it happened on the device.
+		const deletedAt = new Date("2026-10-26T14:00:00.000Z");
+		await device.execute(
+			"UPDATE entries SET _deleted = 1, _metadata = ? WHERE id = ?",
+			[stamped({}, CONTRACT_VERSION, deletedAt)._metadata, entryId],
+		);
+		await waitForUploads(device);
+		const deletion = await adminClient()
+			.from("activity_log")
+			.select("device_time")
+			.eq("row_id", entryId)
+			.eq("action", "delete")
+			.single();
+		expect(new Date(deletion.data?.device_time ?? "").toISOString()).toBe(
+			deletedAt.toISOString(),
+		);
+		const restored = await userClient(user).rpc("restore_entry", {
+			entry_id: entryId,
+		});
+		if (restored.error) throw restored.error;
+		await vi.waitFor(
+			async () =>
+				expect(
+					await device.getOptional<{ amount: string }>(
+						"SELECT amount FROM entries WHERE id = ?",
+						[entryId],
+					),
+				).toEqual({ amount: "12345678901234.5678" }),
+			{ timeout: 10_000 },
+		);
 	});
 
 	it("a Transfer and a Balance adjustment upload, and both can be edited or deleted", async () => {

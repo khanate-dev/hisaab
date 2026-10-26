@@ -19,6 +19,10 @@ msgstr "{day} at {time}"
 msgid "{description} × {quantity}"
 msgstr "{description} × {quantity}"
 
+#: src/features/activity/activity-list.tsx
+msgid "{label}: {was} → {now}"
+msgstr "{label}: {was} → {now}"
+
 #: src/features/categories/category-list.tsx
 msgid "{name}, in {parentName}"
 msgstr "{name}, in {parentName}"
@@ -51,6 +55,26 @@ msgstr "{walletName} → {toName}"
 msgid "{where}, {shown}"
 msgstr "{where}, {shown}"
 
+#: src/features/activity/activity-list.tsx
+msgid "{who} added {what}: {named}"
+msgstr "{who} added {what}: {named}"
+
+#: src/features/activity/activity-list.tsx
+msgid "{who} changed {what}: {named}"
+msgstr "{who} changed {what}: {named}"
+
+#: src/features/activity/activity-list.tsx
+msgid "{who} deleted {what}: {named}"
+msgstr "{who} deleted {what}: {named}"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Category"
+msgstr "a Category"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Category since gone"
+msgstr "a Category since gone"
+
 #: src/features/sync/sync-status.tsx
 msgid "A change couldn't sync"
 msgstr "A change couldn't sync"
@@ -63,6 +87,10 @@ msgstr "A change to a household couldn't sync"
 msgid "A change to a membership couldn't sync"
 msgstr "A change to a membership couldn't sync"
 
+#: src/features/activity/activity-list.tsx
+msgid "a Membership"
+msgstr "a Membership"
+
 #: src/features/sync/sync-status.tsx
 msgid "A new household couldn't sync"
 msgstr "A new household couldn't sync"
@@ -71,6 +99,10 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
+#: src/features/activity/activity-list.tsx
+msgid "a record"
+msgstr "a record"
+
 #: src/features/entries/transfer-form.tsx
 msgid "A Transfer goes to another Wallet."
 msgstr "A Transfer goes to another Wallet."
@@ -78,6 +110,20 @@ msgstr "A Transfer goes to another Wallet."
 #: src/app/entries/new.tsx
 msgid "A Transfer moves money between two Wallets; add another Wallet first."
 msgstr "A Transfer moves money between two Wallets; add another Wallet first."
+
+#: src/features/activity/activity-list.tsx
+msgid "a Wallet"
+msgstr "a Wallet"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Wallet since gone"
+msgstr "a Wallet since gone"
+
+#: src/app/_layout.tsx
+#: src/app/activity.tsx
+#: src/app/me.tsx
+msgid "Activity log"
+msgstr "Activity log"
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "Actual balance ({currency})"
@@ -146,6 +192,7 @@ msgstr "All Entries"
 msgid "All Wallets"
 msgstr "All Wallets"
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
@@ -156,6 +203,14 @@ msgstr "Amount"
 #: src/features/entries/transfer-form.tsx
 msgid "Amount ({currency})"
 msgstr "Amount ({currency})"
+
+#: src/features/activity/activity-list.tsx
+msgid "an Entry"
+msgstr "an Entry"
+
+#: src/features/activity/activity-list.tsx
+msgid "an Item"
+msgstr "an Item"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/wallets/wallet-detail.tsx
@@ -174,6 +229,10 @@ msgstr "Archive Category"
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archive Wallet"
 msgstr "Archive Wallet"
+
+#: src/features/activity/fields.ts
+msgid "Archived"
+msgstr "Archived"
 
 #: src/app/categories/index.tsx
 msgid "Archived Categories"
@@ -206,6 +265,10 @@ msgstr "Balance history"
 #: src/features/wallets/labels.ts
 msgid "Bank"
 msgstr "Bank"
+
+#: src/features/activity/fields.ts
+msgid "Base currency"
+msgstr "Base currency"
 
 #: src/features/wallets/balance.tsx
 msgid "Below zero"
@@ -256,6 +319,7 @@ msgstr "Categories"
 
 #: src/app/_layout.tsx
 #: src/app/categories/[id].tsx
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
@@ -299,6 +363,7 @@ msgstr "Create Cash Wallet"
 msgid "Credit card"
 msgstr "Credit card"
 
+#: src/features/activity/fields.ts
 #: src/features/onboarding/first-wallet-form.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Currency"
@@ -312,6 +377,7 @@ msgstr "Cutlery"
 msgid "Cyan"
 msgstr "Cyan"
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
@@ -360,6 +426,7 @@ msgstr "Deleting a household couldn't sync"
 msgid "Deleting a membership couldn't sync"
 msgstr "Deleting a membership couldn't sync"
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
@@ -471,6 +538,10 @@ msgstr "Entries"
 msgid "Entry"
 msgstr "Entry"
 
+#: src/app/activity.tsx
+msgid "Every change to the household's data. Nobody can edit it."
+msgstr "Every change to the household's data. Nobody can edit it."
+
 #: src/features/categories/labels.ts
 #: src/features/entries/labels.ts
 msgid "Expense"
@@ -519,6 +590,10 @@ msgstr "Green"
 #: src/features/categories/labels.ts
 msgid "Heartbeat"
 msgstr "Heartbeat"
+
+#: src/features/activity/activity-list.tsx
+msgid "Hisaab"
+msgstr "Hisaab"
 
 #: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
@@ -584,6 +659,7 @@ msgstr "It leaves your Wallets list. Its Entries and Balance stay, and you can b
 msgid "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 msgstr "It sits under {parentName}, which is archived too. Bring {parentName} back first."
 
+#: src/features/activity/fields.ts
 #: src/features/entries/items-section.tsx
 msgid "Item"
 msgstr "Item"
@@ -627,6 +703,7 @@ msgstr "Keep the notes to 1000 characters or fewer."
 msgid "Keep the quantity to 40 characters or fewer."
 msgstr "Keep the quantity to 40 characters or fewer."
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Kind"
@@ -643,6 +720,14 @@ msgstr "Lime"
 #: src/app/categories/index.tsx
 msgid "List"
 msgstr "List"
+
+#: src/app/activity.tsx
+msgid "Loading the Activity log…"
+msgstr "Loading the Activity log…"
+
+#: src/features/activity/activity-list.tsx
+msgid "Made {made}, synced {synced}"
+msgstr "Made {made}, synced {synced}"
 
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
@@ -667,6 +752,7 @@ msgstr "Member"
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
 
+#: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Name"
@@ -737,11 +823,16 @@ msgstr "No permission."
 msgid "No Wallets yet."
 msgstr "No Wallets yet."
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
 msgid "Notes"
 msgstr "Notes"
+
+#: src/features/activity/activity-list.tsx
+msgid "Nothing has changed yet."
+msgstr "Nothing has changed yet."
 
 #: src/features/categories/category-actions.tsx
 msgid "Nothing is recorded in it yet, so it's removed for good."
@@ -821,10 +912,16 @@ msgstr "Pick the Wallet it leaves and the one it goes to."
 msgid "Plane"
 msgstr "Plane"
 
+#: src/features/activity/activity-list.tsx
+msgid "Puts the Entry back as it was when deleted"
+msgstr "Puts the Entry back as it was when deleted"
+
+#: src/features/activity/fields.ts
 #: src/features/entries/items-section.tsx
 msgid "Quantity"
 msgstr "Quantity"
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 msgid "Received"
 msgstr "Received"
@@ -866,6 +963,14 @@ msgstr "Reports arrive once there are Entries to report on."
 #: src/features/entries/labels.ts
 msgid "Rest"
 msgstr "Rest"
+
+#: src/features/activity/activity-list.tsx
+msgid "Restore"
+msgstr "Restore"
+
+#: src/features/activity/fields.ts
+msgid "Role"
+msgstr "Role"
 
 #: src/app/categories/[id].tsx
 #: src/app/entries/[id]/edit.tsx
@@ -927,6 +1032,10 @@ msgstr "Show archived Categories"
 msgid "Show archived Wallets"
 msgstr "Show archived Wallets"
 
+#: src/app/activity.tsx
+msgid "Show older changes"
+msgstr "Show older changes"
+
 #: src/app/_layout.tsx
 #: src/features/auth/sign-in-form.tsx
 msgid "Sign in"
@@ -936,6 +1045,7 @@ msgstr "Sign in"
 msgid "Sign out"
 msgstr "Sign out"
 
+#: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 msgid "Sits under"
 msgstr "Sits under"
@@ -943,6 +1053,10 @@ msgstr "Sits under"
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Skip"
 msgstr "Skip"
+
+#: src/features/activity/activity-list.tsx
+msgid "Someone"
+msgstr "Someone"
 
 #: src/features/auth/sign-in-form.tsx
 msgid "Something went wrong"
@@ -956,6 +1070,10 @@ msgstr "Switch household: {name}"
 msgid "Sync status"
 msgstr "Sync status"
 
+#: src/features/activity/activity-list.tsx
+msgid "Synced {synced}"
+msgstr "Synced {synced}"
+
 #: src/features/households/household-list.tsx
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
@@ -967,9 +1085,17 @@ msgstr "Syncing your households…"
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
 
+#: src/app/activity.tsx
+msgid "That Entry couldn't be restored. Try again once you're online."
+msgstr "That Entry couldn't be restored. Try again once you're online."
+
 #: src/features/wallets/adjust-balance.tsx
 msgid "That's already its Balance; there's nothing to adjust."
 msgstr "That's already its Balance; there's nothing to adjust."
+
+#: src/app/activity.tsx
+msgid "The Activity log needs a connection. Try again once you're online."
+msgstr "The Activity log needs a connection. Try again once you're online."
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
@@ -979,6 +1105,10 @@ msgstr "The amount is more than zero."
 #: src/features/wallets/wallet-form.tsx
 msgid "The currency is fixed once the Wallet has Entries."
 msgstr "The currency is fixed once the Wallet has Entries."
+
+#: src/features/activity/activity-list.tsx
+msgid "the household"
+msgstr "the household"
 
 #: src/features/entries/items-section.tsx
 msgid "The Items add up to more than the total, so the total is now {grownTotal}."
@@ -1013,10 +1143,16 @@ msgstr "This version of Hisaab is too old to sync. Your changes are safe on this
 msgid "This Wallet isn't here. It may not have synced yet."
 msgstr "This Wallet isn't here. It may not have synced yet."
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-form.tsx
 msgid "Time"
 msgstr "Time"
 
+#: src/features/activity/fields.ts
+msgid "Timezone"
+msgstr "Timezone"
+
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/transfer-form.tsx
 msgid "To"
@@ -1038,6 +1174,11 @@ msgstr "Total"
 msgid "Transfer"
 msgstr "Transfer"
 
+#: src/app/activity.tsx
+msgid "Try again"
+msgstr "Try again"
+
+#: src/features/activity/fields.ts
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"
 msgstr "Type"
@@ -1081,6 +1222,7 @@ msgstr "Violet"
 
 #: src/app/_layout.tsx
 #: src/app/wallets/[id]/index.tsx
+#: src/features/activity/fields.ts
 #: src/features/categories/labels.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/quick-add-form.tsx

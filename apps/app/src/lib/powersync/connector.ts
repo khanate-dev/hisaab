@@ -2,6 +2,7 @@ import {
 	CONTRACT_VERSION,
 	NO_ROWS,
 	readStamp,
+	readStampTime,
 	UNMAPPABLE,
 } from "@hisaab/client-schema";
 import {
@@ -75,6 +76,9 @@ type Write = {
 	result: PromiseLike<{ data: unknown[] | null; error: PostgrestError | null }>;
 };
 
+/** The Activity log's device time travels as a header the log trigger reads (deletes are stamped too, `stampedDelete`). */
+const DEVICE_TIME_HEADER = "x-device-time";
+
 const write = async (
 	supabase: SupabaseClient,
 	db: AbstractPowerSyncDatabase,
@@ -82,10 +86,19 @@ const write = async (
 	op: QueuedOp,
 ): Promise<Write | null> => {
 	const table = supabase.from(op.table);
+	const deviceTime = readStampTime(entry.metadata);
+	const withTime = <
+		B extends { setHeader: (name: string, value: string) => B },
+	>(
+		builder: B,
+	) =>
+		deviceTime === null
+			? builder
+			: builder.setHeader(DEVICE_TIME_HEADER, deviceTime);
 	switch (op.op) {
 		case "PUT": {
 			const row = { ...op.data, id: op.id };
-			return { sent: row, result: table.upsert(row).select("id") };
+			return { sent: row, result: withTime(table.upsert(row).select("id")) };
 		}
 		case "PATCH": {
 			// Last writer wins per row (ADR-0007): send the whole local row, never PowerSync's changed fields.
@@ -98,13 +111,13 @@ const write = async (
 			const { id: _id, ...columns } = { ...row, ...op.data };
 			return {
 				sent: columns,
-				result: table.update(columns).eq("id", op.id).select("id"),
+				result: withTime(table.update(columns).eq("id", op.id).select("id")),
 			};
 		}
 		case "DELETE":
 			return {
 				sent: null,
-				result: table.delete().eq("id", op.id).select("id"),
+				result: withTime(table.delete().eq("id", op.id).select("id")),
 			};
 	}
 };

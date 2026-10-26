@@ -2,7 +2,7 @@ import { column, Table } from "@powersync/common";
 import { getTableColumns } from "drizzle-orm";
 import { getTableConfig, type SQLiteTable } from "drizzle-orm/sqlite-core";
 
-import { STAMP_COLUMN } from "./stamp";
+import { DELETED_COLUMN, STAMP_COLUMN } from "./stamp";
 
 // PowerSync stores every column as text, integer or real; booleans and timestamps in integer mode are integers.
 const COLUMN_TYPES: Record<string, typeof column.text> = {
@@ -36,6 +36,8 @@ export const toPowerSyncTable = (
 			trackMetadata = true;
 			continue;
 		}
+		// PowerSync provides the delete flag itself once a table tracks metadata.
+		if (name === DELETED_COLUMN) continue;
 		const type = COLUMN_TYPES[columnType];
 		if (!type)
 			throw new Error(

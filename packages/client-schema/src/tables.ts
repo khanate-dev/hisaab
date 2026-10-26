@@ -2,7 +2,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { CATEGORY_KINDS, ENTRY_KINDS, WALLET_TYPES } from "./kinds";
 import { ROLES } from "./roles";
-import { STAMP_COLUMN } from "./stamp";
+import { DELETED_COLUMN, STAMP_COLUMN } from "./stamp";
 
 // Synced tables mirror their Sync Streams columns (powersync/sync-config.yaml), not the Postgres tables.
 
@@ -11,6 +11,8 @@ import { STAMP_COLUMN } from "./stamp";
  * (ADR-0009). Set it with `stamped()`; it never syncs and is never uploaded as a column.
  */
 const contractStamp = () => text(STAMP_COLUMN);
+/** PowerSync's delete flag, written only by `stampedDelete()`; never a column of its own. */
+const deleteFlag = () => integer(DELETED_COLUMN, { mode: "boolean" });
 
 export const households = sqliteTable("households", {
 	id: text("id").primaryKey(),
@@ -23,6 +25,7 @@ export const households = sqliteTable("households", {
 	timezone: text("timezone"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 export const memberships = sqliteTable("memberships", {
@@ -32,6 +35,7 @@ export const memberships = sqliteTable("memberships", {
 	role: text("role", { enum: ROLES }).notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 /** A User's name, shown to the people they share a household with. */
@@ -40,6 +44,7 @@ export const profiles = sqliteTable("profiles", {
 	display_name: text("display_name").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 export const wallets = sqliteTable("wallets", {
@@ -52,6 +57,7 @@ export const wallets = sqliteTable("wallets", {
 	archived_at: text("archived_at"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 export const categories = sqliteTable("categories", {
@@ -67,6 +73,7 @@ export const categories = sqliteTable("categories", {
 	archived_at: text("archived_at"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 export const entries = sqliteTable("entries", {
@@ -92,6 +99,7 @@ export const entries = sqliteTable("entries", {
 	created_by: text("created_by").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 /** One line of an Expense (CONTEXT.md, Item); the Expense's amount is minus the sum of its Items' amounts. */
@@ -111,6 +119,7 @@ export const entryItems = sqliteTable("entry_items", {
 	rest: integer("rest", { mode: "boolean" }).notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
 });
 
 /** The one global row: the minimum contract version the server accepts writes from (ADR-0009). */

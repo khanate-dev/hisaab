@@ -16,5 +16,6 @@ export const makeCategory = (
 	archived_at: null,
 	created_at: "2026-10-26T00:00:00.000Z",
 	_metadata: null,
+	_deleted: null,
 	...overrides,
 });
