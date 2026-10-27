@@ -217,8 +217,14 @@ const PendingRow = ({
 				<View className="flex-row flex-wrap gap-2">
 					{!changing && (
 						<Chip
-							onPress={() => setChanging(true)}
-						>{t`Change and confirm`}</Chip>
+							onPress={() => {
+								// Confirmed on its own, with its changes, not with the others.
+								onPick(false);
+								setChanging(true);
+							}}
+						>
+							{t`Change and confirm`}
+						</Chip>
 					)}
 					<Chip
 						accessibilityLabel={t`Skip ${name} due ${dueDate}`}

@@ -7,6 +7,7 @@ import {
 	dueOccurrences,
 	nameBasedUuid,
 	nextDueDate,
+	ruleEdit,
 	occurrenceEntryId,
 	occurrenceId,
 	type RuleLike,
@@ -199,6 +200,16 @@ describe("Occurrence ids", () => {
 		).toBe("2ed6657d-e927-568b-95e1-2665a8aea6a2");
 	});
 
+	it("match what Postgres's uuid_generate_v5 derives, which the server checks them against", () => {
+		const rule = "00000000-0000-7000-8000-00000000dd01";
+		expect(occurrenceId(rule, "2026-10-01")).toBe(
+			"86d0ac97-e4ad-5d3f-9764-44991570304d",
+		);
+		expect(occurrenceEntryId(rule, "2026-10-01")).toBe(
+			"6d7e9ad5-7893-5327-94a5-1712abe5ac52",
+		);
+	});
+
 	it("are the same for the same rule and date, and differ otherwise, the Entry's too", () => {
 		const id = fc.uuid();
 		fc.assert(
@@ -211,5 +222,66 @@ describe("Occurrence ids", () => {
 				}
 			}),
 		);
+	});
+});
+
+describe("ruleEdit", () => {
+	it("keeps every past due date as it was and takes the edited schedule from today on", () => {
+		fc.assert(
+			fc.property(
+				schedule,
+				schedule,
+				fc.integer({ min: -60, max: 900 }),
+				(current, edited, offset) => {
+					const today = shiftCalendarDate(current.starts_on, offset);
+					const edit = ruleEdit(current, edited, today);
+					const horizon = shiftCalendarDate(today, 1500);
+					if (!edit.split) {
+						expect(current.starts_on >= today).toBe(true);
+						return;
+					}
+					const kept = dueDates(
+						{ ...current, ends_on: edit.endsOn },
+						current.starts_on,
+						horizon,
+					);
+					expect(kept).toEqual(
+						dueDates(current, current.starts_on, shiftCalendarDate(today, -1)),
+					);
+					const next =
+						edit.startsOn === null
+							? []
+							: dueDates(
+									{ ...edited, starts_on: edit.startsOn },
+									edit.startsOn,
+									horizon,
+								);
+					expect(next).toEqual(
+						dueDates(edited, today, horizon).filter(
+							(d) => d >= (edit.startsOn ?? ""),
+						),
+					);
+					expect(next.every((d) => d >= today)).toBe(true);
+				},
+			),
+		);
+	});
+});
+
+describe("dueDates on a bad schedule", () => {
+	it("refuses an interval below one rather than looping", () => {
+		expect(() =>
+			dueDates(
+				{
+					frequency: "weekly",
+					interval: 0,
+					day_of_month: null,
+					starts_on: "2026-10-01",
+					ends_on: null,
+				},
+				"2026-10-01",
+				"2026-12-31",
+			),
+		).toThrow();
 	});
 });

@@ -19,7 +19,8 @@ export default function RecurringRuleScreen() {
 	const rule = rules?.find((r) => r.id === id);
 
 	if (!data || rules === undefined) return null;
-	const { household, wallets, categories, canWrite } = data;
+	const { household, wallets, categories, canWrite, userId } = data;
+	const today = todayIn(entryTimeZone(household));
 	if (!rule || !household.base_currency) {
 		return (
 			<Screen title={t`Recurring rule`}>
@@ -44,12 +45,12 @@ export default function RecurringRuleScreen() {
 						baseCurrency={household.base_currency}
 						categories={categories}
 						onSubmit={async (draft) => {
-							await updateRule(rule.id, draft);
+							await updateRule(rule, userId, draft, today);
 							leaveTo("/recurring");
 						}}
 						rule={rule}
 						submitLabel={t`Save changes`}
-						today={todayIn(entryTimeZone(household))}
+						today={today}
 						wallets={wallets}
 					/>
 					<Confirm

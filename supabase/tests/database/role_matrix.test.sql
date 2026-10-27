@@ -59,7 +59,7 @@ insert into public.recurring_rules (id, household_id, kind, wallet_id, category_
 	 100, 'monthly', 1, '2026-10-01',
 	 '00000000-0000-4000-8000-00000000aaa1');
 insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until) values
-	('00000000-0000-7000-8000-00000000aa71', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61',
+	('e2f0dfa8-e3e5-5073-8755-1a166004d19a', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61',
 	 '2026-10-01', 'snoozed', '2026-10-03');
 insert into public.invites (id, household_id, token, role, expires_at, created_by) values
 	('00000000-0000-7000-8000-00000000aa31', '00000000-0000-7000-8000-00000000aaf1', repeat('m', 32), 'member',
@@ -136,9 +136,9 @@ insert into attempts values
 	('recurring_rules.delete', $$ delete from public.recurring_rules where id = '00000000-0000-7000-8000-00000000aa61' $$),
 	('occurrences.select', $$ select 1 from public.occurrences where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('occurrences.insert', $$ insert into public.occurrences (id, household_id, rule_id, due_on, state)
-		values ('00000000-0000-7000-8000-00000000ab14', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61', '2026-11-01', 'skipped') $$),
-	('occurrences.update', $$ update public.occurrences set snoozed_until = snoozed_until where id = '00000000-0000-7000-8000-00000000aa71' $$),
-	('occurrences.delete', $$ delete from public.occurrences where id = '00000000-0000-7000-8000-00000000aa71' $$),
+		values ('33ab105a-b894-5b94-9498-2517333a31d8', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61', '2026-11-01', 'skipped') $$),
+	('occurrences.update', $$ update public.occurrences set snoozed_until = snoozed_until where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
+	('occurrences.delete', $$ delete from public.occurrences where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
 	('activity_log.select', $$ select 1 from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.insert', $$ insert into public.activity_log (household_id, table_name, row_id, action)
 		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', '00000000-0000-7000-8000-00000000ab09', 'insert') $$),

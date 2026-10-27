@@ -64,6 +64,8 @@ const nthDate = (schedule: Schedule, n: number) => {
  * end. A monthly rule's first due date is its day in the start's month, or the next round when that's before the start.
  */
 export const dueDates = (schedule: Schedule, from: string, to: string) => {
+	if (!Number.isInteger(schedule.interval) || schedule.interval < 1)
+		throw new Error(`A schedule repeats every 1 or more: ${schedule.interval}`);
 	const last =
 		schedule.ends_on !== null && schedule.ends_on < to ? schedule.ends_on : to;
 	const dates: string[] = [];
@@ -88,14 +90,19 @@ export type OccurrenceRecord = {
 
 export type DueOccurrence<R extends RuleLike> = { rule: R; dueOn: string };
 
-const done = (records: readonly OccurrenceRecord[], today: string) => {
+/** An Occurrence's key on a device: its rule and due date, which its id is derived from. */
+export const occurrenceKey = (ruleId: string, dueOn: string) =>
+	`${ruleId}/${dueOn}`;
+
+/** The keys of Occurrences nothing more is to be done with today: confirmed, skipped, or snoozed past today. */
+const handledKeys = (records: readonly OccurrenceRecord[], today: string) => {
 	const handled = new Set<string>();
 	for (const record of records)
 		if (
 			record.state !== "snoozed" ||
 			(record.snoozed_until !== null && record.snoozed_until > today)
 		)
-			handled.add(`${record.rule_id}/${record.due_on}`);
+			handled.add(occurrenceKey(record.rule_id, record.due_on));
 	return handled;
 };
 
@@ -108,17 +115,43 @@ export const dueOccurrences = <R extends RuleLike>(
 	records: readonly OccurrenceRecord[],
 	today: string,
 ): DueOccurrence<R>[] => {
-	const handled = done(records, today);
+	const handled = handledKeys(records, today);
 	return rules
 		.flatMap((rule) =>
 			dueDates(rule, rule.starts_on, today)
-				.filter((dueOn) => !handled.has(`${rule.id}/${dueOn}`))
+				.filter((dueOn) => !handled.has(occurrenceKey(rule.id, dueOn)))
 				.map((dueOn) => ({ rule, dueOn })),
 		)
 		.toSorted(
 			(a, b) =>
 				a.dueOn.localeCompare(b.dueOn) || a.rule.id.localeCompare(b.rule.id),
 		);
+};
+
+/**
+ * How an edit to a rule reaches only Occurrences still to come (ADR-0004). A rule not yet started changes in place.
+ * One already started ends yesterday, keeping its past Occurrences (and what was done with them, Pending ones
+ * included) as they were, and the edited rule carries on as a new one from its first due date from today; none when
+ * the edit leaves it nothing more to come.
+ */
+export const ruleEdit = (
+	current: Schedule,
+	edited: Schedule,
+	today: string,
+):
+	| { split: false }
+	| { split: true; endsOn: string; startsOn: string | null } => {
+	if (current.starts_on >= today) return { split: false };
+	const yesterday = shiftCalendarDate(today, -1);
+	const endsOn =
+		current.ends_on !== null && current.ends_on < yesterday
+			? current.ends_on
+			: yesterday;
+	const startsOn =
+		edited.starts_on >= today
+			? edited.starts_on
+			: nextDueDate(edited, yesterday);
+	return { split: true, endsOn, startsOn };
 };
 
 /** The next due date after today, for showing on a rule; null once it has ended. */

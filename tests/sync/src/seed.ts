@@ -1,4 +1,5 @@
 import type { Role } from "@hisaab/client-schema";
+import { occurrenceId } from "@hisaab/domain";
 import { v7 as uuidv7 } from "uuid";
 
 import { adminClient, type SignedInUser, signInNewUser } from "./users";
@@ -260,7 +261,7 @@ const seedWallets = async (
 	if (ruleRows.error) throw ruleRows.error;
 	const occurrenceRows = await admin.from("occurrences").insert(
 		rules.map(({ id, household_id }) => ({
-			id: uuidv7(),
+			id: occurrenceId(id, "2026-10-01"),
 			household_id,
 			rule_id: id,
 			due_on: "2026-10-01",

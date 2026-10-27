@@ -270,6 +270,18 @@ describe("PendingList", () => {
 		]);
 	});
 
+	it("leaves one being changed out of the batch", async () => {
+		const { onConfirm, user } = await setup();
+		await user.press(
+			screen.getAllByRole("button", { name: "Change and confirm" }).at(0) ??
+				screen.getByText("none"),
+		);
+		await user.press(screen.getByRole("button", { name: "Confirm 1" }));
+		expect(onConfirm).toHaveBeenCalledWith([
+			{ due: pending[1], amount: "3000", occurredOn: "2026-10-05" },
+		]);
+	});
+
 	it("skips or snoozes one for the household", async () => {
 		const { onSkip, onSnooze, user } = await setup();
 		await user.press(screen.getByRole("button", { name: /^Skip Internet/ }));

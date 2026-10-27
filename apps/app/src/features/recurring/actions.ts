@@ -10,6 +10,7 @@ import {
 	occurrenceEntryId,
 	occurrenceId,
 	parseMoney,
+	ruleEdit,
 	signedAmount,
 } from "@hisaab/domain";
 import { eq } from "drizzle-orm";
@@ -22,6 +23,7 @@ import {
 	CONFIRMED,
 	type Confirmation,
 	type Due,
+	type RecurringRule,
 	type RuleDraft,
 	SKIPPED,
 	SNOOZED,
@@ -59,23 +61,78 @@ export const createRule = async (
 	return id;
 };
 
-/** A rule's changes reach only Occurrences still to come or still Pending; Entries already made stay as they are. */
-export const updateRule = async (ruleId: string, draft: RuleDraft) => {
-	await db
-		.update(recurringRules)
-		.set(stamped(columns(draft)))
-		.where(eq(recurringRules.id, ruleId));
+const scheduleOf = (draft: RuleDraft) => ({
+	frequency: draft.frequency,
+	interval: draft.interval,
+	day_of_month: draft.dayOfMonth,
+	starts_on: draft.startsOn,
+	ends_on: draft.endsOn,
+});
+
+/**
+ * A rule's changes reach only Occurrences still to come (ADR-0004). One not started yet changes in place; one already
+ * started ends yesterday as it was, so its past and Pending Occurrences stay as they were, and the edit carries on as a
+ * new rule from its first due date from today. Returns the id the edited rule goes on under.
+ */
+export const updateRule = async (
+	rule: RecurringRule,
+	userId: string,
+	draft: RuleDraft,
+	today: string,
+) => {
+	const edit = ruleEdit(rule, scheduleOf(draft), today);
+	if (!edit.split) {
+		await db
+			.update(recurringRules)
+			.set(stamped(columns(draft)))
+			.where(eq(recurringRules.id, rule.id));
+		return rule.id;
+	}
+	const { endsOn, startsOn } = edit;
+	const id = newId();
+	await db.transaction(async (tx) => {
+		await tx
+			.update(recurringRules)
+			.set(stamped({ ends_on: endsOn }))
+			.where(eq(recurringRules.id, rule.id));
+		if (startsOn === null) return;
+		await tx.insert(recurringRules).values(
+			stamped({
+				id,
+				household_id: rule.household_id,
+				kind: rule.kind,
+				...columns({ ...draft, startsOn }),
+				created_by: userId,
+				created_at: nowIso(),
+			}),
+		);
+	});
+	return startsOn === null ? rule.id : id;
 };
 
-/** The rule goes with what was done with its Occurrences; the Entries they became stay. */
+/** The rule goes with what was done with its Occurrences, here and (by cascade) on the server; the Entries stay. */
 export const deleteRule = async (ruleId: string) => {
-	await db
-		.update(recurringRules)
-		.set(stampedDelete())
-		.where(eq(recurringRules.id, ruleId));
+	await db.transaction(async (tx) => {
+		await tx
+			.update(occurrences)
+			.set(stampedDelete())
+			.where(eq(occurrences.rule_id, ruleId));
+		await tx
+			.update(recurringRules)
+			.set(stampedDelete())
+			.where(eq(recurringRules.id, ruleId));
+	});
 };
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+const localState = async (tx: Transaction, { rule, dueOn }: Due) =>
+	(
+		await tx
+			.select({ state: occurrences.state })
+			.from(occurrences)
+			.where(eq(occurrences.id, occurrenceId(rule.id, dueOn)))
+	)[0]?.state;
 
 /** Writes what was done with an Occurrence, changing the row when this device already has one (it's the same id). */
 const record = async (
@@ -113,15 +170,19 @@ const record = async (
 /**
  * Confirms Occurrences into Entries in one local transaction, each Occurrence before its Entry. Both ids come from
  * the rule and due date, so another device confirming the same one writes the same rows and they merge (ADR-0004).
- * An Entry already on this device (synced from that other device) is left as it is.
+ * One this device already has confirmed (from that other device) is left as it is, and Auto-record (`onlyNew`) leaves
+ * anything already done with. Amounts are in the Base currency: rules only use Wallets in it until Base amounts (#45).
  */
 export const confirmOccurrences = async (
 	userId: string,
 	confirmations: readonly Confirmation[],
 	currency: string,
+	{ onlyNew = false }: { onlyNew?: boolean } = {},
 ) => {
 	await db.transaction(async (tx) => {
 		for (const { due, amount, occurredOn } of confirmations) {
+			const state = await localState(tx, due);
+			if (state === CONFIRMED || (onlyNew && state !== undefined)) continue;
 			const { rule, dueOn } = due;
 			const entryId = occurrenceEntryId(rule.id, dueOn);
 			await record(tx, due, {

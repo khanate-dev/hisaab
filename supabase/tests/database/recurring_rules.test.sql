@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(18);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-00000000dda1', 'alice@example.com'),
@@ -69,29 +69,36 @@ select throws_ok(
 	'42501', null, 'a rule is made in nobody else''s name'
 );
 
+select throws_ok(
+	$$ insert into public.occurrences (id, household_id, rule_id, due_on, state, entry_id)
+	   values ('86d0ac97-e4ad-5d3f-9764-44991570304d', '00000000-0000-7000-8000-00000000ddf1',
+	           '00000000-0000-7000-8000-00000000dd01', '2026-10-01', 'confirmed', '00000000-0000-7000-8000-00000000dd99') $$,
+	'23514', null, 'an Occurrence points at no Entry but the one derived from it'
+);
+
 -- Alice confirms October's rent: the Occurrence, then its Entry.
 select lives_ok(
 	$$ insert into public.occurrences (id, household_id, rule_id, due_on, state, entry_id)
-	   values ('00000000-0000-8000-8000-00000000dd11', '00000000-0000-7000-8000-00000000ddf1',
-	           '00000000-0000-7000-8000-00000000dd01', '2026-10-01', 'confirmed', '00000000-0000-8000-8000-00000000dd21') $$,
+	   values ('86d0ac97-e4ad-5d3f-9764-44991570304d', '00000000-0000-7000-8000-00000000ddf1',
+	           '00000000-0000-7000-8000-00000000dd01', '2026-10-01', 'confirmed', '6d7e9ad5-7893-5327-94a5-1712abe5ac52') $$,
 	'a Member confirms an Occurrence'
 );
 insert into public.entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by) values
-	('00000000-0000-8000-8000-00000000dd21', '00000000-0000-7000-8000-00000000ddf1', '00000000-0000-7000-8000-00000000ddc1',
+	('6d7e9ad5-7893-5327-94a5-1712abe5ac52', '00000000-0000-7000-8000-00000000ddf1', '00000000-0000-7000-8000-00000000ddc1',
 	 'expense', -50000, pg_temp.category('Rent'), '2026-10-01', '00000000-0000-4000-8000-00000000dda1');
 
 -- Bob confirmed it too, offline: his copies upload over the same ids.
 select pg_temp.act_as('00000000-0000-4000-8000-00000000dda2');
 select lives_ok(
 	$$ insert into public.occurrences (id, household_id, rule_id, due_on, state, entry_id)
-	   values ('00000000-0000-8000-8000-00000000dd11', '00000000-0000-7000-8000-00000000ddf1',
-	           '00000000-0000-7000-8000-00000000dd01', '2026-10-01', 'confirmed', '00000000-0000-8000-8000-00000000dd21')
+	   values ('86d0ac97-e4ad-5d3f-9764-44991570304d', '00000000-0000-7000-8000-00000000ddf1',
+	           '00000000-0000-7000-8000-00000000dd01', '2026-10-01', 'confirmed', '6d7e9ad5-7893-5327-94a5-1712abe5ac52')
 	   on conflict (id) do update set state = excluded.state, entry_id = excluded.entry_id $$,
 	'another device''s confirm of the same Occurrence lands'
 );
 select lives_ok(
 	$$ insert into public.entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by, created_at)
-	   values ('00000000-0000-8000-8000-00000000dd21', '00000000-0000-7000-8000-00000000ddf1',
+	   values ('6d7e9ad5-7893-5327-94a5-1712abe5ac52', '00000000-0000-7000-8000-00000000ddf1',
 	           '00000000-0000-7000-8000-00000000ddc1', 'expense', -50000, pg_temp.category('Rent'), '2026-10-01',
 	           (select auth.uid()), now() + interval '1 hour')
 	   on conflict (id) do update set amount = excluded.amount, created_by = excluded.created_by,
@@ -103,20 +110,20 @@ select is(
 	(select count(*)::int from public.entries where household_id = '00000000-0000-7000-8000-00000000ddf1' and kind = 'expense'),
 	1, 'as one Entry, not two'
 );
-select is((select created_by from public.entries where id = '00000000-0000-8000-8000-00000000dd21'),
+select is((select created_by from public.entries where id = '6d7e9ad5-7893-5327-94a5-1712abe5ac52'),
 	'00000000-0000-4000-8000-00000000dda1'::uuid, 'recorded by whoever confirmed first');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000dda2');
 select is(pg_temp.affected($$ update public.occurrences set state = 'skipped', entry_id = null
-	where id = '00000000-0000-8000-8000-00000000dd11' $$), 1, 'a late skip from another device lands');
+	where id = '86d0ac97-e4ad-5d3f-9764-44991570304d' $$), 1, 'a late skip from another device lands');
 reset role;
-select is((select state from public.occurrences where id = '00000000-0000-8000-8000-00000000dd11'), 'confirmed',
+select is((select state from public.occurrences where id = '86d0ac97-e4ad-5d3f-9764-44991570304d'), 'confirmed',
 	'but leaves a confirmed Occurrence as it was');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000dda3');
 select throws_ok(
 	$$ insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until)
-	   values ('00000000-0000-8000-8000-00000000dd12', '00000000-0000-7000-8000-00000000ddf1',
+	   values ('b8fe83ba-66ad-5641-bde9-6daa9bca56c7', '00000000-0000-7000-8000-00000000ddf1',
 	           '00000000-0000-7000-8000-00000000dd02', '2026-10-31', 'snoozed', '2026-11-03') $$,
 	'42501', null, 'a Viewer snoozes nothing'
 );

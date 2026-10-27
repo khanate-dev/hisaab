@@ -10,7 +10,6 @@ import { whenLoaded } from "@/lib/watched";
 
 import {
 	AUTO,
-	CONFIRM,
 	type Due,
 	type OccurrenceRow,
 	type RecurringRule,
@@ -48,8 +47,9 @@ const useOccurrenceRows = (
 	);
 
 /**
- * Occurrences due by today that nothing has been done with, oldest first, split by mode: Confirm rules' are Pending,
- * Auto-record rules' wait for a device to record them. Undefined until everything has loaded.
+ * Occurrences due by today that nothing has been done with, oldest first: Auto-record rules' from the day the rule
+ * was made wait for a device to record them; the rest (Confirm rules', and anything back-dated before an Auto-record
+ * rule existed) are Pending, so nothing is recorded behind anyone's back. Undefined until everything has loaded.
  */
 export const useDueOccurrences = (
 	householdId: string | undefined,
@@ -60,9 +60,13 @@ export const useDueOccurrences = (
 	return useMemo(() => {
 		if (!rules || !records) return undefined;
 		const due = dueOccurrences(rules, records, today);
+		const recordable = ({ rule, dueOn }: Due) =>
+			rule.mode === AUTO &&
+			rule.amount !== null &&
+			dueOn >= rule.created_at.slice(0, 10);
 		return {
-			pending: due.filter((d) => d.rule.mode === CONFIRM),
-			toRecord: due.filter((d) => d.rule.mode === AUTO),
+			pending: due.filter((d) => !recordable(d)),
+			toRecord: due.filter(recordable),
 		};
 	}, [rules, records, today]);
 };

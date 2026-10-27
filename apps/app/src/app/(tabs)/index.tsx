@@ -10,11 +10,9 @@ import { EntryList } from "@/features/entries/entry-list";
 import { useEntryViews } from "@/features/entries/use-entries";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { PendingTile } from "@/features/recurring/pending-tile";
-import { useAutoRecord } from "@/features/recurring/use-auto-record";
 import { useDueOccurrences } from "@/features/recurring/use-recurring";
 import { LoansTile } from "@/features/loans/loans-tile";
 import { useLoans } from "@/features/loans/use-loans";
-import { useCanWrite } from "@/features/households/use-can-write";
 import { Screen } from "@/features/shell/screen";
 import { WalletList } from "@/features/wallets/wallet-list";
 import { useWallets } from "@/features/wallets/use-wallets";
@@ -27,7 +25,6 @@ export default function Home() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
 	const household = useCurrentHousehold(userId);
-	const canWrite = useCanWrite(household?.id, userId) === true;
 	const wallets = useWallets(household?.id);
 	const recent = useEntryViews(household?.id)?.slice(0, RECENT_ENTRIES);
 	const loans = useLoans(household?.id);
@@ -40,12 +37,6 @@ export default function Home() {
 		today,
 	)?.budgets;
 	const due = useDueOccurrences(household?.id, today);
-	useAutoRecord({
-		toRecord: due?.toRecord,
-		userId,
-		canWrite,
-		baseCurrency: household?.base_currency,
-	});
 
 	return (
 		<Screen title={t`Home`}>

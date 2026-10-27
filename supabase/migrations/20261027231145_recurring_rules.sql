@@ -157,11 +157,33 @@ revoke all on function private.keep_occurrence_origin() from public;
 create trigger keep_occurrence_origin before update on public.occurrences
 	for each row execute function private.keep_occurrence_origin();
 
+-- An Occurrence's ids are the ones every device derives from its rule and due date (`occurrenceId`,
+-- `occurrenceEntryId` in the domain package; the same name-based UUIDs as uuid_generate_v5), so its row can't be made
+-- to point at some other Entry.
+create function private.keep_occurrence_ids_derived() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+	namespace constant uuid := '6f0f4c8e-3a5b-4c1d-9e2f-7a8b9c0d1e2f';
+begin
+	if new.id is distinct from extensions.uuid_generate_v5(namespace, format('occurrence/%s/%s', new.rule_id, new.due_on))
+		or (new.entry_id is not null and new.entry_id is distinct from
+			extensions.uuid_generate_v5(namespace, format('entry/%s/%s', new.rule_id, new.due_on))) then
+		raise exception 'An Occurrence''s ids come from its rule and due date' using errcode = '23514';
+	end if;
+	return new;
+end;
+$$;
+revoke all on function private.keep_occurrence_ids_derived() from public;
+create trigger keep_occurrence_ids_derived before insert or update on public.occurrences
+	for each row execute function private.keep_occurrence_ids_derived();
+
 -- Two devices confirming (or Auto-recording) the same Occurrence write the same Entry id: the second upload lands as an
 -- update of the first, whoever sent it, so the copies merge instead of being refused. Who recorded it stays whoever
 -- did first. Anything else keeps its origin as before.
 create or replace function private.keep_entry_origin() returns trigger
-language plpgsql security definer
+language plpgsql
 set search_path = ''
 as $$
 begin
