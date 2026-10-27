@@ -45,6 +45,12 @@ insert into public.contacts (id, household_id, name) values
 	('00000000-0000-7000-8000-00000000aa12', '00000000-0000-7000-8000-00000000aaf1', 'Spare');
 insert into public.loans (id, household_id, contact_id, direction) values
 	('00000000-0000-7000-8000-00000000aa21', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa11', 'lent');
+insert into public.budgets (id, household_id, category_id, valid_from, amount) values
+	('00000000-0000-7000-8000-00000000aa41', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1',
+	 '2026-10', 100);
+insert into public.budget_overrides (id, household_id, category_id, month, amount) values
+	('00000000-0000-7000-8000-00000000aa51', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1',
+	 '2026-11', 50);
 insert into public.invites (id, household_id, token, role, expires_at, created_by) values
 	('00000000-0000-7000-8000-00000000aa31', '00000000-0000-7000-8000-00000000aaf1', repeat('m', 32), 'member',
 	 now() + interval '7 days', '00000000-0000-4000-8000-00000000aaa1');
@@ -100,6 +106,16 @@ insert into attempts values
 		values ('00000000-0000-7000-8000-00000000ab08', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa11', 'borrowed') $$),
 	('loans.update', $$ update public.loans set notes = notes where id = '00000000-0000-7000-8000-00000000aa21' $$),
 	('loans.delete', $$ delete from public.loans where id = '00000000-0000-7000-8000-00000000aa21' $$),
+	('budgets.select', $$ select 1 from public.budgets where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('budgets.insert', $$ insert into public.budgets (id, household_id, category_id, valid_from, amount)
+		values ('00000000-0000-7000-8000-00000000ab11', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1', '2026-12', 1) $$),
+	('budgets.update', $$ update public.budgets set amount = amount where id = '00000000-0000-7000-8000-00000000aa41' $$),
+	('budgets.delete', $$ delete from public.budgets where id = '00000000-0000-7000-8000-00000000aa41' $$),
+	('budget_overrides.select', $$ select 1 from public.budget_overrides where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('budget_overrides.insert', $$ insert into public.budget_overrides (id, household_id, category_id, month, amount)
+		values ('00000000-0000-7000-8000-00000000ab12', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1', '2026-12', 1) $$),
+	('budget_overrides.update', $$ update public.budget_overrides set amount = amount where id = '00000000-0000-7000-8000-00000000aa51' $$),
+	('budget_overrides.delete', $$ delete from public.budget_overrides where id = '00000000-0000-7000-8000-00000000aa51' $$),
 	('activity_log.select', $$ select 1 from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.insert', $$ insert into public.activity_log (household_id, table_name, row_id, action)
 		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', '00000000-0000-7000-8000-00000000ab09', 'insert') $$),
@@ -144,7 +160,7 @@ end $$;
 -- What every household member reads.
 create function pg_temp.reads() returns text[] language sql as $$
 	select array['households.select', 'memberships.select', 'profiles.select', 'wallets.select', 'categories.select',
-		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'activity_log.select',
+		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'budgets.select', 'budget_overrides.select', 'activity_log.select',
 		'app_config.select'];
 $$;
 -- What Admins and Members change besides reading.
@@ -155,7 +171,9 @@ create function pg_temp.writes() returns text[] language sql as $$
 		'entries.insert', 'entries.update', 'entries.delete',
 		'entry_items.insert', 'entry_items.update', 'entry_items.delete',
 		'contacts.insert', 'contacts.update', 'contacts.delete',
-		'loans.insert', 'loans.update', 'loans.delete'];
+		'loans.insert', 'loans.update', 'loans.delete',
+		'budgets.insert', 'budgets.update', 'budgets.delete',
+		'budget_overrides.insert', 'budget_overrides.update', 'budget_overrides.delete'];
 $$;
 
 select set_eq(

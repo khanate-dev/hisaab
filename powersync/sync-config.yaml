@@ -11,7 +11,7 @@ streams:
     auto_subscribe: true
     query: SELECT app_config.id, app_config.min_contract_version FROM app_config
 
-  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries and Items.
+  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries, Items, Budgets and Budget overrides.
   households:
     auto_subscribe: true
     queries:
@@ -41,6 +41,13 @@ streams:
       - SELECT entry_items.id, entry_items.household_id, entry_items.entry_id, entry_items.position, entry_items.description, entry_items.amount, entry_items.quantity, entry_items.category_id, entry_items.rest, entry_items.created_at
         FROM entry_items
         WHERE entry_items.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+
+      - SELECT budgets.id, budgets.household_id, budgets.category_id, budgets.valid_from, budgets.amount, budgets.created_at
+        FROM budgets
+        WHERE budgets.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT budget_overrides.id, budget_overrides.household_id, budget_overrides.category_id, budget_overrides.month, budget_overrides.amount, budget_overrides.created_at
+        FROM budget_overrides
+        WHERE budget_overrides.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
   # A household's Invites, to its Admins only: an Invite's token is the link itself.
   invites:

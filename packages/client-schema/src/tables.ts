@@ -114,6 +114,37 @@ export const loans = sqliteTable("loans", {
 	_deleted: deleteFlag(),
 });
 
+/**
+ * A Budget, or for an income Category its Expected income: a standing amount per Budget month, valid from one
+ * onward until a later one replaces it (CONTEXT.md).
+ */
+export const budgets = sqliteTable("budgets", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	category_id: text("category_id").notNull(),
+	/** The Budget month it's valid from, YYYY-MM. */
+	valid_from: text("valid_from").notNull(),
+	/** Exact decimal text in the Base currency, zero or more. Parse with parseMoney. */
+	amount: text("amount").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** A Budget override: a replacement Budget (or Expected income) amount for one Budget month. */
+export const budgetOverrides = sqliteTable("budget_overrides", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	category_id: text("category_id").notNull(),
+	/** The Budget month it replaces the standing amount in, YYYY-MM. */
+	month: text("month").notNull(),
+	/** Exact decimal text in the Base currency, zero or more. Parse with parseMoney. */
+	amount: text("amount").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 export const entries = sqliteTable("entries", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
