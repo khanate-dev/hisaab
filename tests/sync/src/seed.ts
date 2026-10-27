@@ -215,6 +215,28 @@ const seedWallets = async (
 	);
 	if (items.error) throw items.error;
 
+	// A Budget for Groceries per household, overridden for one month.
+	const budgets = await admin.from("budgets").insert(
+		expenses.map(({ household_id, category_id }) => ({
+			id: uuidv7(),
+			household_id,
+			category_id,
+			valid_from: "2026-10",
+			amount: "30000",
+		})),
+	);
+	if (budgets.error) throw budgets.error;
+	const overrides = await admin.from("budget_overrides").insert(
+		expenses.map(({ household_id, category_id }) => ({
+			id: uuidv7(),
+			household_id,
+			category_id,
+			month: "2026-11",
+			amount: "45000",
+		})),
+	);
+	if (overrides.error) throw overrides.error;
+
 	// A Loan Lent to a Contact per household, with its principal.
 	const contacts = wallets.map(({ household_id }) => ({
 		id: uuidv7(),

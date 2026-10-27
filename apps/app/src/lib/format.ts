@@ -29,6 +29,15 @@ export const formatDate = (isoDate: string) => {
 	);
 };
 
+/** A Budget month for display, named after the month it starts in ("October 2026"), from its first date. */
+export const formatBudgetMonth = (firstDate: string) => {
+	const [year, month] = firstDate.split("-").map(Number);
+	return new Intl.DateTimeFormat(undefined, {
+		month: "long",
+		year: "numeric",
+	}).format(new Date(year ?? 0, (month ?? 1) - 1, 1));
+};
+
 /** An instant, say when a change reached the server, as a date and time in the device's locale and timezone. */
 export const formatDateTime = (iso: string) =>
 	new Intl.DateTimeFormat(undefined, {

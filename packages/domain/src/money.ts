@@ -74,6 +74,28 @@ export class Money {
 		);
 	}
 
+	/** This many times over, exactly; `factor` is a whole number. */
+	times(factor: number) {
+		if (!Number.isInteger(factor))
+			throw new Error(`Not a whole number: ${factor}`);
+		return new Money(this.#amount.times(factor), this.currency);
+	}
+
+	/** How much of `whole` this is, as a whole percentage (rounded half up): for showing Pace, never for sums. */
+	percentOf(whole: Money) {
+		if (whole.currency !== this.currency) {
+			throw new Error(
+				`Can't compare ${this.currency} and ${whole.currency}: convert the currency first`,
+			);
+		}
+		if (whole.#amount.isZero()) return null;
+		return this.#amount
+			.times(100)
+			.dividedBy(whole.#amount)
+			.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+			.toNumber();
+	}
+
 	/** The canonical text form: what Postgres and the local database store. Negative zero prints as "0". */
 	toString() {
 		return this.#amount.isZero() ? "0" : this.#amount.toFixed();
@@ -88,6 +110,9 @@ export const negateMoney = (a: Money) => a.negated();
 export const isZero = (a: Money) => a.isZero();
 export const isNegative = (a: Money) => a.isNegative();
 export const moneyEquals = (a: Money, b: Money) => a.equals(b);
+/** `part` as a whole percentage of `whole`; null when `whole` is zero. */
+export const timesMoney = (a: Money, factor: number) => a.times(factor);
+export const percentOf = (part: Money, whole: Money) => part.percentOf(whole);
 
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */
 export const sumMoney = (amounts: readonly Money[], currency: string): Money =>

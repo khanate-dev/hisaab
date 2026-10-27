@@ -2,6 +2,7 @@
 export * from "./amount-input";
 export * from "./balance-history";
 export * from "./balances";
+export * from "./budgets";
 export * from "./categories";
 export * from "./contract-version";
 export * from "./dates";

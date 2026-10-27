@@ -17,6 +17,8 @@ const SYNCED_TABLES = [
 	"entry_items",
 	"contacts",
 	"loans",
+	"budgets",
+	"budget_overrides",
 	"invites",
 ] as const;
 
