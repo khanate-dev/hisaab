@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-00000000cca1', 'member@example.com'),
@@ -72,6 +72,12 @@ select throws_ok(
 );
 select lives_ok(
 	format($$ insert into public.budgets (id, household_id, category_id, valid_from, amount)
+	   values ('00000000-0000-7000-8000-00000000cc08', '00000000-0000-7000-8000-00000000ccf1', %L, '2027-03', null) $$,
+	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Groceries')),
+	'or stops it from a month on'
+);
+select lives_ok(
+	format($$ insert into public.budgets (id, household_id, category_id, valid_from, amount)
 	   values ('00000000-0000-7000-8000-00000000cc07', '00000000-0000-7000-8000-00000000ccf1', %L, '2026-10', 250000) $$,
 	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Salary')),
 	'Expected income is set the same way'
@@ -96,7 +102,7 @@ select throws_ok($$ update public.budgets set valid_from = '2026-09' where id = 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000cca2');
 select is(pg_temp.affected($$ update public.budget_overrides set amount = 0 where id = '00000000-0000-7000-8000-00000000cc11' $$),
 	0, 'a Viewer changes no Budget');
-select is((select count(*)::int from public.budgets), 3, 'but reads them all');
+select is((select count(*)::int from public.budgets), 4, 'but reads them all');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000cca3');
 select is((select count(*)::int from public.budgets) + (select count(*)::int from public.budget_overrides), 0,

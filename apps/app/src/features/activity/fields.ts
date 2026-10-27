@@ -64,4 +64,12 @@ export const LOGGED_FIELDS: Record<string, Record<string, Field>> = {
 	memberships: {
 		role: { label: msg`Role`, kind: "text" },
 	},
+	budgets: {
+		amount: { label: msg`Amount`, kind: "money" },
+		valid_from: { label: msg`From`, kind: "text" },
+	},
+	budget_overrides: {
+		amount: { label: msg`Amount`, kind: "money" },
+		month: { label: msg`Month`, kind: "text" },
+	},
 };

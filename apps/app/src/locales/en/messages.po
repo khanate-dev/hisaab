@@ -27,6 +27,10 @@ msgstr "{days} days"
 msgid "{description} × {quantity}"
 msgstr "{description} × {quantity}"
 
+#: src/features/budgets/budget-month.tsx
+msgid "{first} to {last}"
+msgstr "{first} to {last}"
+
 #: src/features/activity/activity-list.tsx
 msgid "{label}: {was} → {now}"
 msgstr "{label}: {was} → {now}"
@@ -38,6 +42,10 @@ msgstr "{lent}, {left} outstanding"
 #: src/features/loans/loan-list.tsx
 msgid "{lent}, settled"
 msgstr "{lent}, settled"
+
+#: src/features/budgets/budget-form.tsx
+msgid "{monthName} on"
+msgstr "{monthName} on"
 
 #: src/features/members/member-list.tsx
 msgid "{name} (you)"
@@ -55,6 +63,14 @@ msgstr "{name}, in {parentName}"
 msgid "{name}, under {parentName}"
 msgstr "{name}, under {parentName}"
 
+#: src/features/budgets/budgets-tile.tsx
+msgid "{name}: {spent} of {of}"
+msgstr "{name}: {spent} of {of}"
+
+#: src/features/budgets/budgets-tile.tsx
+msgid "{name}: {spent} of {of}, {percentUsed}%"
+msgstr "{name}: {spent} of {of}, {percentUsed}%"
+
 #: src/features/members/member-list.tsx
 msgid "{name}'s Role"
 msgstr "{name}'s Role"
@@ -62,6 +78,10 @@ msgstr "{name}'s Role"
 #: src/features/loans/loan-detail.tsx
 msgid "{paid} on {day}"
 msgstr "{paid} on {day}"
+
+#: src/features/budgets/budget-form.tsx
+msgid "{parent}: {name}"
+msgstr "{parent}: {name}"
 
 #: src/features/entries/entry-detail.tsx
 msgid "{parentName} › {categoryName}"
@@ -74,6 +94,14 @@ msgstr "{parentName} › {categoryName} · {walletName}"
 #: src/features/entries/entry-form.tsx
 msgid "{parentName} › {name}"
 msgstr "{parentName} › {name}"
+
+#: src/features/budgets/budget-month.tsx
+msgid "{percent}% received"
+msgstr "{percent}% received"
+
+#: src/features/budgets/budget-month.tsx
+msgid "{percent}% spent"
+msgstr "{percent}% spent"
 
 #: src/features/entries/items-section.tsx
 msgid "{restName}, {restAmount}"
@@ -90,6 +118,14 @@ msgstr "{shown}, {role}"
 #: src/features/invites/invite-list.tsx
 msgid "{summary}: {closed}"
 msgstr "{summary}: {closed}"
+
+#: src/features/budgets/budget-month.tsx
+msgid "{used} of {budget} received"
+msgstr "{used} of {budget} received"
+
+#: src/features/budgets/budget-month.tsx
+msgid "{used} of {budget} spent"
+msgstr "{used} of {budget} spent"
 
 #: src/features/entries/entry-list.tsx
 msgid "{walletName} → {toName}"
@@ -118,6 +154,14 @@ msgstr "{who} deleted {what}: {named}"
 #: src/features/invites/invite-form.tsx
 msgid "1 day"
 msgstr "1 day"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Budget"
+msgstr "a Budget"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Budget override"
+msgstr "a Budget override"
 
 #: src/features/activity/activity-list.tsx
 msgid "a Category"
@@ -374,6 +418,10 @@ msgstr "Borrowed from"
 msgid "Both Wallets' Balances change back as if it never happened."
 msgstr "Both Wallets' Balances change back as if it never happened."
 
+#: src/features/budgets/budget-form.tsx
+msgid "Budget ({currency})"
+msgstr "Budget ({currency})"
+
 #: src/features/households/household-settings.tsx
 msgid "Budget month starts on"
 msgstr "Budget month starts on"
@@ -383,10 +431,8 @@ msgid "Budget month starts on day {startDay}"
 msgstr "Budget month starts on day {startDay}"
 
 #: src/app/(tabs)/budgets.tsx
-msgid "Budget months and Pace arrive with Budgets."
-msgstr "Budget months and Pace arrive with Budgets."
-
-#: src/app/(tabs)/budgets.tsx
+#: src/features/budgets/budget-month.tsx
+#: src/features/budgets/budgets-tile.tsx
 #: src/features/shell/sections.ts
 msgid "Budgets"
 msgstr "Budgets"
@@ -395,11 +441,16 @@ msgstr "Budgets"
 msgid "Budgets and reports are in it. It's fixed once the household has an Entry."
 msgstr "Budgets and reports are in it. It's fixed once the household has an Entry."
 
+#: src/app/(tabs)/budgets.tsx
+msgid "Budgets are in the household's Base currency, which its first Wallet sets."
+msgstr "Budgets are in the household's Base currency, which its first Wallet sets."
+
 #: src/features/categories/labels.ts
 msgid "Bus"
 msgstr "Bus"
 
 #: src/components/ui/confirm.tsx
+#: src/features/budgets/budget-form.tsx
 #: src/features/categories/category-actions.tsx
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/items-section.tsx
@@ -431,11 +482,24 @@ msgstr "Categories"
 #: src/app/_layout.tsx
 #: src/app/categories/[id].tsx
 #: src/features/activity/fields.ts
+#: src/features/budgets/budget-form.tsx
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Category"
 msgstr "Category"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Change"
+msgstr "Change"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Change Expected income for {name}"
+msgstr "Change Expected income for {name}"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Change the Budget for {name}"
+msgstr "Change the Budget for {name}"
 
 #: src/features/entries/entry-form.tsx
 msgid "Change the total"
@@ -532,6 +596,18 @@ msgstr "Date"
 #: src/features/entries/quick-add-form.tsx
 msgid "Date: {dateName}"
 msgstr "Date: {dateName}"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Day {day} of {days}"
+msgstr "Day {day} of {days}"
+
+#: src/features/budgets/budget-month.tsx
+msgid "day {day} of {days}, {percent}% received"
+msgstr "day {day} of {days}, {percent}% received"
+
+#: src/features/budgets/budget-month.tsx
+msgid "day {day} of {days}, {percent}% spent"
+msgstr "day {day} of {days}, {percent}% spent"
 
 #: src/features/entries/amount-keypad.tsx
 msgid "Decimal point"
@@ -708,6 +784,10 @@ msgstr "Enter an amount more than zero, like 1500."
 msgid "Enter an amount more than zero, like 500."
 msgstr "Enter an amount more than zero, like 500."
 
+#: src/features/budgets/budget-form.tsx
+msgid "Enter an amount of zero or more, like 30000."
+msgstr "Enter an amount of zero or more, like 30000."
+
 #: src/features/invites/invite-form.tsx
 msgid "Enter an email like sara@example.com, or leave it empty."
 msgstr "Enter an email like sara@example.com, or leave it empty."
@@ -752,6 +832,14 @@ msgstr "Every change to the household's data. Nobody can edit it."
 msgid "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
 msgstr "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
 
+#: src/features/budgets/budget-month.tsx
+msgid "Expected income"
+msgstr "Expected income"
+
+#: src/features/budgets/budget-form.tsx
+msgid "Expected income ({currency})"
+msgstr "Expected income ({currency})"
+
 #: src/features/categories/labels.ts
 #: src/features/entries/labels.ts
 msgid "Expense"
@@ -770,10 +858,15 @@ msgstr "Expired"
 msgid "Fills in its Category, Wallet and amount"
 msgstr "Fills in its Category, Wallet and amount"
 
+#: src/features/budgets/budget-form.tsx
+msgid "For"
+msgstr "For"
+
 #: src/features/invites/invite-form.tsx
 msgid "For email"
 msgstr "For email"
 
+#: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
@@ -1098,6 +1191,10 @@ msgid "Mobile wallet"
 msgstr "Mobile wallet"
 
 #: src/features/activity/fields.ts
+msgid "Month"
+msgstr "Month"
+
+#: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 #: src/features/households/household-form.tsx
 #: src/features/households/household-settings.tsx
@@ -1165,9 +1262,21 @@ msgstr "New Transfer"
 msgid "New Wallet"
 msgstr "New Wallet"
 
+#: src/features/budgets/budget-month.tsx
+msgid "Next"
+msgstr "Next"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Next Budget month"
+msgstr "Next Budget month"
+
 #: src/features/categories/category-list.tsx
 msgid "No archived Categories in this list."
 msgstr "No archived Categories in this list."
+
+#: src/features/budgets/budget-month.tsx
+msgid "No Budgets this month."
+msgstr "No Budgets this month."
 
 #: src/features/categories/category-list.tsx
 msgid "No Categories in this list yet."
@@ -1181,6 +1290,10 @@ msgstr "No Contacts yet."
 #: src/features/wallets/wallet-detail.tsx
 msgid "No Entries yet."
 msgstr "No Entries yet."
+
+#: src/features/budgets/budget-month.tsx
+msgid "No Expected income this month."
+msgstr "No Expected income this month."
 
 #: src/features/invites/invite-list.tsx
 msgid "No Invites yet."
@@ -1223,6 +1336,14 @@ msgstr "None"
 msgid "Notes"
 msgstr "Notes"
 
+#: src/features/budgets/budget-month.tsx
+msgid "Nothing budgeted"
+msgstr "Nothing budgeted"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Nothing expected"
+msgstr "Nothing expected"
+
 #: src/features/activity/activity-list.tsx
 msgid "Nothing has changed yet."
 msgstr "Nothing has changed yet."
@@ -1258,6 +1379,10 @@ msgstr "Online."
 msgid "Online. Every change synced."
 msgstr "Online. Every change synced."
 
+#: src/features/budgets/budget-form.tsx
+msgid "Only {monthName}"
+msgstr "Only {monthName}"
+
 #: src/features/households/household-settings.tsx
 msgid "Only Admins change these."
 msgstr "Only Admins change these."
@@ -1281,6 +1406,10 @@ msgstr "Open Loan"
 #: src/features/invites/invite-landing.tsx
 msgid "Opening the Invite…"
 msgstr "Opening the Invite…"
+
+#: src/features/budgets/budgets-tile.tsx
+msgid "Opens your Budgets"
+msgstr "Opens your Budgets"
 
 #: src/features/loans/loans-tile.tsx
 msgid "Opens your Loans"
@@ -1339,6 +1468,7 @@ msgstr "Personal"
 msgid "Phone"
 msgstr "Phone"
 
+#: src/features/budgets/budget-form.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
 msgid "Pick a Category."
@@ -1361,6 +1491,14 @@ msgstr "Pick the Wallet it leaves and the one it goes to."
 #: src/features/categories/labels.ts
 msgid "Plane"
 msgstr "Plane"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Previous"
+msgstr "Previous"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Previous Budget month"
+msgstr "Previous Budget month"
 
 #: src/features/activity/activity-list.tsx
 msgid "Puts the Entry back as it was when deleted"
@@ -1471,9 +1609,17 @@ msgstr "Save"
 msgid "Save adjustment"
 msgstr "Save adjustment"
 
+#: src/features/budgets/budget-form.tsx
+msgid "Save Budget"
+msgstr "Save Budget"
+
 #: src/app/entries/new.tsx
 msgid "Save Entry"
 msgstr "Save Entry"
+
+#: src/features/budgets/budget-form.tsx
+msgid "Save Expected income"
+msgstr "Save Expected income"
 
 #: src/features/entries/items-section.tsx
 msgid "Save Item"
@@ -1516,6 +1662,14 @@ msgstr "Send code"
 #: src/features/entries/entry-list.tsx
 msgid "Sent to another household"
 msgstr "Sent to another household"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Set a Budget"
+msgstr "Set a Budget"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Set Expected income"
+msgstr "Set Expected income"
 
 #: src/features/invites/invite-landing.tsx
 msgid "Set up on my own instead"
@@ -1601,6 +1755,14 @@ msgstr "Someone new"
 #: src/features/auth/sign-in-form.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
+
+#: src/features/budgets/budget-month.tsx
+msgid "Spending ahead of the month"
+msgstr "Spending ahead of the month"
+
+#: src/features/budgets/budget-form.tsx
+msgid "Stop from {monthName}"
+msgstr "Stop from {monthName}"
 
 #: src/features/shell/household-pill.tsx
 msgid "Switch household: {name}"

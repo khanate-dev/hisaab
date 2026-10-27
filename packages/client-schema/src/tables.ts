@@ -124,8 +124,8 @@ export const budgets = sqliteTable("budgets", {
 	category_id: text("category_id").notNull(),
 	/** The Budget month it's valid from, YYYY-MM. */
 	valid_from: text("valid_from").notNull(),
-	/** Exact decimal text in the Base currency, zero or more. Parse with parseMoney. */
-	amount: text("amount").notNull(),
+	/** Exact decimal text in the Base currency, zero or more; null for no Budget from this month on. */
+	amount: text("amount"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),

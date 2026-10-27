@@ -72,11 +72,11 @@ describe("Budget months", () => {
 describe("budgetFor", () => {
 	const amount = fc.integer({ min: 0, max: 1_000_000 }).map(String);
 
-	it("is the month's override, else the latest standing amount from before it, else none", () => {
+	it("is the month's override, else the latest standing amount from before it (none once stopped), else none", () => {
 		fc.assert(
 			fc.property(
 				month,
-				fc.array(fc.tuple(month, amount), { maxLength: 6 }),
+				fc.array(fc.tuple(month, fc.option(amount)), { maxLength: 6 }),
 				fc.option(amount),
 				(m, standing, override) => {
 					const rows = standing.map(([validFrom, a]) => ({

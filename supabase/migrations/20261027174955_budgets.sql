@@ -8,7 +8,8 @@ create table public.budgets (
 	category_id uuid not null,
 	-- The Budget month (YYYY-MM it starts in) it's valid from.
 	valid_from text not null check (valid_from ~ '^\d{4}-(0[1-9]|1[0-2])$'),
-	amount numeric not null check (amount >= 0),
+	-- Null: no Budget from this month on, until a later one.
+	amount numeric check (amount >= 0),
 	created_at timestamptz not null default now(),
 	unique (category_id, valid_from),
 	-- A Category deleted (only ever unused) takes its Budgets with it.

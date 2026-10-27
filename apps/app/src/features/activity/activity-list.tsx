@@ -22,6 +22,14 @@ const THING_LABELS: Record<string, MessageDescriptor> = {
 	categories: msg`a Category`,
 	entries: msg`an Entry`,
 	entry_items: msg`an Item`,
+	budgets: msg`a Budget`,
+	budget_overrides: msg`a Budget override`,
+};
+
+/** Rows named after the Category they're for. */
+const FOR_A_CATEGORY: Record<string, boolean> = {
+	budgets: true,
+	budget_overrides: true,
 };
 
 const text = (value: unknown) =>
@@ -35,7 +43,7 @@ const text = (value: unknown) =>
 export type ActivityLookup = {
 	wallets: ReadonlyMap<string, { name: string; currency: string }>;
 	categories: ReadonlyMap<string, string>;
-	/** Items are in the Base currency until Base amounts land (#45). */
+	/** Budgets are in it, and Items too until Base amounts land (#45). */
 	baseCurrency: string | null;
 };
 
@@ -67,7 +75,10 @@ export const ActivityList = ({
 				? text(values.description) !== "—"
 					? text(values.description)
 					: i18n._(entryKindLabel(text(values.kind)))
-				: text(values.name ?? values.description ?? values.role);
+				: FOR_A_CATEGORY[row.table_name] === true
+					? (lookup.categories.get(text(values.category_id)) ??
+						t`a Category since gone`)
+					: text(values.name ?? values.description ?? values.role);
 		const what = thing ? i18n._(thing) : t`a record`;
 		const who =
 			row.actor_id === null

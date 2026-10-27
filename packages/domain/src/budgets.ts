@@ -68,7 +68,8 @@ export const dayOfBudgetMonth = (date: string, startDay: number) =>
 export type StandingBudget = {
 	category_id: string;
 	valid_from: BudgetMonth;
-	amount: string;
+	/** Null stops the Budget from this month on. */
+	amount: string | null;
 };
 export type BudgetOverride = {
 	category_id: string;
@@ -94,7 +95,7 @@ export const budgetFor = (
 	const current = standing
 		.filter((b) => b.category_id === categoryId && b.valid_from <= month)
 		.toSorted((a, b) => (a.valid_from < b.valid_from ? 1 : -1))[0];
-	return current ? parseMoney(current.amount, currency) : null;
+	return current?.amount != null ? parseMoney(current.amount, currency) : null;
 };
 
 export type CountedEntry = {
