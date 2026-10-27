@@ -1,4 +1,9 @@
-import { entries, entryItems, profiles } from "@hisaab/client-schema";
+import {
+	entries,
+	entryItems,
+	profiles,
+	recurringRules,
+} from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -58,7 +63,7 @@ export const useItemsOf = (entryId: string): EntryItem[] | undefined =>
 		),
 	);
 
-/** Whether anything is recorded in a Category (an Entry or an Item), so it's archived, never deleted; undefined while loading. */
+/** Whether anything uses a Category (an Entry, an Item or a Recurring rule), so it's archived, never deleted; undefined while loading. */
 export const useCategoryInUse = (categoryId: string): boolean | undefined => {
 	const entry = whenLoaded(
 		useQuery(
@@ -82,9 +87,20 @@ export const useCategoryInUse = (categoryId: string): boolean | undefined => {
 			),
 		),
 	);
-	return entry === undefined || item === undefined
+	const rule = whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select({ id: recurringRules.id })
+					.from(recurringRules)
+					.where(eq(recurringRules.category_id, categoryId))
+					.limit(1),
+			),
+		),
+	);
+	return entry === undefined || item === undefined || rule === undefined
 		? undefined
-		: entry.length + item.length > 0;
+		: entry.length + item.length + rule.length > 0;
 };
 
 /** A User's display name, for "Recorded by"; undefined until their profile has synced. */

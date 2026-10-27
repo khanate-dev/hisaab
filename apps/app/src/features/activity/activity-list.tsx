@@ -24,6 +24,8 @@ const THING_LABELS: Record<string, MessageDescriptor> = {
 	entry_items: msg`an Item`,
 	budgets: msg`a Budget`,
 	budget_overrides: msg`a Budget override`,
+	recurring_rules: msg`a Recurring rule`,
+	occurrences: msg`an Occurrence`,
 };
 
 /** Rows named after the Category they're for. */

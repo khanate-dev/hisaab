@@ -132,19 +132,20 @@ create policy "Admins and Members undo Occurrences" on public.occurrences
 revoke all on public.occurrences from anon, authenticated;
 grant select, insert, update, delete on public.occurrences to authenticated;
 
--- An Occurrence stays the rule's and its due date's. Once confirmed it stays confirmed while its Entry exists: a skip
--- or snooze from a device that hadn't seen the confirm yet quietly keeps it, so nothing says Pending, or skipped, about
--- money already recorded.
+-- An Occurrence stays the rule's and its due date's. Another device writing the same one (an upsert of the same id)
+-- quietly keeps when it was first done. Once confirmed it stays confirmed while its Entry exists: a skip or snooze from
+-- a device that hadn't seen the confirm yet quietly keeps it, so nothing says Pending, or skipped, about money already
+-- recorded.
 create function private.keep_occurrence_origin() returns trigger
 language plpgsql security definer
 set search_path = ''
 as $$
 begin
 	if new.id is distinct from old.id or new.household_id is distinct from old.household_id
-		or new.rule_id is distinct from old.rule_id or new.due_on is distinct from old.due_on
-		or new.created_at is distinct from old.created_at then
+		or new.rule_id is distinct from old.rule_id or new.due_on is distinct from old.due_on then
 		raise exception 'An Occurrence stays its rule''s, on its due date' using errcode = '42501';
 	end if;
+	new.created_at := old.created_at;
 	if old.state = 'confirmed' and new.state <> 'confirmed'
 		and exists (select 1 from public.entries where id = old.entry_id) then
 		return old;

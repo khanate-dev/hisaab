@@ -103,6 +103,22 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Loan` }}
 				/>
 				<Stack.Screen
+					name="pending"
+					options={{ title: t`Pending` }}
+				/>
+				<Stack.Screen
+					name="recurring/index"
+					options={{ title: t`Recurring rules` }}
+				/>
+				<Stack.Screen
+					name="recurring/new"
+					options={{ title: t`New Recurring rule` }}
+				/>
+				<Stack.Screen
+					name="recurring/[id]"
+					options={{ title: t`Recurring rule` }}
+				/>
+				<Stack.Screen
 					name="wallets/index"
 					options={{ title: t`Wallets` }}
 				/>

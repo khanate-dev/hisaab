@@ -15,6 +15,10 @@ msgstr "{categoryName} · {walletName}"
 msgid "{contactName} (archived)"
 msgstr "{contactName} (archived)"
 
+#: src/features/recurring/pending-tile.tsx
+msgid "{count} recurring Entries wait for you to confirm them."
+msgstr "{count} recurring Entries wait for you to confirm them."
+
 #: src/features/entries/entry-detail.tsx
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
@@ -30,6 +34,10 @@ msgstr "{description} × {quantity}"
 #: src/features/budgets/budget-month.tsx
 msgid "{first} to {last}"
 msgstr "{first} to {last}"
+
+#: src/features/recurring/rule-list.tsx
+msgid "{how} · {mode} · {when}"
+msgstr "{how} · {mode} · {when}"
 
 #: src/features/activity/activity-list.tsx
 msgid "{label}: {was} → {now}"
@@ -47,6 +55,10 @@ msgstr "{lent}, settled"
 msgid "{monthName} on"
 msgstr "{monthName} on"
 
+#: src/features/recurring/rule-list.tsx
+msgid "{name} · {amount}"
+msgstr "{name} · {amount}"
+
 #: src/features/members/member-list.tsx
 msgid "{name} (you)"
 msgstr "{name} (you)"
@@ -54,6 +66,10 @@ msgstr "{name} (you)"
 #: src/features/households/household-list.tsx
 msgid "{name}, {role}"
 msgstr "{name}, {role}"
+
+#: src/features/recurring/pending-list.tsx
+msgid "{name}, due {dueDate}"
+msgstr "{name}, due {dueDate}"
 
 #: src/features/categories/category-list.tsx
 msgid "{name}, in {parentName}"
@@ -80,6 +96,7 @@ msgid "{paid} on {day}"
 msgstr "{paid} on {day}"
 
 #: src/features/budgets/budget-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "{parent}: {name}"
 msgstr "{parent}: {name}"
 
@@ -155,6 +172,14 @@ msgstr "{who} deleted {what}: {named}"
 msgid "1 day"
 msgstr "1 day"
 
+#: src/features/recurring/rule-form.tsx
+msgid "1 for every one; 2 for every other one."
+msgstr "1 for every one; 2 for every other one."
+
+#: src/features/recurring/pending-tile.tsx
+msgid "1 recurring Entry waits for you to confirm it."
+msgstr "1 recurring Entry waits for you to confirm it."
+
 #: src/features/activity/activity-list.tsx
 msgid "a Budget"
 msgstr "a Budget"
@@ -202,6 +227,14 @@ msgstr "A new membership couldn't sync"
 #: src/features/activity/activity-list.tsx
 msgid "a record"
 msgstr "a record"
+
+#: src/features/activity/activity-list.tsx
+msgid "a Recurring rule"
+msgstr "a Recurring rule"
+
+#: src/features/recurring/rule-form.tsx
+msgid "A shorter month has it on its last day."
+msgstr "A shorter month has it on its last day."
 
 #: src/features/entries/transfer-form.tsx
 msgid "A Transfer goes to another Wallet."
@@ -304,11 +337,23 @@ msgstr "All Wallets"
 msgid "Amount"
 msgstr "Amount"
 
+#: src/features/recurring/rule-form.tsx
+msgid "Amount ({baseCurrency})"
+msgstr "Amount ({baseCurrency})"
+
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Amount ({currency})"
 msgstr "Amount ({currency})"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Amount for {name} ({baseCurrency})"
+msgstr "Amount for {name} ({baseCurrency})"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Amount varies"
+msgstr "Amount varies"
 
 #: src/features/activity/activity-list.tsx
 msgid "an Entry"
@@ -317,6 +362,10 @@ msgstr "an Entry"
 #: src/features/activity/activity-list.tsx
 msgid "an Item"
 msgstr "an Item"
+
+#: src/features/activity/activity-list.tsx
+msgid "an Occurrence"
+msgstr "an Occurrence"
 
 #: src/features/invites/invite-list.tsx
 msgid "anyone with the link"
@@ -364,6 +413,14 @@ msgstr "Archived: gone from your lists, everything recorded in it kept."
 #: src/features/wallets/wallet-detail.tsx
 msgid "Archived: hidden from your Wallets, its Entries kept."
 msgstr "Archived: hidden from your Wallets, its Entries kept."
+
+#: src/features/recurring/labels.ts
+msgid "Auto-record"
+msgstr "Auto-record"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Auto-record needs an amount; leave it to Confirm for a bill that varies."
+msgstr "Auto-record needs an amount; leave it to Confirm for a bill that varies."
 
 #: src/features/categories/labels.ts
 msgid "Baby"
@@ -486,12 +543,17 @@ msgstr "Categories"
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Category"
 msgstr "Category"
 
 #: src/features/budgets/budget-month.tsx
 msgid "Change"
 msgstr "Change"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Change and confirm"
+msgstr "Change and confirm"
 
 #: src/features/budgets/budget-month.tsx
 msgid "Change Expected income for {name}"
@@ -504,6 +566,10 @@ msgstr "Change the Budget for {name}"
 #: src/features/entries/entry-form.tsx
 msgid "Change the total"
 msgstr "Change the total"
+
+#: src/app/recurring/[id].tsx
+msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
+msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 
 #: src/components/ui/sheet.tsx
 #: src/features/shell/quick-add.tsx
@@ -525,6 +591,26 @@ msgstr "Coin"
 #: src/features/categories/category-form.tsx
 msgid "Colour"
 msgstr "Colour"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Confirm {count}"
+msgstr "Confirm {count}"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Confirm {name}"
+msgstr "Confirm {name}"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Confirm {name} due {dueDate} with the others"
+msgstr "Confirm {name} due {dueDate} with the others"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Confirm 1"
+msgstr "Confirm 1"
+
+#: src/features/recurring/labels.ts
+msgid "Confirm each one"
+msgstr "Confirm each one"
 
 #: src/features/loans/loan-form.tsx
 msgid "Contact"
@@ -593,6 +679,10 @@ msgstr "Cyan"
 msgid "Date"
 msgstr "Date"
 
+#: src/features/recurring/pending-list.tsx
+msgid "Date for {name}"
+msgstr "Date for {name}"
+
 #: src/features/entries/quick-add-form.tsx
 msgid "Date: {dateName}"
 msgstr "Date: {dateName}"
@@ -608,6 +698,10 @@ msgstr "day {day} of {days}, {percent}% received"
 #: src/features/budgets/budget-month.tsx
 msgid "day {day} of {days}, {percent}% spent"
 msgstr "day {day} of {days}, {percent}% spent"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Day of the month"
+msgstr "Day of the month"
 
 #: src/features/entries/amount-keypad.tsx
 msgid "Decimal point"
@@ -655,6 +749,10 @@ msgstr "Delete last digit"
 msgid "Delete Loan"
 msgstr "Delete Loan"
 
+#: src/app/recurring/[id].tsx
+msgid "Delete rule"
+msgstr "Delete rule"
+
 #: src/features/loans/loan-detail.tsx
 msgid "Delete the {paid} Repayment"
 msgstr "Delete the {paid} Repayment"
@@ -662,6 +760,10 @@ msgstr "Delete the {paid} Repayment"
 #: src/features/loans/loan-detail.tsx
 msgid "Delete this Loan?"
 msgstr "Delete this Loan?"
+
+#: src/app/recurring/[id].tsx
+msgid "Delete this Recurring rule?"
+msgstr "Delete this Recurring rule?"
 
 #: src/features/sync/sync-status.tsx
 msgid "Deleting a household couldn't sync"
@@ -676,6 +778,7 @@ msgstr "Deleting a membership couldn't sync"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Description"
 msgstr "Description"
 
@@ -720,6 +823,10 @@ msgstr "Due"
 msgid "Due {due}"
 msgstr "Due {due}"
 
+#: src/features/recurring/pending-list.tsx
+msgid "Due {dueDate} · {howMuch}"
+msgstr "Due {dueDate} · {howMuch}"
+
 #: src/features/entries/entry-form.tsx
 msgid "Earlier Entries like this"
 msgstr "Earlier Entries like this"
@@ -755,6 +862,14 @@ msgstr "Edit Wallet"
 msgid "Email"
 msgstr "Email"
 
+#: src/features/recurring/rule-list.tsx
+msgid "Ended"
+msgstr "Ended"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Ends"
+msgstr "Ends"
+
 #: src/features/households/household-fields.tsx
 #: src/features/onboarding/first-wallet-form.tsx
 #: src/features/wallets/wallet-form.tsx
@@ -780,9 +895,17 @@ msgstr "Enter an amount like 1500 or 1500.50."
 msgid "Enter an amount more than zero, like 1500."
 msgstr "Enter an amount more than zero, like 1500."
 
+#: src/features/recurring/pending-list.tsx
+msgid "Enter an amount more than zero, like 4500."
+msgstr "Enter an amount more than zero, like 4500."
+
 #: src/features/loans/repayment-form.tsx
 msgid "Enter an amount more than zero, like 500."
 msgstr "Enter an amount more than zero, like 500."
+
+#: src/features/recurring/rule-form.tsx
+msgid "Enter an amount more than zero, like 5000, or leave it empty."
+msgstr "Enter an amount more than zero, like 5000, or leave it empty."
 
 #: src/features/budgets/budget-form.tsx
 msgid "Enter an amount of zero or more, like 30000."
@@ -792,7 +915,12 @@ msgstr "Enter an amount of zero or more, like 30000."
 msgid "Enter an email like sara@example.com, or leave it empty."
 msgstr "Enter an email like sara@example.com, or leave it empty."
 
+#: src/features/recurring/rule-form.tsx
+msgid "Enter an end on or after the start, or leave it empty."
+msgstr "Enter an end on or after the start, or leave it empty."
+
 #: src/features/entries/form-checks.ts
+#: src/features/recurring/pending-list.tsx
 msgid "Enter the date as YYYY-MM-DD, like {today}."
 msgstr "Enter the date as YYYY-MM-DD, like {today}."
 
@@ -800,6 +928,10 @@ msgstr "Enter the date as YYYY-MM-DD, like {today}."
 #: src/features/loans/loan-form.tsx
 msgid "Enter the due date as YYYY-MM-DD, or leave it empty."
 msgstr "Enter the due date as YYYY-MM-DD, or leave it empty."
+
+#: src/features/recurring/rule-form.tsx
+msgid "Enter the start as YYYY-MM-DD, like {today}."
+msgstr "Enter the start as YYYY-MM-DD, like {today}."
 
 #: src/features/entries/entry-form.tsx
 msgid "Enter the time as HH:MM, like 18:30, or leave it empty."
@@ -823,6 +955,22 @@ msgstr "Entry"
 #: src/features/households/household-fields.tsx
 msgid "Entry dates are in it."
 msgstr "Entry dates are in it."
+
+#: src/features/recurring/rule-form.tsx
+msgid "Every"
+msgstr "Every"
+
+#: src/features/recurring/schedule-text.ts
+msgid "Every {interval} months on day {day}"
+msgstr "Every {interval} months on day {day}"
+
+#: src/features/recurring/schedule-text.ts
+msgid "Every {interval} weeks"
+msgstr "Every {interval} weeks"
+
+#: src/features/recurring/schedule-text.ts
+msgid "Every {interval} years"
+msgstr "Every {interval} years"
 
 #: src/app/activity.tsx
 msgid "Every change to the household's data. Nobody can edit it."
@@ -861,6 +1009,14 @@ msgstr "Fills in its Category, Wallet and amount"
 #: src/features/budgets/budget-form.tsx
 msgid "For"
 msgstr "For"
+
+#: src/features/recurring/pending-list.tsx
+msgid "For {days} days"
+msgstr "For {days} days"
+
+#: src/features/recurring/pending-list.tsx
+msgid "For a week"
+msgstr "For a week"
 
 #: src/features/invites/invite-form.tsx
 msgid "For email"
@@ -1074,6 +1230,7 @@ msgstr "Joins as"
 
 #: src/features/entries/form-checks.ts
 #: src/features/entries/items-section.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Keep the description to 200 characters or fewer."
 msgstr "Keep the description to 200 characters or fewer."
 
@@ -1093,6 +1250,7 @@ msgstr "Keep the quantity to 40 characters or fewer."
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Kind"
 msgstr "Kind"
 
@@ -1107,6 +1265,10 @@ msgstr "Leave {householdName}?"
 #: src/features/members/household-exit.tsx
 msgid "Leave household"
 msgstr "Leave household"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Leave it empty for a bill that varies: it's asked for when you confirm."
+msgstr "Leave it empty for a bill that varies: it's asked for when you confirm."
 
 #: src/features/loans/labels.ts
 msgid "Lent"
@@ -1198,6 +1360,14 @@ msgstr "Mobile wallet"
 msgid "Month"
 msgstr "Month"
 
+#: src/features/recurring/labels.ts
+msgid "Monthly"
+msgstr "Monthly"
+
+#: src/features/recurring/schedule-text.ts
+msgid "Monthly on day {day}"
+msgstr "Monthly on day {day}"
+
 #: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 #: src/features/households/household-form.tsx
@@ -1253,6 +1423,12 @@ msgstr "New Income"
 msgid "New Loan"
 msgstr "New Loan"
 
+#: src/app/_layout.tsx
+#: src/app/recurring/index.tsx
+#: src/app/recurring/new.tsx
+msgid "New Recurring rule"
+msgstr "New Recurring rule"
+
 #: src/app/categories/new.tsx
 msgid "New Subcategory"
 msgstr "New Subcategory"
@@ -1269,6 +1445,10 @@ msgstr "New Wallet"
 #: src/features/budgets/budget-month.tsx
 msgid "Next"
 msgstr "Next"
+
+#: src/features/recurring/rule-list.tsx
+msgid "Next {nextDate}"
+msgstr "Next {nextDate}"
 
 #: src/features/budgets/budget-month.tsx
 msgid "Next Budget month"
@@ -1319,6 +1499,10 @@ msgstr "No permission, or someone else deleted it."
 msgid "No permission."
 msgstr "No permission."
 
+#: src/features/recurring/rule-list.tsx
+msgid "No Recurring rules yet."
+msgstr "No Recurring rules yet."
+
 #: src/features/loans/loan-detail.tsx
 msgid "No Repayments yet."
 msgstr "No Repayments yet."
@@ -1352,9 +1536,17 @@ msgstr "Nothing expected"
 msgid "Nothing has changed yet."
 msgstr "Nothing has changed yet."
 
+#: src/features/recurring/pending-list.tsx
+msgid "Nothing is Pending."
+msgstr "Nothing is Pending."
+
 #: src/features/categories/category-actions.tsx
 msgid "Nothing is recorded in it yet, so it's removed for good."
 msgstr "Nothing is recorded in it yet, so it's removed for good."
+
+#: src/app/recurring/[id].tsx
+msgid "Nothing more becomes due from it. The Entries it already made stay."
+msgstr "Nothing more becomes due from it. The Entries it already made stay."
 
 #: src/features/categories/category-form.tsx
 msgid "Nothing: a top-level Category"
@@ -1387,6 +1579,10 @@ msgstr "Online. Every change synced."
 msgid "Only {monthName}"
 msgstr "Only {monthName}"
 
+#: src/app/recurring/[id].tsx
+msgid "Only Admins and Members change Recurring rules."
+msgstr "Only Admins and Members change Recurring rules."
+
 #: src/features/households/household-settings.tsx
 msgid "Only Admins change these."
 msgstr "Only Admins change these."
@@ -1411,6 +1607,10 @@ msgstr "Open Loan"
 msgid "Opening the Invite…"
 msgstr "Opening the Invite…"
 
+#: src/features/recurring/pending-tile.tsx
+msgid "Opens what's Pending"
+msgstr "Opens what's Pending"
+
 #: src/features/budgets/budgets-tile.tsx
 msgid "Opens your Budgets"
 msgstr "Opens your Budgets"
@@ -1434,6 +1634,7 @@ msgstr "Optional, say \"2 kg\"; it doesn't change the amount."
 
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Optional."
 msgstr "Optional."
 
@@ -1461,6 +1662,13 @@ msgstr "Owed"
 msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
 
+#: src/app/_layout.tsx
+#: src/app/pending.tsx
+#: src/app/recurring/index.tsx
+#: src/features/recurring/pending-tile.tsx
+msgid "Pending"
+msgstr "Pending"
+
 #: src/app/household.tsx
 #: src/features/entries/transfer-form.tsx
 #: src/features/households/household-list.tsx
@@ -1475,8 +1683,13 @@ msgstr "Phone"
 #: src/features/budgets/budget-form.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Pick a Category."
 msgstr "Pick a Category."
+
+#: src/features/recurring/rule-form.tsx
+msgid "Pick a day of the month from 1 to 31."
+msgstr "Pick a day of the month from 1 to 31."
 
 #: src/features/households/household-settings.tsx
 msgid "Pick a start day from 1 to 28, so every month has it."
@@ -1485,6 +1698,7 @@ msgstr "Pick a start day from 1 to 28, so every month has it."
 #: src/features/entries/entry-form.tsx
 #: src/features/loans/loan-form.tsx
 #: src/features/loans/repayment-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Pick a Wallet."
 msgstr "Pick a Wallet."
 
@@ -1530,6 +1744,22 @@ msgstr "Record Repayment"
 msgid "Recorded by"
 msgstr "Recorded by"
 
+#: src/features/recurring/pending-list.tsx
+#: src/features/recurring/rule-list.tsx
+msgid "Recurring"
+msgstr "Recurring"
+
+#: src/app/_layout.tsx
+#: src/app/recurring/[id].tsx
+msgid "Recurring rule"
+msgstr "Recurring rule"
+
+#: src/app/_layout.tsx
+#: src/app/me.tsx
+#: src/app/recurring/index.tsx
+msgid "Recurring rules"
+msgstr "Recurring rules"
+
 #: src/features/categories/labels.ts
 msgid "Red"
 msgstr "Red"
@@ -1566,6 +1796,14 @@ msgstr "Repayment ({currency})"
 #: src/features/loans/loan-detail.tsx
 msgid "Repayments"
 msgstr "Repayments"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Repeat every 1 to 24."
+msgstr "Repeat every 1 to 24."
+
+#: src/features/recurring/rule-form.tsx
+msgid "Repeats"
+msgstr "Repeats"
 
 #: src/app/(tabs)/reports.tsx
 #: src/features/shell/sections.ts
@@ -1617,6 +1855,10 @@ msgstr "Save adjustment"
 msgid "Save Budget"
 msgstr "Save Budget"
 
+#: src/app/recurring/[id].tsx
+msgid "Save changes"
+msgstr "Save changes"
+
 #: src/app/entries/new.tsx
 msgid "Save Entry"
 msgstr "Save Entry"
@@ -1633,6 +1875,10 @@ msgstr "Save Item"
 #: src/features/loans/loan-form.tsx
 msgid "Save Loan"
 msgstr "Save Loan"
+
+#: src/app/recurring/new.tsx
+msgid "Save Recurring rule"
+msgstr "Save Recurring rule"
 
 #: src/features/loans/repayment-form.tsx
 msgid "Save Repayment"
@@ -1738,8 +1984,21 @@ msgid "Sits under"
 msgstr "Sits under"
 
 #: src/features/onboarding/first-wallet-form.tsx
+#: src/features/recurring/pending-list.tsx
 msgid "Skip"
 msgstr "Skip"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Skip {name} due {dueDate}"
+msgstr "Skip {name} due {dueDate}"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Snooze"
+msgstr "Snooze"
+
+#: src/features/recurring/pending-list.tsx
+msgid "Snooze {name} due {dueDate}"
+msgstr "Snooze {name} due {dueDate}"
 
 #: src/features/entries/entry-list.tsx
 #: src/features/loans/loan-detail.tsx
@@ -1763,6 +2022,10 @@ msgstr "Something went wrong"
 #: src/features/budgets/budget-month.tsx
 msgid "Spending ahead of the month"
 msgstr "Spending ahead of the month"
+
+#: src/features/recurring/rule-form.tsx
+msgid "Starts"
+msgstr "Starts"
 
 #: src/features/budgets/budget-form.tsx
 msgid "Stop from {monthName}"
@@ -1893,6 +2156,10 @@ msgstr "This Loan isn't here. It may have been deleted, or not synced yet."
 msgid "This records an adjustment of {shownGap}. It isn't spending or income, so budgets and reports leave it out."
 msgstr "This records an adjustment of {shownGap}. It isn't spending or income, so budgets and reports leave it out."
 
+#: src/app/recurring/[id].tsx
+msgid "This Recurring rule isn't here. It may have been deleted, or not synced yet."
+msgstr "This Recurring rule isn't here. It may have been deleted, or not synced yet."
+
 #: src/features/update/update-required.tsx
 msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
 msgstr "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
@@ -1984,6 +2251,10 @@ msgstr "Undo"
 msgid "Undo write-off"
 msgstr "Undo write-off"
 
+#: src/features/recurring/pending-list.tsx
+msgid "Until tomorrow"
+msgstr "Until tomorrow"
+
 #: src/features/loans/repayment-form.tsx
 msgid "Up to {most}."
 msgstr "Up to {most}."
@@ -2004,6 +2275,10 @@ msgstr "Update required"
 msgid "Used"
 msgstr "Used"
 
+#: src/features/recurring/rule-list.tsx
+msgid "Varies"
+msgstr "Varies"
+
 #: src/features/households/labels.ts
 msgid "Viewer"
 msgstr "Viewer"
@@ -2022,6 +2297,7 @@ msgstr "Violet"
 #: src/features/categories/labels.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/recurring/rule-form.tsx
 msgid "Wallet"
 msgstr "Wallet"
 
@@ -2044,9 +2320,18 @@ msgstr "Wallets in other currencies take Entries once exchange rates arrive."
 msgid "We emailed a code to {codeSentTo}."
 msgstr "We emailed a code to {codeSentTo}."
 
+#: src/features/recurring/labels.ts
+#: src/features/recurring/schedule-text.ts
+msgid "Weekly"
+msgstr "Weekly"
+
 #: src/app/onboarding.tsx
 msgid "What's your name?"
 msgstr "What's your name?"
+
+#: src/features/recurring/rule-form.tsx
+msgid "When it's due"
+msgstr "When it's due"
 
 #: src/features/loans/loan-form.tsx
 msgid "Which way"
@@ -2071,6 +2356,11 @@ msgstr "Write off {left}?"
 #: src/features/loans/loan-detail.tsx
 msgid "Written off"
 msgstr "Written off"
+
+#: src/features/recurring/labels.ts
+#: src/features/recurring/schedule-text.ts
+msgid "Yearly"
+msgstr "Yearly"
 
 #: src/features/categories/labels.ts
 msgid "Yellow"

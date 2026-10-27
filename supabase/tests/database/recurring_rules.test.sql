@@ -80,7 +80,7 @@ insert into public.entries (id, household_id, wallet_id, kind, amount, category_
 	('00000000-0000-8000-8000-00000000dd21', '00000000-0000-7000-8000-00000000ddf1', '00000000-0000-7000-8000-00000000ddc1',
 	 'expense', -50000, pg_temp.category('Rent'), '2026-10-01', '00000000-0000-4000-8000-00000000dda1');
 
--- Bob confirmed it too, offline: his copies upload as upserts of the same ids.
+-- Bob confirmed it too, offline: his copies upload over the same ids.
 select pg_temp.act_as('00000000-0000-4000-8000-00000000dda2');
 select lives_ok(
 	$$ insert into public.occurrences (id, household_id, rule_id, due_on, state, entry_id)
