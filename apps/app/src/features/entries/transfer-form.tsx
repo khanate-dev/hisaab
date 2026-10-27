@@ -161,7 +161,9 @@ export const TransferForm = ({
 			</View>
 			{withinHousehold && (
 				<View className="gap-2">
-					<Text variant="label">{t`To`}</Text>
+					<Text variant="label">
+						{otherHouseholds.length > 0 ? t`To, in this household` : t`To`}
+					</Text>
 					<RadioGroup
 						label={t`To Wallet`}
 						onValueChange={setToId}

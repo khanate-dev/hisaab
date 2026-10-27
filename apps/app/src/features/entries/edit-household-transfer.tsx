@@ -1,3 +1,4 @@
+import { isNegative, parseMoney } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 
 import { Text } from "@/components/ui/text";
@@ -17,18 +18,25 @@ import { useTransferTargets } from "./use-transfer-targets";
  */
 export const EditHouseholdTransfer = ({
 	entry,
+	currency,
 	userId,
 	onSaved,
 }: {
+	/** The half in the household on screen. */
 	entry: Entry;
+	/** Its Wallet's currency, which its amount is in. */
+	currency: string;
 	userId: string;
 	onSaved: () => void;
 }) => {
 	const { t } = useLingui();
 	const halves = useLinkedHalves(entry.link_id);
-	// Signed by its effect on its Wallet: the half that leaves is the negative one (exact decimal text, never zero).
-	const leaves = halves?.find((h) => h.amount.startsWith("-"));
-	const arrives = halves?.find((h) => h !== leaves);
+	// Signed by its effect on its Wallet: the half on screen leaves if it's negative, and the other one is its mirror.
+	const shownLeaves = isNegative(parseMoney(entry.amount, currency));
+	const other = halves?.find((h) => h.id !== entry.id);
+	const shown = halves?.find((h) => h.id === entry.id);
+	const leaves = shownLeaves ? shown : other;
+	const arrives = shownLeaves ? other : shown;
 	const from = useHousehold(leaves?.household_id);
 	const wallets = useWalletRows(leaves?.household_id);
 	const targets = useTransferTargets(userId, leaves?.household_id);

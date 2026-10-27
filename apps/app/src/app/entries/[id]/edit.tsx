@@ -44,6 +44,11 @@ export default function EditEntry() {
 		return (
 			<Screen title={t`Edit Transfer`}>
 				<EditHouseholdTransfer
+					currency={
+						wallets.find((w) => w.id === entry.wallet_id)?.currency ??
+						household.base_currency ??
+						""
+					}
 					entry={entry}
 					onSaved={() => leaveTo(`/entries/${entry.id}`)}
 					userId={data.userId}

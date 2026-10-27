@@ -9,11 +9,22 @@ import { formatDate, formatMoney } from "@/lib/format";
 import { entryKindLabel } from "./labels";
 import { type EntryView, shownAmount } from "./views";
 
-/** What an Entry is called in a list: its description, else its Category, else its kind. */
+/**
+ * What an Entry is called in a list: its description, else its Category, else its kind. The half of a
+ * cross-household transfer that arrives is someone's Contribution, never naming where it came from (ADR-0003).
+ */
 export const useEntryTitle = () => {
-	const { i18n } = useLingui();
-	return ({ entry, category }: EntryView) =>
-		entry.description ?? category?.name ?? i18n._(entryKindLabel(entry.kind));
+	const { t, i18n } = useLingui();
+	return ({ entry, category, amount, madeBy }: EntryView) => {
+		if (entry.description !== null) return entry.description;
+		if (entry.kind === "household_transfer") {
+			const name = madeBy ?? t`someone`;
+			return isNegative(amount)
+				? t`Sent to another household`
+				: t`Contribution from ${name}`;
+		}
+		return category?.name ?? i18n._(entryKindLabel(entry.kind));
+	};
 };
 
 const EntryRow = ({

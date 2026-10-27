@@ -6,6 +6,7 @@ import { makeEntry } from "@/test/entries";
 import {
 	draftToParams,
 	paramsToDraft,
+	entryRights,
 	repeatEntry,
 	startingWallet,
 } from "./draft";
@@ -105,5 +106,36 @@ describe("startingWallet", () => {
 		expect(startingWallet(open, null)?.id).toBe("w1");
 		expect(startingWallet(open, "w2")?.id).toBe("w1");
 		expect(startingWallet([], "w1")).toBeUndefined();
+	});
+});
+
+describe("entryRights", () => {
+	const half = { kind: "household_transfer", created_by: "u1" } as const;
+
+	it("leaves a linked cross-household transfer to its maker", () => {
+		expect(entryRights({ ...half, link_id: "l1" }, "u1")).toEqual({
+			edit: true,
+			delete: true,
+		});
+		expect(entryRights({ ...half, link_id: "l1" }, "u2")).toEqual({
+			edit: false,
+			delete: false,
+		});
+	});
+
+	it("gives a broken half to its household to delete, with no pair to edit", () => {
+		expect(entryRights({ ...half, link_id: null }, "u2")).toEqual({
+			edit: false,
+			delete: true,
+		});
+	});
+
+	it("restricts nothing else", () => {
+		expect(
+			entryRights({ kind: "expense", link_id: null, created_by: "u1" }, "u2"),
+		).toEqual({
+			edit: true,
+			delete: true,
+		});
 	});
 });

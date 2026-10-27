@@ -476,6 +476,10 @@ msgstr "Contacts"
 msgid "Continue"
 msgstr "Continue"
 
+#: src/features/entries/entry-list.tsx
+msgid "Contribution from {name}"
+msgstr "Contribution from {name}"
+
 #: src/features/invites/invite-landing.tsx
 msgid "Couldn't join just now. Check your connection and try again."
 msgstr "Couldn't join just now. Check your connection and try again."
@@ -937,6 +941,10 @@ msgstr "Items"
 msgid "Its Balance is {now}. What does it really hold?"
 msgstr "Its Balance is {now}. What does it really hold?"
 
+#: src/features/entries/entry-detail.tsx
+msgid "Its other half, in the other household, goes too, and both Balances change back."
+msgstr "Its other half, in the other household, goes too, and both Balances change back."
+
 #: src/features/loans/loan-detail.tsx
 msgid "Its principal and Repayments go with it, and their Wallets' Balances change back."
 msgstr "Its principal and Repayments go with it, and their Wallets' Balances change back."
@@ -1254,6 +1262,10 @@ msgstr "Online. Every change synced."
 msgid "Only Admins change these."
 msgstr "Only Admins change these."
 
+#: src/features/entries/entry-detail.tsx
+msgid "Only whoever made this cross-household transfer changes it."
+msgstr "Only whoever made this cross-household transfer changes it."
+
 #: src/features/entries/edit-household-transfer.tsx
 msgid "Only whoever made this cross-household transfer edits it, while they're in both households."
 msgstr "Only whoever made this cross-household transfer edits it, while they're in both households."
@@ -1501,6 +1513,10 @@ msgstr "Sections"
 msgid "Send code"
 msgstr "Send code"
 
+#: src/features/entries/entry-list.tsx
+msgid "Sent to another household"
+msgstr "Sent to another household"
+
 #: src/features/invites/invite-landing.tsx
 msgid "Set up on my own instead"
 msgstr "Set up on my own instead"
@@ -1567,6 +1583,7 @@ msgstr "Sits under"
 msgid "Skip"
 msgstr "Skip"
 
+#: src/features/entries/entry-list.tsx
 #: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-list.tsx
 msgid "someone"
@@ -1749,6 +1766,10 @@ msgstr "To a Wallet in {name}"
 #: src/features/entries/transfer-form.tsx
 msgid "To Wallet"
 msgstr "To Wallet"
+
+#: src/features/entries/transfer-form.tsx
+msgid "To, in this household"
+msgstr "To, in this household"
 
 #: src/features/entries/quick-add-form.tsx
 msgid "Today"

@@ -155,4 +155,19 @@ describe("EntryDetail", () => {
 			text: formatMoney(parseMoney("28000", "PKR")),
 		});
 	});
+
+	it("leaves a linked cross-household transfer to whoever made it", async () => {
+		await setup({
+			view: view({
+				kind: "household_transfer",
+				category_id: null,
+				amount: "5000",
+				link_id: "l1",
+			}),
+			rights: { edit: false, delete: false },
+		});
+		expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+		expect(screen.getByRole("note")).toHaveTextContent(/whoever made/);
+	});
 });

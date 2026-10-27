@@ -1,21 +1,22 @@
 -- Cross-household transfers (ADR-0003): two mirrored Entries, one in each household, sharing a link_id, made in one
 -- action by a User who belongs to both. Each half is an ordinary Entry of its own household (RLS unchanged): money
--- leaves the From Wallet in one and arrives in the To Wallet in the other. Only that User edits or deletes a half
--- while they belong to its household; once they don't, the link is broken and the half is the household's like any
--- Entry. Expand-only: the kind check widened, a nullable column, rules only on the new kind.
+-- leaves the From Wallet in one and arrives in the To Wallet in the other. Only that User changes a linked pair. When
+-- they leave either household the link breaks (link_id cleared on both halves) and each half is its household's like
+-- any Entry. Expand-only: the kind check widened, a nullable column, rules only on the new kind.
 
 alter table public.entries drop constraint entries_kind_check;
 alter table public.entries add constraint entries_kind_check
 	check (kind in ('balance_adjustment', 'expense', 'income', 'transfer', 'loan_principal', 'repayment',
 		'household_transfer'));
 
--- Shared by the two halves; each household has one half of a pair.
+-- Shared by the two halves while linked; each household has one half of a pair.
 alter table public.entries add column link_id uuid;
 create unique index entries_one_half_per_household on public.entries (link_id, household_id) where link_id is not null;
 
 alter table public.entries drop constraint entries_kind_shape;
 alter table public.entries add constraint entries_kind_shape check (
-	(kind = 'household_transfer') = (link_id is not null)
+	-- Only a half carries a link; a half whose link broke keeps its kind.
+	(link_id is null or kind = 'household_transfer')
 	and (
 		(kind = 'balance_adjustment' and category_id is null and to_wallet_id is null and to_amount is null and loan_id is null)
 		or (kind = 'expense' and category_id is not null and amount < 0 and to_wallet_id is null and to_amount is null
@@ -31,14 +32,17 @@ alter table public.entries add constraint entries_kind_shape check (
 	)
 );
 
--- A half stays a half; only the User who made the pair changes it, while they still belong to its household.
+-- A linked half stays one, the same way round, and only the User who made the pair changes it. A broken one (no
+-- link) is its household's.
 create function private.keep_household_transfer_mirrored() returns trigger
 language plpgsql security definer
 set search_path = ''
 as $$
 begin
-	-- Not a half, the server itself, a restore, or its household being deleted with everything in it.
-	if old.kind <> 'household_transfer' or (select auth.uid()) is null or private.restoring()
+	-- Not a linked half, the server itself, a restore, a link breaking, or its household being deleted with
+	-- everything in it.
+	if old.link_id is null or (select auth.uid()) is null or private.restoring()
+		or coalesce(current_setting('hisaab.breaking_links', true), '') = 'on'
 		or not exists (select 1 from public.households where id = old.household_id) then
 		if tg_op = 'DELETE' then
 			return old;
@@ -51,9 +55,7 @@ begin
 			raise exception 'A half of a cross-household transfer stays one, the same way round' using errcode = '23514';
 		end if;
 	end if;
-	if (select auth.uid()) is distinct from old.created_by and exists (
-		select 1 from public.memberships where household_id = old.household_id and user_id = old.created_by
-	) then
+	if (select auth.uid()) is distinct from old.created_by then
 		raise exception 'Only whoever made a cross-household transfer changes it' using errcode = '42501';
 	end if;
 	if tg_op = 'DELETE' then
@@ -66,7 +68,28 @@ revoke all on function private.keep_household_transfer_mirrored() from public;
 create trigger keep_household_transfer_mirrored before update or delete on public.entries
 	for each row execute function private.keep_household_transfer_mirrored();
 
--- A half comes back only with its other half, which lives in another household: never on its own.
+-- When its maker leaves a household (or is removed, or the household goes), the pairs they made with it break: both
+-- halves lose their link, wherever they are, and each is then its household's.
+create function private.break_household_transfer_links() returns trigger
+language plpgsql security definer
+set search_path = ''
+as $$
+begin
+	perform set_config('hisaab.breaking_links', 'on', true);
+	update public.entries set link_id = null
+	where link_id in (
+		select link_id from public.entries
+		where household_id = old.household_id and created_by = old.user_id and link_id is not null
+	);
+	perform set_config('hisaab.breaking_links', 'off', true);
+	return null;
+end;
+$$;
+revoke all on function private.break_household_transfer_links() from public;
+create trigger break_household_transfer_links after delete on public.memberships
+	for each row execute function private.break_household_transfer_links();
+
+-- A linked half comes back only with its other half, which lives in another household: never on its own.
 create or replace function public.restore_entry(entry_id uuid) returns void
 language plpgsql security definer
 set search_path = ''
@@ -84,7 +107,7 @@ begin
 	if deletion.before ->> 'kind' = 'loan_principal' then
 		raise exception 'A Loan''s principal comes back only with its Loan' using errcode = '23514';
 	end if;
-	if deletion.before ->> 'kind' = 'household_transfer' then
+	if deletion.before ->> 'link_id' is not null then
 		raise exception 'A cross-household transfer isn''t restored one half at a time' using errcode = '23514';
 	end if;
 	if exists (select 1 from public.entries where id = entry_id) then

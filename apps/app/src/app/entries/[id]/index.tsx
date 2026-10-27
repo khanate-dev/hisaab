@@ -8,6 +8,7 @@ import { useEntryTitle } from "@/features/entries/entry-list";
 import { useDisplayName, useEntryViews } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
+import { entryRights } from "@/features/entries/draft";
 import { Screen } from "@/features/shell/screen";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
@@ -54,6 +55,7 @@ export default function EntryScreen() {
 						: () => router.push(`/loans/${view.entry.loan_id}`)
 				}
 				recordedBy={recordedBy}
+				rights={entryRights(view.entry, userId)}
 				view={view}
 			/>
 		</Screen>

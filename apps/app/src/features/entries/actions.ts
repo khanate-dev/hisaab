@@ -127,9 +127,9 @@ export const updateEntry = async (
 
 /**
  * The Entry goes first: the server removes its Items with it, in one change the Activity log can restore together.
- * Its Items then go from this device too; their deletes find nothing left on the server, which is fine.
+ * Its Items then go from this device too; their deletes find nothing left on the server, which is fine. A linked
+ * cross-household transfer goes with its other half (on this device for its maker, who belongs to both).
  */
-/** Deletes an Entry with its Items; a cross-household transfer goes with its other half, where it's here too. */
 export const deleteEntry = async (entryId: string) => {
 	await db.transaction(async (tx) => {
 		const [entry] = await tx

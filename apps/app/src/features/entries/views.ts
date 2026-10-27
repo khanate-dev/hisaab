@@ -16,6 +16,8 @@ export type EntryView = {
 	parent: Category | null;
 	/** An itemized Expense's Items, in the order they were added. */
 	items: ItemView[];
+	/** Who recorded it, by name, once their profile has synced. */
+	madeBy: string | null;
 };
 
 export type ItemView = {
@@ -30,6 +32,8 @@ export const toEntryViews = (
 	categories: readonly Category[],
 	wallets: readonly WalletChoice[],
 	items: readonly EntryItem[] = [],
+	/** Display names of the household's Users, by id. */
+	names: ReadonlyMap<string, string> = new Map(),
 ): EntryView[] => {
 	const itemsByEntry = new Map<string, EntryItem[]>();
 	for (const item of items)
@@ -69,6 +73,7 @@ export const toEntryViews = (
 				arrival,
 				category,
 				parent,
+				madeBy: names.get(entry.created_by) ?? null,
 				items: (itemsByEntry.get(entry.id) ?? [])
 					.toSorted((a, b) => a.position - b.position)
 					.map((item) => ({
