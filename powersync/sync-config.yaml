@@ -11,7 +11,7 @@ streams:
     auto_subscribe: true
     query: SELECT app_config.id, app_config.min_contract_version FROM app_config
 
-  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries, Items, Budgets and Budget overrides.
+  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries, Items, Budgets, Budget overrides, Recurring rules and Occurrences.
   households:
     auto_subscribe: true
     queries:
@@ -48,6 +48,12 @@ streams:
       - SELECT budget_overrides.id, budget_overrides.household_id, budget_overrides.category_id, budget_overrides.month, budget_overrides.amount, budget_overrides.created_at
         FROM budget_overrides
         WHERE budget_overrides.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT recurring_rules.id, recurring_rules.household_id, recurring_rules.mode, recurring_rules.kind, recurring_rules.wallet_id, recurring_rules.category_id, recurring_rules.amount, recurring_rules.description, recurring_rules.frequency, recurring_rules.interval, recurring_rules.day_of_month, recurring_rules.starts_on, recurring_rules.ends_on, recurring_rules.created_by, recurring_rules.created_at
+        FROM recurring_rules
+        WHERE recurring_rules.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      - SELECT occurrences.id, occurrences.household_id, occurrences.rule_id, occurrences.due_on, occurrences.state, occurrences.snoozed_until, occurrences.entry_id, occurrences.created_at
+        FROM occurrences
+        WHERE occurrences.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
   # A household's Invites, to its Admins only: an Invite's token is the link itself.
   invites:

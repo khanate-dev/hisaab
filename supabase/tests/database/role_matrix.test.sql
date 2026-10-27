@@ -51,6 +51,16 @@ insert into public.budgets (id, household_id, category_id, valid_from, amount) v
 insert into public.budget_overrides (id, household_id, category_id, month, amount) values
 	('00000000-0000-7000-8000-00000000aa51', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1',
 	 '2026-11', 50);
+insert into public.recurring_rules (id, household_id, kind, wallet_id, category_id, amount, frequency, day_of_month,
+	starts_on, created_by) values
+	('00000000-0000-7000-8000-00000000aa61', '00000000-0000-7000-8000-00000000aaf1', 'expense',
+	 '00000000-0000-7000-8000-00000000aac1',
+	 (select id from public.categories where household_id = '00000000-0000-7000-8000-00000000aaf1' and name = 'Groceries'),
+	 100, 'monthly', 1, '2026-10-01',
+	 '00000000-0000-4000-8000-00000000aaa1');
+insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until) values
+	('00000000-0000-7000-8000-00000000aa71', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61',
+	 '2026-10-01', 'snoozed', '2026-10-03');
 insert into public.invites (id, household_id, token, role, expires_at, created_by) values
 	('00000000-0000-7000-8000-00000000aa31', '00000000-0000-7000-8000-00000000aaf1', repeat('m', 32), 'member',
 	 now() + interval '7 days', '00000000-0000-4000-8000-00000000aaa1');
@@ -116,6 +126,19 @@ insert into attempts values
 		values ('00000000-0000-7000-8000-00000000ab12', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aab1', '2026-12', 1) $$),
 	('budget_overrides.update', $$ update public.budget_overrides set amount = amount where id = '00000000-0000-7000-8000-00000000aa51' $$),
 	('budget_overrides.delete', $$ delete from public.budget_overrides where id = '00000000-0000-7000-8000-00000000aa51' $$),
+	('recurring_rules.select', $$ select 1 from public.recurring_rules where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('recurring_rules.insert', $$ insert into public.recurring_rules (id, household_id, kind, wallet_id, category_id, frequency, starts_on, created_by)
+		values ('00000000-0000-7000-8000-00000000ab13', '00000000-0000-7000-8000-00000000aaf1', 'expense',
+		        '00000000-0000-7000-8000-00000000aac1',
+		        (select id from public.categories where household_id = '00000000-0000-7000-8000-00000000aaf1' and name = 'Groceries'),
+		        'yearly', '2026-10-01', (select auth.uid())) $$),
+	('recurring_rules.update', $$ update public.recurring_rules set amount = amount where id = '00000000-0000-7000-8000-00000000aa61' $$),
+	('recurring_rules.delete', $$ delete from public.recurring_rules where id = '00000000-0000-7000-8000-00000000aa61' $$),
+	('occurrences.select', $$ select 1 from public.occurrences where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('occurrences.insert', $$ insert into public.occurrences (id, household_id, rule_id, due_on, state)
+		values ('00000000-0000-7000-8000-00000000ab14', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61', '2026-11-01', 'skipped') $$),
+	('occurrences.update', $$ update public.occurrences set snoozed_until = snoozed_until where id = '00000000-0000-7000-8000-00000000aa71' $$),
+	('occurrences.delete', $$ delete from public.occurrences where id = '00000000-0000-7000-8000-00000000aa71' $$),
 	('activity_log.select', $$ select 1 from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.insert', $$ insert into public.activity_log (household_id, table_name, row_id, action)
 		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', '00000000-0000-7000-8000-00000000ab09', 'insert') $$),
@@ -160,7 +183,8 @@ end $$;
 -- What every household member reads.
 create function pg_temp.reads() returns text[] language sql as $$
 	select array['households.select', 'memberships.select', 'profiles.select', 'wallets.select', 'categories.select',
-		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'budgets.select', 'budget_overrides.select', 'activity_log.select',
+		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'budgets.select', 'budget_overrides.select', 'recurring_rules.select', 'occurrences.select',
+		'activity_log.select',
 		'app_config.select'];
 $$;
 -- What Admins and Members change besides reading.
@@ -173,7 +197,9 @@ create function pg_temp.writes() returns text[] language sql as $$
 		'contacts.insert', 'contacts.update', 'contacts.delete',
 		'loans.insert', 'loans.update', 'loans.delete',
 		'budgets.insert', 'budgets.update', 'budgets.delete',
-		'budget_overrides.insert', 'budget_overrides.update', 'budget_overrides.delete'];
+		'budget_overrides.insert', 'budget_overrides.update', 'budget_overrides.delete',
+		'recurring_rules.insert', 'recurring_rules.update', 'recurring_rules.delete',
+		'occurrences.insert', 'occurrences.update', 'occurrences.delete'];
 $$;
 
 select set_eq(

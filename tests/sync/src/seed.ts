@@ -237,6 +237,39 @@ const seedWallets = async (
 	);
 	if (overrides.error) throw overrides.error;
 
+	// A monthly Recurring rule for Groceries per household, with its first Occurrence snoozed.
+	const rules = expenses.map(
+		({ household_id, wallet_id, category_id, author }) => ({
+			id: uuidv7(),
+			household_id,
+			wallet_id,
+			category_id,
+			created_by: author,
+		}),
+	);
+	const ruleRows = await admin.from("recurring_rules").insert(
+		rules.map((r) => ({
+			...r,
+			kind: "expense",
+			amount: "5000",
+			frequency: "monthly",
+			day_of_month: 1,
+			starts_on: "2026-10-01",
+		})),
+	);
+	if (ruleRows.error) throw ruleRows.error;
+	const occurrenceRows = await admin.from("occurrences").insert(
+		rules.map(({ id, household_id }) => ({
+			id: uuidv7(),
+			household_id,
+			rule_id: id,
+			due_on: "2026-10-01",
+			state: "snoozed",
+			snoozed_until: "2026-10-05",
+		})),
+	);
+	if (occurrenceRows.error) throw occurrenceRows.error;
+
 	// A Loan Lent to a Contact per household, with its principal.
 	const contacts = wallets.map(({ household_id }) => ({
 		id: uuidv7(),
