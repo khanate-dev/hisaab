@@ -9,6 +9,8 @@ import { useBudgetMonth } from "@/features/budgets/use-budgets";
 import { EntryList } from "@/features/entries/entry-list";
 import { useEntryViews } from "@/features/entries/use-entries";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
+import { PendingTile } from "@/features/recurring/pending-tile";
+import { useDueOccurrences } from "@/features/recurring/use-recurring";
 import { LoansTile } from "@/features/loans/loans-tile";
 import { useLoans } from "@/features/loans/use-loans";
 import { Screen } from "@/features/shell/screen";
@@ -21,7 +23,8 @@ const RECENT_ENTRIES = 5;
 
 export default function Home() {
 	const { t } = useLingui();
-	const household = useCurrentHousehold(useSignedInUserId());
+	const userId = useSignedInUserId();
+	const household = useCurrentHousehold(userId);
 	const wallets = useWallets(household?.id);
 	const recent = useEntryViews(household?.id)?.slice(0, RECENT_ENTRIES);
 	const loans = useLoans(household?.id);
@@ -33,6 +36,7 @@ export default function Home() {
 			: undefined,
 		today,
 	)?.budgets;
+	const due = useDueOccurrences(household?.id, today);
 
 	return (
 		<Screen title={t`Home`}>
@@ -47,6 +51,12 @@ export default function Home() {
 			>
 				{t`All Wallets`}
 			</Button>
+			{due !== undefined && (
+				<PendingTile
+					count={due.pending.length}
+					onOpen={() => router.push("/pending")}
+				/>
+			)}
 			{budgets !== undefined && (
 				<BudgetsTile
 					budgets={budgets}

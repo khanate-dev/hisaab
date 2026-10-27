@@ -4,6 +4,9 @@ import {
 	CATEGORY_KINDS,
 	ENTRY_KINDS,
 	LOAN_DIRECTIONS,
+	OCCURRENCE_STATES,
+	RECURRING_FREQUENCIES,
+	RECURRING_MODES,
 	WALLET_TYPES,
 } from "./kinds";
 import { ROLES } from "./roles";
@@ -140,6 +143,49 @@ export const budgetOverrides = sqliteTable("budget_overrides", {
 	month: text("month").notNull(),
 	/** Exact decimal text in the Base currency, zero or more. Parse with parseMoney. */
 	amount: text("amount").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** A template Expense or Income plus a schedule that produces Occurrences (CONTEXT.md). */
+export const recurringRules = sqliteTable("recurring_rules", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	/** Confirm (the default) leaves each Occurrence Pending; Auto-record makes it an Entry when it's due. */
+	mode: text("mode", { enum: RECURRING_MODES }).notNull(),
+	kind: text("kind", { enum: CATEGORY_KINDS }).notNull(),
+	wallet_id: text("wallet_id").notNull(),
+	category_id: text("category_id").notNull(),
+	/** Exact decimal text, positive; null for a variable bill, asked for when it's confirmed. */
+	amount: text("amount"),
+	description: text("description"),
+	frequency: text("frequency", { enum: RECURRING_FREQUENCIES }).notNull(),
+	/** Every this many months, weeks or years. */
+	interval: integer("interval").notNull(),
+	/** Monthly rules only: 1 to 31, the last day of a shorter month. */
+	day_of_month: integer("day_of_month"),
+	/** YYYY-MM-DD; a weekly rule falls on its weekday, a yearly one on its day. */
+	starts_on: text("starts_on").notNull(),
+	ends_on: text("ends_on"),
+	created_by: text("created_by").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** What the household did with an Occurrence; one without a row is Pending once due. Ids from `occurrenceId`. */
+export const occurrences = sqliteTable("occurrences", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	rule_id: text("rule_id").notNull(),
+	/** YYYY-MM-DD. */
+	due_on: text("due_on").notNull(),
+	state: text("state", { enum: OCCURRENCE_STATES }).notNull(),
+	/** Snoozed ones are Pending again from this date. */
+	snoozed_until: text("snoozed_until"),
+	/** The Entry a confirmed one became (`occurrenceEntryId`). */
+	entry_id: text("entry_id"),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),

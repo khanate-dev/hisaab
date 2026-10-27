@@ -1,5 +1,5 @@
 import { CONTRACT_VERSION, stamped } from "@hisaab/client-schema";
-import { budgetFor } from "@hisaab/domain";
+import { budgetFor, occurrenceEntryId, occurrenceId } from "@hisaab/domain";
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
 import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -1007,5 +1007,106 @@ describe("sync scenarios", () => {
 				},
 				{ timeout: 10_000 },
 			);
+	});
+	it("two devices confirming the same Occurrence offline upload as one Entry, recorded by the first", async () => {
+		const { users, household } = await seedHousehold({
+			alice: "admin",
+			bob: "member",
+		});
+		const alice = await connectClient(users.alice);
+		const bob = await connectClient(users.bob);
+		const rent = await vi.waitFor(
+			() =>
+				alice.get<{ id: string }>(
+					"SELECT id FROM categories WHERE household_id = ? AND name = 'Rent'",
+					[household],
+				),
+			{ timeout: 10_000 },
+		);
+		const walletId = uuidv7();
+		const ruleId = uuidv7();
+		const now = new Date().toISOString();
+		await alice.writeTransaction(async (tx) => {
+			await tx.execute(
+				"INSERT INTO wallets (id, household_id, name, type, currency, created_at, _metadata) VALUES (?, ?, 'Cash', 'cash', 'PKR', ?, ?)",
+				[walletId, household, now, stamped({})._metadata],
+			);
+			await tx.execute(
+				`INSERT INTO recurring_rules (id, household_id, mode, kind, wallet_id, category_id, amount, frequency, interval, day_of_month, starts_on, created_by, created_at, _metadata)
+				VALUES (?, ?, 'confirm', 'expense', ?, ?, '50000', 'monthly', 1, 1, '2026-10-01', ?, ?, ?)`,
+				[
+					ruleId,
+					household,
+					walletId,
+					rent.id,
+					users.alice.id,
+					now,
+					stamped({})._metadata,
+				],
+			);
+		});
+		await waitForUploads(alice);
+		await vi.waitFor(
+			async () =>
+				expect(
+					await bob.getOptional("SELECT id FROM recurring_rules WHERE id = ?", [
+						ruleId,
+					]),
+				).not.toBeNull(),
+			{ timeout: 10_000 },
+		);
+
+		// What confirmOccurrences writes: the Occurrence, then its Entry, both with ids from the rule and due date.
+		const confirm = (device: AbstractPowerSyncDatabase, userId: string) =>
+			device.writeTransaction(async (tx) => {
+				const entryId = occurrenceEntryId(ruleId, "2026-10-01");
+				await tx.execute(
+					"INSERT INTO occurrences (id, household_id, rule_id, due_on, state, entry_id, created_at, _metadata) VALUES (?, ?, ?, '2026-10-01', 'confirmed', ?, ?, ?)",
+					[
+						occurrenceId(ruleId, "2026-10-01"),
+						household,
+						ruleId,
+						entryId,
+						new Date().toISOString(),
+						stamped({})._metadata,
+					],
+				);
+				await tx.execute(
+					`INSERT INTO entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by, created_at, _metadata)
+					VALUES (?, ?, ?, 'expense', '-50000', ?, '2026-10-01', ?, ?, ?)`,
+					[
+						entryId,
+						household,
+						walletId,
+						rent.id,
+						userId,
+						new Date().toISOString(),
+						stamped({})._metadata,
+					],
+				);
+			});
+		await goOffline(alice);
+		await goOffline(bob);
+		await confirm(alice, users.alice.id);
+		await confirm(bob, users.bob.id);
+		await goOnline(alice);
+		await waitForUploads(alice);
+		await goOnline(bob);
+		await waitForUploads(bob);
+
+		expect(await uploadErrors(alice)).toEqual([]);
+		expect(await uploadErrors(bob)).toEqual([]);
+		const { data, error } = await adminClient()
+			.from("entries")
+			.select("id, created_by")
+			.eq("household_id", household)
+			.eq("kind", "expense");
+		if (error) throw error;
+		expect(data).toEqual([
+			{
+				id: occurrenceEntryId(ruleId, "2026-10-01"),
+				created_by: users.alice.id,
+			},
+		]);
 	});
 });

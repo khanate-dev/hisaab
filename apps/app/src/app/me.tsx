@@ -67,6 +67,12 @@ export default function MeAndHousehold() {
 				{t`Activity log`}
 			</Button>
 			<Button
+				onPress={() => router.push("/recurring")}
+				variant="secondary"
+			>
+				{t`Recurring rules`}
+			</Button>
+			<Button
 				onPress={() => router.push("/loans")}
 				variant="secondary"
 			>

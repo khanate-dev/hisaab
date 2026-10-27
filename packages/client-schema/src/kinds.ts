@@ -25,3 +25,13 @@ export type CategoryKind = (typeof CATEGORY_KINDS)[number];
 
 /** Which way a Loan went: the domain's, so its rules and the schema agree. */
 export { LOAN_DIRECTIONS, type LoanDirection } from "@hisaab/domain";
+
+/** Recurring rule modes and schedules, and what's done with Occurrences: the domain's, so its rules and the schema agree. */
+export {
+	OCCURRENCE_STATES,
+	type OccurrenceState,
+	RECURRING_FREQUENCIES,
+	type RecurringFrequency,
+	RECURRING_MODES,
+	type RecurringMode,
+} from "@hisaab/domain";

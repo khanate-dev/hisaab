@@ -14,4 +14,5 @@ export * from "./invites";
 export * from "./items";
 export * from "./loans";
 export * from "./money";
+export * from "./recurring";
 export * from "./upcasters";
