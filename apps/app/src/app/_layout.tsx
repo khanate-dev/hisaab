@@ -83,6 +83,10 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Join with link` }}
 				/>
 				<Stack.Screen
+					name="members"
+					options={{ title: t`Members & Roles` }}
+				/>
+				<Stack.Screen
 					name="households/new"
 					options={{ title: t`New household` }}
 				/>

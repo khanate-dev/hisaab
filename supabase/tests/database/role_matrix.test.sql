@@ -10,7 +10,8 @@ insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-00000000aaa1', 'admin@example.com'),
 	('00000000-0000-4000-8000-00000000aaa2', 'member@example.com'),
 	('00000000-0000-4000-8000-00000000aaa3', 'viewer@example.com'),
-	('00000000-0000-4000-8000-00000000aaa4', 'other@example.com');
+	('00000000-0000-4000-8000-00000000aaa4', 'other@example.com'),
+	('00000000-0000-4000-8000-00000000aaa5', 'second-viewer@example.com');
 insert into public.households (id, name) values
 	('00000000-0000-7000-8000-00000000aaf1', 'Family'),
 	('00000000-0000-7000-8000-00000000aaf2', 'Other');
@@ -18,7 +19,9 @@ insert into public.memberships (id, household_id, user_id, role) values
 	('00000000-0000-7000-8000-00000000aae1', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1', 'admin'),
 	('00000000-0000-7000-8000-00000000aae2', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa2', 'member'),
 	('00000000-0000-7000-8000-00000000aae3', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa3', 'viewer'),
-	('00000000-0000-7000-8000-00000000aae4', '00000000-0000-7000-8000-00000000aaf2', '00000000-0000-4000-8000-00000000aaa4', 'member');
+	('00000000-0000-7000-8000-00000000aae4', '00000000-0000-7000-8000-00000000aaf2', '00000000-0000-4000-8000-00000000aaa4', 'member'),
+	-- Whom the Role change and removal attempts target: nobody acting.
+	('00000000-0000-7000-8000-00000000aae5', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa5', 'viewer');
 insert into public.profiles (id, display_name) values
 	('00000000-0000-4000-8000-00000000aaa1', 'Admin'),
 	('00000000-0000-4000-8000-00000000aaa2', 'Member'),
@@ -58,7 +61,10 @@ insert into attempts values
 		values ('00000000-0000-7000-8000-00000000ab02', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa4', 'admin') $$),
 	('memberships.update', $$ update public.memberships set default_wallet_id = default_wallet_id
 		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = (select auth.uid()) $$),
-	('memberships.delete', $$ delete from public.memberships where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('memberships.role', $$ update public.memberships set role = 'member' where id = '00000000-0000-7000-8000-00000000aae5' $$),
+	('memberships.delete', $$ delete from public.memberships where id = '00000000-0000-7000-8000-00000000aae5' $$),
+	('memberships.leave', $$ delete from public.memberships
+		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = (select auth.uid()) $$),
 	('profiles.select', $$ select 1 from public.profiles where id = '00000000-0000-4000-8000-00000000aaa1' $$),
 	('profiles.update', $$ update public.profiles set display_name = display_name where id = (select auth.uid()) $$),
 	('profiles.delete', $$ delete from public.profiles where id = (select auth.uid()) $$),
@@ -155,18 +161,19 @@ $$;
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa1') $$,
 	pg_temp.reads() || pg_temp.writes() || array['households.update', 'households.delete', 'invites.select',
-		'invites.insert', 'invites.update'],
-	'an Admin reads and changes everything, and alone renames or deletes the household and manages its Invites'
+		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete'],
+	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '
+		|| 'Members, but as its last Admin can''t leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa2') $$,
-	pg_temp.reads() || pg_temp.writes(),
-	'a Member reads everything but Invites, and records and manages the household''s money'
+	pg_temp.reads() || pg_temp.writes() || array['memberships.leave'],
+	'a Member reads everything but Invites, records and manages the household''s money, and may leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa3') $$,
-	pg_temp.reads() || array['households.insert', 'profiles.update'],
-	'a Viewer only reads, beyond their own name and households of their own'
+	pg_temp.reads() || array['households.insert', 'profiles.update', 'memberships.leave'],
+	'a Viewer only reads, beyond their own name, households of their own and leaving'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa4') $$,

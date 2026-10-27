@@ -827,4 +827,48 @@ describe("sync scenarios", () => {
 		);
 		expect(await member.getAll("SELECT id FROM invites")).toEqual([]);
 	});
+
+	it("a removed Member loses the household from their device, and a deleted household goes from everyone's", async () => {
+		const { users, household } = await seedHousehold({
+			admin: "admin",
+			member: "member",
+		});
+		const admin = await connectClient(users.admin);
+		const member = await connectClient(users.member);
+		const has = (device: AbstractPowerSyncDatabase) =>
+			device.getAll("SELECT id FROM households WHERE id = ?", [household]);
+		await vi.waitFor(async () => expect(await has(member)).toHaveLength(1));
+
+		const { id: membership } = await admin.get<{ id: string }>(
+			"SELECT id FROM memberships WHERE household_id = ? AND user_id = ?",
+			[household, users.member.id],
+		);
+		await admin.execute(
+			"UPDATE memberships SET _deleted = 1, _metadata = ? WHERE id = ?",
+			[stamped({})._metadata, membership],
+		);
+		await waitForUploads(admin);
+		expect(await uploadErrors(admin)).toEqual([]);
+		await vi.waitFor(async () => expect(await has(member)).toEqual([]), {
+			timeout: 10_000,
+		});
+
+		await admin.execute(
+			"UPDATE households SET _deleted = 1, _metadata = ? WHERE id = ?",
+			[stamped({})._metadata, household],
+		);
+		await waitForUploads(admin);
+		expect(await uploadErrors(admin)).toEqual([]);
+		expect(await serverName(household)).toBeUndefined();
+		await vi.waitFor(
+			async () =>
+				expect(
+					await admin.getAll(
+						"SELECT id FROM categories WHERE household_id = ?",
+						[household],
+					),
+				).toEqual([]),
+			{ timeout: 10_000 },
+		);
+	});
 });

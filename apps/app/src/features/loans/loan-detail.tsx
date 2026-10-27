@@ -6,15 +6,7 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { Confirm } from "@/components/ui/confirm";
 import { Text } from "@/components/ui/text";
 import type { WalletChoice } from "@/features/entries/types";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -42,42 +34,6 @@ type Props = {
 	onDeleteRepayment: (entryId: string) => Promise<void>;
 	onWriteOff: (writtenOff: boolean) => Promise<void>;
 	onDelete: () => Promise<void>;
-};
-
-/** A confirmed action: its button opens a dialog that says what happens before anything does. */
-const Confirm = ({
-	trigger,
-	title,
-	description,
-	action,
-	onConfirm,
-}: {
-	trigger: string;
-	title: string;
-	description: string;
-	action: string;
-	onConfirm: () => void;
-}) => {
-	const { t } = useLingui();
-	return (
-		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant="secondary">{trigger}</Button>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogTitle>{title}</DialogTitle>
-				<DialogDescription>{description}</DialogDescription>
-				<DialogFooter>
-					<DialogClose asChild>
-						<Button variant="secondary">{t`Cancel`}</Button>
-					</DialogClose>
-					<DialogClose asChild>
-						<Button onPress={onConfirm}>{action}</Button>
-					</DialogClose>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	);
 };
 
 /** A Loan: who, which way, how much is still outstanding, and its Repayments (spec §3.2). */
