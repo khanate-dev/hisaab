@@ -18,6 +18,7 @@ import { todayIn } from "@/lib/dates";
 import { orNull, recordableWallets, startingWallet } from "./draft";
 import { useCommonChecks, useSave } from "./form-checks";
 import type { Entry, TransferDraft, WalletChoice } from "./types";
+import type { TransferTarget } from "./use-transfer-targets";
 
 type Props = {
 	/** The Transfer being edited; absent when recording one. */
@@ -31,22 +32,37 @@ type Props = {
 	timeZone: string;
 	/** Today, YYYY-MM-DD; injected by tests. */
 	today?: string;
+	/**
+	 * The User's other households it can go to instead, as a cross-household transfer (ADR-0003): their Wallets in
+	 * the From Wallet's currency are offered, grouped by household.
+	 */
+	otherHouseholds?: readonly TransferTarget[];
+	/** Whether it can go to another of this household's Wallets: not when editing a cross-household transfer. */
+	withinHousehold?: boolean;
+	/** The To Wallet when editing a cross-household transfer: its other half's, in the other household. */
+	initialToWalletId?: string;
 	submitLabel: string;
 	onSubmit: (
 		draft: TransferDraft,
 		currencies: { from: string; to: string },
+		/** The other household it goes to, or null when it stays in this one. */
+		toHouseholdId: string | null,
 	) => Promise<void>;
 };
 
 /**
- * A Transfer (spec §4.3): From, To and how much, arriving with what left. Transfers between currencies, with what
- * was Received, join with #45 and cross-household transfers with #43.
+ * A Transfer (spec §4.3): From, To and how much, arriving with what left. "To" is grouped by household: a Wallet in
+ * another household makes it a cross-household transfer. Transfers between currencies, with what was Received, join
+ * with #45 and #46.
  */
 export const TransferForm = ({
 	entry,
 	wallets,
 	baseCurrency,
 	defaultWalletId,
+	otherHouseholds = [],
+	withinHousehold = true,
+	initialToWalletId,
 	timeZone,
 	today = todayIn(timeZone),
 	submitLabel,
@@ -57,15 +73,22 @@ export const TransferForm = ({
 	const { busy, error, setError, save } = useSave();
 	const walletOf = (id: string | null | undefined) =>
 		wallets.find((w) => w.id === id);
+	const householdOf = (id: string | null | undefined) =>
+		otherHouseholds.find((h) => h.wallets.some((w) => w.id === id));
 	const recordable = recordableWallets(wallets, baseCurrency);
 	const [fromId, setFromId] = useState(
 		entry?.wallet_id ?? startingWallet(recordable, defaultWalletId)?.id ?? "",
 	);
+	const firstTo = (exceptId: string) =>
+		withinHousehold
+			? recordable.find((w) => w.id !== exceptId)?.id
+			: otherHouseholds[0]?.wallets[0]?.id;
 	const [toId, setToId] = useState(
-		entry?.to_wallet_id ?? recordable.find((w) => w.id !== fromId)?.id ?? "",
+		initialToWalletId ?? entry?.to_wallet_id ?? firstTo(fromId) ?? "",
 	);
 	const from = walletOf(fromId);
-	const to = walletOf(toId);
+	const toHousehold = householdOf(toId);
+	const to = walletOf(toId) ?? toHousehold?.wallets.find((w) => w.id === toId);
 	const [amount, setAmount] = useState(
 		entry && from
 			? magnitude(parseMoney(entry.amount, from.currency)).toString()
@@ -83,7 +106,7 @@ export const TransferForm = ({
 
 	const chooseFrom = (id: string) => {
 		setFromId(id);
-		if (id === toId) setToId(recordable.find((w) => w.id !== id)?.id ?? "");
+		if (id === toId) setToId(firstTo(id) ?? "");
 	};
 
 	const submit = async () => {
@@ -92,6 +115,10 @@ export const TransferForm = ({
 			return setError(t`Pick the Wallet it leaves and the one it goes to.`);
 		if (from.id === to.id)
 			return setError(t`A Transfer goes to another Wallet.`);
+		if (toHousehold && to.currency !== from.currency)
+			return setError(
+				t`Between households, a Transfer stays in one currency for now.`,
+			);
 		const money = isDecimalAmount(typed)
 			? parseMoney(typed, from.currency)
 			: null;
@@ -111,6 +138,7 @@ export const TransferForm = ({
 					notes: orNull(notes),
 				},
 				{ from: from.currency, to: to.currency },
+				toHousehold?.householdId ?? null,
 			),
 		);
 	};
@@ -131,17 +159,45 @@ export const TransferForm = ({
 					value={fromId}
 				/>
 			</View>
-			<View className="gap-2">
-				<Text variant="label">{t`To`}</Text>
-				<RadioGroup
-					label={t`To Wallet`}
-					onValueChange={setToId}
-					options={choices(walletOf(entry?.to_wallet_id))
-						.filter((w) => w.id !== fromId)
-						.map((w) => ({ value: w.id, label: w.name }))}
-					value={toId}
-				/>
-			</View>
+			{withinHousehold && (
+				<View className="gap-2">
+					<Text variant="label">
+						{otherHouseholds.length > 0 ? t`To, in this household` : t`To`}
+					</Text>
+					<RadioGroup
+						label={t`To Wallet`}
+						onValueChange={setToId}
+						options={choices(walletOf(entry?.to_wallet_id))
+							.filter((w) => w.id !== fromId)
+							.map((w) => ({ value: w.id, label: w.name }))}
+						value={toId}
+					/>
+				</View>
+			)}
+			{otherHouseholds.map((household) => {
+				const name = household.isPersonal ? t`Personal` : household.name;
+				const sameCurrency = household.wallets.filter(
+					(w) => w.currency === currency,
+				);
+				if (sameCurrency.length === 0) return null;
+				return (
+					<View
+						className="gap-2"
+						key={household.householdId}
+					>
+						<Text variant="label">{t`To ${name}`}</Text>
+						<RadioGroup
+							label={t`To a Wallet in ${name}`}
+							onValueChange={setToId}
+							options={sameCurrency.map((w) => ({
+								value: w.id,
+								label: w.name,
+							}))}
+							value={toId}
+						/>
+					</View>
+				);
+			})}
 			<Input
 				inputMode="decimal"
 				label={currency ? t`Amount (${currency})` : t`Amount`}

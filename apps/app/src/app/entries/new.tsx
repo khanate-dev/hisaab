@@ -2,7 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
-import { createEntry, createTransfer } from "@/features/entries/actions";
+import { createEntry, recordTransfer } from "@/features/entries/actions";
 import {
 	type DraftParams,
 	paramsToDraft,
@@ -25,8 +25,15 @@ export default function NewEntry() {
 	// Viewers can't record Entries; reached by a link, they land on the list.
 	if (data?.canWrite === false) return <Redirect href="/entries" />;
 	if (!data) return null;
-	const { userId, household, categories, history, wallets, defaultWalletId } =
-		data;
+	const {
+		userId,
+		household,
+		categories,
+		history,
+		wallets,
+		defaultWalletId,
+		transferTargets,
+	} = data;
 	const transfer = params.kind === "transfer";
 	const title = transfer
 		? t`New Transfer`
@@ -44,14 +51,23 @@ export default function NewEntry() {
 		<Screen title={title}>
 			<Stack.Screen options={{ title }} />
 			{transfer ? (
-				transferable >= 2 ? (
+				// Two Wallets here, or one here and another household to send to.
+				transferable >= 2 ||
+				(transferable >= 1 && transferTargets.length > 0) ? (
 					<TransferForm
 						baseCurrency={household.base_currency}
 						defaultWalletId={defaultWalletId}
-						onSubmit={async (draft, currencies) => {
-							await createTransfer(household.id, userId, draft, currencies);
+						onSubmit={async (draft, currencies, toHouseholdId) => {
+							await recordTransfer(
+								household.id,
+								userId,
+								draft,
+								currencies,
+								toHouseholdId,
+							);
 							leaveTo("/entries");
 						}}
+						otherHouseholds={transferTargets}
 						submitLabel={t`Save Transfer`}
 						timeZone={timeZone}
 						wallets={wallets}

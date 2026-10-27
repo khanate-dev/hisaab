@@ -7,7 +7,7 @@ import { Chip } from "@/components/ui/chip";
 import { Text } from "@/components/ui/text";
 import { entryTimeZone } from "@/lib/dates";
 
-import { createEntry, createTransfer } from "./actions";
+import { createEntry, recordTransfer } from "./actions";
 import { draftToParams } from "./draft";
 import { NeedsWallet } from "./needs-wallet";
 import { QuickAddForm } from "./quick-add-form";
@@ -30,6 +30,7 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 		history,
 		wallets,
 		defaultWalletId,
+		transferTargets,
 	} = data;
 	if (!canWrite)
 		return (
@@ -53,10 +54,17 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 					<TransferForm
 						baseCurrency={household.base_currency}
 						defaultWalletId={defaultWalletId}
-						onSubmit={async (draft, currencies) => {
-							await createTransfer(household.id, userId, draft, currencies);
+						onSubmit={async (draft, currencies, toHouseholdId) => {
+							await recordTransfer(
+								household.id,
+								userId,
+								draft,
+								currencies,
+								toHouseholdId,
+							);
 							onDone();
 						}}
+						otherHouseholds={transferTargets}
 						submitLabel={t`Save Transfer`}
 						timeZone={timeZone}
 						wallets={wallets}

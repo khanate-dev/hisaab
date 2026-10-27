@@ -27,6 +27,8 @@ type Props = {
 	recordedBy: string | undefined;
 	/** Admins and Members edit and delete Expenses and Incomes; Viewers only look. */
 	canEdit: boolean;
+	/** What this User may do to it beyond their Role (`entryRights`); everything, when absent. */
+	rights?: { edit: boolean; delete: boolean } | undefined;
 	onEdit: () => void;
 	onDelete: () => Promise<void>;
 	/** Opens the Loan a principal or Repayment belongs to. */
@@ -59,6 +61,7 @@ export const EntryDetail = ({
 	view,
 	recordedBy,
 	canEdit,
+	rights = { edit: true, delete: true },
 	onEdit,
 	onDelete,
 	onOpenLoan,
@@ -68,7 +71,7 @@ export const EntryDetail = ({
 	const names = useItemNames();
 	const { entry, category, parent, wallet, arrival } = view;
 	// Every Entry can be deleted; a Balance adjustment is re-recorded rather than edited.
-	const editable = canEdit && isEditableKind(entry.kind);
+	const editable = canEdit && rights.edit && isEditableKind(entry.kind);
 	const toName = arrival?.wallet.name;
 	const received =
 		arrival && arrival.wallet.currency !== wallet.currency
@@ -201,7 +204,14 @@ export const EntryDetail = ({
 							{t`Open Loan`}
 						</Button>
 					)}
-					{isDeletableKind(entry.kind) ? (
+					{!rights.delete ? (
+						<Text
+							role="note"
+							variant="muted"
+						>
+							{t`Only whoever made this cross-household transfer changes it.`}
+						</Text>
+					) : isDeletableKind(entry.kind) ? (
 						<Dialog>
 							<DialogTrigger asChild>
 								<Button variant="secondary">{t`Delete`}</Button>
@@ -209,9 +219,11 @@ export const EntryDetail = ({
 							<DialogContent>
 								<DialogTitle>{t`Delete ${title}?`}</DialogTitle>
 								<DialogDescription>
-									{arrival
-										? t`Both Wallets' Balances change back as if it never happened.`
-										: t`Its Wallet's Balance changes back as if it never happened.`}
+									{entry.link_id !== null
+										? t`Its other half, in the other household, goes too, and both Balances change back.`
+										: arrival
+											? t`Both Wallets' Balances change back as if it never happened.`
+											: t`Its Wallet's Balance changes back as if it never happened.`}
 								</DialogDescription>
 								<DialogFooter>
 									<DialogClose asChild>

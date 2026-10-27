@@ -15,6 +15,7 @@ export const ENTRY_KINDS = [
 	"transfer",
 	"loan_principal",
 	"repayment",
+	"household_transfer",
 ] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
 

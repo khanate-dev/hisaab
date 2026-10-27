@@ -107,4 +107,33 @@ describe("EntryList", () => {
 		);
 		expect(screen.getByRole("status")).toHaveTextContent(/no entries/i);
 	});
+
+	it("names a cross-household transfer's arriving half as its maker's Contribution, never where it came from", async () => {
+		const half = (id: string, amount: string) =>
+			makeEntry(id, {
+				kind: "household_transfer",
+				category_id: null,
+				amount,
+				link_id: "l1",
+				created_by: "u9",
+			});
+		await render(
+			<EntryList
+				items={toEntryViews(
+					[half("t1", "5000"), half("t2", "-300")],
+					categories,
+					wallets,
+					[],
+					new Map([["u9", "Sara"]]),
+				)}
+				onOpen={() => {}}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: /Contribution from Sara/ }),
+		).toBeOnTheScreen();
+		expect(
+			screen.getByRole("button", { name: /Sent to another household/ }),
+		).toBeOnTheScreen();
+	});
 });

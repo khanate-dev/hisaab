@@ -104,6 +104,13 @@ export const useEntryViews = (householdId: string | undefined) => {
 	const categories = useCategories(householdId);
 	const wallets = useWalletRows(householdId);
 	const items = useEntryItems(householdId);
+	const people = useQuery(
+		toCompilableQuery(
+			db
+				.select({ id: profiles.id, name: profiles.display_name })
+				.from(profiles),
+		),
+	).data;
 	return useMemo(
 		() =>
 			list === undefined ||
@@ -111,8 +118,14 @@ export const useEntryViews = (householdId: string | undefined) => {
 			wallets === undefined ||
 			items === undefined
 				? undefined
-				: toEntryViews(list, categories, wallets, items),
-		[list, categories, wallets, items],
+				: toEntryViews(
+						list,
+						categories,
+						wallets,
+						items,
+						new Map(people.map((p) => [p.id, p.name])),
+					),
+		[list, categories, wallets, items, people],
 	);
 };
 
@@ -133,3 +146,17 @@ export const useHouseholdHasEntries = (
 	);
 	return rows === undefined ? undefined : rows.length > 0;
 };
+
+/** Both halves of a cross-household transfer that are on this device: both, for a User in both households. */
+export const useLinkedHalves = (linkId: string | null): Entry[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(entries)
+					.where(eq(entries.link_id, linkId ?? "")),
+			),
+		),
+		linkId !== null,
+	);

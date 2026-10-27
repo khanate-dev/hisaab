@@ -100,10 +100,28 @@ export const paramsToDraft = (params: DraftParams): Partial<EntryDraft> => ({
 
 /**
  * Whether an Entry of this kind is edited in the Entry forms: a Balance adjustment is re-recorded instead, and a
- * Loan's principal and Repayments are changed from their Loan.
+ * Loan's principal and Repayments are changed from their Loan. A cross-household transfer is edited, both halves,
+ * by whoever made it.
  */
 export const isEditableKind = (kind: string) =>
-	kind === "expense" || kind === "income" || kind === "transfer";
+	kind === "expense" ||
+	kind === "income" ||
+	kind === "transfer" ||
+	kind === "household_transfer";
+
+/**
+ * Whether this User may change this Entry beyond their Role: a linked cross-household transfer only by whoever made
+ * it (ADR-0003). Once its link broke, it's its household's like any Entry, deleted but not edited (it has no pair).
+ */
+export const entryRights = (
+	entry: Pick<Entry, "kind" | "link_id" | "created_by">,
+	userId: string,
+) => {
+	if (entry.kind !== "household_transfer") return { edit: true, delete: true };
+	if (entry.link_id === null) return { edit: false, delete: true };
+	const maker = entry.created_by === userId;
+	return { edit: maker, delete: maker };
+};
 
 /** A Loan's principal goes only with its Loan; every other Entry can be deleted on its own. */
 export const isDeletableKind = (kind: string) => kind !== "loan_principal";

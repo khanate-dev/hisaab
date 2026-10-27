@@ -4,6 +4,7 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { updateEntry, updateTransfer } from "@/features/entries/actions";
 import { isEditableKind } from "@/features/entries/draft";
+import { EditHouseholdTransfer } from "@/features/entries/edit-household-transfer";
 import { EntryForm } from "@/features/entries/entry-form";
 import { TransferForm } from "@/features/entries/transfer-form";
 import { useItemsOf } from "@/features/entries/use-entries";
@@ -38,6 +39,23 @@ export default function EditEntry() {
 	const { household, categories, history, wallets } = data;
 
 	const timeZone = entryTimeZone(household);
+
+	if (entry.kind === "household_transfer") {
+		return (
+			<Screen title={t`Edit Transfer`}>
+				<EditHouseholdTransfer
+					currency={
+						wallets.find((w) => w.id === entry.wallet_id)?.currency ??
+						household.base_currency ??
+						""
+					}
+					entry={entry}
+					onSaved={() => leaveTo(`/entries/${entry.id}`)}
+					userId={data.userId}
+				/>
+			</Screen>
+		);
+	}
 
 	if (entry.kind === "transfer") {
 		return (

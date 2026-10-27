@@ -123,6 +123,8 @@ export const entries = sqliteTable("entries", {
 	to_wallet_id: text("to_wallet_id"),
 	/** The Loan a principal or Repayment belongs to. */
 	loan_id: text("loan_id"),
+	/** Shared by a cross-household transfer's two halves (ADR-0003), one in each household; null otherwise. */
+	link_id: text("link_id"),
 	kind: text("kind", { enum: ENTRY_KINDS }).notNull(),
 	/** Exact decimal text: the signed change to the Wallet's Balance. Parse with parseMoney; never SUM it in SQL. */
 	amount: text("amount").notNull(),

@@ -13,6 +13,15 @@ export const isFlowKind = (kind: string | undefined): kind is FlowKind =>
 export const magnitude = (amount: Money) =>
 	isNegative(amount) ? negateMoney(amount) : amount;
 
+/**
+ * A cross-household transfer's two halves (ADR-0003): the same money leaving the From Wallet in one household and
+ * arriving in the To Wallet in the other, each signed by its effect on its Wallet.
+ */
+export const householdTransferHalves = (amount: Money) => ({
+	leaves: negateMoney(magnitude(amount)),
+	arrives: magnitude(amount),
+});
+
 /** An Entry's amount is its signed effect on the Balance: an Expense takes money out, an Income brings it in. */
 export const signedAmount = (kind: FlowKind, amount: Money) =>
 	kind === "expense" ? negateMoney(magnitude(amount)) : magnitude(amount);

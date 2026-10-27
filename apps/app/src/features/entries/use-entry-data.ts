@@ -6,6 +6,7 @@ import { useWalletRows } from "@/features/wallets/use-wallets";
 import { useSignedInUserId } from "@/lib/session";
 
 import { useEntries } from "./use-entries";
+import { useTransferTargets } from "./use-transfer-targets";
 
 /**
  * Everything recording or editing an Entry needs, for the household on screen: undefined until it has all loaded,
@@ -16,6 +17,7 @@ export const useEntryData = () => {
 	const household = useCurrentHousehold(userId);
 	const canWrite = useCanWrite(household?.id, userId);
 	const membership = useMembership(household?.id, userId);
+	const transferTargets = useTransferTargets(userId, household?.id);
 	const categories = useCategories(household?.id);
 	const history = useEntries(household?.id);
 	const wallets = useWalletRows(household?.id);
@@ -24,6 +26,7 @@ export const useEntryData = () => {
 		canWrite === undefined ||
 		// The Member's default Wallet seeds the forms' first Wallet, so it has to be in before they start.
 		membership === undefined ||
+		!transferTargets ||
 		!categories ||
 		!history ||
 		!wallets
@@ -38,5 +41,7 @@ export const useEntryData = () => {
 		wallets,
 		/** The Member's own pick of Wallet for new Entries here, if any. */
 		defaultWalletId: membership?.default_wallet_id ?? null,
+		/** The User's other households a Transfer can go to. */
+		transferTargets,
 	};
 };

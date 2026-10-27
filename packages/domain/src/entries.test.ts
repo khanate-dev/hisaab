@@ -8,9 +8,10 @@ import {
 	magnitude,
 	recentDescriptions,
 	signedAmount,
+	householdTransferHalves,
 } from "./entries";
 import { newestFirst } from "./entry-order";
-import { isNegative, isZero, moneyEquals, parseMoney } from "./money";
+import { addMoney, isNegative, isZero, moneyEquals, parseMoney } from "./money";
 
 const money = fc
 	.integer({ min: -10_000_000, max: 10_000_000 })
@@ -227,6 +228,26 @@ describe("frequentCategories", () => {
 					for (const id of ids) expect(uses(id)).toBeGreaterThan(0);
 					const counts = ids.map(uses);
 					expect(counts).toEqual(counts.toSorted((a, b) => b - a));
+				},
+			),
+		);
+	});
+});
+
+describe("householdTransferHalves", () => {
+	it("leaves one Wallet with exactly what arrives in the other", () => {
+		fc.assert(
+			fc.property(
+				fc
+					.integer({ min: -10_000_000, max: 10_000_000 })
+					.filter((n) => n !== 0),
+				(units) => {
+					const { leaves, arrives } = householdTransferHalves(
+						parseMoney((units / 100).toFixed(2), "PKR"),
+					);
+					expect(isNegative(leaves)).toBe(true);
+					expect(isNegative(arrives)).toBe(false);
+					expect(isZero(addMoney(leaves, arrives))).toBe(true);
 				},
 			),
 		);
