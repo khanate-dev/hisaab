@@ -12,7 +12,6 @@ import { db } from "@/lib/powersync";
 
 import { type BudgetScope, ONLY_THIS_MONTH } from "./scope";
 
-
 type Target = { householdId: string; categoryId: string; month: string };
 
 /**
