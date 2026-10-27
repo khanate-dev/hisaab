@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-00000000bba1', 'admin@example.com'),
@@ -120,6 +120,15 @@ select is(
 );
 select is((select count(*)::int from public.activity_log where household_id = '00000000-0000-7000-8000-00000000bbf1'),
 	0, 'its Activity log included');
+
+-- A User deleting their account isn't held back as a last Admin (#64 leaves a Former member there instead).
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-4000-8000-00000000bba5', 'leaving@example.com');
+insert into public.households (id, name) values ('00000000-0000-7000-8000-00000000bbf2', 'Theirs');
+insert into public.memberships (id, household_id, user_id, role) values
+	('00000000-0000-7000-8000-00000000bbe5', '00000000-0000-7000-8000-00000000bbf2', '00000000-0000-4000-8000-00000000bba5', 'admin');
+select lives_ok($$ delete from auth.users where id = '00000000-0000-4000-8000-00000000bba5' $$,
+	'a last Admin''s account can still be deleted');
 
 select * from finish();
 rollback;

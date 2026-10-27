@@ -24,8 +24,9 @@ create policy "Admins remove Members" on public.memberships
 create policy "Members leave shared households" on public.memberships
 	for delete to authenticated using (user_id = (select auth.uid()) and private.is_shared(household_id));
 
--- A Membership stays whose and where it is; its Role changes only by an Admin, and its default Wallet only by its own
--- User. The server itself (no signed-in User) is exempt, as is a Wallet going, which clears the default.
+-- A Membership stays whose and where it is; its Role changes only by an Admin, and only its own User picks its default
+-- Wallet. Clearing one is anyone's (a Wallet going clears it through its foreign key, whoever deletes it), and the
+-- server itself (no signed-in User) is exempt.
 create or replace function private.keep_membership_origin() returns trigger
 language plpgsql
 set search_path = ''
@@ -47,8 +48,9 @@ begin
 end;
 $$;
 
--- A household keeps an Admin: its last one can't leave, be removed or step down. A household being deleted takes
--- its Memberships with it, the last Admin's included. Named to run after keep_membership_origin (triggers run by name).
+-- A shared household keeps an Admin: its last one can't leave, be removed or step down. Exempt: a household being
+-- deleted (its row is already gone, so the lock below finds nothing) and a User being deleted (#64 replaces them with a
+-- Former member). Named to run after keep_membership_origin, so a refused Role change says why first.
 create function private.keep_one_admin() returns trigger
 language plpgsql security definer
 set search_path = ''
@@ -62,7 +64,8 @@ begin
 			losing_an_admin := false;
 		end if;
 	end if;
-	if losing_an_admin then
+	if losing_an_admin and private.is_shared(old.household_id)
+		and exists (select 1 from auth.users where id = old.user_id) then
 		-- Held until commit, so two Admins stepping down at once can't both pass the count below.
 		perform 1 from public.households where id = old.household_id for update;
 		if found and not exists (

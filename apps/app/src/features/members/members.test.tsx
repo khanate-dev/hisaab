@@ -4,8 +4,9 @@ import { screen, userEvent } from "@testing-library/react-native";
 
 import { render } from "@/test/render";
 
-import { HouseholdExit } from "./household-exit";
+import { HouseholdExit, type HouseholdExitProps } from "./household-exit";
 import { MemberList } from "./member-list";
+import { isLastAdmin } from "./last-admin";
 import type { Member } from "./use-members";
 
 const members: Member[] = [
@@ -75,10 +76,24 @@ describe("MemberList", () => {
 	});
 });
 
+describe("isLastAdmin", () => {
+	it("is the only Admin, and nobody else", () => {
+		expect(isLastAdmin(members, "u1")).toBe(true);
+		expect(isLastAdmin(members, "u2")).toBe(false);
+		expect(
+			isLastAdmin(
+				[
+					...members,
+					{ membershipId: "m3", userId: "u3", name: "Sara", role: "admin" },
+				],
+				"u1",
+			),
+		).toBe(false);
+	});
+});
+
 describe("HouseholdExit", () => {
-	const setup = async (
-		props: Partial<Parameters<typeof HouseholdExit>[0]> = {},
-	) => {
+	const setup = async (props: Partial<HouseholdExitProps> = {}) => {
 		const onLeave = jest.fn();
 		const onDelete = jest.fn();
 		await render(

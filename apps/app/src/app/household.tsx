@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { recordableWallets } from "@/features/entries/draft";
 import { useHouseholdHasEntries } from "@/features/entries/use-entries";
 import {
+	deleteHousehold,
 	setDefaultWallet,
 	updateHouseholdSettings,
 } from "@/features/households/actions";
@@ -13,8 +14,9 @@ import { HouseholdSettingsForm } from "@/features/households/household-settings"
 import { isPersonalHousehold } from "@/features/households/is-personal";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { useMembership } from "@/features/households/use-membership";
-import { deleteHousehold, removeMembership } from "@/features/members/actions";
+import { removeMembership } from "@/features/members/actions";
 import { HouseholdExit } from "@/features/members/household-exit";
+import { isLastAdmin } from "@/features/members/last-admin";
 import { useMembers } from "@/features/members/use-members";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
@@ -40,7 +42,6 @@ export default function HouseholdSettings() {
 		return null;
 	const isPersonal = isPersonalHousehold(household, userId);
 	const isAdmin = membership.role === "admin";
-	const admins = members.filter((member) => member.role === "admin").length;
 
 	return (
 		<Screen title={isPersonal ? t`Personal` : household.name}>
@@ -85,7 +86,7 @@ export default function HouseholdSettings() {
 				<HouseholdExit
 					householdName={household.name}
 					isAdmin={isAdmin}
-					lastAdmin={isAdmin && admins === 1}
+					lastAdmin={isLastAdmin(members, userId)}
 					// The household goes from this device; the screen falls back to Personal.
 					onDelete={async () => {
 						await deleteHousehold(household.id);

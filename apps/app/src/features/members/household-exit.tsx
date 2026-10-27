@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { Confirm } from "@/components/ui/confirm";
 import { Text } from "@/components/ui/text";
 
-type Props = {
+export type HouseholdExitProps = {
 	householdName: string;
 	isAdmin: boolean;
 	/** The household's last Admin can't leave until someone else is one. */
@@ -20,7 +20,7 @@ export const HouseholdExit = ({
 	lastAdmin,
 	onLeave,
 	onDelete,
-}: Props) => {
+}: HouseholdExitProps) => {
 	const { t } = useLingui();
 	return (
 		<View className="gap-3">

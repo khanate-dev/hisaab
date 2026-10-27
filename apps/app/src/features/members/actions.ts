@@ -1,5 +1,4 @@
 import {
-	households,
 	memberships,
 	type Role,
 	stamped,
@@ -23,12 +22,4 @@ export const removeMembership = async (membershipId: string) => {
 		.update(memberships)
 		.set(stampedDelete())
 		.where(eq(memberships.id, membershipId));
-};
-
-/** An Admin's deletion of a shared household: everything in it goes, its Activity log included (spec §3.1). */
-export const deleteHousehold = async (householdId: string) => {
-	await db
-		.update(households)
-		.set(stampedDelete())
-		.where(eq(households.id, householdId));
 };

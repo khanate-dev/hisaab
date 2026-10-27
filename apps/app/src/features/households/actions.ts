@@ -1,4 +1,9 @@
-import { households, memberships, stamped } from "@hisaab/client-schema";
+import {
+	households,
+	memberships,
+	stamped,
+	stampedDelete,
+} from "@hisaab/client-schema";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
@@ -86,3 +91,11 @@ export const setDefaultWallet = async (
 /** Remembered on this device only, so the next launch opens the same household. */
 export const setCurrentHousehold = (householdId: string) =>
 	updateDeviceState({ current_household_id: householdId });
+
+/** An Admin's deletion of a shared household: everything in it goes, its Activity log included (spec §3.1). */
+export const deleteHousehold = async (householdId: string) => {
+	await db
+		.update(households)
+		.set(stampedDelete())
+		.where(eq(households.id, householdId));
+};
