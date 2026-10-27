@@ -1,10 +1,10 @@
+import { budgetMonthOf } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { router } from "expo-router";
 
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { BudgetsTile } from "@/features/budgets/budgets-tile";
-import { currentBudgetMonth } from "@/features/budgets/month-view";
 import { useBudgetMonth } from "@/features/budgets/use-budgets";
 import { EntryList } from "@/features/entries/entry-list";
 import { useEntryViews } from "@/features/entries/use-entries";
@@ -29,7 +29,7 @@ export default function Home() {
 	const budgets = useBudgetMonth(
 		household,
 		household
-			? currentBudgetMonth(today, household.budget_month_start_day)
+			? budgetMonthOf(today, household.budget_month_start_day)
 			: undefined,
 		today,
 	)?.budgets;

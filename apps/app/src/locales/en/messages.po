@@ -955,6 +955,10 @@ msgstr "In credit"
 msgid "In the household's timezone, {timeZone}."
 msgstr "In the household's timezone, {timeZone}."
 
+#: src/features/budgets/budget-month.tsx
+msgid "Includes its Subcategories"
+msgstr "Includes its Subcategories"
+
 #: src/features/categories/labels.ts
 #: src/features/entries/labels.ts
 msgid "Income"

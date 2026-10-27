@@ -2,22 +2,23 @@
 // with per-month overrides and no rollover. Expected income is the same thing for an income Category. A Budget month
 // starts on the household's chosen day (1 to 28) and is named by the YYYY-MM it starts in.
 
+import { type CategoryLike, categoryTree } from "./categories";
+import { shiftCalendarDate } from "./dates";
 import { isFlowKind, magnitude } from "./entries";
 import {
 	addMoney,
+	isNegative,
+	isZero,
 	type Money,
+	negateMoney,
 	parseMoney,
 	percentOf,
+	timesMoney,
 	zeroMoney,
 } from "./money";
-import { shiftCalendarDate } from "./dates";
 
 /** A Budget month, as the YYYY-MM it starts in. */
 export type BudgetMonth = string;
-
-const BUDGET_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-export const isBudgetMonth = (text: string) => BUDGET_MONTH.test(text);
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -70,16 +71,26 @@ export type StandingBudget = {
 	valid_from: BudgetMonth;
 	/** Null stops the Budget from this month on. */
 	amount: string | null;
+	created_at: string;
 };
 export type BudgetOverride = {
 	category_id: string;
 	month: BudgetMonth;
 	amount: string;
+	created_at: string;
 };
+
+/** The one written last; ties (never expected) go to whichever came first in the list. */
+const writtenLast = <T extends { created_at: string }>(rows: readonly T[]) =>
+	rows.reduce<T | undefined>(
+		(last, row) => (!last || row.created_at > last.created_at ? row : last),
+		undefined,
+	);
 
 /**
  * A Category's Budget (or Expected income) for a Budget month: its override for that month, else the standing amount
- * valid from the latest month not after it; null when it has none.
+ * valid from the latest month not after it; null when it has none. Two devices offline may each set the same month:
+ * both rows sync, and the one written last wins.
  */
 export const budgetFor = (
 	categoryId: string,
@@ -88,15 +99,27 @@ export const budgetFor = (
 	overrides: readonly BudgetOverride[],
 	currency: string,
 ): Money | null => {
-	const override = overrides.find(
-		(o) => o.category_id === categoryId && o.month === month,
+	const override = writtenLast(
+		overrides.filter((o) => o.category_id === categoryId && o.month === month),
 	);
 	if (override) return parseMoney(override.amount, currency);
-	const current = standing
-		.filter((b) => b.category_id === categoryId && b.valid_from <= month)
-		.toSorted((a, b) => (a.valid_from < b.valid_from ? 1 : -1))[0];
+	const valid = standing.filter(
+		(b) => b.category_id === categoryId && b.valid_from <= month,
+	);
+	const from = valid.reduce<BudgetMonth | undefined>(
+		(latest, b) => (!latest || b.valid_from > latest ? b.valid_from : latest),
+		undefined,
+	);
+	const current = writtenLast(valid.filter((b) => b.valid_from === from));
 	return current?.amount != null ? parseMoney(current.amount, currency) : null;
 };
+
+/** Whether a Category's Budget for the month is a Budget override rather than the standing amount. */
+export const isOverridden = (
+	categoryId: string,
+	month: BudgetMonth,
+	overrides: readonly BudgetOverride[],
+) => overrides.some((o) => o.category_id === categoryId && o.month === month);
 
 export type CountedEntry = {
 	id: string;
@@ -161,11 +184,151 @@ export const pace = (
 ) => ({
 	day,
 	days,
-	/** Null when the Budget is zero. */
+	/** Whole percent used, for showing; null when the Budget is zero. */
 	percentUsed: percentOf(used, budget),
-	/** Ahead of the month: more used than the share of the month gone. */
-	ahead: (() => {
-		const percent = percentOf(used, budget);
-		return percent !== null && percent * days > 100 * day;
-	})(),
+	/** Ahead of the month: a bigger share used than the share of the month gone, compared exactly. */
+	ahead:
+		!isZero(budget) &&
+		isNegative(
+			addMoney(timesMoney(budget, day), negateMoney(timesMoney(used, days))),
+		),
 });
+
+/** One Category's Budget (or Expected income) in a Budget month, and how much of it is used. */
+export type BudgetLine<T extends CategoryLike> = {
+	category: T;
+	budget: Money;
+	/** Spent, for a Budget; received, for Expected income. Includes the Category's Subcategories. */
+	used: Money;
+	/** Whether the Category has Subcategories, whose spending its total includes. */
+	includesSubcategories: boolean;
+	/** Set only for this month, as a Budget override. */
+	overridden: boolean;
+	/** Whole percent of the Budget used; null when the Budget is zero. */
+	percentUsed: number | null;
+	/** More used than the share of the month gone. */
+	ahead: boolean;
+};
+
+/** A Budget month as the Budgets tab shows it. */
+export type BudgetMonthView<T extends CategoryLike> = {
+	month: BudgetMonth;
+	/** The Base currency, which Budgets are in. */
+	currency: string;
+	first: string;
+	last: string;
+	/** How far through it today is: its day for the current month, all of it for a past one, none for a future one. */
+	day: number;
+	days: number;
+	current: boolean;
+	/** Expense Categories with a Budget this month, in list order; archived ones after. */
+	budgets: BudgetLine<T>[];
+	/** Income Categories with Expected income this month, in list order; archived ones after. */
+	expectedIncome: BudgetLine<T>[];
+};
+
+/** One list's Categories: the active ones in list order (each parent, then its Subcategories), then archived ones. */
+const inListOrder = <T extends CategoryLike>(
+	categories: readonly T[],
+	kind: CategoryLike["kind"],
+) => {
+	const active = categoryTree(categories, kind).flatMap(
+		({ category, subcategories }) => [category, ...subcategories],
+	);
+	const shown = new Set(active.map((c) => c.id));
+	return [
+		...active,
+		...categories
+			.filter((c) => c.kind === kind && !shown.has(c.id))
+			.toSorted((a, b) => a.name.localeCompare(b.name)),
+	];
+};
+
+/** A Budget month of a household: every Budget and Expected income in it, how much of each is used, and its Pace. */
+export const budgetMonthView = <T extends CategoryLike>({
+	month,
+	today,
+	startDay,
+	currency,
+	categories,
+	standing,
+	overrides,
+	entries,
+	items,
+}: {
+	month: BudgetMonth;
+	today: string;
+	startDay: number;
+	/** The Base currency: Budgets, and every Expense and Income until Base amounts (#45), are in it. */
+	currency: string;
+	categories: readonly T[];
+	standing: readonly StandingBudget[];
+	overrides: readonly BudgetOverride[];
+	entries: readonly CountedEntry[];
+	items: readonly CountedItem[];
+}): BudgetMonthView<T> => {
+	const range = budgetMonthRange(month, startDay);
+	const days = budgetMonthDays(month, startDay);
+	const thisMonth = budgetMonthOf(today, startDay);
+	const day =
+		month === thisMonth
+			? dayOfBudgetMonth(today, startDay)
+			: month < thisMonth
+				? days
+				: 0;
+	const parentOf = new Map(categories.map((c) => [c.id, c.parent_id]));
+	const parents = new Set(categories.map((c) => c.parent_id));
+	const totals = categoryTotals(entries, items, parentOf, range, currency);
+	const lines = (kind: CategoryLike["kind"]) =>
+		inListOrder(categories, kind).flatMap((category): BudgetLine<T>[] => {
+			const budget = budgetFor(
+				category.id,
+				month,
+				standing,
+				overrides,
+				currency,
+			);
+			if (!budget) return [];
+			const used = totals.get(category.id) ?? zeroMoney(currency);
+			const { percentUsed, ahead } = pace(used, budget, day, days);
+			return [
+				{
+					category,
+					budget,
+					used,
+					includesSubcategories: parents.has(category.id),
+					overridden: isOverridden(category.id, month, overrides),
+					percentUsed,
+					ahead,
+				},
+			];
+		});
+	return {
+		month,
+		currency,
+		...range,
+		day,
+		days,
+		current: month === thisMonth,
+		budgets: lines("expense"),
+		expectedIncome: lines("income"),
+	};
+};
+
+/**
+ * Home's top Budgets: the most used first. A Subcategory's Budget is left out when its parent's is shown, as the
+ * parent's already counts its spending.
+ */
+export const topBudgets = <T extends CategoryLike>(
+	lines: readonly BudgetLine<T>[],
+	count: number,
+) => {
+	const budgeted = new Set(lines.map((l) => l.category.id));
+	return lines
+		.filter(
+			(l) =>
+				l.category.parent_id === null || !budgeted.has(l.category.parent_id),
+		)
+		.toSorted((a, b) => (b.percentUsed ?? -1) - (a.percentUsed ?? -1))
+		.slice(0, count);
+};

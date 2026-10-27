@@ -15,7 +15,7 @@ import {
 	type BudgetMonthView,
 	EXPENSE,
 	INCOME,
-} from "./month-view";
+} from "./types";
 
 type Props = {
 	view: BudgetMonthView;
@@ -198,6 +198,9 @@ const BudgetRow = ({
 				className="gap-1"
 			>
 				<Text variant="label">{name}</Text>
+				{line.includesSubcategories && (
+					<Text variant="muted">{t`Includes its Subcategories`}</Text>
+				)}
 				<Text>{amounts}</Text>
 				<Text variant="muted">{paceText}</Text>
 			</View>

@@ -11,11 +11,13 @@ create table public.budgets (
 	-- Null: no Budget from this month on, until a later one.
 	amount numeric check (amount >= 0),
 	created_at timestamptz not null default now(),
-	unique (category_id, valid_from),
+	-- Not unique per Category and month: two devices offline may each set the same one, and both rows sync rather
+	-- than one being rejected. The one written last wins (`budgetFor`).
 	-- A Category deleted (only ever unused) takes its Budgets with it.
 	foreign key (category_id, household_id) references public.categories (id, household_id) on delete cascade
 );
 create index budgets_household_id_idx on public.budgets (household_id);
+create index budgets_category_id_idx on public.budgets (category_id);
 alter table public.budgets enable row level security;
 create policy "Members read their households' Budgets" on public.budgets
 	for select to authenticated using (private.is_member(household_id));
@@ -36,10 +38,11 @@ create table public.budget_overrides (
 	month text not null check (month ~ '^\d{4}-(0[1-9]|1[0-2])$'),
 	amount numeric not null check (amount >= 0),
 	created_at timestamptz not null default now(),
-	unique (category_id, month),
+	-- Not unique either, for the same reason as Budgets.
 	foreign key (category_id, household_id) references public.categories (id, household_id) on delete cascade
 );
 create index budget_overrides_household_id_idx on public.budget_overrides (household_id);
+create index budget_overrides_category_id_idx on public.budget_overrides (category_id);
 alter table public.budget_overrides enable row level security;
 create policy "Members read their households' Budget overrides" on public.budget_overrides
 	for select to authenticated using (private.is_member(household_id));

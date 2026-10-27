@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { parseMoney } from "@hisaab/domain";
+import { budgetMonthView, parseMoney } from "@hisaab/domain";
 import { screen, userEvent, within } from "@testing-library/react-native";
 
 import { formatMoney } from "@/lib/format";
@@ -7,10 +7,9 @@ import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
-import type { BudgetScope } from "./scope";
 import { BudgetMonth } from "./budget-month";
 import { BudgetsTile } from "./budgets-tile";
-import { budgetMonthView } from "./month-view";
+import type { BudgetScope } from "./scope";
 
 const pkr = (amount: string) => formatMoney(parseMoney(amount, "PKR"));
 
@@ -21,13 +20,21 @@ const rent = makeCategory("c4", "Rent");
 const salary = makeCategory("c5", "Salary", { kind: "income" });
 const categories = [food, groceries, transport, rent, salary];
 
+const AT = "2026-09-01T00:00:00.000Z";
 const standing = [
-	{ category_id: "c1", valid_from: "2026-09", amount: "30000" },
-	{ category_id: "c3", valid_from: "2026-10", amount: "10000" },
-	{ category_id: "c4", valid_from: "2026-10", amount: "50000" },
-	{ category_id: "c5", valid_from: "2026-01", amount: "250000" },
+	{ category_id: "c1", valid_from: "2026-09", amount: "30000", created_at: AT },
+	{ category_id: "c3", valid_from: "2026-10", amount: "10000", created_at: AT },
+	{ category_id: "c4", valid_from: "2026-10", amount: "50000", created_at: AT },
+	{
+		category_id: "c5",
+		valid_from: "2026-01",
+		amount: "250000",
+		created_at: AT,
+	},
 ];
-const overrides = [{ category_id: "c3", month: "2026-11", amount: "2000" }];
+const overrides = [
+	{ category_id: "c3", month: "2026-11", amount: "2000", created_at: AT },
+];
 
 const entries = [
 	// Groceries count towards Food, their parent.
@@ -77,42 +84,6 @@ const october = (month = "2026-10", today = "2026-10-12") =>
 		entries,
 		items,
 	});
-
-describe("budgetMonthView", () => {
-	it("counts Items against their own Category, Subcategories in their parent, and no Balance adjustment", () => {
-		const view = october();
-		const used = Object.fromEntries(
-			view.budgets.map((line) => [line.category.name, line.used.toString()]),
-		);
-		expect(used).toEqual({ Food: "13000", Transport: "5000", Rent: "0" });
-		expect(view.expectedIncome.map((l) => l.used.toString())).toEqual([
-			"250000",
-		]);
-	});
-
-	it("uses a month's override, and the standing amount again after it", () => {
-		const budgetOf = (month: string) =>
-			budgetMonthView({ ...sources, month })
-				.budgets.find((l) => l.category.name === "Transport")
-				?.budget.toString();
-		const sources = {
-			today: "2026-10-12",
-			startDay: 1,
-			currency: "PKR",
-			categories,
-			standing,
-			overrides,
-			entries,
-			items,
-		};
-		expect([
-			budgetOf("2026-09"),
-			budgetOf("2026-10"),
-			budgetOf("2026-11"),
-			budgetOf("2026-12"),
-		]).toEqual([undefined, "10000", "2000", "10000"]);
-	});
-});
 
 describe("BudgetMonth", () => {
 	const setup = async (
@@ -192,6 +163,26 @@ describe("BudgetMonth", () => {
 			amount: "55000",
 			scope: "month",
 		});
+	});
+
+	it("keeps an overridden month's Budget to that month unless told otherwise", async () => {
+		const { onSet, user } = await setup({
+			view: october("2026-11", "2026-11-05"),
+		});
+		await user.press(
+			screen.getByRole("button", { name: "Change the Budget for Transport" }),
+		);
+		await user.press(screen.getByRole("button", { name: "Save Budget" }));
+		expect(onSet).toHaveBeenCalledWith({
+			categoryId: "c3",
+			amount: "2000",
+			scope: "month",
+		});
+	});
+
+	it("says a parent's Budget includes its Subcategories", async () => {
+		await setup();
+		expect(screen.getAllByText("Includes its Subcategories")).toHaveLength(1);
 	});
 
 	it("stops a Budget from this month on", async () => {

@@ -1,11 +1,10 @@
-import { shiftBudgetMonth } from "@hisaab/domain";
+import { budgetMonthOf, shiftBudgetMonth } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 
 import { Text } from "@/components/ui/text";
 import { setBudget, stopBudget } from "@/features/budgets/actions";
 import { BudgetMonth } from "@/features/budgets/budget-month";
-import { currentBudgetMonth } from "@/features/budgets/month-view";
 import { useBudgetMonth } from "@/features/budgets/use-budgets";
 import { useCategories } from "@/features/categories/use-categories";
 import { useCanWrite } from "@/features/households/use-can-write";
@@ -22,10 +21,14 @@ export default function Budgets() {
 	const categories = useCategories(household?.id);
 	const today = todayIn(entryTimeZone(household));
 	const thisMonth = household
-		? currentBudgetMonth(today, household.budget_month_start_day)
+		? budgetMonthOf(today, household.budget_month_start_day)
 		: undefined;
-	// Months away from this one, so the tab follows today across a month boundary.
-	const [offset, setOffset] = useState(0);
+	// Months away from this one, so the tab follows today across a month boundary; back to this one in another
+	// household.
+	const [moved, setMoved] = useState({ householdId: household?.id, offset: 0 });
+	const offset = moved.householdId === household?.id ? moved.offset : 0;
+	const move = (by: number) =>
+		setMoved({ householdId: household?.id, offset: offset + by });
 	const month =
 		thisMonth === undefined ? undefined : shiftBudgetMonth(thisMonth, offset);
 	const view = useBudgetMonth(household, month, today);
@@ -49,8 +52,8 @@ export default function Budgets() {
 				<BudgetMonth
 					canEdit={canWrite}
 					categories={categories}
-					onNext={() => setOffset((o) => o + 1)}
-					onPrevious={() => setOffset((o) => o - 1)}
+					onNext={() => move(1)}
+					onPrevious={() => move(-1)}
 					onSet={({ categoryId, amount, scope }) =>
 						setBudget(
 							{ householdId: household.id, categoryId, month: view.month },

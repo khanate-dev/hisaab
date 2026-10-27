@@ -1,4 +1,5 @@
 import { budgetOverrides, budgets } from "@hisaab/client-schema";
+import { budgetMonthView } from "@hisaab/domain";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -9,7 +10,7 @@ import { useEntries, useEntryItems } from "@/features/entries/use-entries";
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
 
-import { type BudgetMonthView, budgetMonthView } from "./month-view";
+import type { BudgetMonthView } from "./types";
 
 export type Budget = typeof budgets.$inferSelect;
 export type BudgetOverrideRow = typeof budgetOverrides.$inferSelect;

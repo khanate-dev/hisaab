@@ -1,5 +1,5 @@
--- Budgets and Budget overrides: one standing amount per Category per starting Budget month and one override per
--- Category per month, never negative, in the Category's own household; Admins and Members set them, Viewers and
+-- Budgets and Budget overrides: standing amounts from a Budget month on and one-month overrides, never negative, in
+-- the Category's own household; two for the same month (from two devices offline) both land; Admins and Members set them, Viewers and
 -- outsiders don't; a Budget stays for its Category and month.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -40,11 +40,11 @@ select lives_ok(
 	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Groceries')),
 	'a Member sets a Budget from a Budget month on'
 );
-select throws_ok(
+select lives_ok(
 	format($$ insert into public.budgets (id, household_id, category_id, valid_from, amount)
 	   values ('00000000-0000-7000-8000-00000000cc02', '00000000-0000-7000-8000-00000000ccf1', %L, '2026-10', 1) $$,
 	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Groceries')),
-	'23505', null, 'one standing amount per Category per starting month'
+	'another device setting the same month offline isn''t refused (the one written last wins)'
 );
 select lives_ok(
 	format($$ insert into public.budgets (id, household_id, category_id, valid_from, amount)
@@ -88,11 +88,11 @@ select lives_ok(
 	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Groceries')),
 	'a Member overrides a Budget for one month'
 );
-select throws_ok(
+select lives_ok(
 	format($$ insert into public.budget_overrides (id, household_id, category_id, month, amount)
 	   values ('00000000-0000-7000-8000-00000000cc12', '00000000-0000-7000-8000-00000000ccf1', %L, '2026-11', 1) $$,
 	   pg_temp.category('00000000-0000-7000-8000-00000000ccf1', 'Groceries')),
-	'23505', null, 'once per month'
+	'nor an override'
 );
 select is(pg_temp.affected($$ update public.budgets set amount = 32000 where id = '00000000-0000-7000-8000-00000000cc01' $$),
 	1, 'and changes a Budget''s amount');
@@ -102,7 +102,7 @@ select throws_ok($$ update public.budgets set valid_from = '2026-09' where id = 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000cca2');
 select is(pg_temp.affected($$ update public.budget_overrides set amount = 0 where id = '00000000-0000-7000-8000-00000000cc11' $$),
 	0, 'a Viewer changes no Budget');
-select is((select count(*)::int from public.budgets), 4, 'but reads them all');
+select is((select count(*)::int from public.budgets), 5, 'but reads them all');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000cca3');
 select is((select count(*)::int from public.budgets) + (select count(*)::int from public.budget_overrides), 0,

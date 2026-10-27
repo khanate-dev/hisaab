@@ -1,4 +1,5 @@
 import { CONTRACT_VERSION, stamped } from "@hisaab/client-schema";
+import { budgetFor } from "@hisaab/domain";
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
 import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -943,5 +944,68 @@ describe("sync scenarios", () => {
 				).toEqual([{ household_id: household }]),
 			{ timeout: 10_000 },
 		);
+	});
+	it("two devices setting the same month's Budget offline both upload, and the one written last wins", async () => {
+		const { users, household } = await seedHousehold({
+			alice: "admin",
+			bob: "member",
+		});
+		const alice = await connectClient(users.alice);
+		const bob = await connectClient(users.bob);
+		const groceries = await vi.waitFor(
+			() =>
+				alice.get<{ id: string }>(
+					"SELECT id FROM categories WHERE household_id = ? AND name = 'Groceries'",
+					[household],
+				),
+			{ timeout: 10_000 },
+		);
+		const setBudget = (
+			device: AbstractPowerSyncDatabase,
+			amount: string,
+			createdAt: string,
+		) =>
+			device.execute(
+				"INSERT INTO budgets (id, household_id, category_id, valid_from, amount, created_at, _metadata) VALUES (?, ?, ?, '2026-10', ?, ?, ?)",
+				[
+					uuidv7(),
+					household,
+					groceries.id,
+					amount,
+					createdAt,
+					stamped({})._metadata,
+				],
+			);
+
+		await goOffline(alice);
+		await goOffline(bob);
+		await setBudget(alice, "30000", "2026-10-02T09:00:00.000Z");
+		await setBudget(bob, "35000", "2026-10-02T10:00:00.000Z");
+		await goOnline(bob);
+		await waitForUploads(bob);
+		await goOnline(alice);
+		await waitForUploads(alice);
+
+		expect(await uploadErrors(alice)).toEqual([]);
+		expect(await uploadErrors(bob)).toEqual([]);
+		for (const device of [alice, bob])
+			await vi.waitFor(
+				async () => {
+					const rows = await device.getAll<{
+						category_id: string;
+						valid_from: string;
+						amount: string | null;
+						created_at: string;
+					}>(
+						"SELECT category_id, valid_from, amount, created_at FROM budgets WHERE household_id = ?",
+						[household],
+					);
+					expect(rows).toHaveLength(2);
+					expect(
+						budgetFor(groceries.id, "2026-11", rows, [], "PKR")?.toString(),
+					).toBe("35000");
+				},
+				{ timeout: 10_000 },
+			);
 	});
 });

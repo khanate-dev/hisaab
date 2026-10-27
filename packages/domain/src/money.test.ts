@@ -10,7 +10,9 @@ import {
 	moneyEquals,
 	negateMoney,
 	parseMoney,
+	percentOf,
 	sumMoney,
+	timesMoney,
 } from "./money";
 
 // Exact decimals in the actual unit (ADR-0002): up to 4 decimal places, large enough for any household.
@@ -45,6 +47,44 @@ describe("Money", () => {
 				"PKR",
 			).toString(),
 		).toBe("12345678901234.5679");
+	});
+
+	it("takes a whole percent of another amount, rounded half up, and none of zero", () => {
+		fc.assert(
+			fc.property(
+				fc.integer({ min: 0, max: 1_000_000 }),
+				fc.integer({ min: 1, max: 1_000_000 }),
+				(part, whole) => {
+					const percent = percentOf(
+						parseMoney(String(part), "PKR"),
+						parseMoney(String(whole), "PKR"),
+					);
+					// Within half a percent of the exact share, never further.
+					expect(percent).not.toBeNull();
+					expect(
+						Math.abs((percent ?? 0) * whole - part * 100) * 2 <= whole,
+					).toBe(true);
+				},
+			),
+		);
+		expect(
+			percentOf(parseMoney("1", "PKR"), parseMoney("0", "PKR")),
+		).toBeNull();
+		expect(percentOf(parseMoney("1", "PKR"), parseMoney("200", "PKR"))).toBe(1);
+	});
+
+	it("multiplies exactly by a whole number", () => {
+		fc.assert(
+			fc.property(money("PKR"), fc.integer({ min: -100, max: 100 }), (a, n) => {
+				const sum = sumMoney(
+					Array.from({ length: Math.abs(n) }, () => a),
+					"PKR",
+				);
+				expect(
+					moneyEquals(timesMoney(a, n), n < 0 ? negateMoney(sum) : sum),
+				).toBe(true);
+			}),
+		);
 	});
 
 	it("round-trips through its text form", () => {

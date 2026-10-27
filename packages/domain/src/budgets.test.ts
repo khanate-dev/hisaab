@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	budgetFor,
+	budgetMonthView,
 	budgetMonthDays,
 	budgetMonthOf,
 	budgetMonthRange,
@@ -11,7 +12,9 @@ import {
 	dayOfBudgetMonth,
 	pace,
 	shiftBudgetMonth,
+	topBudgets,
 } from "./budgets";
+import type { CategoryLike } from "./categories";
 import { shiftCalendarDate } from "./dates";
 import { moneyEquals, parseMoney, sumMoney } from "./money";
 
@@ -71,34 +74,126 @@ describe("Budget months", () => {
 
 describe("budgetFor", () => {
 	const amount = fc.integer({ min: 0, max: 1_000_000 }).map(String);
+	const instant = fc
+		.integer({ min: 0, max: 1_000_000 })
+		.map((n) => new Date(1_800_000_000_000 + n * 1000).toISOString());
+	const standingRow = fc.record({
+		category_id: fc.constant("c1"),
+		valid_from: month,
+		amount: fc.option(amount),
+		created_at: instant,
+	});
+	const shown = (money: ReturnType<typeof budgetFor>) =>
+		money === null ? null : money.toString();
 
-	it("is the month's override, else the latest standing amount from before it (none once stopped), else none", () => {
+	it("is a month's override, whatever the standing amounts", () => {
 		fc.assert(
 			fc.property(
 				month,
-				fc.array(fc.tuple(month, fc.option(amount)), { maxLength: 6 }),
-				fc.option(amount),
-				(m, standing, override) => {
-					const rows = standing.map(([validFrom, a]) => ({
+				fc.array(standingRow, { maxLength: 6 }),
+				amount,
+				(m, rows, a) => {
+					const override = {
 						category_id: "c1",
-						valid_from: validFrom,
+						month: m,
 						amount: a,
-					}));
-					const overrides =
-						override === null
-							? []
-							: [{ category_id: "c1", month: m, amount: override }];
-					const got = budgetFor("c1", m, rows, overrides, "PKR");
-					const latest = rows
-						.filter((r) => r.valid_from <= m)
-						.toSorted((a, b) => (a.valid_from < b.valid_from ? 1 : -1))[0];
-					const want = override ?? latest?.amount ?? null;
-					expect(got === null ? null : got.toString()).toBe(
-						want === null ? null : parseMoney(want, "PKR").toString(),
+						created_at: "2027-01-01T00:00:00.000Z",
+					};
+					expect(shown(budgetFor("c1", m, rows, [override], "PKR"))).toBe(
+						parseMoney(a, "PKR").toString(),
 					);
 				},
 			),
 		);
+	});
+
+	it("is unchanged by a standing amount from a later month, or by another Category's", () => {
+		fc.assert(
+			fc.property(
+				month,
+				fc.array(standingRow, { maxLength: 6 }),
+				amount,
+				fc.integer({ min: 1, max: 24 }),
+				(m, rows, a, later) => {
+					const before = shown(budgetFor("c1", m, rows, [], "PKR"));
+					const more = [
+						...rows,
+						{
+							category_id: "c1",
+							valid_from: shiftBudgetMonth(m, later),
+							amount: a,
+							created_at: "2027-01-01T00:00:00.000Z",
+						},
+						{
+							category_id: "c2",
+							valid_from: m,
+							amount: a,
+							created_at: "2027-01-01T00:00:00.000Z",
+						},
+					];
+					expect(shown(budgetFor("c1", m, more, [], "PKR"))).toBe(before);
+				},
+			),
+		);
+	});
+
+	it("lasts from the month it's set in until a later one, and a stopped one is none", () => {
+		fc.assert(
+			fc.property(
+				month,
+				fc.array(standingRow, { maxLength: 6 }),
+				fc.option(amount),
+				fc.integer({ min: 0, max: 24 }),
+				(m, rows, a, after) => {
+					// Set last, from m on; no row of `rows` falls between m and the month asked about.
+					const set = {
+						category_id: "c1",
+						valid_from: m,
+						amount: a,
+						created_at: "2099-01-01T00:00:00.000Z",
+					};
+					const asked = shiftBudgetMonth(m, after);
+					const earlier = rows.filter((r) => r.valid_from < m);
+					expect(
+						shown(budgetFor("c1", asked, [...earlier, set], [], "PKR")),
+					).toBe(a === null ? null : parseMoney(a, "PKR").toString());
+				},
+			),
+		);
+	});
+
+	it("takes the one written last when two devices set the same month", () => {
+		const twice = (first: string, second: string) => [
+			{
+				category_id: "c1",
+				valid_from: "2026-10",
+				amount: first,
+				created_at: "2026-10-02T00:00:00.000Z",
+			},
+			{
+				category_id: "c1",
+				valid_from: "2026-10",
+				amount: second,
+				created_at: "2026-10-03T00:00:00.000Z",
+			},
+		];
+		expect(
+			shown(budgetFor("c1", "2026-11", twice("100", "200"), [], "PKR")),
+		).toBe("200");
+		expect(
+			shown(
+				budgetFor(
+					"c1",
+					"2026-10",
+					[],
+					twice("100", "300").map(({ valid_from, ...rest }) => ({
+						...rest,
+						month: valid_from,
+					})),
+					"PKR",
+				),
+			),
+		).toBe("300");
 	});
 });
 
@@ -219,7 +314,7 @@ describe("pace", () => {
 				fc.integer({ min: 0, max: 10_000 }),
 				fc.integer({ min: 1, max: 10_000 }),
 				fc.integer({ min: 28, max: 31 }),
-				fc.integer({ min: 1, max: 28 }),
+				fc.integer({ min: 0, max: 28 }),
 				(used, budget, days, day) => {
 					const result = pace(
 						parseMoney(String(used), "PKR"),
@@ -227,11 +322,133 @@ describe("pace", () => {
 						day,
 						days,
 					);
-					const percent = Math.round((used * 100) / budget);
-					expect(result.percentUsed).toBe(percent);
-					expect(result.ahead).toBe(percent * days > 100 * day);
+					expect(result.percentUsed).toBe(Math.round((used * 100) / budget));
+					expect(result.ahead).toBe(used * days > budget * day);
 				},
 			),
 		);
+	});
+
+	it("compares the exact amounts, not the rounded percent", () => {
+		const used = (amount: string, day: number) =>
+			pace(parseMoney(amount, "PKR"), parseMoney("100", "PKR"), day, 30).ahead;
+		expect(used("50.4", 15)).toBe(true);
+		expect(used("6.6", 2)).toBe(false);
+	});
+});
+
+describe("budgetMonthView", () => {
+	const category = (
+		id: string,
+		name: string,
+		more: Partial<CategoryLike> = {},
+	): CategoryLike => ({
+		id,
+		name,
+		kind: "expense",
+		parent_id: null,
+		archived_at: null,
+		...more,
+	});
+	const at = "2026-10-01T00:00:00.000Z";
+	const view = (month: string, today = "2026-10-12") =>
+		budgetMonthView({
+			month,
+			today,
+			startDay: 1,
+			currency: "PKR",
+			categories: [
+				category("food", "Food"),
+				category("groceries", "Groceries", { parent_id: "food" }),
+				category("old", "Old", { archived_at: at }),
+				category("salary", "Salary", { kind: "income" }),
+			],
+			standing: [
+				{
+					category_id: "food",
+					valid_from: "2026-10",
+					amount: "1000",
+					created_at: at,
+				},
+				{
+					category_id: "groceries",
+					valid_from: "2026-10",
+					amount: "800",
+					created_at: at,
+				},
+				{
+					category_id: "old",
+					valid_from: "2026-01",
+					amount: "50",
+					created_at: at,
+				},
+				{
+					category_id: "salary",
+					valid_from: "2026-01",
+					amount: "5000",
+					created_at: at,
+				},
+			],
+			overrides: [
+				{
+					category_id: "food",
+					month: "2026-11",
+					amount: "2000",
+					created_at: at,
+				},
+			],
+			entries: [
+				{
+					id: "e1",
+					kind: "expense",
+					amount: "-600",
+					category_id: "groceries",
+					occurred_on: "2026-10-03",
+				},
+				{
+					id: "e2",
+					kind: "balance_adjustment",
+					amount: "-999",
+					category_id: null,
+					occurred_on: "2026-10-04",
+				},
+			],
+			items: [],
+		});
+
+	it("lists each Budget in list order, archived Categories after, with what's used and whether it's overridden", () => {
+		const october = view("2026-10");
+		expect(
+			october.budgets.map((l) => [
+				l.category.id,
+				l.budget.toString(),
+				l.used.toString(),
+				l.includesSubcategories,
+			]),
+		).toEqual([
+			["food", "1000", "600", true],
+			["groceries", "800", "600", false],
+			["old", "50", "0", false],
+		]);
+		expect(october.expectedIncome.map((l) => l.category.id)).toEqual([
+			"salary",
+		]);
+		expect(view("2026-11").budgets[0]?.overridden).toBe(true);
+	});
+
+	it("is as far through as today: its day this month, all of a past one, none of a future one", () => {
+		fc.assert(
+			fc.property(month, date, (m, today) => {
+				const { day, days, current } = view(m, today);
+				expect(day >= 0 && day <= days).toBe(true);
+				expect(current).toBe(day >= 1 && budgetMonthOf(today, 1) === m);
+			}),
+		);
+	});
+
+	it("puts the most used first on Home, leaving out a Subcategory whose parent is shown", () => {
+		expect(
+			topBudgets(view("2026-10").budgets, 3).map((l) => l.category.id),
+		).toEqual(["food", "old"]);
 	});
 });

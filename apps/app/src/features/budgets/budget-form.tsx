@@ -16,7 +16,7 @@ import type { Category } from "@/features/categories/types";
 import { useSave } from "@/features/entries/form-checks";
 
 import { type BudgetScope, ONLY_THIS_MONTH, ONWARD } from "./scope";
-import { type BudgetLine, INCOME } from "./month-view";
+import { type BudgetLine, INCOME } from "./types";
 
 type Props = {
 	/** Expense Categories take a Budget; income ones take Expected income. */
@@ -65,7 +65,9 @@ export const BudgetForm = ({
 		initial?.category.id ?? choices[0]?.value ?? "",
 	);
 	const [amount, setAmount] = useState(initial?.budget.toString() ?? "");
-	const [scope, setScope] = useState<BudgetScope>(ONWARD);
+	const [scope, setScope] = useState<BudgetScope>(
+		initial?.overridden ? ONLY_THIS_MONTH : ONWARD,
+	);
 	const income = kind === INCOME;
 
 	const submit = async () => {

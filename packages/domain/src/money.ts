@@ -74,6 +74,13 @@ export class Money {
 		);
 	}
 
+	/** This many times over, exactly; `factor` is a whole number. */
+	times(factor: number) {
+		if (!Number.isInteger(factor))
+			throw new Error(`Not a whole number: ${factor}`);
+		return new Money(this.#amount.times(factor), this.currency);
+	}
+
 	/** How much of `whole` this is, as a whole percentage (rounded half up): for showing Pace, never for sums. */
 	percentOf(whole: Money) {
 		if (whole.currency !== this.currency) {
@@ -104,6 +111,7 @@ export const isZero = (a: Money) => a.isZero();
 export const isNegative = (a: Money) => a.isNegative();
 export const moneyEquals = (a: Money, b: Money) => a.equals(b);
 /** `part` as a whole percentage of `whole`; null when `whole` is zero. */
+export const timesMoney = (a: Money, factor: number) => a.times(factor);
 export const percentOf = (part: Money, whole: Money) => part.percentOf(whole);
 
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */

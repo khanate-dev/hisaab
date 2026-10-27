@@ -5,7 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { formatMoney } from "@/lib/format";
 
-import { type BudgetLine, topBudgets } from "./month-view";
+import { topBudgets } from "@hisaab/domain";
+
+import type { BudgetLine } from "./types";
 
 const TOP = 3;
 
