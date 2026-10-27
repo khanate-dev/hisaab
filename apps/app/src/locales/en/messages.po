@@ -95,6 +95,7 @@ msgstr "{name}'s Role"
 msgid "{paid} on {day}"
 msgstr "{paid} on {day}"
 
+#: src/app/(tabs)/entries.tsx
 #: src/features/budgets/budget-form.tsx
 #: src/features/recurring/rule-form.tsx
 msgid "{parent}: {name}"
@@ -127,6 +128,10 @@ msgstr "{restName}, {restAmount}"
 #: src/features/invites/invite-list.tsx
 msgid "{role}, for {who}"
 msgstr "{role}, for {who}"
+
+#: src/features/search/entry-search.tsx
+msgid "{shown} of {total} Entries"
+msgstr "{shown} of {total} Entries"
 
 #: src/features/members/member-list.tsx
 msgid "{shown}, {role}"
@@ -414,6 +419,10 @@ msgstr "Archived: gone from your lists, everything recorded in it kept."
 msgid "Archived: hidden from your Wallets, its Entries kept."
 msgstr "Archived: hidden from your Wallets, its Entries kept."
 
+#: src/features/search/entry-search.tsx
+msgid "As YYYY-MM-DD."
+msgstr "As YYYY-MM-DD."
+
 #: src/features/recurring/labels.ts
 msgid "Auto-record"
 msgstr "Auto-record"
@@ -513,6 +522,7 @@ msgstr "Bus"
 #: src/features/entries/items-section.tsx
 #: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/repayment-form.tsx
+#: src/features/search/entry-search.tsx
 #: src/features/wallets/wallet-detail.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -533,6 +543,7 @@ msgstr "Cash in hand"
 #: src/app/_layout.tsx
 #: src/app/categories/index.tsx
 #: src/app/me.tsx
+#: src/features/search/entry-search.tsx
 msgid "Categories"
 msgstr "Categories"
 
@@ -570,6 +581,10 @@ msgstr "Change the total"
 #: src/app/recurring/[id].tsx
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
+
+#: src/features/search/entry-search.tsx
+msgid "Clear"
+msgstr "Clear"
 
 #: src/components/ui/sheet.tsx
 #: src/features/shell/quick-add.tsx
@@ -756,6 +771,10 @@ msgstr "Delete rule"
 #: src/features/loans/loan-detail.tsx
 msgid "Delete the {paid} Repayment"
 msgstr "Delete the {paid} Repayment"
+
+#: src/features/search/entry-search.tsx
+msgid "Delete the {savedName} filter"
+msgstr "Delete the {savedName} filter"
 
 #: src/features/loans/loan-detail.tsx
 msgid "Delete this Loan?"
@@ -1006,6 +1025,14 @@ msgstr "Expired"
 msgid "Fills in its Category, Wallet and amount"
 msgstr "Fills in its Category, Wallet and amount"
 
+#: src/features/search/entry-search.tsx
+msgid "Filters"
+msgstr "Filters"
+
+#: src/features/search/entry-search.tsx
+msgid "Filters ({narrowed})"
+msgstr "Filters ({narrowed})"
+
 #: src/features/budgets/budget-form.tsx
 msgid "For"
 msgstr "For"
@@ -1027,6 +1054,7 @@ msgstr "For email"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/transfer-form.tsx
 #: src/features/loans/loan-form.tsx
+#: src/features/search/entry-search.tsx
 msgid "From"
 msgstr "From"
 
@@ -1251,6 +1279,7 @@ msgstr "Keep the quantity to 40 characters or fewer."
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/recurring/rule-form.tsx
+#: src/features/search/entry-search.tsx
 msgid "Kind"
 msgstr "Kind"
 
@@ -1376,6 +1405,10 @@ msgstr "Monthly on day {day}"
 msgid "Name"
 msgstr "Name"
 
+#: src/features/search/entry-search.tsx
+msgid "Name it in 1 to 60 characters."
+msgstr "Name it in 1 to 60 characters."
+
 #: src/features/contacts/contact-list.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
@@ -1469,6 +1502,10 @@ msgstr "No Categories in this list yet."
 #: src/features/contacts/contact-list.tsx
 msgid "No Contacts yet."
 msgstr "No Contacts yet."
+
+#: src/app/(tabs)/entries.tsx
+msgid "No Entries match."
+msgstr "No Entries match."
 
 #: src/features/entries/entry-list.tsx
 #: src/features/wallets/wallet-detail.tsx
@@ -1741,6 +1778,7 @@ msgid "Record Repayment"
 msgstr "Record Repayment"
 
 #: src/features/entries/entry-detail.tsx
+#: src/features/search/entry-search.tsx
 msgid "Recorded by"
 msgstr "Recorded by"
 
@@ -1867,6 +1905,10 @@ msgstr "Save Entry"
 msgid "Save Expected income"
 msgstr "Save Expected income"
 
+#: src/features/search/entry-search.tsx
+msgid "Save filter"
+msgstr "Save filter"
+
 #: src/features/entries/items-section.tsx
 msgid "Save Item"
 msgstr "Save Item"
@@ -1888,10 +1930,18 @@ msgstr "Save Repayment"
 msgid "Save settings"
 msgstr "Save settings"
 
+#: src/features/search/entry-search.tsx
+msgid "Save this search"
+msgstr "Save this search"
+
 #: src/app/entries/new.tsx
 #: src/features/entries/quick-add.tsx
 msgid "Save Transfer"
 msgstr "Save Transfer"
+
+#: src/features/search/entry-search.tsx
+msgid "Saved filter name"
+msgstr "Saved filter name"
 
 #: src/features/households/household-settings.tsx
 msgid "Saved."
@@ -1900,6 +1950,10 @@ msgstr "Saved."
 #: src/features/entries/items-section.tsx
 msgid "Say what the Item is."
 msgstr "Say what the Item is."
+
+#: src/features/search/entry-search.tsx
+msgid "Search Entries"
+msgstr "Search Entries"
 
 #: src/features/shell/sidebar.tsx
 msgid "Sections"
@@ -2006,6 +2060,7 @@ msgstr "Snooze {name} due {dueDate}"
 msgid "someone"
 msgstr "someone"
 
+#: src/app/(tabs)/entries.tsx
 #: src/features/activity/activity-list.tsx
 #: src/features/members/member-list.tsx
 msgid "Someone"
@@ -2185,6 +2240,7 @@ msgstr "Timezone: {timeZone}"
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/search/entry-search.tsx
 msgid "To"
 msgstr "To"
 
@@ -2271,6 +2327,10 @@ msgstr "Update now"
 msgid "Update required"
 msgstr "Update required"
 
+#: src/features/search/entry-search.tsx
+msgid "Use the {savedName} filter"
+msgstr "Use the {savedName} filter"
+
 #: src/features/invites/invite-list.tsx
 msgid "Used"
 msgstr "Used"
@@ -2309,6 +2369,7 @@ msgstr "Wallet: {walletName}"
 #: src/app/(tabs)/index.tsx
 #: src/app/me.tsx
 #: src/app/wallets/index.tsx
+#: src/features/search/entry-search.tsx
 msgid "Wallets"
 msgstr "Wallets"
 
@@ -2336,6 +2397,10 @@ msgstr "When it's due"
 #: src/features/loans/loan-form.tsx
 msgid "Which way"
 msgstr "Which way"
+
+#: src/features/search/entry-search.tsx
+msgid "Words, or amounts like 2500 or >2000."
+msgstr "Words, or amounts like 2500 or >2000."
 
 #: src/features/invites/invite-list.tsx
 msgid "Works until {until}"
