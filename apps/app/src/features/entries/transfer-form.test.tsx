@@ -26,6 +26,7 @@ const setup = async (
 		async (
 			_draft: TransferDraft,
 			_currencies: { from: string; to: string },
+			_toHouseholdId: string | null,
 		) => {},
 	);
 	await render(
@@ -58,6 +59,7 @@ describe("TransferForm", () => {
 				notes: null,
 			},
 			{ from: "PKR", to: "PKR" },
+			null,
 		);
 	});
 
@@ -102,6 +104,37 @@ describe("TransferForm", () => {
 				toAmount: "700",
 			}),
 			{ from: "PKR", to: "PKR" },
+			null,
+		);
+	});
+
+	it("goes to another of the User's households, grouped under it, in the same currency", async () => {
+		const { onSubmit, user } = await setup({
+			otherHouseholds: [
+				{
+					householdId: "h2",
+					name: "Family",
+					isPersonal: false,
+					wallets: [
+						{ id: "f1", name: "Joint", currency: "PKR", archived_at: null },
+						{ id: "f2", name: "Travel", currency: "USD", archived_at: null },
+					],
+				},
+			],
+		});
+		expect(screen.getByLabelText("To a Wallet in Family")).toBeOnTheScreen();
+		expect(screen.queryByRole("radio", { name: "Travel" })).toBeNull();
+		await user.press(screen.getByRole("radio", { name: "Joint" }));
+		await user.type(screen.getByLabelText("Amount (PKR)"), "2500");
+		await user.press(screen.getByRole("button", { name: "Save Transfer" }));
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				fromWalletId: "w1",
+				toWalletId: "f1",
+				amount: "2500",
+			}),
+			{ from: "PKR", to: "PKR" },
+			"h2",
 		);
 	});
 });

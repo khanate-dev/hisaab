@@ -58,8 +58,9 @@ export default function Activity() {
 		canWrite &&
 		row.table_name === "entries" &&
 		row.action === "delete" &&
-		// A Loan's principal comes back only with its Loan.
+		// A Loan's principal comes back only with its Loan, and a cross-household transfer never one half at a time.
 		row.before?.kind !== "loan_principal" &&
+		row.before?.kind !== "household_transfer" &&
 		entries !== undefined &&
 		!entries.some((e) => e.id === row.row_id) &&
 		rows?.find((r) => r.row_id === row.row_id && r.action === "delete") === row;

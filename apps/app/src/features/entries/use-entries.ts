@@ -133,3 +133,17 @@ export const useHouseholdHasEntries = (
 	);
 	return rows === undefined ? undefined : rows.length > 0;
 };
+
+/** Both halves of a cross-household transfer that are on this device: both, for a User in both households. */
+export const useLinkedHalves = (linkId: string | null): Entry[] | undefined =>
+	whenLoaded(
+		useQuery(
+			toCompilableQuery(
+				db
+					.select()
+					.from(entries)
+					.where(eq(entries.link_id, linkId ?? "")),
+			),
+		),
+		linkId !== null,
+	);

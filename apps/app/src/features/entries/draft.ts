@@ -100,10 +100,14 @@ export const paramsToDraft = (params: DraftParams): Partial<EntryDraft> => ({
 
 /**
  * Whether an Entry of this kind is edited in the Entry forms: a Balance adjustment is re-recorded instead, and a
- * Loan's principal and Repayments are changed from their Loan.
+ * Loan's principal and Repayments are changed from their Loan. A cross-household transfer is edited, both halves,
+ * by whoever made it.
  */
 export const isEditableKind = (kind: string) =>
-	kind === "expense" || kind === "income" || kind === "transfer";
+	kind === "expense" ||
+	kind === "income" ||
+	kind === "transfer" ||
+	kind === "household_transfer";
 
 /** A Loan's principal goes only with its Loan; every other Entry can be deleted on its own. */
 export const isDeletableKind = (kind: string) => kind !== "loan_principal";

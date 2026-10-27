@@ -74,6 +74,38 @@ export const seedHouseholds = async () => {
 		.eq("user_id", bob.id);
 	if (defaulted.error) throw defaulted.error;
 
+	// bob moves money from Side to Family: mirrored halves (ADR-0003), each household with its own.
+	const sideWallet = await admin
+		.from("wallets")
+		.select("id")
+		.eq("household_id", side)
+		.single();
+	if (sideWallet.error) throw sideWallet.error;
+	const link = uuidv7();
+	const halves = await admin.from("entries").insert([
+		{
+			id: uuidv7(),
+			household_id: side,
+			wallet_id: sideWallet.data.id,
+			kind: "household_transfer",
+			amount: "-250",
+			link_id: link,
+			occurred_on: "2026-10-27",
+			created_by: bob.id,
+		},
+		{
+			id: uuidv7(),
+			household_id: family,
+			wallet_id: familyWallet.data.id,
+			kind: "household_transfer",
+			amount: "250",
+			link_id: link,
+			occurred_on: "2026-10-27",
+			created_by: bob.id,
+		},
+	]);
+	if (halves.error) throw halves.error;
+
 	return { users, households: { family, side } };
 };
 

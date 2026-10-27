@@ -5,6 +5,7 @@ import {
 	stampedDelete,
 } from "@hisaab/client-schema";
 import {
+	householdTransferHalves,
 	magnitude,
 	type Money,
 	negateMoney,
@@ -128,12 +129,21 @@ export const updateEntry = async (
  * The Entry goes first: the server removes its Items with it, in one change the Activity log can restore together.
  * Its Items then go from this device too; their deletes find nothing left on the server, which is fine.
  */
+/** Deletes an Entry with its Items; a cross-household transfer goes with its other half, where it's here too. */
 export const deleteEntry = async (entryId: string) => {
 	await db.transaction(async (tx) => {
+		const [entry] = await tx
+			.select({ linkId: entries.link_id })
+			.from(entries)
+			.where(eq(entries.id, entryId));
 		await tx
 			.update(entries)
 			.set(stampedDelete())
-			.where(eq(entries.id, entryId));
+			.where(
+				entry?.linkId
+					? eq(entries.link_id, entry.linkId)
+					: eq(entries.id, entryId),
+			);
 		await tx
 			.update(entryItems)
 			.set(stampedDelete())
@@ -212,3 +222,101 @@ export const recordBalanceAdjustment = async (
 		}),
 	);
 };
+
+/** What a cross-household transfer's halves share: when, what for and how much (each signed for its own Wallet). */
+const householdTransferColumns = (draft: TransferDraft, currency: string) => {
+	const { leaves, arrives } = householdTransferHalves(
+		parseMoney(draft.amount, currency),
+	);
+	const shared = {
+		kind: "household_transfer" as const,
+		category_id: null,
+		to_wallet_id: null,
+		to_amount: null,
+		occurred_on: draft.occurredOn,
+		occurred_time: null,
+		description: draft.description,
+		notes: draft.notes,
+	};
+	return {
+		from: {
+			...shared,
+			wallet_id: draft.fromWalletId,
+			amount: leaves.toString(),
+		},
+		to: { ...shared, wallet_id: draft.toWalletId, amount: arrives.toString() },
+	};
+};
+
+/**
+ * A cross-household transfer (ADR-0003): two linked, mirrored Entries made in one action, money leaving the From
+ * Wallet in this household and arriving in the To Wallet in the other. Same currency on both sides until #46.
+ */
+export const createHouseholdTransfer = async (
+	households: { from: string; to: string },
+	userId: string,
+	draft: TransferDraft,
+	currency: string,
+) => {
+	const linkId = newId();
+	const createdAt = nowIso();
+	const { from, to } = householdTransferColumns(draft, currency);
+	const id = newId();
+	await db.transaction(async (tx) => {
+		await tx.insert(entries).values([
+			stamped({
+				id,
+				household_id: households.from,
+				link_id: linkId,
+				...from,
+				created_by: userId,
+				created_at: createdAt,
+			}),
+			stamped({
+				id: newId(),
+				household_id: households.to,
+				link_id: linkId,
+				...to,
+				created_by: userId,
+				created_at: createdAt,
+			}),
+		]);
+	});
+	return id;
+};
+
+/** Edits both halves together, as only their maker does; each keeps its household and which way its money goes. */
+export const updateHouseholdTransfer = async (
+	halves: { leaves: string; arrives: string },
+	draft: TransferDraft,
+	currency: string,
+) => {
+	const { from, to } = householdTransferColumns(draft, currency);
+	await db.transaction(async (tx) => {
+		await tx
+			.update(entries)
+			.set(stamped(from))
+			.where(eq(entries.id, halves.leaves));
+		await tx
+			.update(entries)
+			.set(stamped(to))
+			.where(eq(entries.id, halves.arrives));
+	});
+};
+
+/** A Transfer from the form: within the household, or to another of the User's households (ADR-0003). */
+export const recordTransfer = (
+	householdId: string,
+	userId: string,
+	draft: TransferDraft,
+	currencies: { from: string; to: string },
+	toHouseholdId: string | null,
+) =>
+	toHouseholdId === null
+		? createTransfer(householdId, userId, draft, currencies)
+		: createHouseholdTransfer(
+				{ from: householdId, to: toHouseholdId },
+				userId,
+				draft,
+				currencies.from,
+			);

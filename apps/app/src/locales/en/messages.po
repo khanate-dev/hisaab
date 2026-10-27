@@ -350,6 +350,10 @@ msgstr "Base currency: {shownCurrency}"
 msgid "Below zero"
 msgstr "Below zero"
 
+#: src/features/entries/transfer-form.tsx
+msgid "Between households, a Transfer stays in one currency for now."
+msgstr "Between households, a Transfer stays in one currency for now."
+
 #: src/features/loans/labels.ts
 msgid "Borrowed"
 msgstr "Borrowed"
@@ -828,6 +832,10 @@ msgstr "House"
 msgid "Household settings"
 msgstr "Household settings"
 
+#: src/features/entries/labels.ts
+msgid "Household transfer"
+msgstr "Household transfer"
+
 #: src/features/shell/household-pill.tsx
 msgid "Households"
 msgstr "Households"
@@ -1246,6 +1254,10 @@ msgstr "Online. Every change synced."
 msgid "Only Admins change these."
 msgstr "Only Admins change these."
 
+#: src/features/entries/edit-household-transfer.tsx
+msgid "Only whoever made this cross-household transfer edits it, while they're in both households."
+msgstr "Only whoever made this cross-household transfer edits it, while they're in both households."
+
 #: src/features/invites/join-with-link-form.tsx
 msgid "Open Invite"
 msgstr "Open Invite"
@@ -1305,6 +1317,7 @@ msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
 
 #: src/app/household.tsx
+#: src/features/entries/transfer-form.tsx
 #: src/features/households/household-list.tsx
 #: src/features/shell/household-pill.tsx
 msgid "Personal"
@@ -1437,6 +1450,7 @@ msgstr "Role"
 #: src/app/categories/[id].tsx
 #: src/app/entries/[id]/edit.tsx
 #: src/app/wallets/[id]/edit.tsx
+#: src/features/entries/edit-household-transfer.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Save"
 msgstr "Save"
@@ -1723,6 +1737,14 @@ msgstr "Timezone: {timeZone}"
 #: src/features/entries/transfer-form.tsx
 msgid "To"
 msgstr "To"
+
+#: src/features/entries/transfer-form.tsx
+msgid "To {name}"
+msgstr "To {name}"
+
+#: src/features/entries/transfer-form.tsx
+msgid "To a Wallet in {name}"
+msgstr "To a Wallet in {name}"
 
 #: src/features/entries/transfer-form.tsx
 msgid "To Wallet"

@@ -871,4 +871,77 @@ describe("sync scenarios", () => {
 			{ timeout: 10_000 },
 		);
 	});
+
+	it("a cross-household transfer uploads as mirrored halves, each household seeing only its own", async () => {
+		const { users, household } = await seedHousehold({
+			mover: "member",
+			partner: "admin",
+		});
+		const admin = adminClient();
+		const personal = await admin
+			.from("households")
+			.select("id")
+			.eq("personal_user_id", users.mover.id)
+			.single();
+		if (personal.error) throw personal.error;
+		const salary = uuidv7();
+		const joint = uuidv7();
+		const wallets = await admin.from("wallets").insert([
+			{
+				id: salary,
+				household_id: personal.data.id,
+				name: "Salary",
+				type: "bank",
+				currency: "PKR",
+			},
+			{
+				id: joint,
+				household_id: household,
+				name: "Joint",
+				type: "bank",
+				currency: "PKR",
+			},
+		]);
+		if (wallets.error) throw wallets.error;
+		const mover = await connectClient(users.mover);
+		const partner = await connectClient(users.partner);
+		const stamp = stamped({})._metadata;
+		const link = uuidv7();
+		const now = new Date().toISOString();
+
+		await mover.writeTransaction(async (tx) => {
+			for (const [id, householdId, walletId, amount] of [
+				[uuidv7(), personal.data.id, salary, "-5000"],
+				[uuidv7(), household, joint, "5000"],
+			])
+				await tx.execute(
+					`INSERT INTO entries (id, household_id, wallet_id, kind, amount, link_id, occurred_on, created_by, created_at, _metadata)
+					VALUES (?, ?, ?, 'household_transfer', ?, ?, '2026-10-27', ?, ?, ?)`,
+					[id, householdId, walletId, amount, link, users.mover.id, now, stamp],
+				);
+		});
+		await waitForUploads(mover);
+
+		expect(await uploadErrors(mover)).toEqual([]);
+		const halves = await admin
+			.from("entries")
+			.select("household_id, amount::text")
+			.eq("link_id", link)
+			.order("amount");
+		if (halves.error) throw halves.error;
+		expect(halves.data).toEqual([
+			{ household_id: personal.data.id, amount: "-5000" },
+			{ household_id: household, amount: "5000" },
+		]);
+		await vi.waitFor(
+			async () =>
+				expect(
+					await partner.getAll<{ household_id: string }>(
+						"SELECT household_id FROM entries WHERE link_id = ?",
+						[link],
+					),
+				).toEqual([{ household_id: household }]),
+			{ timeout: 10_000 },
+		);
+	});
 });

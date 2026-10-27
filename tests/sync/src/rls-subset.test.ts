@@ -92,4 +92,16 @@ describe("RLS ⊇ Sync Streams", () => {
 			seed.households.side,
 		);
 	});
+
+	it("streams each household only its own half of a cross-household transfer", async () => {
+		const { family } = seed.households;
+		const carol = await connectClient(seed.users.carol);
+		await vi.waitFor(async () =>
+			expect(
+				await carol.getAll<{ household_id: string }>(
+					"SELECT household_id FROM entries WHERE kind = 'household_transfer'",
+				),
+			).toEqual([{ household_id: family }]),
+		);
+	});
 });

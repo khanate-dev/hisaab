@@ -10,6 +10,7 @@ export const makeEntry = (
 	wallet_id: "w1",
 	to_wallet_id: null,
 	loan_id: null,
+	link_id: null,
 	kind: "expense",
 	amount: "-450",
 	to_amount: null,
