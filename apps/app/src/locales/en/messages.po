@@ -39,6 +39,10 @@ msgstr "{lent}, {left} outstanding"
 msgid "{lent}, settled"
 msgstr "{lent}, settled"
 
+#: src/features/members/member-list.tsx
+msgid "{name} (you)"
+msgstr "{name} (you)"
+
 #: src/features/households/household-list.tsx
 msgid "{name}, {role}"
 msgstr "{name}, {role}"
@@ -50,6 +54,10 @@ msgstr "{name}, in {parentName}"
 #: src/features/categories/category-list.tsx
 msgid "{name}, under {parentName}"
 msgstr "{name}, under {parentName}"
+
+#: src/features/members/member-list.tsx
+msgid "{name}'s Role"
+msgstr "{name}'s Role"
 
 #: src/features/loans/loan-detail.tsx
 msgid "{paid} on {day}"
@@ -74,6 +82,10 @@ msgstr "{restName}, {restAmount}"
 #: src/features/invites/invite-list.tsx
 msgid "{role}, for {who}"
 msgstr "{role}, for {who}"
+
+#: src/features/members/member-list.tsx
+msgid "{shown}, {role}"
+msgstr "{shown}, {role}"
 
 #: src/features/invites/invite-list.tsx
 msgid "{summary}: {closed}"
@@ -383,10 +395,10 @@ msgstr "Budgets and reports are in it. It's fixed once the household has an Entr
 msgid "Bus"
 msgstr "Bus"
 
+#: src/components/ui/confirm.tsx
 #: src/features/categories/category-actions.tsx
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/items-section.tsx
-#: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/repayment-form.tsx
 #: src/features/wallets/wallet-detail.tsx
@@ -523,6 +535,10 @@ msgstr "Decimal point"
 msgid "Delete"
 msgstr "Delete"
 
+#: src/features/members/household-exit.tsx
+msgid "Delete {householdName}?"
+msgstr "Delete {householdName}?"
+
 #: src/features/categories/category-actions.tsx
 msgid "Delete {name}?"
 msgstr "Delete {name}?"
@@ -538,6 +554,14 @@ msgstr "Delete Category"
 #: src/features/entries/entry-detail.tsx
 msgid "Delete Entry"
 msgstr "Delete Entry"
+
+#: src/features/members/household-exit.tsx
+msgid "Delete for everyone"
+msgstr "Delete for everyone"
+
+#: src/features/members/household-exit.tsx
+msgid "Delete household"
+msgstr "Delete household"
 
 #: src/features/entries/amount-keypad.tsx
 msgid "Delete last digit"
@@ -716,6 +740,10 @@ msgstr "Entry dates are in it."
 msgid "Every change to the household's data. Nobody can edit it."
 msgstr "Every change to the household's data. Nobody can edit it."
 
+#: src/features/members/household-exit.tsx
+msgid "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
+msgstr "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
+
 #: src/features/categories/labels.ts
 #: src/features/entries/labels.ts
 msgid "Expense"
@@ -858,6 +886,10 @@ msgstr "Invites"
 msgid "It can't be less than the {repaidText} already repaid."
 msgstr "It can't be less than the {repaidText} already repaid."
 
+#: src/features/members/household-exit.tsx
+msgid "It goes from your devices. What you recorded stays, and you can only come back by Invite."
+msgstr "It goes from your devices. What you recorded stays, and you can only come back by Invite."
+
 #: src/features/categories/category-actions.tsx
 msgid "It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time."
 msgstr "It leaves your lists with its Subcategories. Everything recorded in them stays, and you can bring it back any time."
@@ -951,6 +983,18 @@ msgstr "Keep the quantity to 40 characters or fewer."
 msgid "Kind"
 msgstr "Kind"
 
+#: src/features/members/household-exit.tsx
+msgid "Leave"
+msgstr "Leave"
+
+#: src/features/members/household-exit.tsx
+msgid "Leave {householdName}?"
+msgstr "Leave {householdName}?"
+
+#: src/features/members/household-exit.tsx
+msgid "Leave household"
+msgstr "Leave household"
+
 #: src/features/loans/labels.ts
 msgid "Lent"
 msgstr "Lent"
@@ -1022,6 +1066,12 @@ msgstr "Me & household"
 #: src/features/households/labels.ts
 msgid "Member"
 msgstr "Member"
+
+#: src/app/_layout.tsx
+#: src/app/household.tsx
+#: src/app/members.tsx
+msgid "Members & Roles"
+msgstr "Members & Roles"
 
 #: src/app/me.tsx
 msgid "Members and your preferences arrive here."
@@ -1318,12 +1368,21 @@ msgid "Red"
 msgstr "Red"
 
 #: src/features/entries/items-section.tsx
+#: src/features/members/member-list.tsx
 msgid "Remove"
 msgstr "Remove"
 
 #: src/features/entries/items-section.tsx
 msgid "Remove {description}"
 msgstr "Remove {description}"
+
+#: src/features/members/member-list.tsx
+msgid "Remove {name}"
+msgstr "Remove {name}"
+
+#: src/features/members/member-list.tsx
+msgid "Remove {name}?"
+msgstr "Remove {name}?"
 
 #: src/features/entries/items-section.tsx
 msgid "Removed {removedName}."
@@ -1500,6 +1559,7 @@ msgid "someone"
 msgstr "someone"
 
 #: src/features/activity/activity-list.tsx
+#: src/features/members/member-list.tsx
 msgid "Someone"
 msgstr "Someone"
 
@@ -1586,6 +1646,10 @@ msgstr "The Loan is settled without it. Its Repayments stay, and you can undo th
 #: src/features/loans/loan-form.tsx
 msgid "Their name"
 msgstr "Their name"
+
+#: src/features/members/member-list.tsx
+msgid "They lose this household from their devices. What they recorded stays."
+msgstr "They lose this household from their devices. What they recorded stays."
 
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "This becomes your Base currency. It locks after your first Entry."
@@ -1684,6 +1748,10 @@ msgstr "Try again"
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"
 msgstr "Type"
+
+#: src/features/members/household-exit.tsx
+msgid "Type its name to confirm"
+msgstr "Type its name to confirm"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/contacts/contact-list.tsx
@@ -1818,6 +1886,10 @@ msgstr "You're invited as {role}."
 #: src/features/invites/invite-landing.tsx
 msgid "You're invited as {role}. This Invite is for one email address; sign in with it."
 msgstr "You're invited as {role}. This Invite is for one email address; sign in with it."
+
+#: src/features/members/household-exit.tsx
+msgid "You're its only Admin: make someone else an Admin before you leave."
+msgstr "You're its only Admin: make someone else an Admin before you leave."
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"

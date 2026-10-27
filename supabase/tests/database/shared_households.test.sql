@@ -104,7 +104,7 @@ select is(pg_temp.affected($$ update public.memberships set default_wallet_id = 
 	where id = '00000000-0000-7000-8000-0000000008e1' $$), 1, 'a Member picks their default Wallet');
 select throws_ok(
 	$$ update public.memberships set role = 'viewer' where id = '00000000-0000-7000-8000-0000000008e1' $$,
-	'42501', null, 'but not their Role'
+	'23514', null, 'but, as its only Admin, can''t step down'
 );
 select throws_ok(
 	$$ update public.memberships set default_wallet_id = '00000000-0000-7000-8000-0000000008c2'
