@@ -107,6 +107,25 @@ export const seedHouseholds = async () => {
 	]);
 	if (halves.error) throw halves.error;
 
+	// Every User saves a filter at home, and everyone in Family saves one there: each sees only their own.
+	const filters = await admin.from("saved_filters").insert([
+		...personal.data.map((row) => ({
+			id: uuidv7(),
+			household_id: row.id,
+			user_id: row.personal_user_id as string,
+			name: "Mine",
+			criteria: JSON.stringify({ query: ">2000" }),
+		})),
+		...[alice, bob, carol].map((user) => ({
+			id: uuidv7(),
+			household_id: family,
+			user_id: user.id,
+			name: "Family",
+			criteria: JSON.stringify({ query: "rent" }),
+		})),
+	]);
+	if (filters.error) throw filters.error;
+
 	return { users, households: { family, side } };
 };
 

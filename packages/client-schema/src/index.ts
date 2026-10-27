@@ -30,6 +30,7 @@ export const schema = new Schema({
 	occurrences: toPowerSyncTable(tables.occurrences),
 	profiles: toPowerSyncTable(tables.profiles),
 	recurring_rules: toPowerSyncTable(tables.recurringRules),
+	saved_filters: toPowerSyncTable(tables.savedFilters),
 	wallets: toPowerSyncTable(tables.wallets),
 	upload_errors: toPowerSyncTable(tables.uploadErrors, { localOnly: true }),
 	device_state: toPowerSyncTable(tables.deviceState, { localOnly: true }),
