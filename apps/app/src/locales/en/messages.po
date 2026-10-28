@@ -1192,6 +1192,14 @@ msgstr "Expense or Income instead"
 msgid "Expired"
 msgstr "Expired"
 
+#: src/app/(tabs)/entries.tsx
+msgid "Export CSV"
+msgstr "Export CSV"
+
+#: src/app/(tabs)/entries.tsx
+msgid "Export these {shownCount} as CSV"
+msgstr "Export these {shownCount} as CSV"
+
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 msgid "Fills in its Category, Wallet and amount"
@@ -2482,6 +2490,10 @@ msgstr "That Attachment opens once you're online and it has uploaded."
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't attach. Try again."
 msgstr "That didn't attach. Try again."
+
+#: src/app/(tabs)/entries.tsx
+msgid "That didn't export. Try again."
+msgstr "That didn't export. Try again."
 
 #: src/features/import/import-wizard.tsx
 msgid "That didn't import. Try again."

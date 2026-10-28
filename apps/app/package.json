@@ -48,6 +48,7 @@
 		"expo-image-picker": "catalog:",
 		"expo-linking": "catalog:",
 		"expo-local-authentication": "catalog:",
+		"expo-sharing": "catalog:",
 		"expo-localization": "catalog:",
 		"expo-router": "catalog:",
 		"expo-status-bar": "catalog:",
