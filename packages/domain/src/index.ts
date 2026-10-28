@@ -1,4 +1,5 @@
 // Framework-free domain core. No react-native, Expo, React or I/O imports (enforced by lint).
+export * from "./account-deletion";
 export * from "./amount-input";
 export * from "./attachment-purge";
 export * from "./attachments";

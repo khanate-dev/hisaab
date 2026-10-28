@@ -1,7 +1,4 @@
-import { profiles } from "@hisaab/client-schema";
 import { useLingui } from "@lingui/react/macro";
-import { toCompilableQuery } from "@powersync/drizzle-driver";
-import { useQuery } from "@powersync/react";
 import { useMemo } from "react";
 import { View } from "react-native";
 
@@ -16,10 +13,10 @@ import { useCategories } from "@/features/categories/use-categories";
 import { useEntries } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
+import { usePeopleNames } from "@/features/members/use-people-names";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import type { ActivityRow } from "@/lib/activity-log";
-import { db } from "@/lib/powersync";
 import { useSignedInUserId } from "@/lib/session";
 
 export default function Activity() {
@@ -32,12 +29,8 @@ export default function Activity() {
 	const entries = useEntries(household?.id);
 	const wallets = useWalletRows(household?.id);
 	const categories = useCategories(household?.id);
-	// The names of everyone the User shares a household with; profiles sync for exactly those (Sync Streams).
-	const people = useQuery(toCompilableQuery(db.select().from(profiles))).data;
-	const names = useMemo(
-		() => new Map(people.map((p) => [p.id, p.display_name])),
-		[people],
-	);
+	// The names of everyone the User shares a household with, and of its Former members.
+	const names = usePeopleNames();
 	const lookup = useMemo(
 		() => ({
 			wallets: new Map(

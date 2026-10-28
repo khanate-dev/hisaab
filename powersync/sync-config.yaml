@@ -11,7 +11,7 @@ streams:
     auto_subscribe: true
     query: SELECT app_config.id, app_config.min_contract_version FROM app_config
 
-  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Loans, Entries, Items, Budgets, Budget overrides, Recurring rules, Occurrences and Attachments.
+  # Every household the User belongs to, with its Memberships, Wallets, Categories, Contacts, Former members, Loans, Entries, Items, Budgets, Budget overrides, Recurring rules, Occurrences and Attachments.
   households:
     auto_subscribe: true
     queries:
@@ -30,6 +30,10 @@ streams:
       - SELECT contacts.id, contacts.household_id, contacts.name, contacts.archived_at, contacts.created_at
         FROM contacts
         WHERE contacts.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+      # Who stands in for a deleted User in each household ("Former member 1"), for naming what they made.
+      - SELECT former_members.id, former_members.household_id, former_members.number, former_members.created_at
+        FROM former_members
+        WHERE former_members.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       - SELECT loans.id, loans.household_id, loans.contact_id, loans.direction, loans.due_on, loans.written_off_at, loans.notes, loans.created_at
         FROM loans
         WHERE loans.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())

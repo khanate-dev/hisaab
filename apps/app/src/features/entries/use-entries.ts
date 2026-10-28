@@ -1,9 +1,4 @@
-import {
-	entries,
-	entryItems,
-	profiles,
-	recurringRules,
-} from "@hisaab/client-schema";
+import { entries, entryItems, recurringRules } from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { eq } from "drizzle-orm";
@@ -11,6 +6,7 @@ import { useMemo } from "react";
 
 import { useCategories } from "@/features/categories/use-categories";
 import { useWalletRows } from "@/features/wallets/use-wallets";
+import { usePeopleNames } from "@/features/members/use-people-names";
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
 
@@ -103,16 +99,11 @@ export const useCategoryInUse = (categoryId: string): boolean | undefined => {
 		: entry.length + item.length + rule.length > 0;
 };
 
-/** A User's display name, for "Recorded by"; undefined until their profile has synced. */
-export const useDisplayName = (userId: string | undefined) =>
-	useQuery(
-		toCompilableQuery(
-			db
-				.select({ name: profiles.display_name })
-				.from(profiles)
-				.where(eq(profiles.id, userId ?? "")),
-		),
-	).data[0]?.name;
+/** Who made something, for "Recorded by": a User's name, or their Former member's; undefined until it's synced. */
+export const useDisplayName = (userId: string | undefined) => {
+	const names = usePeopleNames();
+	return userId === undefined ? undefined : names.get(userId);
+};
 
 /** The household's Entries, newest first, joined to their Wallets and Categories; undefined while loading. */
 export const useEntryViews = (householdId: string | undefined) => {
@@ -120,13 +111,7 @@ export const useEntryViews = (householdId: string | undefined) => {
 	const categories = useCategories(householdId);
 	const wallets = useWalletRows(householdId);
 	const items = useEntryItems(householdId);
-	const people = useQuery(
-		toCompilableQuery(
-			db
-				.select({ id: profiles.id, name: profiles.display_name })
-				.from(profiles),
-		),
-	).data;
+	const people = usePeopleNames();
 	return useMemo(
 		() =>
 			list === undefined ||
@@ -134,13 +119,7 @@ export const useEntryViews = (householdId: string | undefined) => {
 			wallets === undefined ||
 			items === undefined
 				? undefined
-				: toEntryViews(
-						list,
-						categories,
-						wallets,
-						items,
-						new Map(people.map((p) => [p.id, p.name])),
-					),
+				: toEntryViews(list, categories, wallets, items, people),
 		[list, categories, wallets, items, people],
 	);
 };

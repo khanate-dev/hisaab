@@ -16,6 +16,7 @@ const SYNCED_TABLES = [
 	"entries",
 	"entry_items",
 	"contacts",
+	"former_members",
 	"loans",
 	"budgets",
 	"budget_overrides",
@@ -55,8 +56,11 @@ describe("RLS ⊇ Sync Streams", () => {
 				const readable = await api.from(table).select("id");
 				if (readable.error) throw readable.error;
 
-				// dave is in no shared household, so nothing has notified him.
-				if (!(table === "notifications" && name === "dave"))
+				// dave is in no shared household, so nothing has notified him and nobody's left one of his.
+				if (!(
+					(table === "notifications" || table === "former_members") &&
+					name === "dave"
+				))
 					expect(synced.length, `${table} synced something`).toBeGreaterThan(0);
 				expect(readable.data.map((row) => row.id)).toEqual(
 					expect.arrayContaining(synced),
