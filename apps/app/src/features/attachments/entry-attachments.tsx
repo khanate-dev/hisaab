@@ -8,7 +8,6 @@ import { useLingui } from "@lingui/react/macro";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
 import { asc, eq } from "drizzle-orm";
-import { openURL } from "expo-linking";
 import { useState } from "react";
 
 import { attachFile, removeAttachment } from "@/lib/attachments/actions";
@@ -18,6 +17,7 @@ import {
 	pickPhoto,
 	UnsupportedFile,
 } from "@/lib/attachments/pick";
+import { openFile } from "@/lib/attachments/open-file";
 import { attachmentLink } from "@/lib/attachments/queue";
 import { db } from "@/lib/powersync";
 
@@ -77,7 +77,7 @@ export const EntryAttachments = ({
 		const row = rows.find((r) => r.id === attachmentId);
 		if (!row || !isAttachmentMediaType(row.media_type)) return;
 		try {
-			await openURL(
+			await openFile(
 				await attachmentLink(
 					attachmentPath(row.household_id, row.id, row.media_type),
 				),
