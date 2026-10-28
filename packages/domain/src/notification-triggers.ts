@@ -13,15 +13,18 @@ export type HouseholdFacts = {
 	/** Its own today, YYYY-MM-DD. */
 	today: string;
 	members: { userId: string; role: Role }[];
-	/** Its Recurring rules' Occurrences due in the last 3 days, today's included. */
+	/** Its Recurring rules' Occurrences due in the last 3 days, today's included, or whose snooze ends today. */
 	occurrences: {
 		ruleId: string;
 		mode: "confirm" | "auto";
 		createdBy: string;
-		/** Its description, else its Category's name. */
+		/** Its description, else its Category's name: free text, for the inbox only (it may hold a figure). */
 		ruleName: string;
+		/** Its Category's name, which push names it by. */
+		categoryName: string;
 		dueOn: string;
 		state: "pending" | "confirmed" | "skipped" | "snoozed";
+		snoozedUntil: string | null;
 	}[];
 	/** Its Loans still owed and not written off, due within 3 days or overdue. */
 	loans: {
@@ -109,9 +112,22 @@ export const scheduledNotifications = (
 	};
 	const reminderDay = shift(today, -3);
 	for (const o of facts.occurrences) {
-		const about = { ruleId: o.ruleId, ruleName: o.ruleName, dueOn: o.dueOn };
+		const about = {
+			ruleId: o.ruleId,
+			ruleName: o.ruleName,
+			categoryName: o.categoryName,
+			dueOn: o.dueOn,
+		};
 		if (o.mode === "confirm" && o.state === "pending") {
-			if (o.dueOn === today)
+			// Back from a snooze today: Pending again, so due again.
+			if (o.snoozedUntil === today)
+				raise(
+					[o.createdBy],
+					"recurring_due",
+					`recurring_due/${o.ruleId}/${o.dueOn}/snooze/${today}`,
+					{ ...about, reminder: false },
+				);
+			else if (o.dueOn === today)
 				raise(
 					[o.createdBy],
 					"recurring_due",

@@ -37,8 +37,10 @@ const occurrence = (
 	mode: "confirm",
 	createdBy: MEMBER,
 	ruleName: "Rent",
+	categoryName: "Housing",
 	dueOn: "2026-11-10",
 	state: "pending",
+	snoozedUntil: null,
 	...o,
 });
 
@@ -62,6 +64,12 @@ describe("scheduledNotifications", () => {
 								dueOn: "2026-11-07",
 							}),
 							occurrence({ ruleId: "r5", dueOn: "2026-11-08" }),
+							// Snoozed a month ago to today: due again.
+							occurrence({
+								ruleId: "r6",
+								dueOn: "2026-10-10",
+								snoozedUntil: "2026-11-10",
+							}),
 						],
 					}),
 				),
@@ -69,6 +77,7 @@ describe("scheduledNotifications", () => {
 		).toEqual([
 			`recurring_due ${MEMBER} recurring_due/r1/2026-11-10`,
 			`recurring_due ${MEMBER} recurring_due/r2/2026-11-07/reminder`,
+			`recurring_due ${MEMBER} recurring_due/r6/2026-10-10/snooze/2026-11-10`,
 		]);
 	});
 
@@ -168,7 +177,9 @@ describe("scheduledNotifications", () => {
 				mode: fc.constantFrom("confirm" as const, "auto" as const),
 				createdBy: fc.constantFrom(ADMIN, MEMBER, VIEWER, "u4", "u-gone"),
 				ruleName: fc.string(),
+				categoryName: fc.string(),
 				dueOn: fc.constant("2026-11-10"),
+				snoozedUntil: fc.constant(null),
 				state: fc.constantFrom(
 					"pending" as const,
 					"confirmed" as const,
@@ -215,7 +226,11 @@ describe("scheduledNotifications", () => {
 					.slice(0, 10);
 			return {
 				...f,
-				occurrences: f.occurrences.map((o, i) => ({ ...o, dueOn: near(i) })),
+				occurrences: f.occurrences.map((o, i) => ({
+					...o,
+					dueOn: near(i),
+					snoozedUntil: i % 5 === 0 ? f.today : null,
+				})),
 				loans: f.loans.map((l, i) => ({ ...l, dueOn: near(i + 20) })),
 			};
 		});
@@ -329,6 +344,19 @@ describe("raiseScheduledNotifications", () => {
 });
 
 describe("event push text", () => {
+	it("names a Recurring rule by its Category, never by its description, which may hold a figure", () => {
+		const [due] = scheduledNotifications(
+			household({ occurrences: [occurrence({ ruleName: "Rent 45,000" })] }),
+		);
+		expect(due && pushMessage(due.trigger, due.payload)).toEqual({
+			title: "Recurring due",
+			body: "Housing is due in Family.",
+		});
+		expect(due && readEventPayload(due.trigger, due.payload)).toEqual(
+			expect.objectContaining({ ruleName: "Rent 45,000" }),
+		);
+	});
+
 	it("says what's due in names only, the same whatever else the payload holds", () => {
 		fc.assert(
 			fc.property(
@@ -338,6 +366,7 @@ describe("event push text", () => {
 						payload: fc.record({
 							ruleId: fc.uuid(),
 							ruleName: fc.string(),
+							categoryName: fc.string(),
 							dueOn: fc.constant("2026-11-10"),
 							reminder: fc.boolean(),
 						}),
@@ -347,6 +376,7 @@ describe("event push text", () => {
 						payload: fc.record({
 							ruleId: fc.uuid(),
 							ruleName: fc.string(),
+							categoryName: fc.string(),
 							dueOn: fc.constant("2026-11-10"),
 						}),
 					}),

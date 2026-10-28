@@ -85,19 +85,30 @@ const useEventMessage = () => {
 			}
 			case "loan_due": {
 				const { contactName: contact } = event;
+				if (event.direction === LENT)
+					switch (event.when) {
+						case SOON:
+							return t`The Loan to ${contact} is due in 3 days, in ${household}.`;
+						case TODAY:
+							return t`The Loan to ${contact} is due today, in ${household}.`;
+						case OVERDUE:
+							return t`The Loan to ${contact} is overdue, in ${household}.`;
+					}
 				switch (event.when) {
 					case SOON:
-						return t`The Loan with ${contact} is due in 3 days, in ${household}.`;
+						return t`The Loan from ${contact} is due in 3 days, in ${household}.`;
 					case TODAY:
-						return t`The Loan with ${contact} is due today, in ${household}.`;
+						return t`The Loan from ${contact} is due today, in ${household}.`;
 					case OVERDUE:
-						return t`The Loan with ${contact} is overdue, in ${household}.`;
+						return t`The Loan from ${contact} is overdue, in ${household}.`;
 				}
 			}
 		}
 	};
 };
 
+// Named, as the Lingui lint rule takes any string literal in a component for copy.
+const LENT = "lent";
 const FULL = 100;
 const SOON = "soon";
 const TODAY = "today";

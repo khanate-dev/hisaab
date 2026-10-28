@@ -58,7 +58,12 @@ describe("InboxList", () => {
 			payload: JSON.stringify({ householdName: "Family", ...payload }),
 			created_at: "2026-11-10T04:00:00.000Z",
 		});
-		const rule = { ruleId: "r1", ruleName: "Rent", dueOn: "2026-11-10" };
+		const rule = {
+			ruleId: "r1",
+			ruleName: "Rent",
+			categoryName: "Housing",
+			dueOn: "2026-11-10",
+		};
 		const loan = {
 			loanId: "l1",
 			contactName: "Bilal",
@@ -79,7 +84,11 @@ describe("InboxList", () => {
 						level: 80,
 					}),
 					event("e5", "loan_due", { ...loan, when: "soon" }),
-					event("e6", "loan_due", { ...loan, when: "overdue" }),
+					event("e6", "loan_due", {
+						...loan,
+						direction: "borrowed",
+						when: "overdue",
+					}),
 					// Malformed: just what kind of Notification it is.
 					event("e7", "budget_threshold", { categoryName: "Fuel" }),
 				]}
@@ -91,8 +100,8 @@ describe("InboxList", () => {
 			"Rent is still Pending in Family.",
 			"Rent was recorded in Family.",
 			"Groceries has used 80% of its Budget in Family.",
-			"The Loan with Bilal is due in 3 days, in Family.",
-			"The Loan with Bilal is overdue, in Family.",
+			"The Loan to Bilal is due in 3 days, in Family.",
+			"The Loan from Bilal is overdue, in Family.",
 			"Budget threshold",
 		])
 			expect(screen.getByLabelText(said)).toBeVisible();

@@ -107,7 +107,10 @@ export type EventPayload =
 			trigger: "recurring_due";
 			householdName: string;
 			ruleId: string;
+			/** The rule's description, else its Category's name: for the inbox only, as it may hold a figure. */
 			ruleName: string;
+			/** Its Category's name, which push names it by. */
+			categoryName: string;
 			dueOn: string;
 			/** Still Pending 3 days on. */
 			reminder: boolean;
@@ -116,7 +119,10 @@ export type EventPayload =
 			trigger: "auto_recorded";
 			householdName: string;
 			ruleId: string;
+			/** The rule's description, else its Category's name: for the inbox only, as it may hold a figure. */
 			ruleName: string;
+			/** Its Category's name, which push names it by. */
+			categoryName: string;
 			dueOn: string;
 	  }
 	| {
@@ -157,11 +163,13 @@ export const readEventPayload = (
 	if (householdName === null) return null;
 	const ruleId = text("ruleId");
 	const ruleName = text("ruleName");
+	const categoryName = text("categoryName");
 	const dueOn = text("dueOn");
 	switch (trigger) {
 		case "recurring_due":
 			return ruleId !== null &&
 				ruleName !== null &&
+				categoryName !== null &&
 				dueOn !== null &&
 				typeof p.reminder === "boolean"
 				? {
@@ -169,17 +177,20 @@ export const readEventPayload = (
 						householdName,
 						ruleId,
 						ruleName,
+						categoryName,
 						dueOn,
 						reminder: p.reminder,
 					}
 				: null;
 		case "auto_recorded":
-			return ruleId !== null && ruleName !== null && dueOn !== null
-				? { trigger, householdName, ruleId, ruleName, dueOn }
+			return ruleId !== null &&
+				ruleName !== null &&
+				categoryName !== null &&
+				dueOn !== null
+				? { trigger, householdName, ruleId, ruleName, categoryName, dueOn }
 				: null;
 		case "budget_threshold": {
 			const categoryId = text("categoryId");
-			const categoryName = text("categoryName");
 			const month = text("month");
 			const { level } = p;
 			return categoryId !== null &&
@@ -467,22 +478,28 @@ export const pushMessage = (
 	};
 };
 
-/** An event push's body, from the names in it alone. */
+/**
+ * An event push's body, from names alone: a Recurring rule by its Category's name, never its description, which is
+ * free text and may hold a figure.
+ */
 const eventBody = (event: EventPayload) => {
 	const where = event.householdName;
 	switch (event.trigger) {
 		case "recurring_due":
 			return event.reminder
-				? `${event.ruleName} is still Pending in ${where}.`
-				: `${event.ruleName} is due in ${where}.`;
+				? `${event.categoryName} is still Pending in ${where}.`
+				: `${event.categoryName} is due in ${where}.`;
 		case "auto_recorded":
-			return `${event.ruleName} was recorded in ${where}.`;
+			return `${event.categoryName} was recorded in ${where}.`;
 		case "budget_threshold":
 			return event.level === 100
 				? `${event.categoryName} has used its Budget in ${where}.`
 				: `${event.categoryName} is close to its Budget in ${where}.`;
 		case "loan_due": {
-			const loan = `The Loan with ${event.contactName}`;
+			const loan =
+				event.direction === "lent"
+					? `The Loan to ${event.contactName}`
+					: `The Loan from ${event.contactName}`;
 			return {
 				soon: `${loan} is due soon, in ${where}.`,
 				today: `${loan} is due today, in ${where}.`,

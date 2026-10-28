@@ -84,10 +84,23 @@ as $$
 $$;
 revoke all on function private.budget_levels(uuid, date, integer) from public;
 
--- What each household where it's now 09:00 has to go on, for `scheduledNotifications`: its Members; its Recurring
--- rules' Occurrences due in the last 3 days (from the day each rule was made, as Auto-record has it), Pending or as
--- handled; its open Loans due within 3 days or overdue; and its Budgets 80% or 100% used. Names only, never an amount.
--- The service role's only.
+-- The same, for the harness's check that SQL and the domain agree; the service role's only.
+create function public.budget_levels(target_household uuid, today date, start_day integer)
+returns table (category_id uuid, category_name text, month text, level integer)
+language sql stable security definer
+set search_path = ''
+as $$
+	select * from private.budget_levels(target_household, today, start_day);
+$$;
+revoke all on function public.budget_levels(uuid, date, integer) from public, anon, authenticated;
+grant execute on function public.budget_levels(uuid, date, integer) to service_role;
+
+-- What each household where it's 09:00 or later has to go on, for `scheduledNotifications` (later hours catch up a run
+-- that failed; raising once by dedupe key makes the rest harmless): its Members; its Recurring rules' Occurrences due
+-- in the last 3 days (from the day each rule was made, as Auto-record has it) or whose snooze ends today, Pending or as
+-- handled; its open Loans due within 3 days or overdue; and its Budgets 80% or 100% used, last month's too on a Budget
+-- month's first day (so a crossing late on its last day isn't lost). Names only, never an amount. The service role's
+-- only.
 create function public.notification_facts(as_of timestamptz) returns jsonb
 language sql stable security definer
 set search_path = ''
@@ -95,7 +108,7 @@ as $$
 	with here as (
 		select h.id, h.name, h.budget_month_start_day as start_day, (as_of at time zone h.timezone)::date as today
 		from public.households h
-		where h.timezone is not null and extract(hour from (as_of at time zone h.timezone)) = 9
+		where h.timezone is not null and extract(hour from (as_of at time zone h.timezone)) >= 9
 	)
 	select coalesce(jsonb_agg(jsonb_build_object(
 		'householdId', here.id,
@@ -110,19 +123,29 @@ as $$
 				'ruleId', r.id,
 				'mode', r.mode,
 				'createdBy', r.created_by,
+				-- Free text, which may hold a figure: for the inbox only, never push.
 				'ruleName', coalesce(nullif(btrim(r.description), ''), c.name),
-				'dueOn', to_char(d.due_on, 'YYYY-MM-DD'),
+				'categoryName', c.name,
+				'dueOn', to_char(due.due_on, 'YYYY-MM-DD'),
 				'state', case
 					when o.id is null or (o.state = 'snoozed' and o.snoozed_until <= here.today) then 'pending'
 					else o.state
-				end
+				end,
+				'snoozedUntil', to_char(o.snoozed_until, 'YYYY-MM-DD')
 			)), '[]'::jsonb)
-			from public.recurring_rules r
+			from (
+				select r.id as rule_id, d.due_on
+				from public.recurring_rules r
+				cross join lateral private.schedule_dates(r.frequency, r.interval, r.day_of_month, r.starts_on, r.ends_on,
+					greatest(r.starts_on, (r.created_at at time zone 'UTC')::date, here.today - 3), here.today) as d(due_on)
+				where r.household_id = here.id
+				union
+				select s.rule_id, s.due_on from public.occurrences s
+				where s.household_id = here.id and s.state = 'snoozed' and s.snoozed_until = here.today
+			) as due
+			join public.recurring_rules r on r.id = due.rule_id
 			join public.categories c on c.id = r.category_id and c.household_id = r.household_id
-			cross join lateral private.schedule_dates(r.frequency, r.interval, r.day_of_month, r.starts_on, r.ends_on,
-				greatest(r.starts_on, (r.created_at at time zone 'UTC')::date, here.today - 3), here.today) as d(due_on)
-			left join public.occurrences o on o.rule_id = r.id and o.due_on = d.due_on
-			where r.household_id = here.id
+			left join public.occurrences o on o.rule_id = r.id and o.due_on = due.due_on
 		),
 		'loans', (
 			select coalesce(jsonb_agg(jsonb_build_object(
@@ -146,7 +169,12 @@ as $$
 				'month', b.month,
 				'level', b.level
 			)), '[]'::jsonb)
-			from private.budget_levels(here.id, here.today, here.start_day) b
+			from (
+				select * from private.budget_levels(here.id, here.today, here.start_day)
+				union all
+				select * from private.budget_levels(here.id, here.today - 1, here.start_day)
+				where private.budget_month_start(here.today, here.start_day) = here.today
+			) as b
 		)
 	)), '[]'::jsonb)
 	from here;
@@ -198,5 +226,5 @@ end;
 $$;
 revoke all on function private.request_scheduled_notifications() from public;
 
--- Hourly, a little after the hour, so each household is reached in its own 09:00.
+-- Hourly, a little after the hour, so each household is reached in its own 09:00 (and, should a run fail, the next).
 select cron.schedule('raise-notifications', '2 * * * *', 'select private.request_scheduled_notifications()');

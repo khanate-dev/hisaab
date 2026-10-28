@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(20);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-0000000055a1', 'admin@example.com'),
@@ -107,21 +107,27 @@ insert into public.entries (id, household_id, wallet_id, kind, amount, loan_id, 
 	('00000000-0000-7000-8000-000000005594', '00000000-0000-7000-8000-0000000055f1', '00000000-0000-7000-8000-0000000055c1',
 	 'repayment', 500, '00000000-0000-7000-8000-000000005582', '2026-10-20', '00000000-0000-4000-8000-0000000055a1');
 
+create function pg_temp.households(as_of timestamptz) returns text[] language sql as $$
+	select coalesce(array_agg(f ->> 'householdName' order by f ->> 'householdName')
+		filter (where f ->> 'householdName' in ('Family', 'Elsewhere')), '{}')
+	from jsonb_array_elements(public.notification_facts(as_of)) f;
+$$;
 create function pg_temp.facts(as_of timestamptz) returns jsonb language sql as $$
-	select coalesce(jsonb_agg(f) filter (where f ->> 'householdName' in ('Family', 'Elsewhere')), '[]'::jsonb)
+	select coalesce(jsonb_agg(f) filter (where f ->> 'householdName' = 'Family'), '[]'::jsonb)
 	from jsonb_array_elements(public.notification_facts(as_of)) f;
 $$;
 
--- 04:00 UTC is 09:00 in Karachi, 23:00 the day before in New York.
-select is(jsonb_array_length(pg_temp.facts('2026-11-10 04:00+00')), 1, 'only the household where it''s 09:00');
-select is(jsonb_array_length(pg_temp.facts('2026-11-10 05:00+00')), 0, 'and none an hour on');
+-- 03:00 UTC is 08:00 in Karachi and 22:00 the day before in New York; an hour on, 09:00 and 23:00.
+select is(pg_temp.households('2026-11-10 03:00+00'), array['Elsewhere'], 'only households where it''s 09:00 or later');
+select is(pg_temp.households('2026-11-10 04:00+00'), array['Elsewhere', 'Family'], 'Karachi from its 09:00');
 select is(pg_temp.facts('2026-11-10 04:00+00') -> 0 ->> 'today', '2026-11-10', 'in its own today');
 select is(pg_temp.facts('2026-11-10 04:00+00') -> 0 -> 'members',
 	'[{"role": "admin", "userId": "00000000-0000-4000-8000-0000000055a1"}]'::jsonb, 'with its Members');
 select is(
-	(select jsonb_agg(o ->> 'ruleName' || ' ' || (o ->> 'dueOn') || ' ' || (o ->> 'state') order by o ->> 'dueOn')
+	(select jsonb_agg(o ->> 'ruleName' || ' ' || (o ->> 'categoryName') || ' ' || (o ->> 'dueOn') || ' ' || (o ->> 'state')
+		order by o ->> 'dueOn')
 	 from jsonb_array_elements(pg_temp.facts('2026-11-10 04:00+00') -> 0 -> 'occurrences') o),
-	'["T Fuel 2026-11-07 pending", "Flat rent 2026-11-10 pending"]'::jsonb,
+	'["T Fuel T Fuel 2026-11-07 pending", "Flat rent T Rent 2026-11-10 pending"]'::jsonb,
 	'its Occurrences due in the last 3 days, named by description, else Category'
 );
 insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until)
@@ -132,10 +138,25 @@ select is(
 	 where o ->> 'dueOn' = '2026-11-07'),
 	'snoozed', 'one snoozed past today isn''t Pending'
 );
+-- Snoozed long ago to today: back to Pending today, and so among today's.
+insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until)
+select (private.occurrence_ids('00000000-0000-7000-8000-000000005561', '2026-10-10')).occurrence_id,
+	'00000000-0000-7000-8000-0000000055f1', '00000000-0000-7000-8000-000000005561', '2026-10-10', 'snoozed', '2026-11-10';
+select is(
+	(select (o ->> 'state') || ' ' || (o ->> 'snoozedUntil') from jsonb_array_elements(pg_temp.facts('2026-11-10 04:00+00') -> 0 -> 'occurrences') o
+	 where o ->> 'dueOn' = '2026-10-10'),
+	'pending 2026-11-10', 'one whose snooze ends today is Pending again'
+);
 select is(pg_temp.facts('2026-11-10 04:00+00') -> 0 -> 'loans',
 	'[{"dueOn": "2026-11-13", "loanId": "00000000-0000-7000-8000-000000005581", "contactName": "Bilal", "direction": "lent"}]'::jsonb,
 	'its Loans still owed, due within 3 days, never one repaid');
 select is(jsonb_array_length(pg_temp.facts('2026-11-10 04:00+00') -> 0 -> 'budgets'), 2, 'and its Budgets passed');
+select is(
+	(select jsonb_agg((b ->> 'categoryName') || ' ' || (b ->> 'month') order by b ->> 'categoryName')
+	 from jsonb_array_elements(pg_temp.facts('2026-12-01 04:00+00') -> 0 -> 'budgets') b),
+	'["T Food 2026-11", "T Rent 2026-11"]'::jsonb,
+	'on a Budget month''s first day, last month''s too, so a crossing late on its last day isn''t lost'
+);
 
 -- Raising: once only by dedupe key, and only to someone in the household.
 create function pg_temp.raise(user_id uuid, dedupe_key text) returns integer language sql as $$
