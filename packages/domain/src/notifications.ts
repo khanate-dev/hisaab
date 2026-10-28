@@ -37,12 +37,19 @@ export const defaultOn = (trigger: NotificationTrigger, role: MemberRole) => {
 	return true;
 };
 
-/** Whether a trigger reaches a User by push: their own choice, else their Role's default. Never the inbox's say. */
+/**
+ * Whether a trigger reaches a User by push: their own choice, else their Role's default. Someone no longer in the
+ * household (`role` null: they just left or were removed) hears only about that. Never the inbox's say. As
+ * `private.push_on` in the database.
+ */
 export const isOn = (
 	trigger: NotificationTrigger,
-	role: MemberRole,
+	role: MemberRole | null,
 	choice: { enabled: boolean } | undefined,
-) => choice?.enabled ?? defaultOn(trigger, role);
+) =>
+	role === null
+		? trigger === "membership"
+		: (choice?.enabled ?? defaultOn(trigger, role));
 
 /** What a Membership Notification says happened. */
 export type MembershipChange = "joined" | "left" | "removed" | "role_changed";
@@ -113,7 +120,10 @@ export type ClaimedDelivery = {
 
 /** How sending went: sent; failed (try again later); or dead (the target is gone, say a 410 or an expired token). */
 export type SendOutcome =
-	{ status: "sent" } | { status: "failed" | "dead"; error: string };
+	/** `ticket`: Expo's, to fetch its receipt by on a later run. */
+	| { status: "sent"; ticket?: string }
+	| { status: "failed"; error: string }
+	| { status: "dead"; error: string; gone?: boolean };
 
 /** Sends one delivery through its channel. Push (8.2) and email (the Monthly summary) bring theirs. */
 export type Sender = (delivery: ClaimedDelivery) => Promise<SendOutcome>;
@@ -127,9 +137,30 @@ export type DispatchAdapters = {
 			id: string;
 			status: "sent" | "failed" | "dead";
 			error: string | null;
+			ticket: string | null;
 		}[],
 	) => Promise<void>;
+	/** Forgets targets that are gone for good, so nothing is sent to them again. */
+	forget: (targets: string[]) => Promise<void>;
+	/** Sent Expo deliveries whose receipt should be in by now, at most `limit`. */
+	receiptsDue: (
+		limit: number,
+	) => Promise<{ id: string; target: string; ticket: string }[]>;
+	/** Records what each receipt said; an error makes the delivery dead. */
+	settleReceipts: (
+		results: { id: string; error: string | null }[],
+	) => Promise<void>;
 };
+
+/** One Expo push receipt: whether the message reached APNs or FCM. */
+export type ExpoReceipt =
+	| { status: "ok" }
+	| { status: "error"; message?: string; details?: { error?: string } };
+
+/** Fetches Expo's receipts for tickets; a ticket with none yet is missing from the answer. */
+export type ReceiptFetcher = (
+	tickets: string[],
+) => Promise<Record<string, ExpoReceipt>>;
 
 /** How many deliveries one run takes, and how many tries a delivery gets (#13: five, with backoff). */
 export const DISPATCH_BATCH = 100;
@@ -139,6 +170,7 @@ export const MAX_ATTEMPTS = 5;
 export const dispatchDeliveries = async (
 	adapters: DispatchAdapters,
 	senders: Partial<Record<DeliveryChannel, Sender>>,
+	fetchReceipts?: ReceiptFetcher,
 ) => {
 	const claimed = await adapters.claim(DISPATCH_BATCH);
 	const results = await Promise.all(
@@ -156,13 +188,64 @@ export const dispatchDeliveries = async (
 					: outcome.status;
 			return {
 				id: delivery.id,
+				target: delivery.target,
 				status,
 				error: "error" in outcome ? outcome.error : null,
+				ticket: outcome.status === "sent" ? (outcome.ticket ?? null) : null,
+				gone: outcome.status === "dead" && outcome.gone === true,
 			};
 		}),
 	);
-	if (results.length > 0) await adapters.settle(results);
+	if (results.length > 0)
+		await adapters.settle(
+			results.map(({ id, status, error, ticket }) => ({
+				id,
+				status,
+				error,
+				ticket,
+			})),
+		);
+	const gone = results.flatMap((r) => (r.gone ? [r.target] : []));
+	if (fetchReceipts)
+		gone.push(...(await checkReceipts(adapters, fetchReceipts)));
+	if (gone.length > 0) await adapters.forget([...new Set(gone)]);
 	return results.length;
+};
+
+/** How many Expo receipts one run asks for (Expo takes up to 1,000 ids a request). */
+export const RECEIPT_BATCH = 300;
+
+/** What an Expo receipt says: delivered, or an error; an unregistered device's token is gone. */
+export const expoReceiptOutcome = (
+	receipt: ExpoReceipt,
+): { error: string | null; gone: boolean } =>
+	receipt.status === "ok"
+		? { error: null, gone: false }
+		: {
+				error: receipt.details?.error ?? receipt.message ?? "Expo error",
+				gone: receipt.details?.error === "DeviceNotRegistered",
+			};
+
+/**
+ * Settles the receipts that are in for sent Expo deliveries (#13: tickets say Expo took a message, receipts whether it
+ * reached the device). One with no receipt yet waits for a later run. Answers with the targets found gone.
+ */
+const checkReceipts = async (
+	adapters: DispatchAdapters,
+	fetchReceipts: ReceiptFetcher,
+) => {
+	const due = await adapters.receiptsDue(RECEIPT_BATCH);
+	if (due.length === 0) return [];
+	const receipts = await fetchReceipts(due.map((d) => d.ticket));
+	const settled = due.flatMap((d) => {
+		const receipt = receipts[d.ticket];
+		return receipt ? [{ ...d, ...expoReceiptOutcome(receipt) }] : [];
+	});
+	if (settled.length > 0)
+		await adapters.settleReceipts(
+			settled.map(({ id, error }) => ({ id, error })),
+		);
+	return settled.flatMap((r) => (r.gone ? [r.target] : []));
 };
 
 /**
@@ -195,6 +278,7 @@ export const handleDispatchRequest = async (
 	adaptersFor: (key: string) => DispatchAdapters,
 	senders: Partial<Record<DeliveryChannel, Sender>>,
 	request: Request,
+	fetchReceipts?: ReceiptFetcher,
 ): Promise<Response> => {
 	if (request.method !== "POST")
 		return Response.json({ status: "method_not_allowed" }, { status: 405 });
@@ -205,7 +289,11 @@ export const handleDispatchRequest = async (
 	try {
 		return Response.json({
 			status: "ok",
-			settled: await dispatchDeliveries(adaptersFor(key), senders),
+			settled: await dispatchDeliveries(
+				adaptersFor(key),
+				senders,
+				fetchReceipts,
+			),
 		});
 	} catch (error) {
 		if (error instanceof DispatchForbidden)
@@ -213,3 +301,84 @@ export const handleDispatchRequest = async (
 		throw error;
 	}
 };
+
+const TRIGGER_TITLES: Record<NotificationTrigger, string> = {
+	recurring_due: "Recurring due",
+	auto_recorded: "Auto-recorded",
+	budget_threshold: "Budget threshold",
+	loan_due: "Loan due",
+	household_activity: "Household activity",
+	membership: "Membership",
+	monthly_summary: "Monthly summary",
+};
+
+/**
+ * What a push says (#13: server templates by trigger; English only at launch). Made only from the names of who and
+ * where, never from anything else in the payload, so no amount ever reaches a lock screen or a push relay.
+ */
+export const pushMessage = (
+	trigger: NotificationTrigger,
+	payload: string,
+): { title: string; body: string } => {
+	const membership =
+		trigger === "membership" ? readMembershipPayload(payload) : null;
+	if (membership) {
+		const name = membership.name ?? "Someone";
+		const where = membership.householdName;
+		const body = {
+			joined: `${name} joined ${where}.`,
+			left: `${name} left ${where}.`,
+			removed: `${name} was removed from ${where}.`,
+			role_changed: `${name} is now ${ROLE_NAMES[membership.role]} in ${where}.`,
+		}[membership.change];
+		return { title: "Hisaab", body };
+	}
+	let household: string | null = null;
+	try {
+		const raw: unknown = JSON.parse(payload);
+		if (
+			raw !== null &&
+			typeof raw === "object" &&
+			typeof (raw as { householdName?: unknown }).householdName === "string"
+		)
+			household = (raw as { householdName: string }).householdName;
+	} catch {
+		household = null;
+	}
+	return {
+		title: TRIGGER_TITLES[trigger],
+		body: household === null ? "Open Hisaab to see it." : `In ${household}.`,
+	};
+};
+
+const ROLE_NAMES: Record<MemberRole, string> = {
+	admin: "an Admin",
+	member: "a Member",
+	viewer: "a Viewer",
+};
+
+/** One Expo push ticket, as the Expo Push Service answers each message. */
+export type ExpoTicket =
+	| { status: "ok"; id?: string }
+	| { status: "error"; message?: string; details?: { error?: string } };
+
+/** What an Expo ticket says about sending: an unregistered device's token is gone; other errors are retried. */
+export const expoOutcome = (ticket: ExpoTicket | undefined): SendOutcome => {
+	if (!ticket) return { status: "failed", error: "No ticket from Expo" };
+	if (ticket.status === "ok")
+		return ticket.id === undefined
+			? { status: "sent" }
+			: { status: "sent", ticket: ticket.id };
+	const error = ticket.details?.error ?? ticket.message ?? "Expo error";
+	return ticket.details?.error === "DeviceNotRegistered"
+		? { status: "dead", error, gone: true }
+		: { status: "failed", error };
+};
+
+/** What a Web Push service's answer says: 404 and 410 mean the subscription is gone; 2xx sent; anything else retried. */
+export const webPushOutcome = (status: number): SendOutcome =>
+	status >= 200 && status < 300
+		? { status: "sent" }
+		: status === 404 || status === 410
+			? { status: "dead", error: `Subscription gone (${status})`, gone: true }
+			: { status: "failed", error: `Push service answered ${status}` };

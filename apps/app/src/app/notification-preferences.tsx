@@ -4,6 +4,7 @@ import { useCurrentHousehold } from "@/features/households/use-current-household
 import { useMembership } from "@/features/households/use-membership";
 import { setPreference } from "@/features/notifications/actions";
 import { PreferencesList } from "@/features/notifications/preferences-list";
+import { ThisDevicePush } from "@/features/notifications/this-device-push";
 import { usePreferences } from "@/features/notifications/use-notifications";
 import { Screen } from "@/features/shell/screen";
 import { useSignedInUserId } from "@/lib/session";
@@ -40,6 +41,7 @@ export default function NotificationPreferences() {
 	const household = useCurrentHousehold(userId);
 	return (
 		<Screen title={t`Notification preferences`}>
+			<ThisDevicePush userId={userId} />
 			{household && (
 				<HouseholdPreferences
 					household={household}

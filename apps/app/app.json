@@ -23,7 +23,8 @@
 				{
 					"faceIDPermission": "Hisaab uses Face ID to unlock the app, if you turn the app lock on."
 				}
-			]
+			],
+			"expo-notifications"
 		],
 		"experiments": {
 			"typedRoutes": true

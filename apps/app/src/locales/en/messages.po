@@ -793,6 +793,10 @@ msgstr "Couldn't join just now. Check your connection and try again."
 msgid "Couldn't open the Invite. Check your connection and try again."
 msgstr "Couldn't open the Invite. Check your connection and try again."
 
+#: src/features/notifications/this-device-push.tsx
+msgid "Couldn't reach the server. Check you're online and try again."
+msgstr "Couldn't reach the server. Check you're online and try again."
+
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Create Cash Wallet"
 msgstr "Create Cash Wallet"
@@ -1914,6 +1918,10 @@ msgstr "Notification preferences"
 msgid "Notifications"
 msgstr "Notifications"
 
+#: src/features/notifications/push-setting.tsx
+msgid "Notifications are blocked for Hisaab here. Allow them in this device's settings, then turn push on."
+msgstr "Notifications are blocked for Hisaab here. Allow them in this device's settings, then turn push on."
+
 #: src/features/shell/top-bar.tsx
 msgid "Notifications, {unread} new"
 msgstr "Notifications, {unread} new"
@@ -2104,6 +2112,14 @@ msgstr "Previous"
 #: src/features/budgets/budget-month.tsx
 msgid "Previous Budget month"
 msgstr "Previous Budget month"
+
+#: src/features/notifications/push-setting.tsx
+msgid "Push isn't available here yet; your inbox still gets every Notification."
+msgstr "Push isn't available here yet; your inbox still gets every Notification."
+
+#: src/features/notifications/push-setting.tsx
+msgid "Push on this device"
+msgstr "Push on this device"
 
 #: src/features/activity/activity-list.tsx
 msgid "Puts the Entry back as it was when deleted"
@@ -2604,6 +2620,10 @@ msgstr "This Category isn't here. It may not have synced yet."
 msgid "This device"
 msgstr "This device"
 
+#: src/features/notifications/push-setting.tsx
+msgid "This device gets push notifications for what's on below."
+msgstr "This device gets push notifications for what's on below."
+
 #: src/app/entries/[id]/edit.tsx
 #: src/app/entries/[id]/index.tsx
 msgid "This Entry isn't here. It may have been deleted, or not synced yet."
@@ -2713,6 +2733,14 @@ msgstr "Transfer"
 #: src/app/activity.tsx
 msgid "Try again"
 msgstr "Try again"
+
+#: src/features/notifications/push-setting.tsx
+msgid "Turn off push notifications"
+msgstr "Turn off push notifications"
+
+#: src/features/notifications/push-setting.tsx
+msgid "Turn on push notifications"
+msgstr "Turn on push notifications"
 
 #: src/features/device/this-device.tsx
 msgid "Turn on the app lock"

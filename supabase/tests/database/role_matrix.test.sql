@@ -76,6 +76,8 @@ insert into public.notification_preferences (id, household_id, user_id, trigger,
 	(extensions.uuid_generate_v5('8a3c2f1e-5b7d-4e9a-a6c1-2d4f6b8e0a13',
 		'preference/00000000-0000-4000-8000-00000000aaa1/00000000-0000-7000-8000-00000000aaf1/membership'),
 	 '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1', 'membership', false);
+insert into public.devices (id, user_id, platform, push_kind, push_token) values
+	('00000000-0000-7000-8000-00000000aabd', '00000000-0000-4000-8000-00000000aaa1', 'android', 'expo', 'ExponentPushToken[admin]');
 insert into public.saved_filters (id, household_id, user_id, name, criteria) values
 	('00000000-0000-7000-8000-00000000aa81', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
 	 'Mine', '{}');
@@ -179,6 +181,11 @@ insert into attempts values
 		        '00000000-0000-7000-8000-00000000aaf1', (select auth.uid()), 'loan_due', true) $$),
 	('notification_preferences.update', $$ update public.notification_preferences set enabled = enabled
 		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = '00000000-0000-4000-8000-00000000aaa1' $$),
+	-- A device is its User's alone: the Admin's here, and anyone signed in registers their own.
+	('devices.select', $$ select 1 from public.devices where id = '00000000-0000-7000-8000-00000000aabd' $$),
+	('devices.insert', $$ select public.register_device('00000000-0000-7000-8000-00000000ab18', 'android', 'expo',
+		'ExponentPushToken[matrix]') $$),
+	('devices.delete', $$ delete from public.devices where id = '00000000-0000-7000-8000-00000000aabd' $$),
 	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
 	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('saved_filters.insert', $$ insert into public.saved_filters (id, household_id, user_id, name, criteria)
@@ -255,7 +262,7 @@ select set_eq(
 		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'import_mappings.select',
 		'import_mappings.update', 'import_mappings.delete', 'notifications.select', 'notifications.update',
 		'notification_deliveries.select', 'notification_preferences.select', 'notification_preferences.insert',
-		'notification_preferences.update',
+		'notification_preferences.update', 'devices.select', 'devices.insert', 'devices.delete',
 		'saved_filters.select',
 		'saved_filters.insert', 'saved_filters.update', 'saved_filters.delete'],
 	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '
@@ -264,19 +271,19 @@ select set_eq(
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa2') $$,
 	pg_temp.reads() || pg_temp.writes() || array['memberships.leave', 'saved_filters.insert',
-		'notification_preferences.insert', 'notifications.select'],
+		'notification_preferences.insert', 'notifications.select', 'devices.insert'],
 	'a Member reads everything but Invites, records and manages the household''s money, and may leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa3') $$,
 	-- Their own inbox has their joining in it.
 	pg_temp.reads() || array['households.insert', 'profiles.update', 'memberships.leave', 'saved_filters.insert',
-		'notification_preferences.insert', 'notifications.select'],
+		'notification_preferences.insert', 'notifications.select', 'devices.insert'],
 	'a Viewer only reads, beyond their own name, households of their own and leaving'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa4') $$,
-	array['app_config.select', 'households.insert', 'profiles.update'],
+	array['app_config.select', 'households.insert', 'profiles.update', 'devices.insert'],
 	'a member of another household gets nothing of this one'
 );
 select is_empty(
