@@ -253,6 +253,62 @@ export type SendOutcome =
 /** Sends one delivery through its channel. Push (8.2) and email (the Monthly summary) bring theirs. */
 export type Sender = (delivery: ClaimedDelivery) => Promise<SendOutcome>;
 
+/** Sends up to `size` deliveries of one channel in one request (Expo takes 100): an outcome for each, in order. */
+export type BatchSender = {
+	size: number;
+	send: (deliveries: ClaimedDelivery[]) => Promise<SendOutcome[]>;
+};
+
+/** Each channel's sender, one at a time or in batches. */
+export type Senders = Partial<Record<DeliveryChannel, Sender | BatchSender>>;
+
+const failure = (error: unknown): SendOutcome => ({
+	status: "failed",
+	error: error instanceof Error ? error.message : String(error),
+});
+
+/** Every claimed delivery's outcome, by id: each sent through its channel's sender, batched where it batches. */
+const sendAll = async (claimed: ClaimedDelivery[], senders: Senders) => {
+	const outcomes = new Map<string, SendOutcome>();
+	const byChannel = new Map<DeliveryChannel, ClaimedDelivery[]>();
+	for (const d of claimed)
+		byChannel.set(d.channel, [...(byChannel.get(d.channel) ?? []), d]);
+	await Promise.all(
+		[...byChannel].map(async ([channel, deliveries]) => {
+			const sender = senders[channel];
+			if (!sender) {
+				for (const d of deliveries)
+					outcomes.set(d.id, {
+						status: "failed",
+						error: `No sender for ${channel} yet`,
+					});
+				return;
+			}
+			if (typeof sender === "function") {
+				await Promise.all(
+					deliveries.map(async (d) =>
+						outcomes.set(d.id, await sender(d).catch(failure)),
+					),
+				);
+				return;
+			}
+			for (let i = 0; i < deliveries.length; i += sender.size) {
+				const chunk = deliveries.slice(i, i + sender.size);
+				const sent = await sender
+					.send(chunk)
+					.catch((error: unknown) => chunk.map(() => failure(error)));
+				chunk.forEach((d, j) =>
+					outcomes.set(
+						d.id,
+						sent[j] ?? { status: "failed", error: "No outcome for it" },
+					),
+				);
+			}
+		}),
+	);
+	return outcomes;
+};
+
 /** What the dispatcher needs from the database, as the service role. */
 export type DispatchAdapters = {
 	/** Due deliveries, locked against other runs, their attempt counted; at most `limit`. */
@@ -294,19 +350,17 @@ export const MAX_ATTEMPTS = 5;
 /** Sends what's due once. A channel with no sender yet fails the delivery, which then retries until it's dead. */
 export const dispatchDeliveries = async (
 	adapters: DispatchAdapters,
-	senders: Partial<Record<DeliveryChannel, Sender>>,
+	senders: Senders,
 	fetchReceipts?: ReceiptFetcher,
 ) => {
 	const claimed = await adapters.claim(DISPATCH_BATCH);
+	const outcomes = await sendAll(claimed, senders);
 	const results = await Promise.all(
 		claimed.map(async (delivery) => {
-			const send = senders[delivery.channel];
-			const outcome: SendOutcome = send
-				? await send(delivery).catch((error: unknown) => ({
-						status: "failed" as const,
-						error: error instanceof Error ? error.message : String(error),
-					}))
-				: { status: "failed", error: `No sender for ${delivery.channel} yet` };
+			const outcome: SendOutcome = outcomes.get(delivery.id) ?? {
+				status: "failed",
+				error: "No outcome for it",
+			};
 			const status =
 				outcome.status === "failed" && delivery.attempts >= MAX_ATTEMPTS
 					? "dead"
@@ -401,7 +455,7 @@ export class DispatchForbidden extends Error {}
  */
 export const handleDispatchRequest = async (
 	adaptersFor: (key: string) => DispatchAdapters,
-	senders: Partial<Record<DeliveryChannel, Sender>>,
+	senders: Senders,
 	request: Request,
 	fetchReceipts?: ReceiptFetcher,
 ): Promise<Response> => {
@@ -532,6 +586,19 @@ export const expoOutcome = (ticket: ExpoTicket | undefined): SendOutcome => {
 		? { status: "dead", error, gone: true }
 		: { status: "failed", error };
 };
+
+/** How many messages Expo takes in one request. */
+export const EXPO_BATCH = 100;
+
+/** What Expo's answer to a batch says of each message, in order: its ticket's outcome, or failed when it gave none. */
+export const expoOutcomes = (tickets: unknown, count: number): SendOutcome[] =>
+	Array.from({ length: count }, (_, i) =>
+		expoOutcome(
+			Array.isArray(tickets)
+				? (tickets[i] as ExpoTicket | undefined)
+				: undefined,
+		),
+	);
 
 /** What a Web Push service's answer says: 404 and 410 mean the subscription is gone; 2xx sent; anything else retried. */
 export const webPushOutcome = (status: number): SendOutcome =>

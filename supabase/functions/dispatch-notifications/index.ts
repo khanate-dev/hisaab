@@ -6,12 +6,16 @@ import {
 	type DispatchAdapters,
 	DispatchForbidden,
 	type ExpoReceipt,
+	type BatchSender,
+	EXPO_BATCH,
 	type ExpoTicket,
 	expoOutcome,
+	expoOutcomes,
 	handleDispatchRequest,
 	pushMessage,
 	type ReceiptFetcher,
 	type Sender,
+	type SendOutcome,
 	webPushOutcome,
 } from "../../../packages/domain/src/notifications.ts";
 
@@ -96,23 +100,51 @@ const adaptersFor = (key: string): DispatchAdapters => {
 	};
 };
 
-/** Mobile push through the Expo Push Service, which holds the APNs and FCM credentials (#13). */
-const expo: Sender = async (delivery) => {
+const EXPO_SEND = "https://exp.host/--/api/v2/push/send";
+
+const expoMessage = (delivery: ClaimedDelivery) => {
 	const { title, body } = pushMessage(delivery.trigger, delivery.payload);
-	const response = await fetch("https://exp.host/--/api/v2/push/send", {
+	return {
+		to: delivery.target,
+		title,
+		body,
+		data: { notificationId: delivery.notificationId },
+	};
+};
+
+const postToExpo = (messages: unknown) =>
+	fetch(EXPO_SEND, {
 		method: "POST",
 		headers: { "content-type": "application/json", accept: "application/json" },
-		body: JSON.stringify({
-			to: delivery.target,
-			title,
-			body,
-			data: { notificationId: delivery.notificationId },
-		}),
+		body: JSON.stringify(messages),
 	});
+
+/** One message on its own: what a batch Expo refused whole falls back to, so one bad token fails only itself. */
+const expoOne = async (delivery: ClaimedDelivery): Promise<SendOutcome> => {
+	const response = await postToExpo(expoMessage(delivery));
 	if (!response.ok)
 		return { status: "failed", error: `Expo answered ${response.status}` };
 	const { data } = (await response.json()) as { data?: ExpoTicket };
 	return expoOutcome(data);
+};
+
+/**
+ * Mobile push through the Expo Push Service, which holds the APNs and FCM credentials (#13): up to 100 a request, a
+ * ticket back for each in order. A batch refused whole (a 400, say tokens of two projects) goes again one at a time.
+ */
+const expo: BatchSender = {
+	size: EXPO_BATCH,
+	send: async (deliveries) => {
+		const response = await postToExpo(deliveries.map(expoMessage));
+		if (response.status === 400) return Promise.all(deliveries.map(expoOne));
+		if (!response.ok)
+			return deliveries.map(() => ({
+				status: "failed" as const,
+				error: `Expo answered ${response.status}`,
+			}));
+		const { data } = (await response.json()) as { data?: unknown };
+		return expoOutcomes(data, deliveries.length);
+	},
 };
 
 /** Expo's receipts for its tickets: whether each message reached APNs or FCM. */
