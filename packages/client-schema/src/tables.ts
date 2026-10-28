@@ -191,6 +191,23 @@ export const occurrences = sqliteTable("occurrences", {
 	_deleted: deleteFlag(),
 });
 
+/** An image or PDF attached to an Entry; the file is in Storage at `attachmentPath`, the thumbnail right here. */
+export const attachments = sqliteTable("attachments", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	entry_id: text("entry_id").notNull(),
+	/** One of `ATTACHMENT_MEDIA_TYPES`. */
+	media_type: text("media_type").notNull(),
+	size_bytes: integer("size_bytes").notNull(),
+	file_name: text("file_name"),
+	/** A small JPEG data URL, for images. */
+	thumbnail: text("thumbnail"),
+	created_by: text("created_by").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** A named set of search and filter criteria, private to the User who saved it (CONTEXT.md). */
 export const savedFilters = sqliteTable("saved_filters", {
 	id: text("id").primaryKey(),

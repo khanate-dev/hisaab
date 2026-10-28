@@ -25,6 +25,11 @@ catalog:
   expo-localization: 57.0.2
   expo-router: 57.0.29
   expo-status-bar: 57.0.1
+  # Attachments (#55): picking, shrinking and keeping files on the device; SDK 57's bundled versions
+  expo-document-picker: 57.0.3
+  expo-file-system: 57.0.7
+  expo-image-manipulator: 57.0.21
+  expo-image-picker: 57.0.20
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3
