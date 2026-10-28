@@ -19,6 +19,14 @@ msgstr "{contactName} (archived)"
 msgid "{count} recurring Entries wait for you to confirm them."
 msgstr "{count} recurring Entries wait for you to confirm them."
 
+#: src/features/import/import-wizard.tsx
+msgid "{date} · {amount} {way}"
+msgstr "{date} · {amount} {way}"
+
+#: src/features/import/import-wizard.tsx
+msgid "{date}, {name}, {amount} {way}"
+msgstr "{date}, {name}, {amount} {way}"
+
 #: src/features/entries/entry-detail.tsx
 msgid "{day} at {time}"
 msgstr "{day} at {time}"
@@ -50,6 +58,10 @@ msgstr "{lent}, {left} outstanding"
 #: src/features/loans/loan-list.tsx
 msgid "{lent}, settled"
 msgstr "{lent}, settled"
+
+#: src/features/import/import-wizard.tsx
+msgid "{missing} rows still need a Category."
+msgstr "{missing} rows still need a Category."
 
 #: src/features/budgets/budget-form.tsx
 msgid "{monthName} on"
@@ -97,6 +109,7 @@ msgstr "{paid} on {day}"
 
 #: src/app/(tabs)/entries.tsx
 #: src/features/budgets/budget-form.tsx
+#: src/features/import/import-wizard.tsx
 #: src/features/recurring/rule-form.tsx
 msgid "{parent}: {name}"
 msgstr "{parent}: {name}"
@@ -120,6 +133,14 @@ msgstr "{percent}% received"
 #: src/features/budgets/budget-month.tsx
 msgid "{percent}% spent"
 msgstr "{percent}% spent"
+
+#: src/features/import/import-wizard.tsx
+msgid "{readCount} rows read; {unreadable} can't be, and are left out."
+msgstr "{readCount} rows read; {unreadable} can't be, and are left out."
+
+#: src/features/import/import-wizard.tsx
+msgid "{readCount} rows read."
+msgstr "{readCount} rows read."
 
 #: src/features/entries/items-section.tsx
 msgid "{restName}, {restAmount}"
@@ -185,6 +206,10 @@ msgstr "1 for every one; 2 for every other one."
 msgid "1 recurring Entry waits for you to confirm it."
 msgstr "1 recurring Entry waits for you to confirm it."
 
+#: src/features/import/import-wizard.tsx
+msgid "1 row still needs a Category."
+msgstr "1 row still needs a Category."
+
 #: src/features/activity/activity-list.tsx
 msgid "a Budget"
 msgstr "a Budget"
@@ -228,6 +253,10 @@ msgstr "A new household couldn't sync"
 #: src/features/sync/sync-status.tsx
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
+
+#: src/features/import/import-wizard.tsx
+msgid "A quote opened on line {unclosedAt} never closes, so nothing from there on is read."
+msgstr "A quote opened on line {unclosedAt} never closes, so nothing from there on is read."
 
 #: src/features/activity/activity-list.tsx
 msgid "a record"
@@ -338,6 +367,7 @@ msgstr "All Wallets"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/import/import-wizard.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Amount"
 msgstr "Amount"
@@ -359,6 +389,10 @@ msgstr "Amount for {name} ({baseCurrency})"
 #: src/features/recurring/pending-list.tsx
 msgid "Amount varies"
 msgstr "Amount varies"
+
+#: src/features/import/import-wizard.tsx
+msgid "Amounts"
+msgstr "Amounts"
 
 #: src/features/attachments/entry-attachments.tsx
 msgid "An Attachment is an image or a PDF."
@@ -447,6 +481,10 @@ msgstr "Auto-record needs an amount; leave it to Confirm for a bill that varies.
 #: src/features/categories/labels.ts
 msgid "Baby"
 msgstr "Baby"
+
+#: src/features/import/import-wizard.tsx
+msgid "Back"
+msgstr "Back"
 
 #: src/features/entries/labels.ts
 msgid "Balance adjustment"
@@ -567,9 +605,18 @@ msgstr "Categories"
 #: src/features/entries/entry-detail.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/import/import-wizard.tsx
 #: src/features/recurring/rule-form.tsx
 msgid "Category"
 msgstr "Category"
+
+#: src/features/import/import-wizard.tsx
+msgid "Category (optional)"
+msgstr "Category (optional)"
+
+#: src/features/import/import-wizard.tsx
+msgid "Category for {name} on {date}: {categoryName}"
+msgstr "Category for {name} on {date}: {categoryName}"
 
 #: src/features/budgets/budget-month.tsx
 msgid "Change"
@@ -594,6 +641,10 @@ msgstr "Change the total"
 #: src/app/recurring/[id].tsx
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
+
+#: src/features/import/import-wizard.tsx
+msgid "Choose CSV file"
+msgstr "Choose CSV file"
 
 #: src/features/attachments/attachment-list.tsx
 msgid "Choose PDF or image"
@@ -631,6 +682,10 @@ msgstr "Coin"
 #: src/features/categories/category-form.tsx
 msgid "Colour"
 msgstr "Colour"
+
+#: src/features/import/import-wizard.tsx
+msgid "Column {number}"
+msgstr "Column {number}"
 
 #: src/features/recurring/pending-list.tsx
 msgid "Confirm {count}"
@@ -691,6 +746,10 @@ msgstr "Create household"
 msgid "Create Invite"
 msgstr "Create Invite"
 
+#: src/features/import/import-wizard.tsx
+msgid "Credit (money in)"
+msgstr "Credit (money in)"
+
 #: src/features/wallets/labels.ts
 msgid "Credit card"
 msgstr "Credit card"
@@ -715,6 +774,7 @@ msgstr "Cyan"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/import/import-wizard.tsx
 #: src/features/loans/loan-form.tsx
 #: src/features/loans/repayment-form.tsx
 msgid "Date"
@@ -723,6 +783,10 @@ msgstr "Date"
 #: src/features/recurring/pending-list.tsx
 msgid "Date for {name}"
 msgstr "Date for {name}"
+
+#: src/features/import/import-wizard.tsx
+msgid "Date format"
+msgstr "Date format"
 
 #: src/features/entries/quick-add-form.tsx
 msgid "Date: {dateName}"
@@ -747,6 +811,14 @@ msgstr "day {day} of {days}, {percent}% spent"
 #: src/features/recurring/rule-form.tsx
 msgid "Day of the month"
 msgstr "Day of the month"
+
+#: src/features/import/import-wizard.tsx
+msgid "Debit (money out)"
+msgstr "Debit (money out)"
+
+#: src/features/import/import-wizard.tsx
+msgid "Debit and credit columns"
+msgstr "Debit and credit columns"
 
 #: src/features/entries/amount-keypad.tsx
 msgid "Decimal point"
@@ -827,6 +899,7 @@ msgstr "Deleting a membership couldn't sync"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/import/import-wizard.tsx
 #: src/features/recurring/rule-form.tsx
 msgid "Description"
 msgstr "Description"
@@ -862,6 +935,10 @@ msgstr "Dismiss: new household"
 #: src/features/sync/sync-status.tsx
 msgid "Dismiss: new membership"
 msgstr "Dismiss: new membership"
+
+#: src/features/import/import-wizard.tsx
+msgid "Done"
+msgstr "Done"
 
 #: src/features/loans/loan-edit-form.tsx
 #: src/features/loans/loan-form.tsx
@@ -1063,6 +1140,10 @@ msgstr "Filters"
 msgid "Filters ({narrowed})"
 msgstr "Filters ({narrowed})"
 
+#: src/features/import/import-wizard.tsx
+msgid "First: {firstDate} · {firstName} · {firstAmount}"
+msgstr "First: {firstDate} · {firstName} · {firstAmount}"
+
 #: src/features/budgets/budget-form.tsx
 msgid "For"
 msgstr "For"
@@ -1102,6 +1183,10 @@ msgstr "Getting your households ready…"
 #: src/features/categories/labels.ts
 msgid "Gift"
 msgstr "Gift"
+
+#: src/features/import/import-wizard.tsx
+msgid "Give each row a Category. Likely duplicates of Entries already here (same date and amount) are left out unless you keep them."
+msgstr "Give each row a Category. Likely duplicates of Entries already here (same date and amount) are left out unless you keep them."
 
 #: src/features/categories/category-form.tsx
 msgid "Give the Category a name."
@@ -1163,6 +1248,44 @@ msgstr "Icon"
 #: src/features/attachments/entry-attachments.tsx
 msgid "Image"
 msgstr "Image"
+
+#: src/features/import/import-wizard.tsx
+msgid "Import"
+msgstr "Import"
+
+#: src/features/import/import-wizard.tsx
+msgid "Import {count} Entries"
+msgstr "Import {count} Entries"
+
+#: src/features/import/import-wizard.tsx
+msgid "Import {name} on {date}"
+msgstr "Import {name} on {date}"
+
+#: src/features/import/import-wizard.tsx
+msgid "Import 1 Entry"
+msgstr "Import 1 Entry"
+
+#: src/features/import/import-wizard.tsx
+msgid "Import a statement into {walletName} as Entries. Any bank's CSV works: you map its columns next."
+msgstr "Import a statement into {walletName} as Entries. Any bank's CSV works: you map its columns next."
+
+#: src/app/_layout.tsx
+#: src/app/wallets/[id]/import.tsx
+#: src/app/wallets/[id]/index.tsx
+msgid "Import CSV"
+msgstr "Import CSV"
+
+#: src/features/import/import-wizard.tsx
+msgid "Imported {imported} Entries into {walletName}."
+msgstr "Imported {imported} Entries into {walletName}."
+
+#: src/features/import/import-wizard.tsx
+msgid "Imported 1 Entry into {walletName}."
+msgstr "Imported 1 Entry into {walletName}."
+
+#: src/features/import/import-wizard.tsx
+msgid "in"
+msgstr "in"
 
 #: src/features/wallets/balance.tsx
 msgid "In credit"
@@ -1362,6 +1485,10 @@ msgstr "Lent to"
 msgid "Lightning bolt"
 msgstr "Lightning bolt"
 
+#: src/features/import/import-wizard.tsx
+msgid "Likely duplicate"
+msgstr "Likely duplicate"
+
 #: src/features/categories/labels.ts
 msgid "Lime"
 msgstr "Lime"
@@ -1407,6 +1534,10 @@ msgstr "Made by an older version of the app, and it no longer fits."
 msgid "Magenta"
 msgstr "Magenta"
 
+#: src/features/import/import-wizard.tsx
+msgid "Map columns"
+msgstr "Map columns"
+
 #: src/app/_layout.tsx
 #: src/app/me.tsx
 #: src/features/shell/sections.ts
@@ -1431,6 +1562,10 @@ msgstr "Members and your preferences arrive here."
 #: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
+
+#: src/features/import/import-wizard.tsx
+msgid "Money out shows as positive"
+msgstr "Money out shows as positive"
 
 #: src/features/activity/fields.ts
 msgid "Month"
@@ -1554,6 +1689,10 @@ msgstr "No Categories in this list yet."
 msgid "No Contacts yet."
 msgstr "No Contacts yet."
 
+#: src/features/import/import-wizard.tsx
+msgid "No description"
+msgstr "No description"
+
 #: src/app/(tabs)/entries.tsx
 msgid "No Entries match."
 msgstr "No Entries match."
@@ -1600,6 +1739,7 @@ msgid "No Wallets yet."
 msgstr "No Wallets yet."
 
 #: src/features/households/household-settings.tsx
+#: src/features/import/import-wizard.tsx
 msgid "None"
 msgstr "None"
 
@@ -1658,6 +1798,10 @@ msgstr "Offline. Changes sync when you're back online."
 #: src/features/households/household-list.tsx
 msgid "On screen now"
 msgstr "On screen now"
+
+#: src/features/import/import-wizard.tsx
+msgid "One amount column"
+msgstr "One amount column"
 
 #: src/features/sync/sync-status.tsx
 msgid "Online."
@@ -1746,6 +1890,10 @@ msgstr "Orange"
 msgid "Other {categoryName}"
 msgstr "Other {categoryName}"
 
+#: src/features/import/import-wizard.tsx
+msgid "out"
+msgstr "out"
+
 #: src/features/loans/loan-detail.tsx
 msgid "Outstanding"
 msgstr "Outstanding"
@@ -1757,6 +1905,10 @@ msgstr "Owed"
 #: src/features/loans/loans-tile.tsx
 msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
+
+#: src/features/import/import-wizard.tsx
+msgid "Paste the CSV here"
+msgstr "Paste the CSV here"
 
 #: src/features/attachments/attachment-list.tsx
 msgid "PDF"
@@ -1779,6 +1931,14 @@ msgstr "Personal"
 #: src/features/categories/labels.ts
 msgid "Phone"
 msgstr "Phone"
+
+#: src/features/import/import-wizard.tsx
+msgid "Pick a Category"
+msgstr "Pick a Category"
+
+#: src/features/import/import-wizard.tsx
+msgid "Pick a Category for {name} on {date}"
+msgstr "Pick a Category for {name} on {date}"
 
 #: src/features/budgets/budget-form.tsx
 #: src/features/entries/entry-form.tsx
@@ -1925,6 +2085,10 @@ msgstr "Rest"
 #: src/features/activity/activity-list.tsx
 msgid "Restore"
 msgstr "Restore"
+
+#: src/features/import/import-wizard.tsx
+msgid "Review rows"
+msgstr "Review rows"
 
 #: src/features/invites/invite-list.tsx
 msgid "Revoke"
@@ -2076,6 +2240,10 @@ msgstr "Show archived Categories"
 msgid "Show archived Wallets"
 msgstr "Show archived Wallets"
 
+#: src/features/import/import-wizard.tsx
+msgid "Show more rows"
+msgstr "Show more rows"
+
 #: src/app/activity.tsx
 msgid "Show older changes"
 msgstr "Show older changes"
@@ -2147,6 +2315,14 @@ msgstr "Spending ahead of the month"
 msgid "Starts"
 msgstr "Starts"
 
+#: src/features/import/import-wizard.tsx
+msgid "Statement CSV"
+msgstr "Statement CSV"
+
+#: src/app/wallets/[id]/import.tsx
+msgid "Statements import into Wallets in the household's Base currency for now."
+msgstr "Statements import into Wallets in the household's Base currency for now."
+
 #: src/features/budgets/budget-form.tsx
 msgid "Stop from {monthName}"
 msgstr "Stop from {monthName}"
@@ -2179,6 +2355,10 @@ msgstr "That Attachment opens once you're online and it has uploaded."
 msgid "That didn't attach. Try again."
 msgstr "That didn't attach. Try again."
 
+#: src/features/import/import-wizard.tsx
+msgid "That didn't import. Try again."
+msgstr "That didn't import. Try again."
+
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't remove. Try again."
 msgstr "That didn't remove. Try again."
@@ -2194,6 +2374,10 @@ msgstr "That didn't save. Try again."
 #: src/app/activity.tsx
 msgid "That Entry couldn't be restored. Try again once you're online."
 msgstr "That Entry couldn't be restored. Try again once you're online."
+
+#: src/features/import/import-wizard.tsx
+msgid "That file couldn't be read. Paste its contents instead."
+msgstr "That file couldn't be read. Paste its contents instead."
 
 #: src/features/invites/join-with-link-form.tsx
 msgid "That isn't an Invite link. Paste the whole link you were sent."
@@ -2231,6 +2415,10 @@ msgstr "The currency is fixed once the Wallet has Entries."
 #: src/features/households/household-settings.tsx
 msgid "The day each Budget month starts, from 1 to 28."
 msgstr "The day each Budget month starts, from 1 to 28."
+
+#: src/features/import/import-wizard.tsx
+msgid "The first row is a header"
+msgstr "The first row is a header"
 
 #: src/features/activity/activity-list.tsx
 msgid "the household"
@@ -2308,6 +2496,10 @@ msgstr "This Recurring rule isn't here. It may have been deleted, or not synced 
 #: src/features/update/update-required.tsx
 msgid "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
 msgstr "This version of Hisaab is too old to sync. Your changes are safe on this device and will sync after you update."
+
+#: src/app/wallets/[id]/import.tsx
+msgid "This Wallet is archived; unarchive it to import into it."
+msgstr "This Wallet is archived; unarchive it to import into it."
 
 #: src/app/wallets/[id]/index.tsx
 msgid "This Wallet isn't here. It may not have synced yet."

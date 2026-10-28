@@ -64,6 +64,8 @@ insert into public.occurrences (id, household_id, rule_id, due_on, state, snooze
 insert into public.attachments (id, household_id, entry_id, media_type, size_bytes, created_by) values
 	('00000000-0000-7000-8000-00000000aa91', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aad1',
 	 'image/jpeg', 1000, '00000000-0000-4000-8000-00000000aaa1');
+insert into public.import_mappings (id, household_id, wallet_id, mapping) values
+	('00000000-0000-7000-8000-00000000aaa9', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aac1', '{}');
 insert into public.saved_filters (id, household_id, user_id, name, criteria) values
 	('00000000-0000-7000-8000-00000000aa81', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
 	 'Mine', '{}');
@@ -151,6 +153,9 @@ insert into attempts values
 		        'application/pdf', 1, (select auth.uid())) $$),
 	('attachments.update', $$ update public.attachments set thumbnail = thumbnail where id = '00000000-0000-7000-8000-00000000aa91' $$),
 	('attachments.delete', $$ delete from public.attachments where id = '00000000-0000-7000-8000-00000000aa91' $$),
+	('import_mappings.select', $$ select 1 from public.import_mappings where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('import_mappings.update', $$ update public.import_mappings set mapping = mapping where id = '00000000-0000-7000-8000-00000000aaa9' $$),
+	('import_mappings.delete', $$ delete from public.import_mappings where id = '00000000-0000-7000-8000-00000000aaa9' $$),
 	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
 	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('saved_filters.insert', $$ insert into public.saved_filters (id, household_id, user_id, name, criteria)
@@ -224,7 +229,8 @@ $$;
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa1') $$,
 	pg_temp.reads() || pg_temp.writes() || array['households.update', 'households.delete', 'invites.select',
-		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'saved_filters.select',
+		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'import_mappings.select',
+		'import_mappings.update', 'import_mappings.delete', 'saved_filters.select',
 		'saved_filters.insert', 'saved_filters.update', 'saved_filters.delete'],
 	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '
 		|| 'Members, but as its last Admin can''t leave'

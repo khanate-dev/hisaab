@@ -131,6 +131,10 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Wallet` }}
 				/>
 				<Stack.Screen
+					name="wallets/[id]/import"
+					options={{ title: t`Import CSV` }}
+				/>
+				<Stack.Screen
 					name="wallets/[id]/edit"
 					options={{ title: t`Edit Wallet` }}
 				/>

@@ -1,6 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Screen } from "@/features/shell/screen";
 import { recordBalanceAdjustment } from "@/features/entries/actions";
@@ -8,6 +9,7 @@ import { useHousehold } from "@/features/households/use-household";
 import { archiveWallet, unarchiveWallet } from "@/features/wallets/actions";
 import { useWallet } from "@/features/wallets/use-wallets";
 import { useCanWrite } from "@/features/households/use-can-write";
+import { useMembership } from "@/features/households/use-membership";
 import { WalletDetail } from "@/features/wallets/wallet-detail";
 import { entryTimeZone, todayIn } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
@@ -20,6 +22,8 @@ export default function WalletScreen() {
 	// The household the Wallet belongs to: its timezone dates the adjustment.
 	const household = useHousehold(wallet?.row.household_id);
 	const canWrite = useCanWrite(wallet?.row.household_id, userId);
+	const isAdmin =
+		useMembership(wallet?.row.household_id, userId)?.role === "admin";
 
 	if (!wallet) {
 		return (
@@ -53,6 +57,16 @@ export default function WalletScreen() {
 				onUnarchive={() => unarchiveWallet(id)}
 				wallet={wallet.summary}
 			/>
+			{isAdmin &&
+				wallet.row.archived_at === null &&
+				household?.base_currency === wallet.row.currency && (
+					<Button
+						onPress={() => router.push(`/wallets/${id}/import`)}
+						variant="secondary"
+					>
+						{t`Import CSV`}
+					</Button>
+				)}
 		</Screen>
 	);
 }

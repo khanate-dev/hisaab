@@ -257,6 +257,17 @@ const seedWallets = async (
 	);
 	if (overrides.error) throw overrides.error;
 
+	// A CSV import mapping for each household's Wallet, kept for its Admins.
+	const mappings = await admin.from("import_mappings").insert(
+		expenses.map(({ household_id, wallet_id }) => ({
+			id: uuidv7(),
+			household_id,
+			wallet_id,
+			mapping: JSON.stringify({ hasHeader: true, dateColumn: 0 }),
+		})),
+	);
+	if (mappings.error) throw mappings.error;
+
 	// An image attached to each household's Expense.
 	const attachmentRows = await admin.from("attachments").insert(
 		expenses.map(({ id, household_id, author }) => ({
