@@ -11,7 +11,8 @@ import { occurrenceKey } from "./occurrence-key";
 import { useDueOccurrences } from "./use-recurring";
 
 /**
- * Records Auto-record rules' due Occurrences as Entries while the app is open and a User who may write is signed in.
+ * Records Auto-record rules' due Occurrences as Entries while the app is open and a User who may write is signed in,
+ * so they show at once, offline too. The server's hourly job records them anyway, app closed or not (#49).
  * It waits for the device's first full sync, so it never redoes one another device already did (or whose Entry was
  * since deleted). Another device doing the same at the same time writes the same ids, and the copies merge (ADR-0004).
  */
