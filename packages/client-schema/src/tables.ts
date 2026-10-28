@@ -220,6 +220,38 @@ export const importMappings = sqliteTable("import_mappings", {
 	_deleted: deleteFlag(),
 });
 
+/** One Notification in the User's Notification inbox (CONTEXT.md); raised by the server, only marked read here. */
+export const notifications = sqliteTable("notifications", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	/** The recipient: always the signed-in User. */
+	user_id: text("user_id").notNull(),
+	/** One of `NOTIFICATION_TRIGGERS`. */
+	trigger: text("trigger").notNull(),
+	subject_user_id: text("subject_user_id"),
+	/** JSON text of what happened (`readMembershipPayload`); never an amount. */
+	payload: text("payload").notNull(),
+	created_at: text("created_at").notNull(),
+	read_at: text("read_at"),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** Whether a trigger also reaches the User by push in a household; one per trigger, its id from `preferenceId`. */
+export const notificationPreferences = sqliteTable("notification_preferences", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	user_id: text("user_id").notNull(),
+	trigger: text("trigger").notNull(),
+	/** Push. */
+	enabled: integer("enabled", { mode: "boolean" }).notNull(),
+	/** Email: the Monthly summary only, opt-in (#13); null for every other trigger. */
+	email_enabled: integer("email_enabled", { mode: "boolean" }),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** A named set of search and filter criteria, private to the User who saved it (CONTEXT.md). */
 export const savedFilters = sqliteTable("saved_filters", {
 	id: text("id").primaryKey(),

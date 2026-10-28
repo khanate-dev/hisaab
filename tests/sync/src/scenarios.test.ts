@@ -1,5 +1,10 @@
 import { CONTRACT_VERSION, stamped } from "@hisaab/client-schema";
-import { budgetFor, occurrenceEntryId, occurrenceId } from "@hisaab/domain";
+import {
+	budgetFor,
+	occurrenceEntryId,
+	occurrenceId,
+	preferenceId,
+} from "@hisaab/domain";
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
 import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -1108,5 +1113,54 @@ describe("sync scenarios", () => {
 				created_by: users.alice.id,
 			},
 		]);
+	});
+	it("a Notification marked read and a preference set offline upload, and only the read mark changes", async () => {
+		const { users, household } = await seedHousehold({
+			alice: "admin",
+			bob: "member",
+		});
+		const admin = adminClient();
+		const alice = await connectClient(users.alice);
+		// The seed's joins raised Membership Notifications into Alice's inbox.
+		const notification = await vi.waitFor(
+			() =>
+				alice.get<{ id: string; payload: string }>(
+					"SELECT id, payload FROM notifications LIMIT 1",
+				),
+			{ timeout: 10_000 },
+		);
+		await goOffline(alice);
+		await alice.execute(
+			"UPDATE notifications SET read_at = ?, _metadata = ? WHERE id = ?",
+			[new Date().toISOString(), stamped({})._metadata, notification.id],
+		);
+		await alice.execute(
+			"INSERT INTO notification_preferences (id, household_id, user_id, trigger, enabled, created_at, _metadata) VALUES (?, ?, ?, 'membership', 0, ?, ?)",
+			[
+				preferenceId(users.alice.id, household, "membership"),
+				household,
+				users.alice.id,
+				new Date().toISOString(),
+				stamped({})._metadata,
+			],
+		);
+		await goOnline(alice);
+		await waitForUploads(alice);
+
+		expect(await uploadErrors(alice)).toEqual([]);
+		const row = await admin
+			.from("notifications")
+			.select("read_at, payload")
+			.eq("id", notification.id)
+			.single();
+		if (row.error) throw row.error;
+		expect(row.data.read_at).not.toBeNull();
+		expect(row.data.payload).toBe(notification.payload);
+		const prefs = await admin
+			.from("notification_preferences")
+			.select("enabled")
+			.eq("user_id", users.alice.id);
+		if (prefs.error) throw prefs.error;
+		expect(prefs.data).toEqual([{ enabled: false }]);
 	});
 });

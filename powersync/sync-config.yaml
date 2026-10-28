@@ -69,6 +69,17 @@ streams:
     auto_subscribe: true
     query: SELECT import_mappings.id, import_mappings.household_id, import_mappings.wallet_id, import_mappings.mapping, import_mappings.created_at FROM import_mappings WHERE import_mappings.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id() AND memberships.role = 'admin')
 
+  # The User's own Notification inbox, and their own notification preferences in households they belong to.
+  notifications:
+    auto_subscribe: true
+    queries:
+      - SELECT notifications.id, notifications.household_id, notifications.user_id, notifications.trigger, notifications.subject_user_id, notifications.payload, notifications.created_at, notifications.read_at
+        FROM notifications
+        WHERE notifications.user_id = auth.user_id()
+      - SELECT notification_preferences.id, notification_preferences.household_id, notification_preferences.user_id, notification_preferences.trigger, notification_preferences.enabled, notification_preferences.email_enabled, notification_preferences.created_at
+        FROM notification_preferences
+        WHERE notification_preferences.user_id = auth.user_id() AND notification_preferences.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+
   # The User's own Saved filters, in households they belong to; private, so nobody else's.
   saved_filters:
     auto_subscribe: true

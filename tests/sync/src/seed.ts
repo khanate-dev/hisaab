@@ -1,5 +1,5 @@
 import type { Role } from "@hisaab/client-schema";
-import { occurrenceId } from "@hisaab/domain";
+import { occurrenceId, preferenceId } from "@hisaab/domain";
 import { v7 as uuidv7 } from "uuid";
 
 import { adminClient, type SignedInUser, signInNewUser } from "./users";
@@ -125,6 +125,22 @@ export const seedHouseholds = async () => {
 		})),
 	]);
 	if (filters.error) throw filters.error;
+
+	// Every User sets a preference at home. (Their Membership Notifications were raised as the joins happened.)
+	const preferences = await admin.from("notification_preferences").insert(
+		personal.data.map((row) => ({
+			id: preferenceId(
+				row.personal_user_id as string,
+				row.id,
+				"monthly_summary",
+			),
+			household_id: row.id,
+			user_id: row.personal_user_id as string,
+			trigger: "monthly_summary",
+			enabled: true,
+		})),
+	);
+	if (preferences.error) throw preferences.error;
 
 	return { users, households: { family, side } };
 };

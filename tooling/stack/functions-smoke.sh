@@ -53,3 +53,14 @@ token=$(printf 'a%.0s' $(seq 32))
 results="preview:$(ask "{\"action\":\"preview\",\"token\":\"$token\"}") accept:$(ask "{\"action\":\"accept\",\"token\":\"$token\"}")"
 echo "accept-invite: $results"
 [[ $results == "preview:404 accept:401" ]] || { cat "$log" >&2; exit 1; }
+
+# dispatch-notifications runs only for the service role (pg_cron calls it with that key): a bogus key, the anon key
+# and a signed-in User's are refused by the database, the service role's is let through.
+dispatch="$api/functions/v1/dispatch-notifications"
+keys=$(pnpm exec supabase status --output json 2>/dev/null)
+service_key=$(node -p 'JSON.parse(process.argv[1]).SERVICE_ROLE_KEY' "$keys")
+anon_key=$(node -p 'JSON.parse(process.argv[1]).ANON_KEY' "$keys")
+run() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 20 -X POST "$dispatch" "$@"; }
+results="bogus:$(run -H "authorization: Bearer nope") anon:$(run -H "authorization: Bearer $anon_key") service:$(run -H "authorization: Bearer $service_key")"
+echo "dispatch-notifications: $results"
+[[ $results == "bogus:403 anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }

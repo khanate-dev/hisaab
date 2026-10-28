@@ -63,6 +63,10 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Notifications` }}
 				/>
 				<Stack.Screen
+					name="notification-preferences"
+					options={{ title: t`Notification preferences` }}
+				/>
+				<Stack.Screen
 					name="activity"
 					options={{ title: t`Activity log` }}
 				/>
