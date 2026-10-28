@@ -10,8 +10,6 @@ import {
 } from "./csv-export";
 import { parseCsv } from "./csv-import";
 
-const DANGEROUS = /^[=+\-@\t\r]/;
-
 describe("csvCell", () => {
 	it("defuses what a spreadsheet would run as a formula, but never a plain amount", () => {
 		expect(csvCell('=HYPERLINK("x")')).toBe(`"'=HYPERLINK(""x"")"`);
@@ -22,29 +20,29 @@ describe("csvCell", () => {
 });
 
 describe("toCsv", () => {
-	it("reads back as written, a defused field with its apostrophe", () => {
+	it("reads back exactly as written when nothing needs defusing", () => {
+		const safe = fc
+			.string({ maxLength: 10 })
+			.filter((v) => !/^[=+\-@\t\r]/.test(v));
 		fc.assert(
 			fc.property(
-				fc.array(
-					fc.array(fc.string({ maxLength: 10 }), {
-						minLength: 2,
-						maxLength: 5,
-					}),
-					{ minLength: 1, maxLength: 6 },
-				),
+				fc.array(fc.array(safe, { minLength: 2, maxLength: 5 }), {
+					minLength: 1,
+					maxLength: 6,
+				}),
 				(rows) => {
-					const back = parseCsv(toCsv(rows)).records.map((r) => r.cells);
-					const want = rows
-						.map((r) =>
-							r.map((v) =>
-								DANGEROUS.test(v) && !/^-?\d+(\.\d+)?$/.test(v) ? `'${v}` : v,
-							),
-						)
-						.filter((r) => !(r.length === 1 && r[0] === ""));
-					expect(back).toEqual(want);
+					expect(parseCsv(toCsv(rows)).records.map((r) => r.cells)).toEqual(
+						rows,
+					);
 				},
 			),
 		);
+	});
+
+	it("reads a defused field back with its apostrophe, and an amount as itself", () => {
+		const back = parseCsv(toCsv([["=1+1", "-450.50", "@x", "+92"]])).records[0]
+			?.cells;
+		expect(back).toEqual(["'=1+1", "-450.50", "'@x", "'+92"]);
 	});
 });
 

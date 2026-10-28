@@ -32,7 +32,8 @@ import { useSavedFilters } from "@/features/search/use-saved-filters";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import { entryTimeZone, todayIn } from "@/lib/dates";
-import { exportFileName, saveCsv } from "@/lib/files/save-csv";
+import { exportFileName } from "@/lib/files/export-name";
+import { saveCsv } from "@/lib/files/save-csv";
 import { useSignedInUserId } from "@/lib/session";
 
 /** One household's Entries with their search: a household switch starts it afresh (spec §3.4). */
@@ -153,6 +154,10 @@ const SearchableEntries = ({
 					kind: i18n._(entryKindLabel(view.entry.kind)),
 					category: (name, parent) =>
 						parent === undefined ? name : t`${parent}: ${name}`,
+					parentOf: ({ parent_id }) =>
+						parent_id === null
+							? undefined
+							: categories?.find((c) => c.id === parent_id)?.name,
 					contact:
 						view.entry.loan_id === null
 							? null

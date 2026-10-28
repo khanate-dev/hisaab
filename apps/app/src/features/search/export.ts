@@ -9,6 +9,8 @@ export const toExportEntry = (
 		kind: string;
 		/** A Category under its parent, "Food: Groceries". */
 		category: (name: string, parent: string | undefined) => string;
+		/** A Category's parent's name, for an Item's Category. */
+		parentOf: (category: { parent_id: string | null }) => string | undefined;
 		contact: string | null;
 	},
 ): ExportEntry => ({
@@ -30,7 +32,9 @@ export const toExportEntry = (
 	contact: words.contact,
 	items: view.items.map(({ item, category }) => ({
 		description: item.description,
-		category: category?.name ?? null,
+		category: category
+			? words.category(category.name, words.parentOf(category))
+			: null,
 		amount: item.amount,
 		quantity: item.quantity,
 	})),

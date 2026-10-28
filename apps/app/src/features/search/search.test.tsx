@@ -282,6 +282,7 @@ describe("toExportEntry", () => {
 			kind: "Expense",
 			category: (name, parent) =>
 				parent === undefined ? name : `${parent}: ${name}`,
+			parentOf: ({ parent_id }) => (parent_id === "c1" ? "Food" : undefined),
 			contact: null,
 		});
 		expect(row).toEqual(
@@ -293,7 +294,7 @@ describe("toExportEntry", () => {
 				items: [
 					{
 						description: "Milk",
-						category: "Groceries",
+						category: "Food: Groceries",
 						amount: "0.10",
 						quantity: "2",
 					},
