@@ -5,6 +5,7 @@ import {
 	type ImportMapping,
 	type ImportRow,
 	isNegative,
+	fitMapping,
 	likelyDuplicates,
 	magnitude,
 	parseCsv,
@@ -50,6 +51,8 @@ type Props = {
 };
 
 const NONE = "none";
+/** How many rows the review shows at a time, so a long statement doesn't render all at once. */
+const PAGE = 50;
 const SOURCE = "source";
 const MAP = "map";
 const REVIEW = "review";
@@ -84,8 +87,8 @@ export const ImportWizard = ({
 }: Props) => {
 	const { t } = useLingui();
 	const [step, setStep] = useState<Step>(SOURCE);
-	const [text, setText] = useState("");
-	const [mapping, setMapping] = useState<ImportMapping>(
+	const [text, setStatement] = useState("");
+	const [chosenMapping, setMapping] = useState<ImportMapping>(
 		savedMapping ?? DEFAULT_MAPPING,
 	);
 	const [chosen, setChosen] = useState<Record<number, string>>({});
@@ -94,10 +97,25 @@ export const ImportWizard = ({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [imported, setImported] = useState(0);
+	const [shownRows, setShownRows] = useState(PAGE);
 
-	const table = useMemo(() => parseCsv(text), [text]);
-	const width = Math.max(0, ...table.map((r) => r.length));
-	const header = mapping.hasHeader ? table[0] : undefined;
+	/** A new statement starts the per-row choices afresh: its lines are other rows. */
+	const setText = (next: string) => {
+		setStatement(next);
+		setChosen({});
+		setKept({});
+		setShownRows(PAGE);
+	};
+
+	const parsed = useMemo(() => parseCsv(text), [text]);
+	const table = parsed.records;
+	const width = Math.max(0, ...table.map((r) => r.cells.length));
+	// A saved mapping (or one made for another file) is fitted to this file's columns.
+	const mapping = useMemo(
+		() => fitMapping(chosenMapping, width),
+		[chosenMapping, width],
+	);
+	const header = mapping.hasHeader ? table[0]?.cells : undefined;
 	const columns = Array.from({ length: width }, (_, i) => {
 		const named = header?.[i]?.trim();
 		const number = i + 1;
@@ -112,8 +130,13 @@ export const ImportWizard = ({
 		() => likelyDuplicates(read.rows, existing, currency),
 		[read.rows, existing, currency],
 	);
-	const categoryOf = (row: ImportRow) =>
-		chosen[row.line] ?? guessCategory(row, categories);
+	// A choice from the other list (say, after "Money out shows as positive" flips the row) no longer counts.
+	const categoryOf = (row: ImportRow) => {
+		const picked = categories.find((c) => c.id === chosen[row.line]);
+		return picked?.kind === kindOf(row)
+			? picked.id
+			: guessCategory(row, categories);
+	};
 	const included = read.rows.filter(
 		(row) => kept[row.line] ?? !duplicates.has(row.line),
 	);
@@ -217,6 +240,7 @@ export const ImportWizard = ({
 		const firstDate = first ? formatDate(first.occurredOn) : "";
 		const firstName = first?.description ?? "";
 		const readCount = read.rows.length;
+		const { unclosedAt } = parsed;
 		const unreadable = read.problems.length;
 		return (
 			<View className="gap-4">
@@ -341,6 +365,11 @@ export const ImportWizard = ({
 					{first && (
 						<Text variant="muted">{t`First: ${firstDate} · ${firstName} · ${firstAmount}`}</Text>
 					)}
+					{unclosedAt !== null && (
+						<Text className="text-bad">
+							{t`A quote opened on line ${unclosedAt} never closes, so nothing from there on is read.`}
+						</Text>
+					)}
 				</Card>
 				<View className="flex-row flex-wrap gap-2">
 					<Button
@@ -366,7 +395,7 @@ export const ImportWizard = ({
 			<Text variant="muted">
 				{t`Give each row a Category. Likely duplicates of Entries already here (same date and amount) are left out unless you keep them.`}
 			</Text>
-			{read.rows.map((row) => {
+			{read.rows.slice(0, shownRows).map((row) => {
 				const categoryId = categoryOf(row);
 				const category = categories.find((c) => c.id === categoryId);
 				const on = kept[row.line] ?? !duplicates.has(row.line);
@@ -411,6 +440,14 @@ export const ImportWizard = ({
 					</Card>
 				);
 			})}
+			{read.rows.length > shownRows && (
+				<Button
+					onPress={() => setShownRows((n) => n + PAGE)}
+					variant="secondary"
+				>
+					{t`Show more rows`}
+				</Button>
+			)}
 			<Sheet
 				onOpenChange={(open) => {
 					if (!open) setPicking(null);

@@ -2,7 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
-	csvField,
+	fitMapping,
 	type ImportMapping,
 	likelyDuplicates,
 	parseCsv,
@@ -16,6 +16,13 @@ import { parseMoney } from "./money";
 
 const field = fc.string({ maxLength: 12 });
 
+/** One CSV field as RFC 4180 writes it: quoted when it has to be. */
+const csvField = (value: string) =>
+	/[",\r\n]/.test(value) || value.startsWith('"')
+		? `"${value.replaceAll('"', '""')}"`
+		: value;
+const cells = (text: string) => parseCsv(text).records.map((r) => r.cells);
+
 describe("parseCsv", () => {
 	it("reads back what csvField writes, quotes, commas and line breaks included", () => {
 		fc.assert(
@@ -27,17 +34,33 @@ describe("parseCsv", () => {
 				fc.constantFrom("\n", "\r\n"),
 				(rows, newline) => {
 					const text = rows.map((r) => r.map(csvField).join(",")).join(newline);
-					expect(parseCsv(text)).toEqual(rows);
+					// A row of one empty field is a blank line, which isn't a record.
+					expect(cells(text)).toEqual(
+						rows.filter((r) => !(r.length === 1 && r[0] === "")),
+					);
 				},
 			),
 		);
 	});
 
-	it("drops a byte-order mark and blank lines", () => {
-		expect(parseCsv("﻿Date,Amount\n\n2026-10-01,5\n")).toEqual([
-			["Date", "Amount"],
-			["2026-10-01", "5"],
-		]);
+	it("drops a byte-order mark and blank lines, and knows each record's line", () => {
+		expect(
+			parseCsv('\uFEFFDate,Amount\n\n2026-10-01,"two\nlines"\n2026-10-02,5\n'),
+		).toEqual({
+			records: [
+				{ line: 1, cells: ["Date", "Amount"] },
+				{ line: 3, cells: ["2026-10-01", "two\nlines"] },
+				{ line: 5, cells: ["2026-10-02", "5"] },
+			],
+			unclosedAt: null,
+		});
+	});
+
+	it("reads nothing past a quote that never closes, and says where it opened", () => {
+		expect(parseCsv('a,b\nc,"oops\nd,e')).toEqual({
+			records: [{ line: 1, cells: ["a", "b"] }],
+			unclosedAt: 2,
+		});
 	});
 });
 
@@ -63,26 +86,68 @@ describe("readDate", () => {
 });
 
 describe("readAmount", () => {
-	it("reads statement amounts exactly, whatever their dressing", () => {
+	it("reads statement amounts exactly in their usual dressing", () => {
 		const read = (text: string) => readAmount(text, "PKR")?.toString() ?? null;
 		expect(read("1,234.50")).toBe("1234.5");
-		expect(read("Rs 2,500")).toBe("2500");
+		expect(read("Rs. 2,500")).toBe("2500");
+		expect(read("PKR 1,000.00")).toBe("1000");
 		expect(read("(1,200.00)")).toBe("-1200");
 		expect(read("450-")).toBe("-450");
+		expect(read("500 DR")).toBe("-500");
+		expect(read("500 CR")).toBe("500");
 		expect(read("-0.10")).toBe("-0.1");
-		expect(read("")).toBeNull();
-		expect(read("n/a")).toBeNull();
 	});
 
-	it("never loses a cent", () => {
+	it("refuses what it would have to guess at, rather than import the wrong money", () => {
+		const read = (text: string, currency = "PKR") =>
+			readAmount(text, currency)?.toString() ?? null;
+		for (const text of [
+			"",
+			"n/a",
+			"1.234,50",
+			"12,50",
+			"1,2",
+			"1.5e3",
+			"--5",
+			"(5",
+			"-(5)",
+			"-5-",
+			"5 DRX",
+			"100.555",
+		])
+			expect(read(text)).toBeNull();
+		expect(read("100.5", "JPY")).toBeNull();
+	});
+
+	it("keeps an amount's size and direction however it's dressed", () => {
 		fc.assert(
 			fc.property(
-				fc.integer({ min: -10_000_000, max: 10_000_000 }),
-				(cents) => {
-					const text = (cents / 100).toFixed(2);
-					expect(readAmount(text, "PKR")?.toString()).toBe(
-						parseMoney(text, "PKR").toString(),
+				fc.bigInt({ min: 0n, max: 10n ** 12n }),
+				fc.integer({ min: 0, max: 99 }),
+				fc.boolean(),
+				fc.constantFrom("", "Rs ", "PKR ", "₨"),
+				fc.constantFrom("minus", "parentheses", "trailing", "dr"),
+				fc.boolean(),
+				(whole, cents, out, prefix, outMark, grouped) => {
+					const digits = grouped
+						? whole.toLocaleString("en-US")
+						: whole.toString();
+					const fraction = String(cents).padStart(2, "0");
+					const plain = `${digits}.${fraction}`;
+					const dressed = !out
+						? `${prefix}${plain}`
+						: outMark === "minus"
+							? `${prefix}-${plain}`
+							: outMark === "parentheses"
+								? `(${prefix}${plain})`
+								: outMark === "trailing"
+									? `${prefix}${plain}-`
+									: `${prefix}${plain} DR`;
+					const want = parseMoney(
+						`${out ? "-" : ""}${whole}.${fraction}`,
+						"PKR",
 					);
+					expect(readAmount(dressed, "PKR")?.toString()).toBe(want.toString());
 				},
 			),
 		);
@@ -102,7 +167,7 @@ describe("readRows", () => {
 	it("reads data rows through a mapping, and points at the lines it can't read", () => {
 		const csv = parseCsv(
 			"Date,Details,Amount,Category\n01/10/2026,Milk,-450,Groceries\n02/10/2026,Salary,90000,\nlater,Oops,5,\n03/10/2026,Nothing,0,",
-		);
+		).records;
 		const { rows, problems } = readRows(csv, single, "PKR");
 		expect(
 			rows.map((r) => [
@@ -123,7 +188,9 @@ describe("readRows", () => {
 	});
 
 	it("takes money out from a debit column and money in from a credit one", () => {
-		const csv = parseCsv("2026-10-01,Milk,450,\n2026-10-02,Salary,,90000");
+		const csv = parseCsv(
+			"2026-10-01,Milk,450,\n2026-10-02,Salary,,90000\n2026-10-03,Both,5,6",
+		).records;
 		const { rows } = readRows(
 			csv,
 			{
@@ -135,11 +202,24 @@ describe("readRows", () => {
 			},
 			"PKR",
 		);
+		const { problems } = readRows(
+			csv,
+			{
+				...single,
+				hasHeader: false,
+				dateFormat: "YYYY-MM-DD",
+				amount: { kind: "split", debitColumn: 2, creditColumn: 3 },
+				categoryColumn: null,
+			},
+			"PKR",
+		);
 		expect(rows.map((r) => r.amount.toString())).toEqual(["-450", "90000"]);
+		// Both a debit and a credit: which is meant can't be told.
+		expect(problems).toEqual([{ line: 3, reason: "both" }]);
 	});
 
 	it("flips a statement that shows money out as positive", () => {
-		const csv = parseCsv("2026-10-01,Milk,450");
+		const csv = parseCsv("2026-10-01,Milk,450").records;
 		const { rows } = readRows(
 			csv,
 			{
@@ -164,29 +244,77 @@ describe("likelyDuplicates", () => {
 		categoryName: null,
 	});
 
-	it("flags rows with the date and amount of an Entry already there, or of an earlier row", () => {
+	it("flags rows with the date and amount of an Entry already in the Wallet, the same way round", () => {
 		const flagged = likelyDuplicates(
 			[
 				row(2, "2026-10-01", "-450"),
 				row(3, "2026-10-01", "-450.00"),
-				row(4, "2026-10-02", "-450"),
-				row(5, "2026-10-03", "100"),
+				row(4, "2026-10-01", "450"),
+				row(5, "2026-10-02", "-450"),
 			],
-			[{ occurred_on: "2026-10-03", amount: "100" }],
+			[{ occurred_on: "2026-10-01", amount: "-450" }],
 			"PKR",
 		);
-		expect([...flagged]).toEqual([3, 5]);
+		expect([...flagged]).toEqual([2, 3]);
 	});
 
-	it("flags nothing in a file of distinct rows with nothing already there", () => {
+	it("flags exactly the rows matching an Entry already there, never two real charges in one file", () => {
 		fc.assert(
 			fc.property(
-				fc.uniqueArray(fc.integer({ min: 1, max: 100_000 }), { maxLength: 20 }),
-				(amounts) => {
+				fc.array(fc.integer({ min: 1, max: 20 }), { maxLength: 20 }),
+				fc.array(fc.integer({ min: 1, max: 20 }), { maxLength: 5 }),
+				(amounts, existing) => {
 					const rows = amounts.map((a, i) =>
 						row(i + 1, "2026-10-01", String(a)),
 					);
-					expect(likelyDuplicates(rows, [], "PKR").size).toBe(0);
+					const flagged = likelyDuplicates(
+						rows,
+						existing.map((a) => ({
+							occurred_on: "2026-10-01",
+							amount: String(a),
+						})),
+						"PKR",
+					);
+					expect([...flagged]).toEqual(
+						rows
+							.filter((_, i) => existing.includes(amounts[i] ?? 0))
+							.map((r) => r.line),
+					);
+				},
+			),
+		);
+	});
+});
+
+describe("fitMapping", () => {
+	it("never points a mapping past the file's columns", () => {
+		fc.assert(
+			fc.property(
+				fc.integer({ min: 1, max: 6 }),
+				fc.integer({ min: 0, max: 9 }),
+				(width, column) => {
+					const fitted = fitMapping(
+						{
+							...single,
+							dateColumn: column,
+							descriptionColumn: column,
+							amount: {
+								kind: "split",
+								debitColumn: column,
+								creditColumn: column,
+							},
+							categoryColumn: column,
+						},
+						width,
+					);
+					const used = [
+						fitted.dateColumn,
+						fitted.descriptionColumn,
+						fitted.categoryColumn,
+					];
+					if (fitted.amount.kind === "split")
+						used.push(fitted.amount.debitColumn, fitted.amount.creditColumn);
+					expect(used.every((c) => c === null || c < width)).toBe(true);
 				},
 			),
 		);

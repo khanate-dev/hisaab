@@ -1,5 +1,5 @@
 import { entries, importMappings, stamped } from "@hisaab/client-schema";
-import type { ImportMapping } from "@hisaab/domain";
+import { type ImportMapping, isNegative, parseMoney } from "@hisaab/domain";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
@@ -17,7 +17,13 @@ export const importRows = async (
 		householdId,
 		walletId,
 		userId,
-	}: { householdId: string; walletId: string; userId: string },
+		currency,
+	}: {
+		householdId: string;
+		walletId: string;
+		userId: string;
+		currency: string;
+	},
 	rows: readonly ImportedRow[],
 	mapping: ImportMapping,
 ) => {
@@ -28,7 +34,8 @@ export const importRows = async (
 					id: newId(),
 					household_id: householdId,
 					wallet_id: walletId,
-					kind: row.amount.startsWith("-")
+					// Money out is an Expense, money in an Income.
+					kind: isNegative(parseMoney(row.amount, currency))
 						? ("expense" as const)
 						: ("income" as const),
 					amount: row.amount,

@@ -6,21 +6,39 @@
 import { isCalendarDate } from "./dates";
 import { magnitude } from "./entries";
 import {
-	isDecimalAmount,
+	currencyDecimals,
 	isZero,
 	type Money,
-	moneyEquals,
 	negateMoney,
 	parseMoney,
 } from "./money";
 
-/** RFC 4180 CSV: quoted fields with doubled quotes, commas and line breaks inside quotes, CRLF or LF, a BOM. */
-export const parseCsv = (text: string): string[][] => {
-	const rows: string[][] = [];
-	let row: string[] = [];
+/** A CSV record and the line of the file it starts on, from 1 (a quoted field can run over several lines). */
+export type CsvRecord = { line: number; cells: string[] };
+
+/**
+ * RFC 4180 CSV: quoted fields with doubled quotes, commas and line breaks inside quotes, CRLF or LF, a BOM. Blank
+ * lines are skipped. `unclosedAt` is the line of a quote never closed, after which nothing is trusted (so nothing is
+ * read); null when every quote closes.
+ */
+export const parseCsv = (
+	text: string,
+): { records: CsvRecord[]; unclosedAt: number | null } => {
+	const records: CsvRecord[] = [];
+	let cells: string[] = [];
 	let field = "";
 	let quoted = false;
-	const input = text.startsWith("﻿") ? text.slice(1) : text;
+	let quoteLine = 0;
+	let line = 1;
+	let start = 1;
+	const input = text.startsWith("\uFEFF") ? text.slice(1) : text;
+	const end = () => {
+		cells.push(field);
+		if (!(cells.length === 1 && cells[0] === ""))
+			records.push({ line: start, cells });
+		cells = [];
+		field = "";
+	};
 	for (let i = 0; i < input.length; i += 1) {
 		const c = input[i];
 		if (quoted) {
@@ -28,32 +46,31 @@ export const parseCsv = (text: string): string[][] => {
 				field += '"';
 				i += 1;
 			} else if (c === '"') quoted = false;
-			else field += c;
-		} else if (c === '"' && field === "") quoted = true;
-		else if (c === ",") {
-			row.push(field);
+			else {
+				if (c === "\n") line += 1;
+				field += c;
+			}
+		} else if (c === '"' && field === "") {
+			quoted = true;
+			quoteLine = line;
+		} else if (c === ",") {
+			cells.push(field);
 			field = "";
 		} else if (c === "\n" || c === "\r") {
 			if (c === "\r" && input[i + 1] === "\n") i += 1;
-			row.push(field);
-			rows.push(row);
-			row = [];
-			field = "";
+			end();
+			line += 1;
+			start = line;
 		} else field += c;
 	}
-	if (field !== "" || row.length > 0) {
-		row.push(field);
-		rows.push(row);
-	}
-	// Blank lines (a lone empty field) carry nothing.
-	return rows.filter((r) => !(r.length === 1 && r[0] === ""));
+	if (quoted)
+		return {
+			records: records.filter((r) => r.line < quoteLine),
+			unclosedAt: quoteLine,
+		};
+	if (field !== "" || cells.length > 0) end();
+	return { records, unclosedAt: null };
 };
-
-/** One CSV field as RFC 4180 writes it: quoted when it has to be. */
-export const csvField = (value: string) =>
-	/[",\r\n]/.test(value) || value.startsWith('"')
-		? `"${value.replaceAll('"', '""')}"`
-		: value;
 
 export const DATE_FORMATS = ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"] as const;
 export type DateFormat = (typeof DATE_FORMATS)[number];
@@ -94,30 +111,34 @@ export const readDate = (text: string, format: DateFormat): string | null => {
 	return isCalendarDate(date) ? date : null;
 };
 
+// What a statement amount may be dressed in, and nothing else: a currency code or symbol before it, a sign, thousands
+// separators where they belong, a decimal point, a trailing minus or DR/CR, or accounting parentheses. A decimal
+// comma (`1.234,50`), an exponent or anything unexpected is refused rather than guessed at.
+const STATEMENT_AMOUNT =
+	/^(\()?\s*(?:[A-Za-z]{1,3}\.?|[$€£¥₹₨])?\s*([+-])?\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?\s*(-|DR|CR)?\s*(\))?$/i;
+
 /**
- * A statement amount as Money; null when it isn't one. Thousands separators, a currency code or symbol and spaces are
- * dropped, and `(1,200.00)` or a trailing `-` reads as negative. An empty field is null too.
+ * A statement amount as Money; null when it isn't one, or has more decimals than its currency (so a misread never
+ * imports the wrong money). `(1,200.00)`, a trailing `-` or `DR` read as money out; `CR` as money in.
  */
 export const readAmount = (text: string, currency: string): Money | null => {
-	let value = text.trim();
-	if (value === "") return null;
-	let negative = false;
-	if (/^\(.*\)$/.test(value)) {
-		negative = true;
-		value = value.slice(1, -1);
-	}
-	if (value.endsWith("-")) {
-		negative = !negative;
-		value = value.slice(0, -1);
-	}
-	value = value.replace(/[A-Za-z$€£¥₹₨\s]/g, "").replaceAll(",", "");
-	if (value.startsWith("-")) {
-		negative = !negative;
-		value = value.slice(1);
-	} else if (value.startsWith("+")) value = value.slice(1);
-	if (!isDecimalAmount(value)) return null;
-	const money = parseMoney(value, currency);
-	return negative ? negateMoney(money) : money;
+	const match = STATEMENT_AMOUNT.exec(text.trim());
+	if (!match) return null;
+	const [, open, sign, whole, fraction = "", suffix, close] = match;
+	if ((open === undefined) !== (close === undefined)) return null;
+	const marks = [
+		open !== undefined,
+		sign === "-",
+		suffix === "-" || suffix?.toUpperCase() === "DR",
+	].filter(Boolean);
+	if (marks.length > 1 || (sign !== undefined && suffix !== undefined))
+		return null;
+	if (fraction.length - 1 > currencyDecimals(currency)) return null;
+	const money = parseMoney(
+		`${(whole ?? "").replaceAll(",", "")}${fraction}`,
+		currency,
+	);
+	return marks.length === 1 ? negateMoney(money) : money;
 };
 
 /** A statement row read through a mapping: money in is positive, money out negative. */
@@ -130,11 +151,14 @@ export type ImportRow = {
 	categoryName: string | null;
 };
 
-export type RowProblem = { line: number; reason: "date" | "amount" | "zero" };
+export type RowProblem = {
+	line: number;
+	reason: "date" | "amount" | "zero" | "both";
+};
 
 /** Every data row read through a mapping, and the lines that couldn't be. */
 export const readRows = (
-	rows: readonly (readonly string[])[],
+	records: readonly CsvRecord[],
 	mapping: ImportMapping,
 	currency: string,
 ): { rows: ImportRow[]; problems: RowProblem[] } => {
@@ -142,9 +166,8 @@ export const readRows = (
 	const problems: RowProblem[] = [];
 	const cell = (row: readonly string[], column: number | null) =>
 		column === null ? "" : (row[column] ?? "").trim();
-	for (const [index, row] of rows.entries()) {
+	for (const [index, { line, cells: row }] of records.entries()) {
 		if (mapping.hasHeader && index === 0) continue;
-		const line = index + 1;
 		const occurredOn = readDate(
 			cell(row, mapping.dateColumn),
 			mapping.dateFormat,
@@ -154,6 +177,10 @@ export const readRows = (
 			continue;
 		}
 		const amount = signed(row, mapping.amount, cell, currency);
+		if (amount === "both") {
+			problems.push({ line, reason: "both" });
+			continue;
+		}
 		if (amount === null) {
 			problems.push({ line, reason: "amount" });
 			continue;
@@ -175,20 +202,24 @@ export const readRows = (
 	return { rows: read, problems };
 };
 
-/** A row's amount, money in positive: a single column (flipped if the statement shows money out as positive), or a
- * debit (out) or credit (in) column, whichever has a non-zero amount, each read by its size. */
+/**
+ * A row's amount, money in positive: a single column (flipped if the statement shows money out as positive), or a
+ * debit (out) or credit (in) column, each read by its size; "both" when each has a non-zero amount, as which one is
+ * meant can't be told.
+ */
 const signed = (
 	row: readonly string[],
 	amount: ImportMapping["amount"],
 	cell: (row: readonly string[], column: number | null) => string,
 	currency: string,
-): Money | null => {
+): Money | "both" | null => {
 	if (amount.kind === "single") {
 		const value = readAmount(cell(row, amount.column), currency);
 		return value && amount.outIsPositive ? negateMoney(value) : value;
 	}
 	const out = readAmount(cell(row, amount.debitColumn), currency);
 	const into = readAmount(cell(row, amount.creditColumn), currency);
+	if (out && !isZero(out) && into && !isZero(into)) return "both";
 	if (out && !isZero(out)) return negateMoney(magnitude(out));
 	if (into && !isZero(into)) return magnitude(into);
 	return out ?? into;
@@ -198,31 +229,52 @@ const signed = (
 export type ExistingEntry = { occurred_on: string; amount: string };
 
 /**
- * The lines that are likely duplicates (spec: same date, amount and Wallet): of an Entry already in the Wallet, or of
- * an earlier row in the same file. Flagged, not dropped; the Admin decides.
+ * The lines that are likely duplicates (spec: same date, amount and Wallet) of an Entry already in the Wallet. Flagged
+ * for the Admin to decide on, never dropped here.
  */
 export const likelyDuplicates = (
 	rows: readonly ImportRow[],
 	existing: readonly ExistingEntry[],
 	currency: string,
 ): Set<number> => {
-	const flagged = new Set<number>();
-	const same = (
-		a: { occurredOn: string; amount: Money },
-		b: { occurredOn: string; amount: Money },
-	) => a.occurredOn === b.occurredOn && moneyEquals(a.amount, b.amount);
-	const already = existing.map((e) => ({
-		occurredOn: e.occurred_on,
-		amount: parseMoney(e.amount, currency),
-	}));
-	rows.forEach((row, i) => {
-		if (
-			already.some((e) => same(e, row)) ||
-			rows.slice(0, i).some((earlier) => same(earlier, row))
-		)
-			flagged.add(row.line);
-	});
-	return flagged;
+	const already = new Set(
+		existing.map(
+			(e) => `${e.occurred_on}/${parseMoney(e.amount, currency).toString()}`,
+		),
+	);
+	return new Set(
+		rows
+			.filter((row) =>
+				already.has(`${row.occurredOn}/${row.amount.toString()}`),
+			)
+			.map((row) => row.line),
+	);
+};
+
+/** A mapping fitted to a file `width` columns wide: an optional column past its edge is dropped, a required one moved
+ * to the first column, so a saved mapping never points nowhere. */
+export const fitMapping = (
+	mapping: ImportMapping,
+	width: number,
+): ImportMapping => {
+	const fits = (column: number) => column < width;
+	const required = (column: number) => (fits(column) ? column : 0);
+	const optional = (column: number | null) =>
+		column !== null && fits(column) ? column : null;
+	return {
+		...mapping,
+		dateColumn: required(mapping.dateColumn),
+		descriptionColumn: optional(mapping.descriptionColumn),
+		categoryColumn: optional(mapping.categoryColumn),
+		amount:
+			mapping.amount.kind === "single"
+				? { ...mapping.amount, column: required(mapping.amount.column) }
+				: {
+						kind: "split",
+						debitColumn: required(mapping.amount.debitColumn),
+						creditColumn: required(mapping.amount.creditColumn),
+					},
+	};
 };
 
 /** Reads back a saved mapping, or null when it's missing or malformed, so an odd row never breaks the import. */

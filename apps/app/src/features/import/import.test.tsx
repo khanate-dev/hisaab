@@ -23,6 +23,13 @@ const STATEMENT = [
 	"someday,Oops,5,",
 ].join("\n");
 
+/** The last of several matches; there's always at least one, or getAllByRole would have thrown. */
+const last = <T,>(items: readonly T[]): T => {
+	const item = items.at(-1);
+	if (item === undefined) throw new Error("nothing matched");
+	return item;
+};
+
 const setup = async (
 	props: Partial<Parameters<typeof ImportWizard>[0]> = {},
 ) => {
@@ -57,10 +64,7 @@ describe("ImportWizard", () => {
 		await user.press(screen.getByRole("button", { name: "Choose CSV file" }));
 		await user.press(screen.getByRole("button", { name: "Map columns" }));
 		// Every column group lists the header's columns; the last group is the optional Category one.
-		await user.press(
-			screen.getAllByRole("radio", { name: "Category" }).at(-1) ??
-				screen.getByText("none"),
-		);
+		await user.press(last(screen.getAllByRole("radio", { name: "Category" })));
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"4 rows read; 1 can't be, and are left out.",
 		);
@@ -192,6 +196,36 @@ describe("ImportWizard", () => {
 				amount: { kind: "split", debitColumn: 2, creditColumn: 3 },
 			}),
 		);
+	});
+
+	it("drops a Category choice from the other list once a row flips between money out and in", async () => {
+		const { user } = await setup();
+		await user.press(screen.getByRole("button", { name: "Choose CSV file" }));
+		await user.press(screen.getByRole("button", { name: "Map columns" }));
+		await user.press(screen.getByRole("button", { name: "Review rows" }));
+		await user.press(
+			screen.getByRole("button", {
+				name: "Pick a Category for Electricity on Oct 2, 2026",
+			}),
+		);
+		await user.press(screen.getByRole("radio", { name: "Utilities" }));
+		expect(
+			screen.getByRole("button", {
+				name: "Category for Electricity on Oct 2, 2026: Utilities",
+			}),
+		).toBeVisible();
+
+		await user.press(screen.getByRole("button", { name: "Back" }));
+		await user.press(
+			screen.getByRole("checkbox", { name: "Money out shows as positive" }),
+		);
+		await user.press(screen.getByRole("button", { name: "Review rows" }));
+		// Electricity is money in now: an Income, which Utilities can't be.
+		expect(
+			screen.getByRole("button", {
+				name: "Pick a Category for Electricity on Oct 2, 2026",
+			}),
+		).toBeVisible();
 	});
 
 	it("says when a picked file can't be read", async () => {

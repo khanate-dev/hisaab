@@ -57,14 +57,16 @@ export default function WalletScreen() {
 				onUnarchive={() => unarchiveWallet(id)}
 				wallet={wallet.summary}
 			/>
-			{isAdmin && wallet.row.archived_at === null && (
-				<Button
-					onPress={() => router.push(`/wallets/${id}/import`)}
-					variant="secondary"
-				>
-					{t`Import CSV`}
-				</Button>
-			)}
+			{isAdmin &&
+				wallet.row.archived_at === null &&
+				household?.base_currency === wallet.row.currency && (
+					<Button
+						onPress={() => router.push(`/wallets/${id}/import`)}
+						variant="secondary"
+					>
+						{t`Import CSV`}
+					</Button>
+				)}
 		</Screen>
 	);
 }

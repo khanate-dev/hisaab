@@ -13,7 +13,8 @@ create table public.import_mappings (
 	-- A Wallet deleted takes its mapping with it.
 	foreign key (wallet_id, household_id) references public.wallets (id, household_id) on delete cascade
 );
--- One per Wallet: a second device's first mapping for the same Wallet is a conflict the app resolves by updating.
+-- One per Wallet. Two Admins saving a Wallet's first mapping offline at once: the second is refused, and it's simply
+-- saved again (as an update) with their next import.
 create unique index import_mappings_one_per_wallet on public.import_mappings (wallet_id);
 create index import_mappings_household_id_idx on public.import_mappings (household_id);
 alter table public.import_mappings enable row level security;

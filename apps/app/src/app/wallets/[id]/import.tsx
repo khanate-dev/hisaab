@@ -39,13 +39,20 @@ export default function ImportIntoWallet() {
 	// CSV import is an Admin's data tool; reached by a link, anyone else lands back on the Wallet.
 	if (membership !== undefined && membership?.role !== "admin")
 		return <Redirect href={`/wallets/${id}`} />;
-	if (!wallet || !categories || !all || saved.isLoading || !membership)
+	if (
+		!wallet ||
+		!categories ||
+		!all ||
+		saved.isLoading ||
+		!membership ||
+		!household
+	)
 		return null;
 	// Expenses and Incomes are recorded in the Base currency until Base amounts (#45), so imports are too.
 	const blocked =
 		wallet.row.archived_at !== null
 			? t`This Wallet is archived; unarchive it to import into it.`
-			: household?.base_currency !== wallet.row.currency
+			: household.base_currency !== wallet.row.currency
 				? t`Statements import into Wallets in the household's Base currency for now.`
 				: null;
 	if (blocked !== null) {
@@ -71,7 +78,12 @@ export default function ImportIntoWallet() {
 				onDone={() => leaveTo(`/wallets/${id}`)}
 				onImport={(rows, mapping) =>
 					importRows(
-						{ householdId: wallet.row.household_id, walletId: id, userId },
+						{
+							householdId: wallet.row.household_id,
+							walletId: id,
+							userId,
+							currency: wallet.row.currency,
+						},
 						rows,
 						mapping,
 					)

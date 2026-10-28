@@ -254,6 +254,10 @@ msgstr "A new household couldn't sync"
 msgid "A new membership couldn't sync"
 msgstr "A new membership couldn't sync"
 
+#: src/features/import/import-wizard.tsx
+msgid "A quote opened on line {unclosedAt} never closes, so nothing from there on is read."
+msgstr "A quote opened on line {unclosedAt} never closes, so nothing from there on is read."
+
 #: src/features/activity/activity-list.tsx
 msgid "a record"
 msgstr "a record"
@@ -2235,6 +2239,10 @@ msgstr "Show archived Categories"
 #: src/app/wallets/index.tsx
 msgid "Show archived Wallets"
 msgstr "Show archived Wallets"
+
+#: src/features/import/import-wizard.tsx
+msgid "Show more rows"
+msgstr "Show more rows"
 
 #: src/app/activity.tsx
 msgid "Show older changes"
