@@ -432,6 +432,10 @@ verify_jwt = false
 [functions.accept-invite]
 verify_jwt = false
 
+# Checks the caller's session itself (a fresh email OTP sign-in), as accept-invite does.
+[functions.delete-account]
+verify_jwt = false
+
 # Called by pg_cron with the service role's key; the database decides who may dispatch (a secret key isn't a JWT).
 [functions.dispatch-notifications]
 verify_jwt = false

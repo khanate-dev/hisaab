@@ -730,6 +730,10 @@ msgstr "Change the total"
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 
+#: src/features/account/delete-account-flow.tsx
+msgid "Check again"
+msgstr "Check again"
+
 #: src/features/backup/restore-form.tsx
 msgid "Choose a Full backup"
 msgstr "Choose a Full backup"
@@ -763,6 +767,7 @@ msgstr "Close"
 msgid "Close {viewingName}"
 msgstr "Close {viewingName}"
 
+#: src/features/account/delete-account-flow.tsx
 #: src/features/auth/sign-in-form.tsx
 msgid "Code"
 msgstr "Code"
@@ -782,6 +787,10 @@ msgstr "Colour"
 #: src/features/import/import-wizard.tsx
 msgid "Column {number}"
 msgstr "Column {number}"
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Confirm"
+msgstr "Confirm"
 
 #: src/features/recurring/pending-list.tsx
 msgid "Confirm {count}"
@@ -803,6 +812,14 @@ msgstr "Confirm 1"
 msgid "Confirm each one"
 msgstr "Confirm each one"
 
+#: src/features/account/delete-account-flow.tsx
+msgid "Confirm it's you: we'll email a code to sign in with again."
+msgstr "Confirm it's you: we'll email a code to sign in with again."
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Confirmation"
+msgstr "Confirmation"
+
 #: src/features/loans/loan-form.tsx
 msgid "Contact"
 msgstr "Contact"
@@ -813,6 +830,7 @@ msgstr "Contact"
 msgid "Contacts"
 msgstr "Contacts"
 
+#: src/features/account/delete-account-flow.tsx
 #: src/features/onboarding/name-form.tsx
 msgid "Continue"
 msgstr "Continue"
@@ -950,6 +968,12 @@ msgstr "Delete {name}?"
 msgid "Delete {title}?"
 msgstr "Delete {title}?"
 
+#: src/app/_layout.tsx
+#: src/app/delete-account.tsx
+#: src/app/me.tsx
+msgid "Delete account"
+msgstr "Delete account"
+
 #: src/features/categories/category-actions.tsx
 msgid "Delete Category"
 msgstr "Delete Category"
@@ -974,6 +998,10 @@ msgstr "Delete last digit"
 msgid "Delete Loan"
 msgstr "Delete Loan"
 
+#: src/features/account/delete-account-flow.tsx
+msgid "Delete my account"
+msgstr "Delete my account"
+
 #: src/app/recurring/[id].tsx
 msgid "Delete rule"
 msgstr "Delete rule"
@@ -985,6 +1013,10 @@ msgstr "Delete the {paid} Repayment"
 #: src/features/search/entry-search.tsx
 msgid "Delete the {savedName} filter"
 msgstr "Delete the {savedName} filter"
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Delete the household"
+msgstr "Delete the household"
 
 #: src/features/loans/loan-detail.tsx
 msgid "Delete this Loan?"
@@ -1001,6 +1033,10 @@ msgstr "Deleting a household couldn't sync"
 #: src/features/sync/sync-status.tsx
 msgid "Deleting a membership couldn't sync"
 msgstr "Deleting a membership couldn't sync"
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Deleting your account is immediate and can't be undone. Your Personal household goes, with everything in it. In households you share, what you recorded stays, under an anonymous Former member. Your Invites are revoked."
+msgstr "Deleting your account is immediate and can't be undone. Your Personal household goes, with everything in it. In households you share, what you recorded stays, under an anonymous Former member. Your Invites are revoked."
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -1095,6 +1131,10 @@ msgstr "Edit Wallet"
 #: src/features/auth/sign-in-form.tsx
 msgid "Email"
 msgstr "Email"
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Email me a code"
+msgstr "Email me a code"
 
 #: src/features/recurring/rule-list.tsx
 msgid "Ended"
@@ -1280,6 +1320,10 @@ msgstr "For a week"
 #: src/features/invites/invite-form.tsx
 msgid "For email"
 msgstr "For email"
+
+#: src/features/members/use-people-names.ts
+msgid "Former member {number}"
+msgstr "Former member {number}"
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -1694,6 +1738,10 @@ msgstr "Magenta"
 #: src/features/backup/full-backup-section.tsx
 msgid "Make a Full backup"
 msgstr "Make a Full backup"
+
+#: src/features/account/delete-account-flow.tsx
+msgid "Make someone else an Admin"
+msgstr "Make someone else an Admin"
 
 #: src/features/backup/full-backup-section.tsx
 msgid "Making the backup…"
@@ -2124,6 +2172,7 @@ msgstr "PDF"
 msgid "Pending"
 msgstr "Pending"
 
+#: src/app/delete-account.tsx
 #: src/app/household.tsx
 #: src/features/entries/transfer-form.tsx
 #: src/features/households/household-list.tsx
@@ -2597,6 +2646,10 @@ msgstr "That backup is damaged and can't be restored."
 msgid "That backup is from a newer version of Hisaab. Update the app, then restore it."
 msgstr "That backup is from a newer version of Hisaab. Update the app, then restore it."
 
+#: src/features/account/delete-account-flow.tsx
+msgid "That code didn't work. Check it, or send a new one."
+msgstr "That code didn't work. Check it, or send a new one."
+
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't attach. Try again."
 msgstr "That didn't attach. Try again."
@@ -2604,6 +2657,10 @@ msgstr "That didn't attach. Try again."
 #: src/app/(tabs)/entries.tsx
 msgid "That didn't export. Try again."
 msgstr "That didn't export. Try again."
+
+#: src/features/account/delete-account-flow.tsx
+msgid "That didn't go through. Check you're online and try again."
+msgstr "That didn't go through. Check you're online and try again."
 
 #: src/features/import/import-wizard.tsx
 msgid "That didn't import. Try again."
@@ -2644,6 +2701,10 @@ msgstr "That file isn't a Hisaab Full backup."
 #: src/features/invites/join-with-link-form.tsx
 msgid "That isn't an Invite link. Paste the whole link you were sent."
 msgstr "That isn't an Invite link. Paste the whole link you were sent."
+
+#: src/features/account/delete-account-flow.tsx
+msgid "That took a while: confirm it's you with a new code."
+msgstr "That took a while: confirm it's you with a new code."
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "That's already its Balance; there's nothing to adjust."
@@ -2737,6 +2798,10 @@ msgstr "Their name"
 #: src/features/members/member-list.tsx
 msgid "They lose this household from their devices. What they recorded stays."
 msgstr "They lose this household from their devices. What they recorded stays."
+
+#: src/features/account/delete-account-flow.tsx
+msgid "This account has no email to send a code to, so it can't be deleted here. Contact support."
+msgstr "This account has no email to send a code to, so it can't be deleted here. Contact support."
 
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "This becomes your Base currency. It locks after your first Entry."
@@ -2885,6 +2950,10 @@ msgstr "Turn on the app lock"
 msgid "Type"
 msgstr "Type"
 
+#: src/features/account/delete-account-flow.tsx
+msgid "Type {DELETE_CONFIRMATION} to delete your account for good."
+msgstr "Type {DELETE_CONFIRMATION} to delete your account for good."
+
 #: src/features/members/household-exit.tsx
 msgid "Type its name to confirm"
 msgstr "Type its name to confirm"
@@ -2993,6 +3062,10 @@ msgstr "Wallets in other currencies take Entries once exchange rates arrive."
 msgid "We emailed a code to {codeSentTo}."
 msgstr "We emailed a code to {codeSentTo}."
 
+#: src/features/account/delete-account-flow.tsx
+msgid "We emailed a code to {email}."
+msgstr "We emailed a code to {email}."
+
 #: src/features/recurring/labels.ts
 #: src/features/recurring/schedule-text.ts
 msgid "Weekly"
@@ -3082,6 +3155,10 @@ msgstr "You're its only Admin: make someone else an Admin before you leave."
 #: src/features/notifications/inbox-list.tsx
 msgid "You're now {role} in {household}."
 msgstr "You're now {role} in {household}."
+
+#: src/features/account/delete-account-flow.tsx
+msgid "You're the only Admin of these households, and others are in them. Make someone else an Admin, or delete the household, first."
+msgstr "You're the only Admin of these households, and others are in them. Make someone else an Admin, or delete the household, first."
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"

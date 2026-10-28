@@ -102,6 +102,10 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 					options={{ title: t`Restore a Full backup` }}
 				/>
 				<Stack.Screen
+					name="delete-account"
+					options={{ title: t`Delete account` }}
+				/>
+				<Stack.Screen
 					name="loans/index"
 					options={{ title: t`Loans` }}
 				/>

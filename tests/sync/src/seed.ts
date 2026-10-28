@@ -142,6 +142,12 @@ export const seedHouseholds = async () => {
 	);
 	if (preferences.error) throw preferences.error;
 
+	// Someone who deleted their account, as their Former member in Family (server-written only).
+	const former = await admin
+		.from("former_members")
+		.insert({ id: uuidv7(), household_id: family, number: 1 });
+	if (former.error) throw former.error;
+
 	return { users, households: { family, side } };
 };
 

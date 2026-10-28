@@ -99,6 +99,12 @@ export default function MeAndHousehold() {
 			>
 				{t`Sign out`}
 			</Button>
+			<Button
+				onPress={() => router.push("/delete-account")}
+				variant="secondary"
+			>
+				{t`Delete account`}
+			</Button>
 		</Screen>
 	);
 }

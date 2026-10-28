@@ -83,3 +83,10 @@ raise="$api/functions/v1/raise-notifications"
 results="anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $service_key")"
 echo "raise-notifications: $results"
 [[ $results == "anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
+
+# delete-account boots and answers through the domain handler: no session, or one Auth doesn't know, is a 401.
+del="$api/functions/v1/delete-account"
+ask_delete() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 10 -X POST "$del" -H "x-contract-version: $current" -H "content-type: application/json" --data '{"action":"check"}' "$@"; }
+results="none:$(ask_delete) bogus:$(ask_delete -H "authorization: Bearer nope")"
+echo "delete-account: $results"
+[[ $results == "none:401 bogus:401" ]] || { cat "$log" >&2; exit 1; }

@@ -103,6 +103,20 @@ export const contacts = sqliteTable("contacts", {
 	_deleted: deleteFlag(),
 });
 
+/**
+ * The anonymous stand-in for a deleted User in a household (CONTEXT.md, Former member): their rows carry its id.
+ * Server-written only.
+ */
+export const formerMembers = sqliteTable("former_members", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	/** "Former member 1", "Former member 2", in the order they went. */
+	number: integer("number").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** Money Lent to or Borrowed from a Contact; its principal and Repayments are Entries, its outstanding derived. */
 export const loans = sqliteTable("loans", {
 	id: text("id").primaryKey(),
