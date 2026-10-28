@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { markRead } from "@/features/notifications/actions";

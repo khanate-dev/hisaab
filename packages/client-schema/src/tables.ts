@@ -243,7 +243,10 @@ export const notificationPreferences = sqliteTable("notification_preferences", {
 	household_id: text("household_id").notNull(),
 	user_id: text("user_id").notNull(),
 	trigger: text("trigger").notNull(),
+	/** Push. */
 	enabled: integer("enabled", { mode: "boolean" }).notNull(),
+	/** Email: the Monthly summary only, opt-in (#13); null for every other trigger. */
+	email_enabled: integer("email_enabled", { mode: "boolean" }),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),

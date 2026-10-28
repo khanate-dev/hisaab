@@ -76,7 +76,7 @@ streams:
       - SELECT notifications.id, notifications.household_id, notifications.user_id, notifications.trigger, notifications.subject_user_id, notifications.payload, notifications.created_at, notifications.read_at
         FROM notifications
         WHERE notifications.user_id = auth.user_id()
-      - SELECT notification_preferences.id, notification_preferences.household_id, notification_preferences.user_id, notification_preferences.trigger, notification_preferences.enabled, notification_preferences.created_at
+      - SELECT notification_preferences.id, notification_preferences.household_id, notification_preferences.user_id, notification_preferences.trigger, notification_preferences.enabled, notification_preferences.email_enabled, notification_preferences.created_at
         FROM notification_preferences
         WHERE notification_preferences.user_id = auth.user_id() AND notification_preferences.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 

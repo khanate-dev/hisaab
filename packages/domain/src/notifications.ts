@@ -165,6 +165,24 @@ export const dispatchDeliveries = async (
 	return results.length;
 };
 
+/**
+ * Whether a key could be the service role's, before asking the database: a secret key, or a JWT whose role claim says
+ * so. A publishable key, a User's session or anything else is turned away without spending a database call.
+ */
+export const mayBeServiceKey = (key: string) => {
+	if (key.startsWith("sb_secret_")) return true;
+	const [, body] = key.split(".");
+	if (!body) return false;
+	try {
+		const claims = JSON.parse(
+			atob(body.replaceAll("-", "+").replaceAll("_", "/")),
+		) as { role?: unknown };
+		return claims.role === "service_role";
+	} catch {
+		return false;
+	}
+};
+
 /** The database refused the caller: they aren't the service role. */
 export class DispatchForbidden extends Error {}
 

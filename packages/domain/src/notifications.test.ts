@@ -11,6 +11,7 @@ import {
 	handleDispatchRequest,
 	isOn,
 	MAX_ATTEMPTS,
+	mayBeServiceKey,
 	type MemberRole,
 	NOTIFICATION_TRIGGERS,
 	readMembershipPayload,
@@ -90,6 +91,21 @@ describe("preferenceId", () => {
 				},
 			),
 		);
+	});
+});
+
+describe("mayBeServiceKey", () => {
+	const jwt = (claims: object) =>
+		`x.${btoa(JSON.stringify(claims)).replaceAll("=", "")}.y`;
+	it("lets a secret key or a service-role JWT on to the database, and nothing else", () => {
+		expect(mayBeServiceKey("sb_secret_abc")).toBe(true);
+		expect(mayBeServiceKey(jwt({ role: "service_role" }))).toBe(true);
+		expect(mayBeServiceKey(jwt({ role: "anon" }))).toBe(false);
+		expect(mayBeServiceKey(jwt({ role: "authenticated", sub: "u1" }))).toBe(
+			false,
+		);
+		expect(mayBeServiceKey("sb_publishable_abc")).toBe(false);
+		expect(mayBeServiceKey("not.a-jwt.at-all")).toBe(false);
 	});
 });
 
@@ -186,8 +202,9 @@ describe("dispatchDeliveries", () => {
 
 	it("runs with the caller's key, refused unless the database takes it as the service role's", async () => {
 		const { adapters } = store([]);
+		const service = "sb_secret_abc";
 		const forKey = (key: string): DispatchAdapters =>
-			key === "service"
+			key === service
 				? adapters
 				: {
 						...adapters,
@@ -203,8 +220,15 @@ describe("dispatchDeliveries", () => {
 			);
 		expect((await post({})).status).toBe(403);
 		expect((await post({ authorization: "Bearer nope" })).status).toBe(403);
+		// Looks like a secret key, but the database says otherwise.
 		expect(
-			await (await post({ authorization: "Bearer service" })).json(),
-		).toEqual({ status: "ok", settled: 0 });
+			(await post({ authorization: "Bearer sb_secret_wrong" })).status,
+		).toBe(403);
+		expect(
+			await (await post({ authorization: `Bearer ${service}` })).json(),
+		).toEqual({
+			status: "ok",
+			settled: 0,
+		});
 	});
 });

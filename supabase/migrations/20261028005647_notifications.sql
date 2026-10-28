@@ -88,7 +88,10 @@ create table public.notification_preferences (
 	user_id uuid not null references auth.users (id) on delete cascade,
 	trigger text not null check (trigger in ('recurring_due', 'auto_recorded', 'budget_threshold', 'loan_due',
 		'household_activity', 'membership', 'monthly_summary')),
+	-- Push.
 	enabled boolean not null,
+	-- Email, which only the Monthly summary has (#13: opt-in, off by default); null for every other trigger.
+	email_enabled boolean check (email_enabled is null or trigger = 'monthly_summary'),
 	created_at timestamptz not null default now(),
 	unique (household_id, user_id, trigger)
 );
@@ -198,13 +201,15 @@ set search_path = ''
 as $$
 	with due as (
 		select d.id from public.notification_deliveries d
-		where d.status in ('pending', 'failed') and d.next_attempt_at <= now()
+		-- A run that died after claiming leaves a row unsettled: it comes back, but never past its last attempt.
+		where d.status in ('pending', 'failed') and d.next_attempt_at <= now() and d.attempts < 5
 		order by d.next_attempt_at
 		limit batch
 		for update skip locked
 	)
 	update public.notification_deliveries d
-	set attempts = d.attempts + 1, next_attempt_at = now() + make_interval(mins => power(2, d.attempts)::int)
+	-- 1, 2, 4 then 8 minutes; capped at a day either way.
+	set attempts = d.attempts + 1, next_attempt_at = now() + make_interval(mins => least(power(2, d.attempts), 1440)::int)
 	from due, public.notifications n
 	where d.id = due.id and n.id = d.notification_id
 	returning d.id, d.notification_id, d.user_id, d.channel, d.target, d.attempts, n.trigger, n.payload;
@@ -236,7 +241,8 @@ declare
 	service_key text := (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key');
 begin
 	if project_url is null or service_key is null or not exists (
-		select 1 from public.notification_deliveries where status in ('pending', 'failed') and next_attempt_at <= now()
+		select 1 from public.notification_deliveries
+		where status in ('pending', 'failed') and next_attempt_at <= now() and attempts < 5
 	) then
 		return;
 	end if;
@@ -250,11 +256,14 @@ end;
 $$;
 revoke all on function private.request_dispatch() from public;
 
--- Housekeeping (#13): Notifications go after 90 days, deliveries after 30, and the jobs' own run log after 7.
+-- Housekeeping (#13): a delivery out of attempts and never settled is dead; Notifications go after 90 days,
+-- deliveries after 30, and the jobs' own run log after 7.
 create function private.purge_notifications() returns void
 language sql security definer
 set search_path = ''
 as $$
+	update public.notification_deliveries set status = 'dead', last_error = 'Out of attempts'
+	where status in ('pending', 'failed') and attempts >= 5;
 	delete from public.notification_deliveries where created_at < now() - interval '30 days';
 	delete from public.notifications where created_at < now() - interval '90 days';
 	delete from cron.job_run_details where end_time < now() - interval '7 days';
