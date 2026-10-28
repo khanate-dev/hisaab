@@ -60,10 +60,14 @@ export const EntryAttachments = ({
 		try {
 			const picked = await pick();
 			if (!picked) return;
-			const reason = attachmentProblem(rows.length, {
-				mediaType: picked.mediaType,
-				bytes: picked.data.byteLength,
-			});
+			// An expired one no longer counts against the five.
+			const reason = attachmentProblem(
+				rows.filter((r) => r.purged_at === null).length,
+				{
+					mediaType: picked.mediaType,
+					bytes: picked.data.byteLength,
+				},
+			);
 			if (reason === "full")
 				return setProblem(t`An Entry takes ${limit} Attachments at most.`);
 			if (reason === "size")
@@ -86,7 +90,12 @@ export const EntryAttachments = ({
 
 	const open = async (attachmentId: string) => {
 		const row = rows.find((r) => r.id === attachmentId);
-		if (!row || !isAttachmentMediaType(row.media_type)) return;
+		if (
+			!row ||
+			row.purged_at !== null ||
+			!isAttachmentMediaType(row.media_type)
+		)
+			return;
 		setProblem(null);
 		setBusy(true);
 		try {
@@ -112,6 +121,7 @@ export const EntryAttachments = ({
 				mediaType: r.media_type,
 				fileName: r.file_name,
 				thumbnail: r.thumbnail,
+				expired: r.purged_at !== null,
 			}))}
 			busy={busy}
 			canEdit={canEdit}

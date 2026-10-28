@@ -435,3 +435,7 @@ verify_jwt = false
 # Called by pg_cron with the service role's key; the database decides who may dispatch (a secret key isn't a JWT).
 [functions.dispatch-notifications]
 verify_jwt = false
+
+# Called by pg_cron with the service role's key, like dispatch-notifications.
+[functions.purge-attachments]
+verify_jwt = false

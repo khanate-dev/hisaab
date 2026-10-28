@@ -16,6 +16,8 @@ export type AttachmentItem = {
 	fileName: string | null;
 	/** A small JPEG data URL, for images. */
 	thumbnail: string | null;
+	/** Its file was purged (its Entry was deleted 90 days or more before it came back): shown, but not opened. */
+	expired: boolean;
 };
 
 type Props = {
@@ -84,47 +86,53 @@ export const AttachmentList = ({
 				</Text>
 			) : (
 				<View className="flex-row flex-wrap gap-3">
-					{attachments.map(({ id, mediaType, fileName, thumbnail }) => {
-						const name = fileName ?? kindName(mediaType);
-						return (
-							<View
-								className="w-28 gap-1"
-								key={id}
-							>
-								<Pressable
-									accessibilityLabel={t`Open ${name}`}
-									className="h-28 w-28 items-center justify-center overflow-hidden rounded-control border-2 border-border bg-surface-2"
-									disabled={busy}
-									onPress={() => onOpen(id)}
-									role="button"
+					{attachments.map(
+						({ id, mediaType, fileName, thumbnail, expired }) => {
+							const name = fileName ?? kindName(mediaType);
+							return (
+								<View
+									className="w-28 gap-1"
+									key={id}
 								>
-									{thumbnail === null ? (
-										<Text variant="label">{kindName(mediaType)}</Text>
-									) : (
-										<Image
-											accessible={false}
-											className="h-full w-full"
-											source={{ uri: thumbnail }}
-										/>
-									)}
-								</Pressable>
-								<Text
-									numberOfLines={1}
-									variant="muted"
-								>
-									{name}
-								</Text>
-								{canEdit && (
-									<Chip
-										accessibilityLabel={t`Remove ${name}`}
-										onPress={() => onRemove(id)}
+									<Pressable
+										accessibilityLabel={
+											expired ? t`${name}, expired` : t`Open ${name}`
+										}
+										className="h-28 w-28 items-center justify-center overflow-hidden rounded-control border-2 border-border bg-surface-2"
+										disabled={busy || expired}
+										onPress={() => onOpen(id)}
+										role="button"
 									>
-										{t`Remove`}
-									</Chip>
-								)}
-							</View>
-						);
-					})}
+										{expired ? (
+											<Text variant="muted">{t`Expired`}</Text>
+										) : thumbnail === null ? (
+											<Text variant="label">{kindName(mediaType)}</Text>
+										) : (
+											<Image
+												accessible={false}
+												className="h-full w-full"
+												source={{ uri: thumbnail }}
+											/>
+										)}
+									</Pressable>
+									<Text
+										numberOfLines={1}
+										variant="muted"
+									>
+										{name}
+									</Text>
+									{canEdit && (
+										<Chip
+											accessibilityLabel={t`Remove ${name}`}
+											onPress={() => onRemove(id)}
+										>
+											{t`Remove`}
+										</Chip>
+									)}
+								</View>
+							);
+						},
+					)}
 				</View>
 			)}
 			{problem !== null && (

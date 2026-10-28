@@ -64,3 +64,9 @@ run() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 2
 results="bogus:$(run -H "authorization: Bearer nope") anon:$(run -H "authorization: Bearer $anon_key") service:$(run -H "authorization: Bearer $service_key")"
 echo "dispatch-notifications: $results"
 [[ $results == "bogus:403 anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
+
+# purge-attachments likewise runs only for the service role, through the database and the Storage API.
+purge="$api/functions/v1/purge-attachments"
+results="bogus:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer nope") anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer $service_key")"
+echo "purge-attachments: $results"
+[[ $results == "bogus:403 anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }

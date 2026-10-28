@@ -55,7 +55,7 @@ streams:
         FROM occurrences
         WHERE occurrences.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
       # The thumbnail syncs with the row; the file itself downloads from Storage when it's opened.
-      - SELECT attachments.id, attachments.household_id, attachments.entry_id, attachments.media_type, attachments.size_bytes, attachments.file_name, attachments.thumbnail, attachments.created_by, attachments.created_at
+      - SELECT attachments.id, attachments.household_id, attachments.entry_id, attachments.media_type, attachments.size_bytes, attachments.file_name, attachments.thumbnail, attachments.purged_at, attachments.created_by, attachments.created_at
         FROM attachments
         WHERE attachments.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 

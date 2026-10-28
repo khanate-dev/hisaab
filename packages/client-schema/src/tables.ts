@@ -202,6 +202,8 @@ export const attachments = sqliteTable("attachments", {
 	file_name: text("file_name"),
 	/** A small JPEG data URL, for images. */
 	thumbnail: text("thumbnail"),
+	/** Set once its file was purged (90 days after its Entry was deleted): a restored Entry shows it expired. */
+	purged_at: text("purged_at"),
 	created_by: text("created_by").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
