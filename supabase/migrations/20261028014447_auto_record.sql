@@ -77,6 +77,8 @@ as $$
 			'entry/' || rule_id::text || '/' || to_char(due_on, 'YYYY-MM-DD'));
 $$;
 revoke all on function private.occurrence_ids(uuid, date) from public;
+-- The Occurrence id check runs as whoever writes the Occurrence.
+grant execute on function private.occurrence_ids(uuid, date) to authenticated;
 
 create or replace function private.keep_occurrence_ids_derived() returns trigger
 language plpgsql
