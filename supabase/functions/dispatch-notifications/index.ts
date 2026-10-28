@@ -136,7 +136,15 @@ const expo: BatchSender = {
 	size: EXPO_BATCH,
 	send: async (deliveries) => {
 		const response = await postToExpo(deliveries.map(expoMessage));
-		if (response.status === 400) return Promise.all(deliveries.map(expoOne));
+		if (response.status === 400)
+			return Promise.all(
+				deliveries.map((d) =>
+					expoOne(d).catch((error: unknown): SendOutcome => ({
+						status: "failed",
+						error: String(error),
+					})),
+				),
+			);
 		if (!response.ok)
 			return deliveries.map(() => ({
 				status: "failed" as const,

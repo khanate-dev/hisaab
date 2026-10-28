@@ -7,6 +7,8 @@ import { useUnreadCount } from "./use-notifications";
 export const useAppBadge = (userId: string) => {
 	const unread = useUnreadCount(userId);
 	useEffect(() => {
-		if (unread !== undefined) void setBadgeCountAsync(unread).catch(() => {});
+		void setBadgeCountAsync(unread).catch(() => {});
 	}, [unread]);
+	// Signed out (the tabs go): no count left on the icon.
+	useEffect(() => () => void setBadgeCountAsync(0).catch(() => {}), []);
 };

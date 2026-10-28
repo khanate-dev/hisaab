@@ -455,6 +455,31 @@ describe("push outcomes", () => {
 		]);
 	});
 
+	it("give exactly one outcome per message, in order, whatever Expo answered", () => {
+		const ticket = fc.oneof(
+			fc.record({ status: fc.constant("ok" as const), id: fc.string() }),
+			fc.record({
+				status: fc.constant("error" as const),
+				details: fc.record({
+					error: fc.constantFrom("DeviceNotRegistered", "MessageRateExceeded"),
+				}),
+			}),
+		);
+		fc.assert(
+			fc.property(
+				fc.option(fc.array(ticket, { maxLength: 10 })),
+				fc.nat({ max: 10 }),
+				(tickets, count) => {
+					const outcomes = expoOutcomes(tickets, count);
+					expect(outcomes).toHaveLength(count);
+					outcomes.forEach((o, i) =>
+						expect(o).toEqual(expoOutcome(tickets?.[i])),
+					);
+				},
+			),
+		);
+	});
+
 	it("dispatch forgets the gone targets once each", async () => {
 		const claimed: ClaimedDelivery[] = ["d1", "d2"].map((id) => ({
 			id,

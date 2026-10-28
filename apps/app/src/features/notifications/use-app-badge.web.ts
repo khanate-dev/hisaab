@@ -6,9 +6,17 @@ import { useUnreadCount } from "./use-notifications";
 export const useAppBadge = (userId: string) => {
 	const unread = useUnreadCount(userId);
 	useEffect(() => {
-		if (unread === undefined || !("setAppBadge" in navigator)) return;
+		if (!("setAppBadge" in navigator)) return;
 		void (
 			unread > 0 ? navigator.setAppBadge(unread) : navigator.clearAppBadge()
 		).catch(() => {});
 	}, [unread]);
+	// Signed out (the tabs go): no count left on the badge.
+	useEffect(
+		() => () => {
+			if ("clearAppBadge" in navigator)
+				void navigator.clearAppBadge().catch(() => {});
+		},
+		[],
+	);
 };
