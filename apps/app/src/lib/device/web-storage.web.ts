@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { powersync } from "../powersync";
+import { powersync } from "@/lib/powersync";
 
 /**
  * On the web (spec §5): asks the browser to keep the local database (persistent storage), so it isn't cleared under
@@ -8,7 +8,7 @@ import { powersync } from "../powersync";
  */
 export const useWebStorageGuard = () => {
 	useEffect(() => {
-		void navigator.storage?.persist?.();
+		void navigator.storage?.persist?.().catch(() => {});
 		let waiting = 0;
 		const abort = new AbortController();
 		void (async () => {

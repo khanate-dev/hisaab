@@ -1,15 +1,13 @@
 import { colorScheme } from "nativewind";
 import { useEffect } from "react";
 
-import { useDeviceState } from "@/lib/device-state";
-
-import { appearanceOf } from "@hisaab/client-schema";
+import { useDeviceSettings } from "@/lib/device/settings";
 
 /** Applies this device's appearance override (or the OS's choice) to the theme. Renders nothing. */
 export const AppearanceSync = () => {
-	const saved = useDeviceState()?.appearance;
+	const appearance = useDeviceSettings()?.appearance;
 	useEffect(() => {
-		colorScheme.set(appearanceOf(saved));
-	}, [saved]);
+		if (appearance !== undefined) colorScheme.set(appearance);
+	}, [appearance]);
 	return null;
 };

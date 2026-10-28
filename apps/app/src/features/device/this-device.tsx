@@ -1,19 +1,18 @@
 import { useLingui } from "@lingui/react/macro";
 import { useEffect, useState } from "react";
 
-import { updateDeviceState, useDeviceState } from "@/lib/device-state";
 import {
 	canLockWithBiometrics,
 	unlockWithBiometrics,
 } from "@/lib/device/biometrics";
+import { updateDeviceSettings, useDeviceSettings } from "@/lib/device/settings";
 
-import { appearanceOf } from "@hisaab/client-schema";
 import { DeviceSettings } from "./device-settings";
 
-/** This device's settings, saved on the device only (they never sync). */
+/** This device's settings, kept on the device only: they never sync, and stay when someone signs out. */
 export const ThisDevice = () => {
 	const { t } = useLingui();
-	const device = useDeviceState();
+	const settings = useDeviceSettings();
 	const [lockAvailable, setLockAvailable] = useState(false);
 	const [lockProblem, setLockProblem] = useState<string | null>(null);
 
@@ -23,29 +22,25 @@ export const ThisDevice = () => {
 		);
 	}, []);
 
-	if (device === undefined) return null;
+	if (settings === undefined) return null;
+	const stayedOff = t`The unlock didn't pass, so the app lock stays off.`;
 	return (
 		<DeviceSettings
-			appearance={appearanceOf(device.appearance)}
+			appearance={settings.appearance}
 			lockAvailable={lockAvailable}
-			lockOn={device.app_lock === true}
+			lockOn={settings.appLock}
 			lockProblem={lockProblem}
-			onAppearance={(appearance) => void updateDeviceState({ appearance })}
+			onAppearance={(appearance) => void updateDeviceSettings({ appearance })}
 			onLock={(on) => {
 				setLockProblem(null);
 				// Turning it on proves the unlock works first, so nobody locks themselves out.
-				if (!on) return void updateDeviceState({ app_lock: false });
+				if (!on) return void updateDeviceSettings({ appLock: false });
 				void unlockWithBiometrics(t`Turn on the app lock`).then(
 					(passed) =>
 						passed
-							? updateDeviceState({ app_lock: true })
-							: setLockProblem(
-									t`The unlock didn't pass, so the app lock stays off.`,
-								),
-					() =>
-						setLockProblem(
-							t`The unlock didn't pass, so the app lock stays off.`,
-						),
+							? updateDeviceSettings({ appLock: true })
+							: setLockProblem(stayedOff),
+					() => setLockProblem(stayedOff),
 				);
 			}}
 		/>

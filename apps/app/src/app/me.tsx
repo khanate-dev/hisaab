@@ -86,13 +86,13 @@ export default function MeAndHousehold() {
 				{t`Contacts`}
 			</Button>
 			<SyncStatusSheet />
+			<ThisDevice />
 			<Button
 				onPress={() => void supabase.auth.signOut()}
 				variant="secondary"
 			>
 				{t`Sign out`}
 			</Button>
-			<ThisDevice />
 		</Screen>
 	);
 }

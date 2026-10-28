@@ -12,8 +12,6 @@ const EMPTY: DeviceState = {
 	current_household_id: null,
 	pending_invite_token: null,
 	pending_invite_household_id: null,
-	appearance: null,
-	app_lock: null,
 };
 
 /** What this device remembers (the local-only `device_state` row); undefined until read. */

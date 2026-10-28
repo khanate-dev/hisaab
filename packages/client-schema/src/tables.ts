@@ -349,10 +349,6 @@ export const deviceState = sqliteTable("device_state", {
 	pending_invite_token: text("pending_invite_token"),
 	/** That Invite's household, once accepted; onboarding waits for its Membership to sync. */
 	pending_invite_household_id: text("pending_invite_household_id"),
-	/** This device's appearance: `system` (null too), `light` or `dark` (spec §4.1). */
-	appearance: text("appearance"),
-	/** Whether this device asks for a biometric unlock (native only, off by default). */
-	app_lock: integer("app_lock", { mode: "boolean" }),
 });
 
 export const DEVICE_STATE_ID = "device";
