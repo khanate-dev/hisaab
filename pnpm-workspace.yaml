@@ -32,6 +32,8 @@ catalog:
   expo-image-picker: 57.0.20
   # Device settings (#65): the optional biometric app lock; SDK 57's bundled version
   expo-local-authentication: 57.0.3
+  # Spreadsheet export (#57): handing the CSV to another app on native; SDK 57's bundled version
+  expo-sharing: 57.0.24
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3

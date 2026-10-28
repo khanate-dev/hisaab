@@ -10,6 +10,7 @@ import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
 
 import { EntrySearch, type FilterChoices } from "./entry-search";
+import { toExportEntry } from "./export";
 import { toSearchable } from "./searchable";
 
 const choices: FilterChoices = {
@@ -238,5 +239,67 @@ describe("toSearchable", () => {
 		);
 		expect(repayment.contactIds).toEqual(["k1"]);
 		expect(repayment.text).toContain("Ali");
+	});
+});
+
+describe("toExportEntry", () => {
+	it("writes an Entry's money exactly as stored, its names in words, and its Items", () => {
+		const groceries = makeCategory("c2", "Groceries", { parent_id: "c1" });
+		const view: EntryView = {
+			entry: makeEntry("e1", {
+				amount: "-1234.567",
+				description: "Weekly shop",
+				occurred_time: "18:30",
+			}),
+			amount: parseMoney("-1234.567", "PKR"),
+			wallet: { id: "w1", name: "Cash", currency: "PKR", archived_at: null },
+			arrival: null,
+			category: groceries,
+			parent: makeCategory("c1", "Food"),
+			items: [
+				{
+					item: {
+						id: "i1",
+						household_id: "h1",
+						entry_id: "e1",
+						position: 0,
+						description: "Milk",
+						amount: "0.10",
+						quantity: "2",
+						category_id: "c2",
+						rest: false,
+						created_at: "2026-10-20T10:00:00.000Z",
+						_metadata: null,
+						_deleted: null,
+					},
+					amount: parseMoney("0.10", "PKR"),
+					category: groceries,
+				},
+			],
+			madeBy: "Ayesha",
+		};
+		const row = toExportEntry(view, {
+			kind: "Expense",
+			category: (name, parent) =>
+				parent === undefined ? name : `${parent}: ${name}`,
+			parentOf: ({ parent_id }) => (parent_id === "c1" ? "Food" : undefined),
+			contact: null,
+		});
+		expect(row).toEqual(
+			expect.objectContaining({
+				amount: "-1234.567",
+				category: "Food: Groceries",
+				occurredTime: "18:30",
+				recordedBy: "Ayesha",
+				items: [
+					{
+						description: "Milk",
+						category: "Food: Groceries",
+						amount: "0.10",
+						quantity: "2",
+					},
+				],
+			}),
+		);
 	});
 });
