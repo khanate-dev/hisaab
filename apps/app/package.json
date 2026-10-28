@@ -77,10 +77,12 @@
 		"@testing-library/react-native": "catalog:",
 		"@types/react": "catalog:",
 		"babel-preset-expo": "catalog:",
+		"eas-cli": "catalog:",
 		"jest": "catalog:",
 		"jest-expo": "catalog:",
 		"tailwindcss": "catalog:",
 		"test-renderer": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"wrangler": "catalog:"
 	}
 }

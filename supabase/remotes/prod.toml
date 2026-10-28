@@ -1,0 +1,23 @@
+# Prod overrides for `supabase config push` (ADR-0011). The CLI only matches a [remotes.*] block by its literal
+# project ref, so deploy.yml fills ${SUPABASE_PROJECT_REF} in and appends this file to config.toml before pushing.
+# Kept out of config.toml itself so the local stack never sees it.
+
+[remotes.prod]
+project_id = "${SUPABASE_PROJECT_REF}"
+
+[remotes.prod.auth]
+site_url = "https://hisaab.khanate.pk"
+additional_redirect_urls = ["https://hisaab.khanate.pk", "hisaab://"]
+
+[remotes.prod.auth.rate_limit]
+email_sent = 30
+
+# Resend sends Auth mail from its own subdomain (ADR-0011); the password is Resend's API key.
+[remotes.prod.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_SMTP_PASSWORD)"
+admin_email = "no-reply@mail.hisaab.khanate.pk"
+sender_name = "Hisaab"

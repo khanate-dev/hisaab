@@ -86,6 +86,18 @@ export default function MeAndHousehold() {
 			>
 				{t`Contacts`}
 			</Button>
+			<Button
+				onPress={() => router.push("/support")}
+				variant="secondary"
+			>
+				{t`Support`}
+			</Button>
+			<Button
+				onPress={() => router.push("/privacy")}
+				variant="secondary"
+			>
+				{t`Privacy policy`}
+			</Button>
 			<SyncStatusSheet />
 			<ThisDevice />
 			<Button

@@ -1,0 +1,15 @@
+// The web app on Workers static assets (ADR-0011): `expo export -p web` writes dist/, deploy.yml runs `wrangler deploy`.
+{
+	"$schema": "https://unpkg.com/wrangler@4.150.0/config-schema.json",
+	"name": "hisaab-web",
+	"compatibility_date": "2026-10-01",
+	"assets": {
+		"directory": "./dist",
+		// A single-page export: every route, /privacy and /support included, is index.html.
+		"not_found_handling": "single-page-application",
+	},
+	// Wrangler makes the custom domain and its DNS record on deploy.
+	"routes": [{ "pattern": "hisaab.khanate.pk", "custom_domain": true }],
+	"workers_dev": false,
+	"preview_urls": false,
+}
