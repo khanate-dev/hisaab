@@ -89,6 +89,11 @@ streams:
     auto_subscribe: true
     query: SELECT saved_filters.id, saved_filters.household_id, saved_filters.user_id, saved_filters.name, saved_filters.criteria, saved_filters.created_at FROM saved_filters WHERE saved_filters.user_id = auth.user_id() AND saved_filters.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
+  # The Recurring rules the User follows ("Notify me"), in households they belong to; nobody else's.
+  recurring_rule_followers:
+    auto_subscribe: true
+    query: SELECT recurring_rule_followers.id, recurring_rule_followers.household_id, recurring_rule_followers.rule_id, recurring_rule_followers.user_id, recurring_rule_followers.enabled, recurring_rule_followers.created_at FROM recurring_rule_followers WHERE recurring_rule_followers.user_id = auth.user_id() AND recurring_rule_followers.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+
   # The User's own profile and the profiles of everyone they share a household with.
   profiles:
     auto_subscribe: true

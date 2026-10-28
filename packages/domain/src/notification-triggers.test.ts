@@ -41,6 +41,7 @@ const occurrence = (
 	dueOn: "2026-11-10",
 	state: "pending",
 	snoozedUntil: null,
+	followers: [],
 	...o,
 });
 
@@ -142,6 +143,31 @@ describe("scheduledNotifications", () => {
 		]);
 	});
 
+	it("tells the rule's followers too, once each, alongside its maker", () => {
+		expect(
+			summary(
+				scheduledNotifications(
+					household({
+						occurrences: [
+							occurrence({ followers: [ADMIN, MEMBER, "u-gone"] }),
+							occurrence({
+								ruleId: "r2",
+								mode: "auto",
+								state: "confirmed",
+								followers: [ADMIN],
+							}),
+						],
+					}),
+				),
+			),
+		).toEqual([
+			`recurring_due ${MEMBER} recurring_due/r1/2026-11-10`,
+			`recurring_due ${ADMIN} recurring_due/r1/2026-11-10`,
+			`auto_recorded ${MEMBER} auto_recorded/r2/2026-11-10`,
+			`auto_recorded ${ADMIN} auto_recorded/r2/2026-11-10`,
+		]);
+	});
+
 	it("tells nobody who's no longer in the household", () => {
 		expect(
 			scheduledNotifications(
@@ -180,6 +206,9 @@ describe("scheduledNotifications", () => {
 				categoryName: fc.string(),
 				dueOn: fc.constant("2026-11-10"),
 				snoozedUntil: fc.constant(null),
+				followers: fc.uniqueArray(
+					fc.constantFrom(ADMIN, MEMBER, VIEWER, "u-gone"),
+				),
 				state: fc.constantFrom(
 					"pending" as const,
 					"confirmed" as const,

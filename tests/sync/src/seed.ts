@@ -1,5 +1,5 @@
 import type { Role } from "@hisaab/client-schema";
-import { occurrenceId, preferenceId } from "@hisaab/domain";
+import { occurrenceId, preferenceId, ruleFollowerId } from "@hisaab/domain";
 import { v7 as uuidv7 } from "uuid";
 
 import { adminClient, type SignedInUser, signInNewUser } from "./users";
@@ -325,6 +325,29 @@ const seedWallets = async (
 		})),
 	);
 	if (ruleRows.error) throw ruleRows.error;
+	// Everyone in each household follows its rule ("Notify me"; #105).
+	const members = await admin
+		.from("memberships")
+		.select("household_id, user_id")
+		.in(
+			"household_id",
+			rules.map((r) => r.household_id),
+		);
+	if (members.error) throw members.error;
+	const follows = await admin.from("recurring_rule_followers").insert(
+		members.data.flatMap(({ household_id, user_id }) =>
+			rules
+				.filter((r) => r.household_id === household_id)
+				.map((r) => ({
+					id: ruleFollowerId(r.id, user_id),
+					household_id,
+					rule_id: r.id,
+					user_id,
+					enabled: true,
+				})),
+		),
+	);
+	if (follows.error) throw follows.error;
 	const occurrenceRows = await admin.from("occurrences").insert(
 		rules.map(({ id, household_id }) => ({
 			id: occurrenceId(id, "2026-10-01"),

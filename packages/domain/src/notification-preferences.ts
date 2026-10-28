@@ -17,3 +17,10 @@ export const preferenceId = (
 		PREFERENCE_NAMESPACE,
 		`preference/${userId}/${householdId}/${trigger}`,
 	);
+
+/**
+ * A rule follow's id, from its rule and User: two devices turning "Notify me" on offline write the same row, and the
+ * server checks it's this one (`keep_rule_follower_origin`).
+ */
+export const ruleFollowerId = (ruleId: string, userId: string) =>
+	nameBasedUuid(PREFERENCE_NAMESPACE, `follow/${ruleId}/${userId}`);

@@ -21,6 +21,7 @@ const SYNCED_TABLES = [
 	"budgets",
 	"budget_overrides",
 	"recurring_rules",
+	"recurring_rule_followers",
 	"occurrences",
 	"saved_filters",
 	"attachments",

@@ -25,6 +25,8 @@ export type HouseholdFacts = {
 		dueOn: string;
 		state: "pending" | "confirmed" | "skipped" | "snoozed";
 		snoozedUntil: string | null;
+		/** Admins and Members who turned "Notify me" on for its rule (#105). */
+		followers: string[];
 	}[];
 	/** Its Loans still owed and not written off, due within 3 days or overdue. */
 	loans: {
@@ -79,8 +81,8 @@ export const loanDueWhen = (
 /**
  * What a household raises at its 09:00 (issue #9's table):
  * - Recurring due: a Confirm-mode Occurrence that's Pending on its due date, and again if still Pending 3 days on, to
- *   the rule's maker;
- * - Auto-recorded: an Auto-record rule's Occurrence recorded today, to the rule's maker;
+ *   the rule's maker and its followers;
+ * - Auto-recorded: an Auto-record rule's Occurrence recorded today, to the rule's maker and its followers;
  * - Budget threshold: a Budget that's passed 80%, then 100%, once each a Budget month, to its Admins and Members;
  * - Loan due: 3 days before, on the day and weekly while overdue, to its Admins and Members.
  * Only to someone in the household (a Personal household's only Member is its owner).
@@ -112,6 +114,8 @@ export const scheduledNotifications = (
 	};
 	const reminderDay = shift(today, -3);
 	for (const o of facts.occurrences) {
+		// The rule's maker, and whoever follows it.
+		const hearers = [...new Set([o.createdBy, ...o.followers])];
 		const about = {
 			ruleId: o.ruleId,
 			ruleName: o.ruleName,
@@ -122,14 +126,14 @@ export const scheduledNotifications = (
 			// Back from a snooze today: Pending again, so due again.
 			if (o.snoozedUntil === today)
 				raise(
-					[o.createdBy],
+					hearers,
 					"recurring_due",
 					`recurring_due/${o.ruleId}/${o.dueOn}/snooze/${today}`,
 					{ ...about, reminder: false },
 				);
 			else if (o.dueOn === today)
 				raise(
-					[o.createdBy],
+					hearers,
 					"recurring_due",
 					`recurring_due/${o.ruleId}/${o.dueOn}`,
 					{
@@ -139,7 +143,7 @@ export const scheduledNotifications = (
 				);
 			else if (o.dueOn === reminderDay)
 				raise(
-					[o.createdBy],
+					hearers,
 					"recurring_due",
 					`recurring_due/${o.ruleId}/${o.dueOn}/reminder`,
 					{ ...about, reminder: true },
@@ -147,7 +151,7 @@ export const scheduledNotifications = (
 		}
 		if (o.mode === "auto" && o.state === "confirmed" && o.dueOn === today)
 			raise(
-				[o.createdBy],
+				hearers,
 				"auto_recorded",
 				`auto_recorded/${o.ruleId}/${o.dueOn}`,
 				about,
