@@ -78,7 +78,7 @@ as $$
 $$;
 revoke all on function private.occurrence_ids(uuid, date) from public;
 -- The Occurrence id check runs as whoever writes the Occurrence.
-grant execute on function private.occurrence_ids(uuid, date) to authenticated;
+grant execute on function private.occurrence_ids(uuid, date) to authenticated, service_role;
 
 create or replace function private.keep_occurrence_ids_derived() returns trigger
 language plpgsql
