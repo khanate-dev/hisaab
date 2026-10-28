@@ -11,7 +11,7 @@ describe("PrivacyPolicy", () => {
 	it("discloses the 30-day backup retention and the support contact", async () => {
 		await render(<PrivacyPolicy />);
 		expect(
-			screen.getByText(/Each backup is kept for 30 days, then deleted/),
+			screen.getByText(/kept for at most 30 days, then deleted/),
 		).toBeOnTheScreen();
 		expect(screen.getByText(/support@hisaab\.khanate\.pk/)).toBeOnTheScreen();
 	});

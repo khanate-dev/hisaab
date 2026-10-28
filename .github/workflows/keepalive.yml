@@ -1,7 +1,8 @@
 name: keepalive
 
 # Free tiers stop idle projects: Supabase pauses after 7 days without activity; PowerSync Cloud deprovisions after
-# 7 days with no deploys or client connections (ADR-0011).
+# 7 days with no deploys or client connections (ADR-0011). So this does what a device does, as a keep-alive User
+# with nothing but its own empty Personal household: signs in, reads through the Data API, and opens a sync stream.
 on:
   schedule:
     - cron: "17 3 * * *"
@@ -10,45 +11,34 @@ on:
 permissions: {}
 
 jobs:
-  supabase:
+  keepalive:
+    # PROD_ENABLED (a repo variable) is set once the prod setup in docs/infra.md is done.
     if: vars.PROD_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: prod
     steps:
-      - name: Ping Supabase Auth
+      - name: Sign in, read, sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          curl --fail --silent --show-error --retry 3 \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            "$SUPABASE_URL/auth/v1/settings" > /dev/null
-
-  powersync:
-    if: vars.PROD_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: prod
-    steps:
-      # A ping isn't activity, so this opens a sync stream for a few seconds, as a User with no households. Its token
-      # is signed with the keep-alive's own HS256 key (kid `keepalive`), which the instance's client auth also accepts.
-      - name: Open a sync connection
-        env:
+          KEEPALIVE_EMAIL: ${{ secrets.KEEPALIVE_EMAIL }}
+          KEEPALIVE_PASSWORD: ${{ secrets.KEEPALIVE_PASSWORD }}
           POWERSYNC_URL: ${{ secrets.POWERSYNC_URL }}
-          POWERSYNC_KEEPALIVE_KEY: ${{ secrets.POWERSYNC_KEEPALIVE_KEY }}
         run: |
-          b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
-          now=$(date +%s)
-          header=$(printf '{"alg":"HS256","typ":"JWT","kid":"keepalive"}' | b64url)
-          claims=$(printf '{"sub":"keepalive","aud":"authenticated","iat":%d,"exp":%d}' "$now" $((now + 300)) | b64url)
-          signature=$(printf '%s.%s' "$header" "$claims" \
-            | openssl dgst -sha256 -mac HMAC -macopt "hexkey:$POWERSYNC_KEEPALIVE_KEY" -binary | b64url)
+          token=$(jq -n --arg email "$KEEPALIVE_EMAIL" --arg password "$KEEPALIVE_PASSWORD" '{$email, $password}' \
+            | curl --fail --silent --show-error --retry 3 -X POST \
+                "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+                -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json" -d @- \
+            | jq -r .access_token)
+          echo "::add-mask::$token"
+          curl --fail --silent --show-error --retry 3 \
+            "$SUPABASE_URL/rest/v1/households?select=id&limit=1" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Authorization: Bearer $token" > /dev/null
           # The stream never ends by itself; the timeout ends it, and the status says whether it was accepted.
           status=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 10 \
             -X POST "$POWERSYNC_URL/sync/stream" \
-            -H "Authorization: Token $header.$claims.$signature" \
-            -H "Content-Type: application/json" \
+            -H "Authorization: Token $token" -H "Content-Type: application/json" \
             -d '{"raw_data":true}' || true)
           echo "sync/stream answered $status"
           test "$status" = 200

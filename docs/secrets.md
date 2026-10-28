@@ -22,7 +22,7 @@ The only place `deploy`, `keepalive` (and later `release` and `nightly`) get sec
 | `POWERSYNC_ADMIN_TOKEN` | PowerSync personal access token | `deploy` (sync config) | Dashboard → Account → Access tokens |
 | `POWERSYNC_INSTANCE_ID` | The prod instance's id | `deploy` | Never changes |
 | `POWERSYNC_URL` | The instance's URL | `keepalive` | Never changes |
-| `POWERSYNC_KEEPALIVE_KEY` | 32 random bytes, hex; the keep-alive's own HS256 key (kid `keepalive`) | `keepalive` | `openssl rand -hex 32`; replace here and in the instance's client auth (docs/infra.md) |
+| `KEEPALIVE_EMAIL`, `KEEPALIVE_PASSWORD` | The keep-alive User: an ordinary account with only its own empty Personal household, signed in by password | `keepalive` | Auth → Users → the User → reset password; replace here |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token: Workers Scripts Edit, Workers Routes Edit and DNS Edit on `khanate.pk` | `deploy` (web) | My Profile → API Tokens → Roll |
 | `CLOUDFLARE_ACCOUNT_ID` | The account id (not secret) | `deploy` (web) | Never changes |
 | `EXPO_TOKEN` | Access token of an Expo robot user | `deploy` (`eas env:pull`) | Expo → Robot users; replace |
@@ -47,7 +47,6 @@ way.
 | Name | Where | Used by | Rotate |
 |---|---|---|---|
 | Database password | Instance → Database connection | Replication from Supabase | With `SUPABASE_DB_PASSWORD` |
-| `keepalive` HS256 key | Instance → Client auth | The `keepalive` sync connection | With `POWERSYNC_KEEPALIVE_KEY` |
 
 ## EAS (`production` environment)
 

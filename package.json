@@ -27,6 +27,7 @@
 		"eslint-plugin-lingui": "catalog:",
 		"eslint-plugin-react-hooks": "catalog:",
 		"globals": "catalog:",
+		"powersync": "catalog:",
 		"prettier": "catalog:",
 		"supabase": "catalog:",
 		"typescript": "catalog:",

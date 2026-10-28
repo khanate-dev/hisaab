@@ -10,21 +10,22 @@ The one-off setup behind `deploy.yml` (ADR-0011), done by hand once, in this ord
 2. Auth → JWT Keys: migrate to asymmetric keys and make **ES256** the current key, so PowerSync can verify tokens through
    `https://<ref>.supabase.co/auth/v1/.well-known/jwks.json`.
 3. Settings → API Keys: check there's a secret key (`sb_secret_…`); `deploy` writes the first one to Vault for pg_cron.
-4. The rest is code: `deploy` runs `db push`, `config push` (with `supabase/remotes/prod.toml` on top of `config.toml`),
+4. Auth → Users → Add user: the keep-alive User, with a long random password and "Auto confirm" on. Its email and
+   password are `KEEPALIVE_EMAIL` and `KEEPALIVE_PASSWORD`; `keepalive` signs in as it every day, so both free tiers
+   see a real device's activity. It owns nothing but its own empty Personal household.
+5. The rest is code: `deploy` runs `db push`, `config push` (with `supabase/remotes/prod.toml` on top of `config.toml`),
    `secrets set`, `functions deploy` and the Vault secrets.
 
-After the first deploy, check that the Edge Functions that import `packages/domain` (outside `supabase/functions`) were
-bundled: `curl -X POST https://<ref>.supabase.co/functions/v1/delete-account` answers with JSON (a 401 or 426), not a
-boot error. If the bundle misses them, add an import map.
+The Edge Functions import `packages/domain` from outside `supabase/functions`; `deploy` checks after each
+`functions deploy` that one of them boots (it refuses an anonymous call with a 4xx, not a 5xx). If the first deploy
+fails there, the bundle missed those files: add an import map.
 
 ## 2. PowerSync Cloud
 
 1. Create an instance and connect it to the Supabase database (the direct connection or the session pooler, as the
    dashboard suggests; the `postgres` password).
-2. Client auth:
-   - JWKS URI `https://<ref>.supabase.co/auth/v1/.well-known/jwks.json`, audience `authenticated`.
-   - An HS256 key for the keep-alive: kid `keepalive`, and as its value the base64url of the bytes of
-     `POWERSYNC_KEEPALIVE_KEY` (`echo <hex> | xxd -r -p | basenc --base64url | tr -d =`).
+2. Client auth: JWKS URI `https://<ref>.supabase.co/auth/v1/.well-known/jwks.json`, audience `authenticated`. Nothing else: every
+   token PowerSync accepts is one Supabase Auth signed.
 3. Make a personal access token for `deploy`. `deploy` pushes only `powersync/sync-config.yaml`; the instance's own
    config stays as set here.
 
@@ -46,7 +47,7 @@ boot error. If the bundle misses them, add an import map.
 | TXT (DMARC) | `_dmarc.mail.hisaab.khanate.pk` | `v=DMARC1; p=none; rua=mailto:<your inbox>` | Starts at `p=none`; move to `p=quarantine` once reports are clean |
 
 The root SPF and Email Routing stay untouched. In Email Routing, add `support@hisaab.khanate.pk` → your inbox: it's the
-store support contact and the `reply_to` on outgoing mail.
+store support contact (and, once the app sends its own mail through Resend, the `reply_to`).
 
 In Resend, add the domain `mail.hisaab.khanate.pk` and make an API key limited to sending from it: that key is
 `RESEND_SMTP_PASSWORD`.
@@ -61,13 +62,15 @@ In Resend, add the domain `mail.hisaab.khanate.pk` and make an API key limited t
 ## 6. GitHub
 
 1. Create the Environment `prod` and add its secrets. Limit it to the `main` branch.
-2. Turn on secret scanning and push protection.
-3. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets, and the
-   keep-alive key (`openssl rand -hex 32`).
+2. Create the Environment `prod-contract` with the same secrets as `prod`'s database job (the `SUPABASE_*`,
+   `RESEND_SMTP_PASSWORD` and `VAPID_*` ones), you as required reviewer and self-approval allowed. `deploy` runs the
+   database job there when the merged PR carries the `contract` label.
+3. Turn on secret scanning and push protection.
+4. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets.
 
 ## 7. First deploy
 
 1. Add the repo variable `PROD_ENABLED` = `true` (Settings → Secrets and variables → Actions → Variables); until then
    `deploy` and `keepalive` skip. Then re-run the latest `ci` on `main` (or merge anything): `deploy` follows it.
-2. Run `keepalive` by hand once and check both jobs pass.
+2. Run `keepalive` by hand once and check it passes.
 3. Open `https://hisaab.khanate.pk`, sign in with an email code (Resend delivers it), and check a second device syncs.

@@ -586,6 +586,10 @@ msgstr "Backups and how long data is kept"
 msgid "Backups made before then expire within 30 days. If one is ever restored, your deletion is applied again."
 msgstr "Backups made before then expire within 30 days. If one is ever restored, your deletion is applied again."
 
+#: src/features/legal/privacy-policy.tsx
+msgid "Backups of the database and the files are kept for at most 30 days, then deleted."
+msgstr "Backups of the database and the files are kept for at most 30 days, then deleted."
+
 #: src/features/entries/labels.ts
 msgid "Balance adjustment"
 msgstr "Balance adjustment"
@@ -788,8 +792,8 @@ msgid "Close {viewingName}"
 msgstr "Close {viewingName}"
 
 #: src/features/legal/privacy-policy.tsx
-msgid "Cloudflare serves this website and holds the off-site backups. Resend sends the sign-in emails. Expo, Google and Apple deliver push notifications."
-msgstr "Cloudflare serves this website and holds the off-site backups. Resend sends the sign-in emails. Expo, Google and Apple deliver push notifications."
+msgid "Cloudflare serves this website and holds the off-site backups. Resend sends the sign-in emails. Expo, Google, Apple and your browser's push service deliver push notifications."
+msgstr "Cloudflare serves this website and holds the off-site backups. Resend sends the sign-in emails. Expo, Google, Apple and your browser's push service deliver push notifications."
 
 #: src/features/account/delete-account-flow.tsx
 #: src/features/auth/sign-in-form.tsx
@@ -1474,6 +1478,10 @@ msgstr "How the last Budget month went."
 msgid "Icon"
 msgstr "Icon"
 
+#: src/features/legal/privacy-policy.tsx
+msgid "If you're the only Admin of a household with other people in it, make someone else an Admin (or delete the household) first."
+msgstr "If you're the only Admin of a household with other people in it, make someone else an Admin (or delete the household) first."
+
 #: src/features/attachments/attachment-list.tsx
 #: src/features/attachments/entry-attachments.tsx
 msgid "Image"
@@ -2086,10 +2094,6 @@ msgstr "Notifications"
 #: src/features/notifications/push-setting.tsx
 msgid "Notifications are blocked for Hisaab here. Allow them in this device's settings, then turn push on."
 msgstr "Notifications are blocked for Hisaab here. Allow them in this device's settings, then turn push on."
-
-#: src/features/legal/privacy-policy.tsx
-msgid "Notifications are deleted after 90 days."
-msgstr "Notifications are deleted after 90 days."
 
 #: src/features/shell/top-bar.tsx
 msgid "Notifications, {unread} new"
@@ -2800,10 +2804,6 @@ msgstr "That's over {megabytes} MB; an Attachment takes {megabytes} MB at most."
 msgid "The Activity log needs a connection. Try again once you're online."
 msgstr "The Activity log needs a connection. Try again once you're online."
 
-#: src/features/legal/privacy-policy.tsx
-msgid "The Activity log of changes in each household, and the push tokens of the devices you turn notifications on for."
-msgstr "The Activity log of changes in each household, and the push tokens of the devices you turn notifications on for."
-
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
 msgid "The amount is more than zero."
@@ -2817,13 +2817,13 @@ msgstr "The Base currency is fixed once the household has an Entry."
 msgid "The currency is fixed once the Wallet has Entries."
 msgstr "The currency is fixed once the Wallet has Entries."
 
-#: src/features/legal/privacy-policy.tsx
-msgid "The database and the files are backed up every night. Each backup is kept for 30 days, then deleted."
-msgstr "The database and the files are backed up every night. Each backup is kept for 30 days, then deleted."
-
 #: src/features/households/household-settings.tsx
 msgid "The day each Budget month starts, from 1 to 28."
 msgstr "The day each Budget month starts, from 1 to 28."
+
+#: src/features/legal/privacy-policy.tsx
+msgid "The files of deleted Entries are removed after 90 days, Notifications after 90 days, and the record of push deliveries after 30 days."
+msgstr "The files of deleted Entries are removed after 90 days, Notifications after 90 days, and the record of push deliveries after 30 days."
 
 #: src/features/import/import-wizard.tsx
 msgid "The first row is a header"
@@ -3227,8 +3227,8 @@ msgid "Yesterday"
 msgstr "Yesterday"
 
 #: src/features/legal/privacy-policy.tsx
-msgid "You can delete your account in the app, under Me & household, at any time. It takes effect at once: your Personal household and its files are deleted, and in shared households what you recorded stays, under an anonymous Former member."
-msgstr "You can delete your account in the app, under Me & household, at any time. It takes effect at once: your Personal household and its files are deleted, and in shared households what you recorded stays, under an anonymous Former member."
+msgid "You can delete your account in the app, under Me & household. It takes effect at once: your Personal household, any household only you are in, and their files are deleted, and your pending Invites are revoked. In shared households what you recorded stays, under an anonymous Former member."
+msgstr "You can delete your account in the app, under Me & household. It takes effect at once: your Personal household, any household only you are in, and their files are deleted, and your pending Invites are revoked. In shared households what you recorded stays, under an anonymous Former member."
 
 #: src/features/notifications/inbox-list.tsx
 msgid "You joined {household}."
@@ -3283,8 +3283,8 @@ msgid "Your default Wallet"
 msgstr "Your default Wallet"
 
 #: src/features/legal/privacy-policy.tsx
-msgid "Your email address, to sign you in with a one-time code."
-msgstr "Your email address, to sign you in with a one-time code."
+msgid "Your email address, to sign you in with a one-time code, and the name you choose."
+msgstr "Your email address, to sign you in with a one-time code, and the name you choose."
 
 #: src/app/onboarding.tsx
 msgid "Your first Wallet"
@@ -3297,3 +3297,7 @@ msgstr "Your inbox gets every Notification from {householdName}. Choose which al
 #: src/features/onboarding/name-form.tsx
 msgid "Your name"
 msgstr "Your name"
+
+#: src/features/legal/privacy-policy.tsx
+msgid "Your settings and saved filters, the Activity log of changes in each household, and the push addresses of the devices you turn notifications on for."
+msgstr "Your settings and saved filters, the Activity log of changes in each household, and the push addresses of the devices you turn notifications on for."

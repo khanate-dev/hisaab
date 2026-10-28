@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  # The gate reads the merged PR's labels.
+  pull-requests: read
 
 concurrency:
   group: deploy-prod
@@ -21,13 +23,31 @@ env:
   SHA: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
-  snapshot:
-    name: pg_dump snapshot to R2
+  # A commit from a `contract`-labelled PR (destructive DDL, a contract-version raise) migrates in `prod-contract`,
+  # whose required reviewer first confirms the store builds are approved and at 100% (ADR-0011).
+  gate:
+    name: Pick the Environment
     # PROD_ENABLED (a repo variable) is set once the prod setup in docs/infra.md is done; until then nothing runs.
     if: >-
       vars.PROD_ENABLED == 'true' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          contract=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[].labels[].name] | index("contract") != null')
+          echo "environment=$([[ $contract == true ]] && echo prod-contract || echo prod)" >> "$GITHUB_OUTPUT"
+
+  snapshot:
+    name: pg_dump snapshot to R2
+    needs: gate
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: prod
@@ -64,10 +84,10 @@ jobs:
 
   database:
     name: Migrations, config, secrets, Edge Functions
-    needs: snapshot
+    needs: [gate, snapshot]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: prod
+    environment: ${{ needs.gate.outputs.environment }}
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -104,6 +124,14 @@ jobs:
           pnpm exec supabase secrets set --env-file "$file"
           rm "$file"
       - run: pnpm exec supabase functions deploy --use-api
+      # The functions import packages/domain from outside supabase/functions; one that didn't bundle fails to boot
+      # (5xx) instead of refusing this anonymous call itself (a 4xx).
+      - name: Edge Functions boot
+        run: |
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' --retry 3 -X POST \
+            "https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/delete-account")
+          echo "delete-account answered $status"
+          [[ $status == 4?? ]]
       # pg_cron calls the notification functions with what Vault holds (#60, #62): the project's URL and a secret key,
       # read from Supabase on each deploy so a rotated key follows on its own.
       - name: Vault secrets for pg_cron
@@ -140,9 +168,7 @@ jobs:
         with:
           ref: ${{ env.SHA }}
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
+      - uses: ./.github/actions/setup
       # Only the Sync Streams: the instance's own config (connection, client auth) is set once in the dashboard
       # (docs/infra.md). An empty directory keeps the CLI off powersync/service.yaml, which is the local stack's.
       - name: Deploy sync config
@@ -151,7 +177,7 @@ jobs:
           INSTANCE_ID: ${{ secrets.POWERSYNC_INSTANCE_ID }}
         run: |
           mkdir -p "$RUNNER_TEMP/powersync"
-          npx --yes powersync@0.10.2 deploy sync-config \
+          pnpm exec powersync deploy sync-config \
             --directory "$RUNNER_TEMP/powersync" \
             --sync-config-file-path "$GITHUB_WORKSPACE/powersync/sync-config.yaml" \
             --instance-id "$INSTANCE_ID"
@@ -178,11 +204,11 @@ jobs:
         run: |
           jq -e '.expo.extra.eas.projectId' app.json > /dev/null \
             || { echo "::error::No EAS project id in app.json; run \`eas init\` and commit it."; exit 1; }
-          npx --yes eas-cli@24.13.0 env:pull --environment production --non-interactive
+          pnpm exec eas env:pull --environment production --non-interactive
       - run: pnpm prepare:web
       - run: pnpm exec expo export --platform web
       - name: Deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4.150.0 deploy
+        run: pnpm exec wrangler deploy
