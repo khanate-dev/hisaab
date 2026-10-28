@@ -1,8 +1,9 @@
 import { attachments } from "@hisaab/client-schema";
 import {
-	attachmentPath,
 	attachmentProblem,
 	isAttachmentMediaType,
+	MAX_ATTACHMENT_BYTES,
+	MAX_ATTACHMENTS,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
@@ -10,18 +11,20 @@ import { useQuery } from "@powersync/react";
 import { asc, eq } from "drizzle-orm";
 import { useState } from "react";
 
-import { attachFile, removeAttachment } from "@/lib/attachments/actions";
+import { addAttachment, removeAttachment } from "@/lib/attachments/actions";
+import { openAttachment } from "@/lib/attachments/open-attachment";
 import {
-	type PreparedFile,
-	pickFile,
+	NotAnAttachment,
+	type PreparedAttachment,
+	pickFromFiles,
 	pickPhoto,
-	UnsupportedFile,
+	takePhoto,
 } from "@/lib/attachments/pick";
-import { openFile } from "@/lib/attachments/open-file";
-import { attachmentLink } from "@/lib/attachments/queue";
 import { db } from "@/lib/powersync";
 
 import { AttachmentList } from "./attachment-list";
+
+const MEGABYTES = MAX_ATTACHMENT_BYTES / (1024 * 1024);
 
 /** An Entry's Attachments, with picking, shrinking, queueing for upload and opening wired in. */
 export const EntryAttachments = ({
@@ -45,27 +48,35 @@ export const EntryAttachments = ({
 	).data;
 	const [busy, setBusy] = useState(false);
 	const [problem, setProblem] = useState<string | null>(null);
+	const [viewing, setViewing] = useState<{ uri: string; name: string } | null>(
+		null,
+	);
+	const limit = MAX_ATTACHMENTS;
+	const megabytes = MEGABYTES;
 
-	const add = async (pick: () => Promise<PreparedFile | null>) => {
+	const add = async (pick: () => Promise<PreparedAttachment | null>) => {
 		setProblem(null);
 		setBusy(true);
 		try {
-			const file = await pick();
-			if (!file) return;
-			const why = attachmentProblem(rows.length, {
-				mediaType: file.mediaType,
-				bytes: file.data.byteLength,
+			const picked = await pick();
+			if (!picked) return;
+			const reason = attachmentProblem(rows.length, {
+				mediaType: picked.mediaType,
+				bytes: picked.data.byteLength,
 			});
-			if (why === "full")
-				return setProblem(t`An Entry takes 5 Attachments at most.`);
-			if (why === "size")
-				return setProblem(t`That file is over 10 MB; try a smaller one.`);
-			if (why === "type") return setProblem(t`Attach an image or a PDF.`);
-			await attachFile(entry, userId, file);
+			if (reason === "full")
+				return setProblem(t`An Entry takes ${limit} Attachments at most.`);
+			if (reason === "size")
+				return setProblem(
+					t`That's over ${megabytes} MB; an Attachment takes ${megabytes} MB at most.`,
+				);
+			if (reason === "type")
+				return setProblem(t`An Attachment is an image or a PDF.`);
+			await addAttachment(entry, userId, picked);
 		} catch (error) {
 			setProblem(
-				error instanceof UnsupportedFile
-					? t`Attach an image or a PDF.`
+				error instanceof NotAnAttachment
+					? t`An Attachment is an image or a PDF.`
 					: t`That didn't attach. Try again.`,
 			);
 		} finally {
@@ -76,14 +87,21 @@ export const EntryAttachments = ({
 	const open = async (attachmentId: string) => {
 		const row = rows.find((r) => r.id === attachmentId);
 		if (!row || !isAttachmentMediaType(row.media_type)) return;
+		setProblem(null);
+		setBusy(true);
 		try {
-			await openFile(
-				await attachmentLink(
-					attachmentPath(row.household_id, row.id, row.media_type),
-				),
-			);
+			const opened = await openAttachment({
+				...row,
+				media_type: row.media_type,
+			});
+			if ("image" in opened)
+				setViewing({ uri: opened.image, name: row.file_name ?? t`Image` });
 		} catch {
-			setProblem(t`That opens once you're online and it has uploaded.`);
+			setProblem(
+				t`That Attachment opens once you're online and it has uploaded.`,
+			);
+		} finally {
+			setBusy(false);
 		}
 	};
 
@@ -97,11 +115,19 @@ export const EntryAttachments = ({
 			}))}
 			busy={busy}
 			canEdit={canEdit}
-			onAddFile={() => void add(pickFile)}
-			onAddPhoto={() => void add(pickPhoto)}
+			onChooseFromFiles={() => void add(pickFromFiles)}
+			onChoosePhoto={() => void add(pickPhoto)}
+			onCloseView={() => setViewing(null)}
 			onOpen={(id) => void open(id)}
-			onRemove={(id) => void removeAttachment(id)}
+			onRemove={(id) => {
+				if (viewing !== null) setViewing(null);
+				void removeAttachment(id).catch(() =>
+					setProblem(t`That didn't remove. Try again.`),
+				);
+			}}
+			onTakePhoto={() => void add(takePhoto)}
 			problem={problem}
+			viewing={viewing}
 		/>
 	);
 };

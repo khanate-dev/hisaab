@@ -22,9 +22,11 @@ const setup = async (
 	props: Partial<Parameters<typeof AttachmentList>[0]> = {},
 ) => {
 	const handlers = {
-		onAddPhoto: jest.fn(),
-		onAddFile: jest.fn(),
+		onTakePhoto: jest.fn(),
+		onChoosePhoto: jest.fn(),
+		onChooseFromFiles: jest.fn(),
 		onOpen: jest.fn((_id: string) => {}),
+		onCloseView: jest.fn(),
 		onRemove: jest.fn((_id: string) => {}),
 	};
 	await render(
@@ -33,6 +35,7 @@ const setup = async (
 			busy={false}
 			canEdit
 			problem={null}
+			viewing={null}
 			{...handlers}
 			{...props}
 		/>,
@@ -51,12 +54,26 @@ describe("AttachmentList", () => {
 		expect(onRemove).toHaveBeenCalledWith("a1");
 	});
 
-	it("adds a photo or a file", async () => {
-		const { onAddPhoto, onAddFile, user } = await setup();
-		await user.press(screen.getByRole("button", { name: "Add photo" }));
-		await user.press(screen.getByRole("button", { name: "Add file" }));
-		expect(onAddPhoto).toHaveBeenCalled();
-		expect(onAddFile).toHaveBeenCalled();
+	it("adds a photo taken now, one from the library, or a PDF or image from files", async () => {
+		const { onTakePhoto, onChoosePhoto, onChooseFromFiles, user } =
+			await setup();
+		await user.press(screen.getByRole("button", { name: "Take photo" }));
+		await user.press(screen.getByRole("button", { name: "Choose photo" }));
+		await user.press(
+			screen.getByRole("button", { name: "Choose PDF or image" }),
+		);
+		expect(onTakePhoto).toHaveBeenCalled();
+		expect(onChoosePhoto).toHaveBeenCalled();
+		expect(onChooseFromFiles).toHaveBeenCalled();
+	});
+
+	it("shows an opened image full size until it's closed", async () => {
+		const { onCloseView, user } = await setup({
+			viewing: { uri: "blob:receipt", name: "receipt.jpg" },
+		});
+		expect(screen.getByLabelText("receipt.jpg")).toBeVisible();
+		await user.press(screen.getByRole("button", { name: "Close receipt.jpg" }));
+		expect(onCloseView).toHaveBeenCalled();
 	});
 
 	it("takes no more than five", async () => {
@@ -67,14 +84,16 @@ describe("AttachmentList", () => {
 				fileName: `${id}.jpg`,
 			})),
 		});
-		expect(screen.queryByRole("button", { name: "Add photo" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Take photo" })).toBeNull();
 		expect(
 			screen.getByText("An Entry takes 5 Attachments at most."),
 		).toBeVisible();
 	});
 
 	it("says why a file didn't attach", async () => {
-		await setup({ problem: "That file is over 10 MB; try a smaller one." });
+		await setup({
+			problem: "That's over 10 MB; an Attachment takes 10 MB at most.",
+		});
 		expect(screen.getByRole("alert")).toHaveTextContent(/over 10 MB/);
 	});
 
@@ -84,7 +103,9 @@ describe("AttachmentList", () => {
 			screen.getByRole("button", { name: "Open receipt.jpg" }),
 		).toBeVisible();
 		expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
-		expect(screen.queryByRole("button", { name: "Add file" })).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: "Choose PDF or image" }),
+		).toBeNull();
 	});
 
 	it("isn't shown to a Viewer when there's nothing attached", async () => {

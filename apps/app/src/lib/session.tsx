@@ -1,7 +1,11 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, type ReactNode, use, useEffect, useState } from "react";
 
-import { attachmentQueue } from "./attachments/queue";
+import {
+	clearAttachments,
+	startAttachments,
+	stopAttachments,
+} from "./attachments/queue";
 import { powersync, startSync, stopSync } from "./powersync";
 import { supabase } from "./supabase";
 
@@ -28,11 +32,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 		const { data } = supabase.auth.onAuthStateChange((event, next) => {
 			setSession(next);
 			// Only an explicit sign-out wipes the local replica; a remount or fast refresh must never lose data.
-			if (event === "SIGNED_OUT")
-				void attachmentQueue
-					.stopSync()
-					.then(() => attachmentQueue.localStorage.clear())
-					.then(stopSync);
+			if (event === "SIGNED_OUT") void clearAttachments().finally(stopSync);
 		});
 		return () => data.subscription.unsubscribe();
 	}, []);
@@ -42,9 +42,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 		if (userId === undefined) return;
 		void startSync();
 		// Files queued while offline upload once the device is back; the queue survives restarts.
-		void attachmentQueue.startSync();
+		void startAttachments();
 		return () => {
-			void attachmentQueue.stopSync();
+			void stopAttachments();
 			void powersync.disconnect();
 		};
 	}, [userId]);

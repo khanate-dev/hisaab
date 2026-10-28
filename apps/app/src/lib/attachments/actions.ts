@@ -1,30 +1,32 @@
-import { stamped, stampedDelete } from "@hisaab/client-schema";
+import { attachments, stamped, stampedDelete } from "@hisaab/client-schema";
 import { attachmentExtension, attachmentPath } from "@hisaab/domain";
+import { eq } from "drizzle-orm";
 
-import { newId } from "../ids";
 import { nowIso } from "../dates";
+import { newId } from "../ids";
+import { db } from "../powersync";
 
-import type { PreparedFile } from "./pick";
+import type { PreparedAttachment } from "./pick";
 import { attachmentQueue } from "./queue";
 
 /**
- * Attaches a file to an Entry: kept on the device and queued for upload, with its row (and thumbnail) written in the
- * same local transaction, so it shows at once and syncs to everyone when the file is up.
+ * Adds an Attachment to an Entry: the file kept on the device and queued for upload, with its row (and thumbnail)
+ * written in the same local transaction, so it shows at once and reaches everyone when the file is up.
  */
-export const attachFile = async (
+export const addAttachment = async (
 	entry: { id: string; household_id: string },
 	userId: string,
-	file: PreparedFile,
+	file: PreparedAttachment,
 ) => {
 	const id = newId();
-	const path = attachmentPath(entry.household_id, id, file.mediaType);
 	await attachmentQueue.saveFile({
 		id,
 		data: file.data,
 		fileExtension: attachmentExtension(file.mediaType),
 		mediaType: file.mediaType,
-		metaData: path,
+		metaData: attachmentPath(entry.household_id, id, file.mediaType),
 		updateHook: async (tx) => {
+			// The queue's own transaction, so the row is written with SQL; stamped like every synced write.
 			const row = stamped({
 				id,
 				household_id: entry.household_id,
@@ -36,36 +38,19 @@ export const attachFile = async (
 				created_by: userId,
 				created_at: nowIso(),
 			});
+			const columns = Object.keys(row);
 			await tx.execute(
-				`INSERT INTO attachments (id, household_id, entry_id, media_type, size_bytes, file_name, thumbnail, created_by, created_at, _metadata)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				[
-					row.id,
-					row.household_id,
-					row.entry_id,
-					row.media_type,
-					row.size_bytes,
-					row.file_name,
-					row.thumbnail,
-					row.created_by,
-					row.created_at,
-					row._metadata,
-				],
+				`INSERT INTO attachments (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
+				Object.values(row),
 			);
 		},
 	});
 };
 
-/** Removes an Attachment: its row now, and its file from Storage once the device is online. */
+/** Removes an Attachment from its Entry. Its file stays in Storage, to be purged later (spec §3.4). */
 export const removeAttachment = async (attachmentId: string) => {
-	const { _metadata } = stampedDelete();
-	await attachmentQueue.deleteFile({
-		id: attachmentId,
-		updateHook: async (tx) => {
-			await tx.execute(
-				"UPDATE attachments SET _deleted = 1, _metadata = ? WHERE id = ?",
-				[_metadata, attachmentId],
-			);
-		},
-	});
+	await db
+		.update(attachments)
+		.set(stampedDelete())
+		.where(eq(attachments.id, attachmentId));
 };

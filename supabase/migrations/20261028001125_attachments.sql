@@ -1,7 +1,8 @@
 -- Attachments (spec §3.4): up to 5 images or PDFs per Entry. The row (with a small thumbnail) syncs to every device
 -- in the household; the file lives in the private `attachments` Storage bucket under the household's folder, and
 -- downloads when it's opened. An Attachment outlives its Entry being deleted, so restoring the Entry brings its files
--- back; purging those of long-deleted Entries comes later. Expand-only: a new table, a bucket and its policies.
+-- back. A removed Attachment's file stays too. Purging both after 90 days, and a deleted household's files at once,
+-- comes later. Expand-only: a new table, a bucket and its policies.
 
 create table public.attachments (
 	id uuid primary key,
@@ -10,7 +11,7 @@ create table public.attachments (
 	entry_id uuid not null,
 	media_type text not null
 		check (media_type in ('image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf')),
-	-- About 10 MB at most (`MAX_ATTACHMENT_BYTES`).
+	-- About 10 MB at most (`MAX_ATTACHMENT_BYTES` in the domain package).
 	size_bytes integer not null check (size_bytes between 1 and 10485760),
 	-- The name it was picked with, for showing.
 	file_name text check (char_length(file_name) <= 200),
@@ -64,6 +65,7 @@ begin
 	if not found then
 		raise exception 'An Attachment belongs to one of the household''s Entries' using errcode = '23503';
 	end if;
+	-- `MAX_ATTACHMENTS` in the domain package.
 	if (select count(*) from public.attachments where entry_id = new.entry_id and id <> new.id) >= 5 then
 		raise exception 'An Entry has 5 Attachments at most' using errcode = '23514';
 	end if;
@@ -86,7 +88,7 @@ on conflict (id) do nothing;
 
 -- The household a file belongs to, from its path; null for a path that doesn't start with a household id.
 create function private.attachment_household(object_name text) returns uuid
-language sql immutable
+language sql stable
 set search_path = ''
 as $$
 	select case when (storage.foldername(object_name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
@@ -98,9 +100,18 @@ grant execute on function private.attachment_household(text) to authenticated;
 create policy "Members read their households' Attachment files" on storage.objects
 	for select to authenticated
 	using (bucket_id = 'attachments' and private.is_member(private.attachment_household(name)));
+-- Only a file whose Attachment row is already here: none without one, and none for a row the server refused. Until
+-- the row has uploaded the device's queue keeps retrying.
 create policy "Admins and Members upload Attachment files" on storage.objects
 	for insert to authenticated
-	with check (bucket_id = 'attachments' and private.can_write(private.attachment_household(name)));
+	with check (
+		bucket_id = 'attachments' and private.can_write(private.attachment_household(name))
+		and exists (
+			select 1 from public.attachments a
+			where a.household_id = private.attachment_household(name)
+				and name = a.household_id::text || '/' || a.id::text || '.' || split_part(name, '.', 2)
+		)
+	);
 create policy "Admins and Members replace Attachment files" on storage.objects
 	for update to authenticated
 	using (bucket_id = 'attachments' and private.can_write(private.attachment_household(name)))

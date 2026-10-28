@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values
 	('00000000-0000-4000-8000-00000000ffa1', 'member@example.com'),
@@ -67,10 +67,13 @@ select lives_ok(pg_temp.upload('00000000-0000-7000-8000-00000000fff1/00000000-00
 	'a Member uploads a file under the household''s folder');
 select throws_ok(pg_temp.upload('00000000-0000-7000-8000-00000000fff2/x.jpg'),
 	'42501', null, 'but not under another household''s');
+select throws_ok(pg_temp.upload('00000000-0000-7000-8000-00000000fff1/00000000-0000-7000-8000-00000000ff99.jpg'),
+	'42501', null, 'nor one with no Attachment row');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000ffa2');
 select is((select count(*)::int from storage.objects where bucket_id = 'attachments'), 1, 'a Viewer reads the household''s files');
-select throws_ok(pg_temp.upload('00000000-0000-7000-8000-00000000fff1/y.jpg'), '42501', null, 'but uploads none');
+select throws_ok(pg_temp.upload('00000000-0000-7000-8000-00000000fff1/00000000-0000-7000-8000-00000000ff06.jpg'),
+	'42501', null, 'but uploads none');
 
 select pg_temp.act_as('00000000-0000-4000-8000-00000000ffa3');
 select is((select count(*)::int from storage.objects where bucket_id = 'attachments')

@@ -1,10 +1,13 @@
-import { MAX_ATTACHMENTS } from "@hisaab/domain";
+import { attachmentKind, MAX_ATTACHMENTS } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { Image, Pressable, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Text } from "@/components/ui/text";
+
+/** A full-size image fits the viewer, whatever its shape. */
+const CONTAIN = "contain";
 
 /** An Attachment as the list shows it. */
 export type AttachmentItem = {
@@ -17,14 +20,18 @@ export type AttachmentItem = {
 
 type Props = {
 	attachments: readonly AttachmentItem[];
-	/** Admins and Members attach and remove; everyone opens. */
+	/** Admins and Members add and remove; everyone opens. */
 	canEdit: boolean;
 	busy: boolean;
-	/** Why the last attach didn't work, if it didn't. */
+	/** Why the last add or open didn't work, if it didn't. */
 	problem: string | null;
-	onAddPhoto: () => void;
-	onAddFile: () => void;
+	/** An image being looked at, full size: its address and name. */
+	viewing: { uri: string; name: string } | null;
+	onTakePhoto: () => void;
+	onChoosePhoto: () => void;
+	onChooseFromFiles: () => void;
 	onOpen: (attachmentId: string) => void;
+	onCloseView: () => void;
 	onRemove: (attachmentId: string) => void;
 };
 
@@ -34,18 +41,40 @@ export const AttachmentList = ({
 	canEdit,
 	busy,
 	problem,
-	onAddPhoto,
-	onAddFile,
+	viewing,
+	onTakePhoto,
+	onChoosePhoto,
+	onChooseFromFiles,
 	onOpen,
+	onCloseView,
 	onRemove,
 }: Props) => {
 	const { t } = useLingui();
 	const count = attachments.length;
-	const most = MAX_ATTACHMENTS;
+	const limit = MAX_ATTACHMENTS;
 	if (count === 0 && !canEdit) return null;
+	const viewingName = viewing?.name;
+	const kindName = (mediaType: string) =>
+		attachmentKind(mediaType) === "pdf" ? t`PDF` : t`Image`;
 	return (
 		<View className="gap-3">
 			<Text variant="title">{t`Attachments`}</Text>
+			{viewing !== null && (
+				<View className="gap-2">
+					<Image
+						accessibilityLabel={viewing.name}
+						className="aspect-square w-full rounded-control border-2 border-border"
+						resizeMode={CONTAIN}
+						source={{ uri: viewing.uri }}
+					/>
+					<Button
+						onPress={onCloseView}
+						variant="secondary"
+					>
+						{t`Close ${viewingName}`}
+					</Button>
+				</View>
+			)}
 			{count === 0 ? (
 				<Text
 					role="status"
@@ -56,8 +85,7 @@ export const AttachmentList = ({
 			) : (
 				<View className="flex-row flex-wrap gap-3">
 					{attachments.map(({ id, mediaType, fileName, thumbnail }) => {
-						const name =
-							fileName ?? (mediaType === "application/pdf" ? t`PDF` : t`Image`);
+						const name = fileName ?? kindName(mediaType);
 						return (
 							<View
 								className="w-28 gap-1"
@@ -66,13 +94,12 @@ export const AttachmentList = ({
 								<Pressable
 									accessibilityLabel={t`Open ${name}`}
 									className="h-28 w-28 items-center justify-center overflow-hidden rounded-control border-2 border-border bg-surface-2"
+									disabled={busy}
 									onPress={() => onOpen(id)}
 									role="button"
 								>
 									{thumbnail === null ? (
-										<Text variant="label">
-											{mediaType === "application/pdf" ? t`PDF` : t`Image`}
-										</Text>
+										<Text variant="label">{kindName(mediaType)}</Text>
 									) : (
 										<Image
 											accessible={false}
@@ -108,26 +135,33 @@ export const AttachmentList = ({
 					{problem}
 				</Text>
 			)}
-			{canEdit && count < most && (
+			{canEdit && count < limit && (
 				<View className="flex-row flex-wrap gap-2">
 					<Button
 						disabled={busy}
-						onPress={onAddPhoto}
+						onPress={onTakePhoto}
 						variant="secondary"
 					>
-						{t`Add photo`}
+						{t`Take photo`}
 					</Button>
 					<Button
 						disabled={busy}
-						onPress={onAddFile}
+						onPress={onChoosePhoto}
 						variant="secondary"
 					>
-						{t`Add file`}
+						{t`Choose photo`}
+					</Button>
+					<Button
+						disabled={busy}
+						onPress={onChooseFromFiles}
+						variant="secondary"
+					>
+						{t`Choose PDF or image`}
 					</Button>
 				</View>
 			)}
-			{canEdit && count >= most && (
-				<Text variant="muted">{t`An Entry takes ${most} Attachments at most.`}</Text>
+			{canEdit && count >= limit && (
+				<Text variant="muted">{t`An Entry takes ${limit} Attachments at most.`}</Text>
 			)}
 		</View>
 	);
