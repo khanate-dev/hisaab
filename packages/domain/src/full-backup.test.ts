@@ -110,7 +110,7 @@ const household = fc
 		const categoryIds = tables.categories.map((c) => c.id);
 		tables.recurring_rules = fresh(g.rules).map(([id, w, c]) => ({
 			id,
-			mode: "confirm",
+			mode: w % 2 === 0 ? "auto" : "confirm",
 			kind: "expense",
 			wallet_id: pick(g.wallets, w) ?? null,
 			category_id: pick(categoryIds, c) ?? null,
@@ -139,7 +139,13 @@ const household = fc
 			to_wallet_id: null,
 			loan_id: e.loan === null ? null : (pick(loanIds, e.loan) ?? null),
 			link_id: "00000000-0000-7000-8000-00000000aaaa",
-			kind: "expense",
+			// A Loan's: its principal, or (as a device may hold them, out of order) a Repayment.
+			kind:
+				e.loan === null || loanIds.length === 0
+					? "expense"
+					: e.wallet % 2 === 0
+						? "repayment"
+						: "loan_principal",
 			amount: e.amount,
 			to_amount: null,
 			occurred_on: "2026-10-02",
@@ -391,7 +397,10 @@ describe("restorePlan", () => {
 				const plan = restorePlan(backup, target, counter());
 				for (const t of ["wallets", "categories", "contacts"] as const)
 					for (const row of plan.tables[t]) expect(row.archived_at).toBe(null);
-				expect(plan.archive.length).toBe(
+				const archive = plan.afterwards.filter(
+					(a) => "archived_at" in a.values,
+				);
+				expect(archive.length).toBe(
 					backup.tables.categories.filter((c) => c.archived_at !== null).length,
 				);
 				const subs = new Set(
@@ -399,11 +408,43 @@ describe("restorePlan", () => {
 						.filter((c) => c.parent_id !== null)
 						.map((c) => c.id),
 				);
-				const firstParent = plan.archive.findIndex((a) => !subs.has(a.id));
+				const firstParent = archive.findIndex((a) => !subs.has(a.id));
 				if (firstParent >= 0)
+					expect(archive.slice(firstParent).every((a) => !subs.has(a.id))).toBe(
+						true,
+					);
+			}),
+		);
+	});
+
+	it("restores Auto-record rules as Confirm, to switch back once their Occurrences are in", () => {
+		fc.assert(
+			fc.property(household, (backup) => {
+				const plan = restorePlan(backup, target, counter());
+				for (const rule of plan.tables.recurring_rules)
+					expect(rule.mode).toBe("confirm");
+				backup.tables.recurring_rules.forEach((old, i) => {
+					const id = plan.tables.recurring_rules[i]?.id;
 					expect(
-						plan.archive.slice(firstParent).every((a) => !subs.has(a.id)),
-					).toBe(true);
+						plan.afterwards.some(
+							(a) => a.id === id && a.values.mode === "auto",
+						),
+					).toBe(old.mode === "auto");
+				});
+			}),
+		);
+	});
+
+	it("writes each Loan's principal before its Repayments, as the server checks them against it", () => {
+		fc.assert(
+			fc.property(household, (backup) => {
+				const kinds = restorePlan(backup, target, counter()).tables.entries.map(
+					(e) => e.kind,
+				);
+				const lastPrincipal = kinds.lastIndexOf("loan_principal");
+				const firstRepayment = kinds.indexOf("repayment");
+				if (lastPrincipal >= 0 && firstRepayment >= 0)
+					expect(lastPrincipal).toBeLessThan(firstRepayment);
 			}),
 		);
 	});

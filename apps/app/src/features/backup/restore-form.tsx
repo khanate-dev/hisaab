@@ -1,4 +1,5 @@
 import { type FullBackup } from "@hisaab/domain";
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { View } from "react-native";
@@ -15,6 +16,8 @@ type Problem = Extract<UnpackedBackup, { problem: string }>["problem"];
 
 const NOT_A_BACKUP: Problem = "not_a_backup";
 const NEWER_VERSION: Problem = "newer_version";
+/** As long as a household name the app takes. */
+const MAX_NAME = 80;
 const PRIMARY = "primary";
 const SECONDARY = "secondary";
 
@@ -25,16 +28,22 @@ const SECONDARY = "secondary";
 export const RestoreForm = ({
 	onChoose,
 	onRestore,
+	onDone,
 }: {
 	/** Lets the User pick a file; null when they back out. */
 	onChoose: () => Promise<UnpackedBackup | null>;
-	onRestore: (chosen: Chosen, name: string) => Promise<void>;
+	/** Restores it; answers with how many Attachment files didn't come back. */
+	onRestore: (chosen: Chosen, name: string) => Promise<number>;
+	/** Once it's restored: on to the new household. */
+	onDone: () => void;
 }) => {
 	const { t } = useLingui();
 	const [chosen, setChosen] = useState<Chosen | null>(null);
 	const [name, setName] = useState("");
 	const [problem, setProblem] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	/** Set once it's restored, with how many files didn't come back: it's never restored twice. */
+	const [missing, setMissing] = useState<number | null>(null);
 
 	const choose = async () => {
 		setProblem(null);
@@ -53,7 +62,9 @@ export const RestoreForm = ({
 		}
 		const { name: householdName } = picked.backup.household;
 		setChosen(picked);
-		setName(t`${householdName} (restored)`);
+		// Short enough for a household's name, suffix and all.
+		const short = householdName.slice(0, MAX_NAME - 11).trim();
+		setName(t`${short} (restored)`);
 	};
 
 	const restore = async () => {
@@ -61,7 +72,9 @@ export const RestoreForm = ({
 		setBusy(true);
 		setProblem(null);
 		try {
-			await onRestore(chosen, name);
+			const left = await onRestore(chosen, name);
+			if (left === 0) onDone();
+			else setMissing(left);
 		} catch {
 			setProblem(t`That didn't restore. Try again.`);
 		} finally {
@@ -74,6 +87,15 @@ export const RestoreForm = ({
 	const entryCount = counts?.entries.length ?? 0;
 	const walletCount = counts?.wallets.length ?? 0;
 	const fileCount = chosen?.files.size ?? 0;
+	if (missing !== null)
+		return (
+			<View className="gap-4">
+				<Text role="status">
+					{t`Restored, but ${plural(missing, { one: "# Attachment file", other: "# Attachment files" })} didn't come back.`}
+				</Text>
+				<Button onPress={onDone}>{t`Go to the household`}</Button>
+			</View>
+		);
 	return (
 		<View className="gap-4">
 			<Text variant="muted">
@@ -89,16 +111,18 @@ export const RestoreForm = ({
 			{chosen && (
 				<>
 					<Text>
-						{t`Made ${madeOn}: ${walletCount} Wallets, ${entryCount} Entries and ${fileCount} Attachment files.`}
+						{t`Made ${madeOn}: ${plural(walletCount, { one: "# Wallet", other: "# Wallets" })}, ${plural(entryCount, { one: "# Entry", other: "# Entries" })} and ${plural(fileCount, { one: "# Attachment file", other: "# Attachment files" })}.`}
 					</Text>
 					<Input
 						label={t`New household's name`}
-						maxLength={80}
+						maxLength={MAX_NAME}
 						onChangeText={setName}
 						value={name}
 					/>
 					<Button
-						disabled={busy || name.trim() === ""}
+						disabled={
+							busy || name.trim() === "" || name.trim().length > MAX_NAME
+						}
 						onPress={() => void restore()}
 					>
 						{busy ? t`Restoring…` : t`Restore into a new household`}

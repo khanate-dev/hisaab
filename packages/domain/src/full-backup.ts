@@ -203,8 +203,15 @@ export type RestorePlan = {
 	tables: Record<Exclude<BackupTable, "attachments">, BackupRow[]>;
 	/** Attachment rows, each written with its file. Ones whose file was purged aren't restored: the file is gone. */
 	attachments: { row: BackupRow; file: RestoredFile }[];
-	/** Rows to archive after the rest is in, Subcategories before their parents. */
-	archive: { table: BackupTable; id: string; archived_at: string }[];
+	/**
+	 * Changes to make once the rest is in: archiving (Subcategories before their parents), and turning Auto-record back
+	 * on, each rule restored as Confirm so the server's hourly job can't record what the backup had skipped meanwhile.
+	 */
+	afterwards: {
+		table: BackupTable;
+		id: string;
+		values: Record<string, BackupValue>;
+	}[];
 };
 
 /**
@@ -235,17 +242,24 @@ export const restorePlan = (
 	}
 
 	const restored = new Map<BackupTable, BackupRow[]>();
-	const archive: RestorePlan["archive"] = [];
+	const afterwards: RestorePlan["afterwards"] = [];
 	for (const table of BACKUP_TABLES) {
 		const rows: BackupRow[] = [];
-		// Categories in two passes, top-level first, so a Subcategory's parent is mapped before it.
+		// Categories top-level first, so a Subcategory's parent is mapped before it; a Loan's principal before its
+		// Repayments, as the server checks Repayments against it.
 		const source =
 			table === "categories"
 				? backup.tables.categories.toSorted(
 						(a, b) =>
 							Number(a.parent_id !== null) - Number(b.parent_id !== null),
 					)
-				: backup.tables[table];
+				: table === "entries"
+					? backup.tables.entries.toSorted(
+							(a, b) =>
+								Number(a.kind !== "loan_principal") -
+								Number(b.kind !== "loan_principal"),
+						)
+					: backup.tables[table];
 		for (const row of source) {
 			const next: BackupRow = { ...row, household_id: target.householdId };
 			let whole = true;
@@ -279,8 +293,16 @@ export const restorePlan = (
 			)
 				continue;
 			if (ARCHIVABLE.has(table) && typeof row.archived_at === "string") {
-				archive.push({ table, id: next.id, archived_at: row.archived_at });
+				afterwards.push({
+					table,
+					id: next.id,
+					values: { archived_at: row.archived_at },
+				});
 				next.archived_at = null;
+			}
+			if (table === "recurring_rules" && row.mode === "auto") {
+				afterwards.push({ table, id: next.id, values: { mode: "auto" } });
+				next.mode = "confirm";
 			}
 			idsOf(table).set(row.id, next.id);
 			rows.push(next);
@@ -293,7 +315,7 @@ export const restorePlan = (
 			.filter((c) => c.parent_id !== null)
 			.map((c) => c.id),
 	);
-	archive.sort(
+	afterwards.sort(
 		(a, b) =>
 			Number(!subcategories.has(a.id)) - Number(!subcategories.has(b.id)),
 	);
@@ -314,6 +336,6 @@ export const restorePlan = (
 				mediaType: String(row.media_type),
 			},
 		})),
-		archive,
+		afterwards,
 	};
 };

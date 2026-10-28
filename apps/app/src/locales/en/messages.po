@@ -51,10 +51,6 @@ msgstr "{description} × {quantity}"
 msgid "{first} to {last}"
 msgstr "{first} to {last}"
 
-#: src/features/backup/restore-form.tsx
-msgid "{householdName} (restored)"
-msgstr "{householdName} (restored)"
-
 #: src/features/recurring/rule-list.tsx
 msgid "{how} · {mode} · {when}"
 msgstr "{how} · {mode} · {when}"
@@ -193,6 +189,10 @@ msgstr "{rule} is still Pending in {household}."
 #: src/features/notifications/inbox-list.tsx
 msgid "{rule} was recorded in {household}."
 msgstr "{rule} was recorded in {household}."
+
+#: src/features/backup/restore-form.tsx
+msgid "{short} (restored)"
+msgstr "{short} (restored)"
 
 #: src/features/search/entry-search.tsx
 msgid "{shown} of {total} Entries"
@@ -1321,6 +1321,10 @@ msgstr "Give the Category a name."
 msgid "Give the household a name."
 msgstr "Give the household a name."
 
+#: src/features/backup/restore-form.tsx
+msgid "Go to the household"
+msgstr "Go to the household"
+
 #: src/features/categories/labels.ts
 msgid "Graduation cap"
 msgstr "Graduation cap"
@@ -1676,8 +1680,8 @@ msgid "Made {made}, synced {synced}"
 msgstr "Made {made}, synced {synced}"
 
 #: src/features/backup/restore-form.tsx
-msgid "Made {madeOn}: {walletCount} Wallets, {entryCount} Entries and {fileCount} Attachment files."
-msgstr "Made {madeOn}: {walletCount} Wallets, {entryCount} Entries and {fileCount} Attachment files."
+msgid "Made {madeOn}: {walletCount, plural, one {# Wallet} other {# Wallets}}, {entryCount, plural, one {# Entry} other {# Entries}} and {fileCount, plural, one {# Attachment file} other {# Attachment files}}."
+msgstr "Made {madeOn}: {walletCount, plural, one {# Wallet} other {# Wallets}}, {entryCount, plural, one {# Entry} other {# Entries}} and {fileCount, plural, one {# Attachment file} other {# Attachment files}}."
 
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
@@ -2308,6 +2312,10 @@ msgid "Restore into a new household"
 msgstr "Restore into a new household"
 
 #: src/features/backup/restore-form.tsx
+msgid "Restored, but {missing, plural, one {# Attachment file} other {# Attachment files}} didn't come back."
+msgstr "Restored, but {missing, plural, one {# Attachment file} other {# Attachment files}} didn't come back."
+
+#: src/features/backup/restore-form.tsx
 msgid "Restoring…"
 msgstr "Restoring…"
 
@@ -2673,6 +2681,10 @@ msgstr "The day each Budget month starts, from 1 to 28."
 #: src/features/import/import-wizard.tsx
 msgid "The first row is a header"
 msgstr "The first row is a header"
+
+#: src/features/backup/full-backup-section.tsx
+msgid "The Full backup is made, but {missing, plural, one {# Attachment file} other {# Attachment files}} couldn't be had and {missing, plural, one {isn't} other {aren't}} in it. Make it again online to include them."
+msgstr "The Full backup is made, but {missing, plural, one {# Attachment file} other {# Attachment files}} couldn't be had and {missing, plural, one {isn't} other {aren't}} in it. Make it again online to include them."
 
 #: src/features/backup/full-backup-section.tsx
 msgid "The Full backup is made."

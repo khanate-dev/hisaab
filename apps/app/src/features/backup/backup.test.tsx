@@ -62,13 +62,23 @@ describe("Full backup ZIP", () => {
 
 describe("FullBackupSection", () => {
 	it("makes the backup when pressed, and says it's made", async () => {
-		const onMake = jest.fn(async () => {});
+		const onMake = jest.fn(async () => 0);
 		await render(<FullBackupSection onMake={onMake} />);
 		await userEvent
 			.setup()
 			.press(screen.getByRole("button", { name: "Make a Full backup" }));
 		expect(onMake).toHaveBeenCalledTimes(1);
 		expect(await screen.findByText("The Full backup is made.")).toBeVisible();
+	});
+
+	it("says how many Attachment files it couldn't include", async () => {
+		await render(<FullBackupSection onMake={async () => 2} />);
+		await userEvent
+			.setup()
+			.press(screen.getByRole("button", { name: "Make a Full backup" }));
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			/made, but 2 Attachment files couldn't be had and aren't in it/,
+		);
 	});
 
 	it("says when it couldn't, as when offline with Attachments", async () => {
@@ -95,10 +105,12 @@ describe("RestoreForm", () => {
 	};
 
 	it("shows what's in the backup and restores it under the name given", async () => {
-		const onRestore = jest.fn(async (_chosen: unknown, _name: string) => {});
+		const onRestore = jest.fn(async (_chosen: unknown, _name: string) => 0);
+		const onDone = jest.fn();
 		await render(
 			<RestoreForm
 				onChoose={async () => chosen}
+				onDone={onDone}
 				onRestore={onRestore}
 			/>,
 		);
@@ -107,7 +119,7 @@ describe("RestoreForm", () => {
 			screen.getByRole("button", { name: "Choose a Full backup" }),
 		);
 		expect(
-			await screen.findByText(/1 Wallets, 2 Entries and 1 Attachment files\./),
+			await screen.findByText(/1 Wallet, 2 Entries and 1 Attachment file\./),
 		).toBeVisible();
 		const name = screen.getByLabelText("New household's name");
 		expect(name).toHaveDisplayValue("Family (restored)");
@@ -117,13 +129,15 @@ describe("RestoreForm", () => {
 			screen.getByRole("button", { name: "Restore into a new household" }),
 		);
 		expect(onRestore).toHaveBeenCalledWith(chosen, "Family again");
+		expect(onDone).toHaveBeenCalled();
 	});
 
 	it("restores nothing without a name", async () => {
 		await render(
 			<RestoreForm
 				onChoose={async () => chosen}
-				onRestore={async () => {}}
+				onDone={() => {}}
+				onRestore={async () => 0}
 			/>,
 		);
 		const user = userEvent.setup();
@@ -146,7 +160,8 @@ describe("RestoreForm", () => {
 			await render(
 				<RestoreForm
 					onChoose={async () => ({ problem })}
-					onRestore={async () => {}}
+					onDone={() => {}}
+					onRestore={async () => 0}
 				/>,
 			);
 			await userEvent
@@ -163,6 +178,7 @@ describe("RestoreForm", () => {
 		await render(
 			<RestoreForm
 				onChoose={async () => chosen}
+				onDone={() => {}}
 				onRestore={async () => {
 					throw new Error("no");
 				}}
@@ -180,5 +196,57 @@ describe("RestoreForm", () => {
 		expect(await screen.findByRole("alert")).toHaveTextContent(
 			"That didn't restore. Try again.",
 		);
+	});
+
+	it("says how many Attachment files didn't come back, and restores nothing twice", async () => {
+		const onRestore = jest.fn(async () => 1);
+		const onDone = jest.fn();
+		await render(
+			<RestoreForm
+				onChoose={async () => chosen}
+				onDone={onDone}
+				onRestore={onRestore}
+			/>,
+		);
+		const user = userEvent.setup();
+		await user.press(
+			screen.getByRole("button", { name: "Choose a Full backup" }),
+		);
+		await user.press(
+			await screen.findByRole("button", {
+				name: "Restore into a new household",
+			}),
+		);
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Restored, but 1 Attachment file didn't come back.",
+		);
+		expect(
+			screen.queryByRole("button", { name: "Restore into a new household" }),
+		).toBeNull();
+		await user.press(
+			screen.getByRole("button", { name: "Go to the household" }),
+		);
+		expect(onDone).toHaveBeenCalled();
+		expect(onRestore).toHaveBeenCalledTimes(1);
+	});
+
+	it("suggests a name short enough for a household", async () => {
+		const long = "H".repeat(100);
+		await render(
+			<RestoreForm
+				onChoose={async () => ({
+					...chosen,
+					backup: { ...backup, household: { ...backup.household, name: long } },
+				})}
+				onDone={() => {}}
+				onRestore={async () => 0}
+			/>,
+		);
+		await userEvent
+			.setup()
+			.press(screen.getByRole("button", { name: "Choose a Full backup" }));
+		expect(
+			await screen.findByLabelText("New household's name"),
+		).toHaveDisplayValue(`${"H".repeat(69)} (restored)`);
 	});
 });

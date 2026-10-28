@@ -17,7 +17,6 @@ import {
 } from "@hisaab/client-schema";
 import {
 	attachmentExtension,
-	attachmentPath,
 	type BackupRow,
 	type BackupTable,
 	backupJson,
@@ -28,7 +27,7 @@ import {
 } from "@hisaab/domain";
 import { eq } from "drizzle-orm";
 
-import { downloadAttachment } from "@/lib/attachments/storage";
+import { attachmentBytes } from "@/lib/attachments/attachment-bytes";
 import { restoreAttachment } from "@/lib/attachments/actions";
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/ids";
@@ -53,7 +52,8 @@ const TABLES = {
 
 /**
  * Makes a household's Full backup on this device (spec §3.4: no server job): every record from the local database,
- * and every Attachment file still kept, fetched from Storage (so it needs a connection when there are any).
+ * and the files of its Entries' Attachments, from this device where kept, else from Storage (so it needs a connection
+ * for those). One at a time, to keep memory down. A file that can't be had is left out and counted, not the backup.
  */
 export const makeFullBackup = async (householdId: string) => {
 	const [household] = await db
@@ -73,28 +73,42 @@ export const makeFullBackup = async (householdId: string) => {
 		),
 	) as Record<BackupTable, Record<string, unknown>[]>;
 	const backup = buildBackup(household, rows, nowIso());
-	const files = await Promise.all(
-		backup.tables.attachments.flatMap((a) => {
-			const type = String(a.media_type);
-			if (a.purged_at !== null || !isAttachmentMediaType(type)) return [];
-			return [
-				downloadAttachment(attachmentPath(householdId, a.id, type)).then(
-					(data) => ({
-						id: a.id,
-						extension: attachmentExtension(type),
-						bytes: new Uint8Array(data),
-					}),
-				),
-			];
-		}),
-	);
-	return packBackup(backupJson(backup), files);
+	// Only those of Entries still here: a deleted Entry's aren't restored.
+	const entryIds = new Set(backup.tables.entries.map((e) => e.id));
+	const files: { id: string; extension: string; bytes: Uint8Array }[] = [];
+	let missing = 0;
+	for (const a of backup.tables.attachments) {
+		const type = String(a.media_type);
+		if (
+			a.purged_at !== null ||
+			!entryIds.has(String(a.entry_id)) ||
+			!isAttachmentMediaType(type)
+		)
+			continue;
+		try {
+			files.push({
+				id: a.id,
+				extension: attachmentExtension(type),
+				bytes: await attachmentBytes({
+					id: a.id,
+					household_id: householdId,
+					media_type: type,
+				}),
+			});
+		} catch {
+			missing += 1;
+		}
+	}
+	return {
+		bytes: packBackup(backupJson(backup), files),
+		missingFiles: missing,
+	};
 };
 
 /**
  * Restores a Full backup into a new shared household, the restorer its Admin: every record under a new id, written
  * through the local database (stamped, like any write) and synced from there, then each Attachment file queued for
- * upload with its row. Answers with the new household's id.
+ * upload with its row. Answers with the new household's id, and how many Attachment files didn't come back.
  */
 export const restoreFullBackup = async (
 	userId: string,
@@ -140,23 +154,30 @@ export const restoreFullBackup = async (
 					.insert(target)
 					.values(stamped(row as typeof wallets.$inferInsert));
 		}
-		// Archived once what refers to them is in, as the server takes nothing new into an archived one.
-		for (const { table, id, archived_at } of plan.archive) {
+		// Archiving, and Auto-record back on, once what they're about is in.
+		for (const { table, id, values } of plan.afterwards) {
 			const target = TABLES[table] as typeof wallets;
 			await tx
 				.update(target)
-				.set(stamped({ archived_at }))
+				.set(stamped(values as Partial<typeof wallets.$inferInsert>))
 				.where(eq(target.id, id));
 		}
 	});
+	// The household is in by now: a file that won't go is counted, never a reason to restore it all again.
+	let missing = 0;
 	for (const { row, file } of plan.attachments) {
 		const bytes = files.get(file.from);
-		if (bytes && isAttachmentMediaType(file.mediaType))
+		try {
+			if (!bytes || !isAttachmentMediaType(file.mediaType))
+				throw new Error("No file for this Attachment");
 			await restoreAttachment(
 				{ ...row, household_id: householdId },
 				file.mediaType,
 				bytes,
 			);
+		} catch {
+			missing += 1;
+		}
 	}
-	return householdId;
+	return { householdId, missingFiles: missing };
 };

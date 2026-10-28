@@ -236,6 +236,7 @@ describe("upload connector", () => {
 					budget_month_start_day: null,
 					created_by: null,
 					created_at: expect.any(String),
+					restored_at: null,
 				},
 			},
 		]);
@@ -333,6 +334,7 @@ describe("upload connector", () => {
 						budget_month_start_day: null,
 						created_by: null,
 						created_at: "2026-01-01",
+						restored_at: null,
 					},
 				},
 			]);

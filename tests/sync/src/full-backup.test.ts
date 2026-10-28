@@ -111,6 +111,7 @@ describe("Full backup restore", () => {
 			{
 				id: rule,
 				household_id: household,
+				mode: "auto",
 				kind: "expense",
 				wallet_id: wallet,
 				category_id: parent,
@@ -238,6 +239,8 @@ describe("Full backup restore", () => {
 				}),
 			),
 		) as Record<BackupTable, Record<string, unknown>[]>;
+		// As a device may hold them, out of the order they were made in: Repayments before their principal.
+		rows.entries.reverse();
 		const backup = buildBackup(
 			{
 				name: "Family",
@@ -286,10 +289,10 @@ describe("Full backup restore", () => {
 			"attachments",
 			plan.attachments.map((a) => a.row),
 		);
-		for (const { table, id: rowId, archived_at } of plan.archive) {
+		for (const { table, id: rowId, values } of plan.afterwards) {
 			const { data, error } = await restorer
 				.from(table)
-				.update({ archived_at })
+				.update(values)
 				.eq("id", rowId)
 				.select("id");
 			if (error) throw error;
@@ -315,5 +318,10 @@ describe("Full backup restore", () => {
 			.eq("household_id", restored)
 			.not("archived_at", "is", null);
 		expect(archived?.map((c) => c.name)).toEqual(["B Snacks"]);
+		const { data: rules } = await admin
+			.from("recurring_rules")
+			.select("mode")
+			.eq("household_id", restored);
+		expect(rules).toEqual([{ mode: "auto" }]);
 	});
 });

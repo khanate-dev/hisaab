@@ -88,15 +88,17 @@ export default function HouseholdSettings() {
 			/>
 			{isAdmin && (
 				<FullBackupSection
-					onMake={async () =>
-						saveZip(
+					onMake={async () => {
+						const { bytes, missingFiles } = await makeFullBackup(household.id);
+						await saveZip(
 							backupFileName(
 								isPersonal ? t`Personal` : household.name,
 								todayIn(entryTimeZone(household)),
 							),
-							await makeFullBackup(household.id),
-						)
-					}
+							bytes,
+						);
+						return missingFiles;
+					}}
 				/>
 			)}
 			{!isPersonal && (

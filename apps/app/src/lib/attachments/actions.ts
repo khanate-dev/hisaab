@@ -51,6 +51,18 @@ export const addAttachment = async (
 	});
 };
 
+const ATTACHMENT_COLUMNS = [
+	"id",
+	"household_id",
+	"entry_id",
+	"media_type",
+	"size_bytes",
+	"file_name",
+	"thumbnail",
+	"created_by",
+	"created_at",
+] as const;
+
 /**
  * Puts back an Attachment from a Full backup: its row, as the restore planned it, and its file queued for upload in
  * the same local transaction, as when it was first added.
@@ -70,7 +82,12 @@ export const restoreAttachment = async (
 		mediaType,
 		metaData: attachmentPath(row.household_id, row.id, mediaType),
 		updateHook: async (tx) => {
-			const values = stamped(row);
+			// Its own columns only: the row comes from a file, so nothing else goes into the SQL.
+			const values = stamped(
+				Object.fromEntries(
+					ATTACHMENT_COLUMNS.map((column) => [column, row[column] ?? null]),
+				),
+			);
 			const columns = Object.keys(values);
 			await tx.execute(
 				`INSERT INTO attachments (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,

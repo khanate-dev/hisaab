@@ -19,10 +19,16 @@ export default function RestoreBackup() {
 					const bytes = await chooseZipBytes();
 					return bytes ? unpackBackup(bytes) : null;
 				}}
+				onDone={() => leaveTo("/")}
 				onRestore={async ({ backup, files }, name) => {
-					const id = await restoreFullBackup(userId, backup, files, name);
-					await setCurrentHousehold(id);
-					leaveTo("/");
+					const { householdId, missingFiles } = await restoreFullBackup(
+						userId,
+						backup,
+						files,
+						name,
+					);
+					await setCurrentHousehold(householdId);
+					return missingFiles;
 				}}
 			/>
 		</Screen>
