@@ -1,10 +1,11 @@
 -- Auto-record: the hourly job records an Auto-record rule's due Occurrences as Entries under the derived ids, once,
--- from the day the rule was made, never one already done with, never a Confirm rule's, and leaves one the database
--- refuses Pending without stopping the rest. Its due dates are the domain's.
+-- from the day the rule was made, never one already done with, never a Confirm rule's, an archived Category's, a
+-- household's with no timezone yet, or one whose maker can no longer write there. Its due dates are the domain's
+-- (the harness checks the two agree).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(15);
 
 insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000022a1', 'maker@example.com');
 insert into public.households (id, name, timezone) values ('00000000-0000-7000-8000-0000000022f1', 'Family', 'Asia/Karachi');
@@ -15,10 +16,7 @@ insert into public.wallets (id, household_id, name, type, currency) values
 
 create function pg_temp.dates(frequency text, every int, day int, starts date, ends date, from_day date, to_day date)
 returns setof date language sql as $$
-	select * from private.due_dates(row('00000000-0000-7000-8000-000000002201'::uuid, '00000000-0000-7000-8000-0000000022f1'::uuid,
-		'auto', 'expense', '00000000-0000-7000-8000-0000000022c1'::uuid, '00000000-0000-7000-8000-0000000022c1'::uuid, 1, null,
-		frequency, every, day, starts, ends, '00000000-0000-4000-8000-0000000022a1'::uuid, now())::public.recurring_rules,
-		from_day, to_day);
+	select * from private.schedule_dates(frequency, every, day, starts, ends, from_day, to_day);
 $$;
 
 select results_eq($$ select * from pg_temp.dates('monthly', 1, 31, '2026-01-15', null, '2026-01-01', '2026-04-30') $$,
@@ -49,11 +47,11 @@ update public.categories set archived_at = now()
 where household_id = '00000000-0000-7000-8000-0000000022f1' and name = 'Fuel';
 
 create function pg_temp.rent_dates() returns setof date language sql as $$
-	select * from private.due_dates((select r from public.recurring_rules r where id = '00000000-0000-7000-8000-000000002211'),
-		greatest(current_date - 70, (now() - interval '40 days')::date), (now() at time zone 'Asia/Karachi')::date);
+	select * from private.schedule_dates('monthly', 1, 1, current_date - 70, null,
+		(now() - interval '40 days')::date, (now() at time zone 'Asia/Karachi')::date);
 $$;
 
-select lives_ok($$ select private.auto_record() $$, 'the job runs, one refusal not stopping the rest');
+select lives_ok($$ select private.auto_record() $$, 'the job runs');
 select is((select count(*)::int from public.entries where household_id = '00000000-0000-7000-8000-0000000022f1'
 	and kind = 'expense' and category_id = (select category_id from public.recurring_rules where id = '00000000-0000-7000-8000-000000002211')),
 	(select count(*)::int from pg_temp.rent_dates()),
@@ -69,11 +67,30 @@ select is(
 select is((select count(*)::int from public.occurrences where rule_id = '00000000-0000-7000-8000-000000002212'), 0,
 	'a Confirm rule''s Occurrences stay Pending');
 select is((select count(*)::int from public.occurrences where rule_id = '00000000-0000-7000-8000-000000002213'), 0,
-	'one the database refuses stays Pending');
+	'one whose Category was archived since stays Pending');
 select is(private.auto_record(), 0, 'a second run records nothing more');
 select is((select created_by from public.entries
 	where category_id = (select category_id from public.recurring_rules where id = '00000000-0000-7000-8000-000000002211') limit 1),
 	'00000000-0000-4000-8000-0000000022a1'::uuid, 'recorded by the rule''s maker');
+
+-- One a device already skipped speaks for itself.
+delete from public.entries where id = (select entry_id from public.occurrences
+	where rule_id = '00000000-0000-7000-8000-000000002211' order by due_on desc limit 1);
+update public.occurrences set state = 'skipped', entry_id = null
+where id = (select id from public.occurrences where rule_id = '00000000-0000-7000-8000-000000002211' order by due_on desc limit 1);
+select is(private.auto_record(), 0, 'a skipped Occurrence isn''t recorded after all');
+
+-- A maker demoted to Viewer, and a household with no timezone, get nothing recorded.
+delete from public.occurrences where rule_id = '00000000-0000-7000-8000-000000002211' and state = 'confirmed';
+delete from public.entries where household_id = '00000000-0000-7000-8000-0000000022f1' and kind = 'expense';
+insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000022a2', 'other@example.com');
+insert into public.memberships (id, household_id, user_id, role) values
+	('00000000-0000-7000-8000-0000000022e2', '00000000-0000-7000-8000-0000000022f1', '00000000-0000-4000-8000-0000000022a2', 'admin');
+update public.memberships set role = 'viewer' where id = '00000000-0000-7000-8000-0000000022e1';
+select is(private.auto_record(), 0, 'nothing is recorded in the name of a maker who can no longer write');
+update public.memberships set role = 'admin' where id = '00000000-0000-7000-8000-0000000022e1';
+update public.households set timezone = null where id = '00000000-0000-7000-8000-0000000022f1';
+select is(private.auto_record(), 0, 'nor in a household with no timezone yet: its devices record in their own today');
 
 select * from finish();
 rollback;
