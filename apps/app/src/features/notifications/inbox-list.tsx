@@ -1,4 +1,9 @@
-import { isNotificationTrigger, readMembershipPayload } from "@hisaab/domain";
+import {
+	type EventPayload,
+	isNotificationTrigger,
+	readEventPayload,
+	readMembershipPayload,
+} from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -20,6 +25,7 @@ export type InboxItem = {
 /** What a Notification says, in the User's words for them: "Bilal joined Family", "You're now Admin in Family". */
 const useMessage = (userId: string) => {
 	const { t, i18n } = useLingui();
+	const eventMessage = useEventMessage();
 	return ({ trigger, payload }: InboxItem) => {
 		const membership =
 			trigger === "membership" ? readMembershipPayload(payload) : null;
@@ -47,11 +53,66 @@ const useMessage = (userId: string) => {
 						: t`${name} is now ${role} in ${household}.`;
 			}
 		}
+		const event = readEventPayload(trigger, payload);
+		if (event) return eventMessage(event);
 		return isNotificationTrigger(trigger)
 			? i18n._(TRIGGER_LABELS[trigger])
 			: t`Notification`;
 	};
 };
+
+/** What an event Notification says (#62): a Recurring rule due or recorded, a Budget passed, a Loan due. */
+const useEventMessage = () => {
+	const { t } = useLingui();
+	return (event: EventPayload) => {
+		const { householdName: household } = event;
+		switch (event.trigger) {
+			case "recurring_due": {
+				const { ruleName: rule } = event;
+				return event.reminder
+					? t`${rule} is still Pending in ${household}.`
+					: t`${rule} is due in ${household}.`;
+			}
+			case "auto_recorded": {
+				const { ruleName: rule } = event;
+				return t`${rule} was recorded in ${household}.`;
+			}
+			case "budget_threshold": {
+				const { categoryName: category } = event;
+				return event.level === FULL
+					? t`${category} has used all its Budget in ${household}.`
+					: t`${category} has used 80% of its Budget in ${household}.`;
+			}
+			case "loan_due": {
+				const { contactName: contact } = event;
+				if (event.direction === LENT)
+					switch (event.when) {
+						case SOON:
+							return t`The Loan to ${contact} is due in 3 days, in ${household}.`;
+						case TODAY:
+							return t`The Loan to ${contact} is due today, in ${household}.`;
+						case OVERDUE:
+							return t`The Loan to ${contact} is overdue, in ${household}.`;
+					}
+				switch (event.when) {
+					case SOON:
+						return t`The Loan from ${contact} is due in 3 days, in ${household}.`;
+					case TODAY:
+						return t`The Loan from ${contact} is due today, in ${household}.`;
+					case OVERDUE:
+						return t`The Loan from ${contact} is overdue, in ${household}.`;
+				}
+			}
+		}
+	};
+};
+
+// Named, as the Lingui lint rule takes any string literal in a component for copy.
+const LENT = "lent";
+const FULL = 100;
+const SOON = "soon";
+const TODAY = "today";
+const OVERDUE = "overdue";
 
 /**
  * The Notification inbox (CONTEXT.md): every Notification the User gets, newest first. Those that were new when the

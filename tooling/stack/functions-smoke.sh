@@ -70,3 +70,16 @@ purge="$api/functions/v1/purge-attachments"
 results="bogus:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer nope") anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$purge" -H "authorization: Bearer $service_key")"
 echo "purge-attachments: $results"
 [[ $results == "bogus:403 anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
+
+# A key that looks like a secret one but isn't is refused by the database itself, for each service-only function.
+for fn in dispatch-notifications purge-attachments raise-notifications; do
+	code=$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$api/functions/v1/$fn" -H "authorization: Bearer sb_secret_wrong")
+	echo "$fn wrong secret: $code"
+	[[ $code == 403 ]] || { cat "$log" >&2; exit 1; }
+done
+
+# raise-notifications likewise, raising each household's 09:00 Notifications through the database.
+raise="$api/functions/v1/raise-notifications"
+results="anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $service_key")"
+echo "raise-notifications: $results"
+[[ $results == "anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }

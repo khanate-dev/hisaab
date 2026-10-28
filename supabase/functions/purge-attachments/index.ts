@@ -20,7 +20,7 @@ const adaptersFor = (key: string): PurgeAdapters => {
 				...init.headers,
 			},
 		});
-		if (await refused(response)) throw new Forbidden();
+		if (refused(response.status)) throw new Forbidden();
 		if (!response.ok)
 			throw new Error(
 				`${path} answered ${response.status}: ${await response.text()}`,

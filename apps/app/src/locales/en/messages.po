@@ -7,6 +7,14 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "{category} has used 80% of its Budget in {household}."
+msgstr "{category} has used 80% of its Budget in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{category} has used all its Budget in {household}."
+msgstr "{category} has used all its Budget in {household}."
+
 #: src/features/entries/entry-list.tsx
 msgid "{categoryName} · {walletName}"
 msgstr "{categoryName} · {walletName}"
@@ -169,6 +177,18 @@ msgstr "{restName}, {restAmount}"
 #: src/features/invites/invite-list.tsx
 msgid "{role}, for {who}"
 msgstr "{role}, for {who}"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{rule} is due in {household}."
+msgstr "{rule} is due in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{rule} is still Pending in {household}."
+msgstr "{rule} is still Pending in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{rule} was recorded in {household}."
+msgstr "{rule} was recorded in {household}."
 
 #: src/features/search/entry-search.tsx
 msgid "{shown} of {total} Entries"
@@ -2588,9 +2608,33 @@ msgstr "the household"
 msgid "The Items add up to more than the total, so the total is now {grownTotal}."
 msgstr "The Items add up to more than the total, so the total is now {grownTotal}."
 
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan from {contact} is due in 3 days, in {household}."
+msgstr "The Loan from {contact} is due in 3 days, in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan from {contact} is due today, in {household}."
+msgstr "The Loan from {contact} is due today, in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan from {contact} is overdue, in {household}."
+msgstr "The Loan from {contact} is overdue, in {household}."
+
 #: src/features/loans/loan-detail.tsx
 msgid "The Loan is settled without it. Its Repayments stay, and you can undo this."
 msgstr "The Loan is settled without it. Its Repayments stay, and you can undo this."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan to {contact} is due in 3 days, in {household}."
+msgstr "The Loan to {contact} is due in 3 days, in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan to {contact} is due today, in {household}."
+msgstr "The Loan to {contact} is due today, in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "The Loan to {contact} is overdue, in {household}."
+msgstr "The Loan to {contact} is overdue, in {household}."
 
 #: src/features/device/this-device.tsx
 msgid "The unlock didn't pass, so the app lock stays off."
