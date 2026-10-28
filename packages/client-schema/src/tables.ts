@@ -36,6 +36,8 @@ export const households = sqliteTable("households", {
 	/** Who created a shared household, and so became its first Admin; null on Personal households. */
 	created_by: text("created_by"),
 	created_at: text("created_at").notNull(),
+	/** Set when it was made from a Full backup, so the server gives it no template Categories of its own. */
+	restored_at: text("restored_at"),
 	_metadata: contractStamp(),
 	_deleted: deleteFlag(),
 });

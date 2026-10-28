@@ -1,5 +1,9 @@
 import { attachments, stamped, stampedDelete } from "@hisaab/client-schema";
-import { attachmentExtension, attachmentPath } from "@hisaab/domain";
+import {
+	type AttachmentMediaType,
+	attachmentExtension,
+	attachmentPath,
+} from "@hisaab/domain";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "../dates";
@@ -42,6 +46,35 @@ export const addAttachment = async (
 			await tx.execute(
 				`INSERT INTO attachments (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
 				Object.values(row),
+			);
+		},
+	});
+};
+
+/**
+ * Puts back an Attachment from a Full backup: its row, as the restore planned it, and its file queued for upload in
+ * the same local transaction, as when it was first added.
+ */
+export const restoreAttachment = async (
+	row: { id: string; household_id: string } & Record<string, unknown>,
+	mediaType: AttachmentMediaType,
+	bytes: Uint8Array,
+) => {
+	await attachmentQueue.saveFile({
+		id: row.id,
+		data: bytes.buffer.slice(
+			bytes.byteOffset,
+			bytes.byteOffset + bytes.byteLength,
+		) as ArrayBuffer,
+		fileExtension: attachmentExtension(mediaType),
+		mediaType,
+		metaData: attachmentPath(row.household_id, row.id, mediaType),
+		updateHook: async (tx) => {
+			const values = stamped(row);
+			const columns = Object.keys(values);
+			await tx.execute(
+				`INSERT INTO attachments (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
+				Object.values(values),
 			);
 		},
 	});

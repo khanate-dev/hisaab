@@ -11,6 +11,7 @@ export * from "./csv-export";
 export * from "./csv-import";
 export * from "./dates";
 export * from "./entries";
+export * from "./full-backup";
 export * from "./entry-order";
 export * from "./households";
 export * from "./ids";

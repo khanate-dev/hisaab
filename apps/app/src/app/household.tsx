@@ -3,6 +3,8 @@ import { router } from "expo-router";
 import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
+import { makeFullBackup } from "@/features/backup/actions";
+import { FullBackupSection } from "@/features/backup/full-backup-section";
 import { recordableWallets } from "@/features/entries/draft";
 import { useHouseholdHasEntries } from "@/features/entries/use-entries";
 import {
@@ -20,7 +22,9 @@ import { isLastAdmin } from "@/features/members/last-admin";
 import { useMembers } from "@/features/members/use-members";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
-import { deviceTimeZone } from "@/lib/dates";
+import { deviceTimeZone, entryTimeZone, todayIn } from "@/lib/dates";
+import { backupFileName } from "@/lib/files/export-name";
+import { saveZip } from "@/lib/files/save-zip";
 import { leaveTo } from "@/lib/navigation";
 import { useSignedInUserId } from "@/lib/session";
 
@@ -82,6 +86,19 @@ export default function HouseholdSettings() {
 				onSave={(settings) => updateHouseholdSettings(household.id, settings)}
 				timeZoneFallback={deviceTimeZone()}
 			/>
+			{isAdmin && (
+				<FullBackupSection
+					onMake={async () =>
+						saveZip(
+							backupFileName(
+								isPersonal ? t`Personal` : household.name,
+								todayIn(entryTimeZone(household)),
+							),
+							await makeFullBackup(household.id),
+						)
+					}
+				/>
+			)}
 			{!isPersonal && (
 				<HouseholdExit
 					householdName={household.name}
