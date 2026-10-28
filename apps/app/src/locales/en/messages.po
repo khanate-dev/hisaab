@@ -793,6 +793,10 @@ msgstr "Couldn't join just now. Check your connection and try again."
 msgid "Couldn't open the Invite. Check your connection and try again."
 msgstr "Couldn't open the Invite. Check your connection and try again."
 
+#: src/features/notifications/this-device-push.tsx
+msgid "Couldn't reach the server. Check you're online and try again."
+msgstr "Couldn't reach the server. Check you're online and try again."
+
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Create Cash Wallet"
 msgstr "Create Cash Wallet"
@@ -2502,10 +2506,6 @@ msgstr "That Attachment opens once you're online and it has uploaded."
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't attach. Try again."
 msgstr "That didn't attach. Try again."
-
-#: src/features/notifications/this-device-push.tsx
-msgid "That didn't change. Check you're online and try again."
-msgstr "That didn't change. Check you're online and try again."
 
 #: src/app/(tabs)/entries.tsx
 msgid "That didn't export. Try again."
