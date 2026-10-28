@@ -115,7 +115,13 @@ export const scheduledNotifications = (
 	const reminderDay = shift(today, -3);
 	for (const o of facts.occurrences) {
 		// The rule's maker, and whoever follows it.
-		const hearers = [...new Set([o.createdBy, ...o.followers])];
+		const hearers = [
+			...new Set([
+				o.createdBy,
+				// Following is for those who write there; a Viewer since isn't told (issue #9).
+				...o.followers.filter((f) => writers.includes(f)),
+			]),
+		];
 		const about = {
 			ruleId: o.ruleId,
 			ruleName: o.ruleName,

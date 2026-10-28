@@ -276,6 +276,19 @@ describe("scheduledNotifications", () => {
 					if (n.trigger === "budget_threshold" || n.trigger === "loan_due")
 						expect(roles.get(n.userId)).not.toBe("viewer");
 				}
+				// A Viewer hears about a rule only as its maker, never as a follower.
+				for (const n of raised)
+					if (
+						(n.trigger === "recurring_due" || n.trigger === "auto_recorded") &&
+						roles.get(n.userId) === "viewer"
+					) {
+						const { ruleId } = JSON.parse(n.payload) as { ruleId: string };
+						expect(
+							f.occurrences.some(
+								(o) => o.ruleId === ruleId && o.createdBy === n.userId,
+							),
+						).toBe(true);
+					}
 				const keys = raised.map((n) => `${n.userId} ${n.dedupeKey}`);
 				expect(new Set(keys).size).toBe(keys.length);
 			}),
