@@ -109,11 +109,12 @@ insert into public.entries (id, household_id, wallet_id, kind, amount, loan_id, 
 
 create function pg_temp.households(as_of timestamptz) returns text[] language sql as $$
 	select coalesce(array_agg(f ->> 'householdName' order by f ->> 'householdName')
-		filter (where f ->> 'householdName' in ('Family', 'Elsewhere')), '{}')
+		filter (where f ->> 'householdId' in ('00000000-0000-7000-8000-0000000055f1', '00000000-0000-7000-8000-0000000055f2')),
+		'{}')
 	from jsonb_array_elements(public.notification_facts(as_of)) f;
 $$;
 create function pg_temp.facts(as_of timestamptz) returns jsonb language sql as $$
-	select coalesce(jsonb_agg(f) filter (where f ->> 'householdName' = 'Family'), '[]'::jsonb)
+	select coalesce(jsonb_agg(f) filter (where f ->> 'householdId' = '00000000-0000-7000-8000-0000000055f1'), '[]'::jsonb)
 	from jsonb_array_elements(public.notification_facts(as_of)) f;
 $$;
 

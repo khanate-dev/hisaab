@@ -5,6 +5,8 @@ import { Confirm } from "@/components/ui/confirm";
 import { Text } from "@/components/ui/text";
 import { useEntryData } from "@/features/entries/use-entry-data";
 import { deleteRule, updateRule } from "@/features/recurring/actions";
+import { setFollowing, useFollowing } from "@/features/recurring/follow";
+import { NotifyMe } from "@/features/recurring/notify-me";
 import { RuleForm } from "@/features/recurring/rule-form";
 import { useRecurringRules } from "@/features/recurring/use-recurring";
 import { Screen } from "@/features/shell/screen";
@@ -17,6 +19,7 @@ export default function RecurringRuleScreen() {
 	const data = useEntryData();
 	const rules = useRecurringRules(data?.household.id);
 	const rule = rules?.find((r) => r.id === id);
+	const following = useFollowing(id, data?.userId ?? "");
 
 	if (!data || rules === undefined) return null;
 	const { household, wallets, categories, canWrite, userId } = data;
@@ -41,6 +44,11 @@ export default function RecurringRuleScreen() {
 					<Text variant="muted">
 						{t`Changes reach what's still to come or Pending; Entries already recorded stay as they are.`}
 					</Text>
+					<NotifyMe
+						isMaker={rule.created_by === userId}
+						on={following}
+						onChange={(on) => void setFollowing(rule, userId, on)}
+					/>
 					<RuleForm
 						baseCurrency={household.base_currency}
 						categories={categories}

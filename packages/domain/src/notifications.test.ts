@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 
-import { preferenceId } from "./notification-preferences";
+import { preferenceId, ruleFollowerId } from "./notification-preferences";
 import {
 	type ClaimedDelivery,
 	defaultOn,
@@ -101,6 +101,32 @@ describe("preferenceId", () => {
 					expect(preferenceId(u, h, t)).toBe(preferenceId(u, h, t));
 					if (u !== u2 || t !== t2)
 						expect(preferenceId(u, h, t)).not.toBe(preferenceId(u2, h, t2));
+				},
+			),
+		);
+	});
+});
+
+describe("ruleFollowerId", () => {
+	it("matches what Postgres's uuid_generate_v5 derives, which the server checks it against", () => {
+		expect(
+			ruleFollowerId(
+				"00000000-0000-7000-8000-000000001111",
+				"00000000-0000-4000-8000-0000000011a1",
+			),
+		).toBe("b804ed60-839e-5335-a01d-30e3b9bcef7a");
+	});
+
+	it("is one per rule and User", () => {
+		fc.assert(
+			fc.property(
+				fc.uuid(),
+				fc.uuid(),
+				fc.uuid(),
+				fc.uuid(),
+				(r, u, r2, u2) => {
+					if (r !== r2 || u !== u2)
+						expect(ruleFollowerId(r, u)).not.toBe(ruleFollowerId(r2, u2));
 				},
 			),
 		);

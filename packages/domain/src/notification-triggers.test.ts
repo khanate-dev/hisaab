@@ -41,6 +41,7 @@ const occurrence = (
 	dueOn: "2026-11-10",
 	state: "pending",
 	snoozedUntil: null,
+	followers: [],
 	...o,
 });
 
@@ -142,6 +143,31 @@ describe("scheduledNotifications", () => {
 		]);
 	});
 
+	it("tells the rule's followers too, once each, alongside its maker", () => {
+		expect(
+			summary(
+				scheduledNotifications(
+					household({
+						occurrences: [
+							occurrence({ followers: [ADMIN, MEMBER, "u-gone"] }),
+							occurrence({
+								ruleId: "r2",
+								mode: "auto",
+								state: "confirmed",
+								followers: [ADMIN],
+							}),
+						],
+					}),
+				),
+			),
+		).toEqual([
+			`recurring_due ${MEMBER} recurring_due/r1/2026-11-10`,
+			`recurring_due ${ADMIN} recurring_due/r1/2026-11-10`,
+			`auto_recorded ${MEMBER} auto_recorded/r2/2026-11-10`,
+			`auto_recorded ${ADMIN} auto_recorded/r2/2026-11-10`,
+		]);
+	});
+
 	it("tells nobody who's no longer in the household", () => {
 		expect(
 			scheduledNotifications(
@@ -180,6 +206,9 @@ describe("scheduledNotifications", () => {
 				categoryName: fc.string(),
 				dueOn: fc.constant("2026-11-10"),
 				snoozedUntil: fc.constant(null),
+				followers: fc.uniqueArray(
+					fc.constantFrom(ADMIN, MEMBER, VIEWER, "u-gone"),
+				),
 				state: fc.constantFrom(
 					"pending" as const,
 					"confirmed" as const,
@@ -247,6 +276,19 @@ describe("scheduledNotifications", () => {
 					if (n.trigger === "budget_threshold" || n.trigger === "loan_due")
 						expect(roles.get(n.userId)).not.toBe("viewer");
 				}
+				// A Viewer hears about a rule only as its maker, never as a follower.
+				for (const n of raised)
+					if (
+						(n.trigger === "recurring_due" || n.trigger === "auto_recorded") &&
+						roles.get(n.userId) === "viewer"
+					) {
+						const { ruleId } = JSON.parse(n.payload) as { ruleId: string };
+						expect(
+							f.occurrences.some(
+								(o) => o.ruleId === ruleId && o.createdBy === n.userId,
+							),
+						).toBe(true);
+					}
 				const keys = raised.map((n) => `${n.userId} ${n.dedupeKey}`);
 				expect(new Set(keys).size).toBe(keys.length);
 			}),

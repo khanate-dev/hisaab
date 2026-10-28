@@ -190,6 +190,19 @@ export const recurringRules = sqliteTable("recurring_rules", {
 	_deleted: deleteFlag(),
 });
 
+/** A User's "Notify me" on a Recurring rule they didn't make; one per rule and User, its id from `ruleFollowerId`. */
+export const recurringRuleFollowers = sqliteTable("recurring_rule_followers", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	rule_id: text("rule_id").notNull(),
+	user_id: text("user_id").notNull(),
+	/** Turned off rather than deleted, so two devices choosing offline write the same row. */
+	enabled: integer("enabled", { mode: "boolean" }).notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** What the household did with an Occurrence; one without a row is Pending once due. Ids from `occurrenceId`. */
 export const occurrences = sqliteTable("occurrences", {
 	id: text("id").primaryKey(),

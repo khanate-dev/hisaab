@@ -591,6 +591,10 @@ msgstr "Base currency"
 msgid "Base currency: {shownCurrency}"
 msgstr "Base currency: {shownCurrency}"
 
+#: src/features/recurring/notify-me.tsx
+msgid "Be told when it's due, or when it records an Entry, as its maker is."
+msgstr "Be told when it's due, or when it records an Entry, as its maker is."
+
 #: src/features/wallets/balance.tsx
 msgid "Below zero"
 msgstr "Below zero"
@@ -2042,6 +2046,10 @@ msgstr "Notifications are blocked for Hisaab here. Allow them in this device's s
 msgid "Notifications, {unread} new"
 msgstr "Notifications, {unread} new"
 
+#: src/features/recurring/notify-me.tsx
+msgid "Notify me about this rule"
+msgstr "Notify me about this rule"
+
 #: src/features/sync/sync-status.tsx
 msgid "Offline. Changes sync when you're back online."
 msgstr "Offline. Changes sync when you're back online."
@@ -3127,6 +3135,10 @@ msgstr "You joined {household}."
 #: src/features/notifications/inbox-list.tsx
 msgid "You left {household}."
 msgstr "You left {household}."
+
+#: src/features/recurring/notify-me.tsx
+msgid "You made this rule, so you're told when it's due or recorded."
+msgstr "You made this rule, so you're told when it's due or recorded."
 
 #: src/features/loans/loans-tile.tsx
 msgid "You owe: {oweTotal}"
