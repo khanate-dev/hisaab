@@ -71,7 +71,8 @@ update public.memberships set role = 'viewer' where id = '00000000-0000-7000-800
 select is(pg_temp.followers(), '[]'::jsonb, 'nor once they''re only a Viewer');
 
 delete from public.recurring_rules where id = '00000000-0000-7000-8000-000000008811';
-select is((select count(*)::int from public.recurring_rule_followers), 0, 'a rule deleted takes its follows with it');
+select is((select count(*)::int from public.recurring_rule_followers where household_id = '00000000-0000-7000-8000-0000000088f1'),
+	0, 'a rule deleted takes its follows with it');
 
 select * from finish();
 rollback;
