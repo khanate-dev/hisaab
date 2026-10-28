@@ -16,6 +16,7 @@ import {
 	NOTIFICATION_TRIGGERS,
 	readMembershipPayload,
 	expoOutcome,
+	expoOutcomes,
 	pushMessage,
 	webPushOutcome,
 } from "./notifications";
@@ -249,6 +250,68 @@ describe("dispatchDeliveries", () => {
 		);
 	});
 
+	it("sends a batching channel in batches, settling each delivery once as its batch says", () => {
+		fc.assert(
+			fc.asyncProperty(
+				fc.integer({ min: 0, max: 30 }),
+				fc.integer({ min: 1, max: 7 }),
+				fc.array(fc.boolean(), { maxLength: 30 }),
+				async (count, size, sentFlags) => {
+					const claimed = Array.from({ length: count }, (_, i) =>
+						delivery(`d${i}`, "expo"),
+					);
+					const { adapters, settle } = store(claimed);
+					const batches: number[] = [];
+					await dispatchDeliveries(adapters, {
+						expo: {
+							size,
+							send: async (chunk) => {
+								batches.push(chunk.length);
+								return chunk.map((d) =>
+									sentFlags[Number(d.id.slice(1))]
+										? { status: "sent" }
+										: { status: "failed", error: "x" },
+								);
+							},
+						},
+					});
+					expect(batches.every((n) => n <= size)).toBe(true);
+					expect(batches.reduce((a, b) => a + b, 0)).toBe(count);
+					const results = settle.mock.calls[0]?.[0] ?? [];
+					expect(results.map((r) => r.id).toSorted()).toEqual(
+						claimed.map((d) => d.id).toSorted(),
+					);
+					for (const r of results)
+						expect(r.status).toBe(
+							sentFlags[Number(r.id.slice(1))] ? "sent" : "failed",
+						);
+				},
+			),
+		);
+	});
+
+	it("fails a whole batch that throws, and a delivery its batch gave no outcome for", async () => {
+		const { adapters, settle } = store([
+			delivery("d1", "expo"),
+			delivery("d2", "expo"),
+			delivery("d3", "webpush"),
+		]);
+		await dispatchDeliveries(adapters, {
+			expo: { size: 100, send: async () => [{ status: "sent" }] },
+			webpush: {
+				size: 100,
+				send: async () => {
+					throw new Error("down");
+				},
+			},
+		});
+		expect(settle.mock.calls[0]?.[0]).toEqual([
+			{ id: "d1", status: "sent", error: null, ticket: null },
+			{ id: "d2", status: "failed", error: "No outcome for it", ticket: null },
+			{ id: "d3", status: "failed", error: "down", ticket: null },
+		]);
+	});
+
 	it("runs with the caller's key, refused unless the database takes it as the service role's", async () => {
 		const { adapters } = store([]);
 		const service = "sb_secret_abc";
@@ -374,6 +437,47 @@ describe("push outcomes", () => {
 			expect.objectContaining({ status: "dead", gone: true }),
 		);
 		expect(webPushOutcome(500).status).toBe("failed");
+	});
+
+	it("read a batch's tickets in order, failing any message Expo gave none", () => {
+		expect(
+			expoOutcomes(
+				[
+					{ status: "ok", id: "k1" },
+					{ status: "error", details: { error: "DeviceNotRegistered" } },
+				],
+				3,
+			).map((o) => o.status),
+		).toEqual(["sent", "dead", "failed"]);
+		expect(expoOutcomes(null, 2).map((o) => o.status)).toEqual([
+			"failed",
+			"failed",
+		]);
+	});
+
+	it("give exactly one outcome per message, in order, whatever Expo answered", () => {
+		const ticket = fc.oneof(
+			fc.record({ status: fc.constant("ok" as const), id: fc.string() }),
+			fc.record({
+				status: fc.constant("error" as const),
+				details: fc.record({
+					error: fc.constantFrom("DeviceNotRegistered", "MessageRateExceeded"),
+				}),
+			}),
+		);
+		fc.assert(
+			fc.property(
+				fc.option(fc.array(ticket, { maxLength: 10 })),
+				fc.nat({ max: 10 }),
+				(tickets, count) => {
+					const outcomes = expoOutcomes(tickets, count);
+					expect(outcomes).toHaveLength(count);
+					outcomes.forEach((o, i) =>
+						expect(o).toEqual(expoOutcome(tickets?.[i])),
+					);
+				},
+			),
+		);
 	});
 
 	it("dispatch forgets the gone targets once each", async () => {
