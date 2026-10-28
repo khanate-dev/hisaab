@@ -6,6 +6,7 @@ export * from "./balances";
 export * from "./budgets";
 export * from "./categories";
 export * from "./contract-version";
+export * from "./csv-import";
 export * from "./dates";
 export * from "./entries";
 export * from "./entry-order";

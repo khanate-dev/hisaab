@@ -208,6 +208,18 @@ export const attachments = sqliteTable("attachments", {
 	_deleted: deleteFlag(),
 });
 
+/** How a Wallet's statements map onto Entries for CSV import; one per Wallet, Admins only. */
+export const importMappings = sqliteTable("import_mappings", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	wallet_id: text("wallet_id").notNull(),
+	/** JSON text: an `ImportMapping`, read back with `readMapping`. */
+	mapping: text("mapping").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** A named set of search and filter criteria, private to the User who saved it (CONTEXT.md). */
 export const savedFilters = sqliteTable("saved_filters", {
 	id: text("id").primaryKey(),

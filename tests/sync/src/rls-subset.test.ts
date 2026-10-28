@@ -23,6 +23,7 @@ const SYNCED_TABLES = [
 	"occurrences",
 	"saved_filters",
 	"attachments",
+	"import_mappings",
 	"invites",
 ] as const;
 
