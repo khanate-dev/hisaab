@@ -61,6 +61,9 @@ insert into public.recurring_rules (id, household_id, kind, wallet_id, category_
 insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until) values
 	('e2f0dfa8-e3e5-5073-8755-1a166004d19a', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61',
 	 '2026-10-01', 'snoozed', '2026-10-03');
+insert into public.attachments (id, household_id, entry_id, media_type, size_bytes, created_by) values
+	('00000000-0000-7000-8000-00000000aa91', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aad1',
+	 'image/jpeg', 1000, '00000000-0000-4000-8000-00000000aaa1');
 insert into public.saved_filters (id, household_id, user_id, name, criteria) values
 	('00000000-0000-7000-8000-00000000aa81', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
 	 'Mine', '{}');
@@ -142,6 +145,12 @@ insert into attempts values
 		values ('33ab105a-b894-5b94-9498-2517333a31d8', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61', '2026-11-01', 'skipped') $$),
 	('occurrences.update', $$ update public.occurrences set snoozed_until = snoozed_until where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
 	('occurrences.delete', $$ delete from public.occurrences where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
+	('attachments.select', $$ select 1 from public.attachments where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('attachments.insert', $$ insert into public.attachments (id, household_id, entry_id, media_type, size_bytes, created_by)
+		values ('00000000-0000-7000-8000-00000000ab16', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aad1',
+		        'application/pdf', 1, (select auth.uid())) $$),
+	('attachments.update', $$ update public.attachments set thumbnail = thumbnail where id = '00000000-0000-7000-8000-00000000aa91' $$),
+	('attachments.delete', $$ delete from public.attachments where id = '00000000-0000-7000-8000-00000000aa91' $$),
 	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
 	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('saved_filters.insert', $$ insert into public.saved_filters (id, household_id, user_id, name, criteria)
@@ -192,7 +201,7 @@ end $$;
 -- What every household member reads.
 create function pg_temp.reads() returns text[] language sql as $$
 	select array['households.select', 'memberships.select', 'profiles.select', 'wallets.select', 'categories.select',
-		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'budgets.select', 'budget_overrides.select', 'recurring_rules.select', 'occurrences.select',
+		'entries.select', 'entry_items.select', 'contacts.select', 'loans.select', 'budgets.select', 'budget_overrides.select', 'recurring_rules.select', 'occurrences.select', 'attachments.select',
 		'activity_log.select',
 		'app_config.select'];
 $$;
@@ -208,7 +217,8 @@ create function pg_temp.writes() returns text[] language sql as $$
 		'budgets.insert', 'budgets.update', 'budgets.delete',
 		'budget_overrides.insert', 'budget_overrides.update', 'budget_overrides.delete',
 		'recurring_rules.insert', 'recurring_rules.update', 'recurring_rules.delete',
-		'occurrences.insert', 'occurrences.update', 'occurrences.delete'];
+		'occurrences.insert', 'occurrences.update', 'occurrences.delete',
+		'attachments.insert', 'attachments.update', 'attachments.delete'];
 $$;
 
 select set_eq(

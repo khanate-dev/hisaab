@@ -257,6 +257,20 @@ const seedWallets = async (
 	);
 	if (overrides.error) throw overrides.error;
 
+	// An image attached to each household's Expense.
+	const attachmentRows = await admin.from("attachments").insert(
+		expenses.map(({ id, household_id, author }) => ({
+			id: uuidv7(),
+			household_id,
+			entry_id: id,
+			media_type: "image/jpeg",
+			size_bytes: 1000,
+			file_name: "receipt.jpg",
+			created_by: author,
+		})),
+	);
+	if (attachmentRows.error) throw attachmentRows.error;
+
 	// A monthly Recurring rule for Groceries per household, with its first Occurrence snoozed.
 	const rules = expenses.map(
 		({ household_id, wallet_id, category_id, author }) => ({

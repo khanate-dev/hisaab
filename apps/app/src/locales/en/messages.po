@@ -360,9 +360,18 @@ msgstr "Amount for {name} ({baseCurrency})"
 msgid "Amount varies"
 msgstr "Amount varies"
 
+#: src/features/attachments/entry-attachments.tsx
+msgid "An Attachment is an image or a PDF."
+msgstr "An Attachment is an image or a PDF."
+
 #: src/features/activity/activity-list.tsx
 msgid "an Entry"
 msgstr "an Entry"
+
+#: src/features/attachments/attachment-list.tsx
+#: src/features/attachments/entry-attachments.tsx
+msgid "An Entry takes {limit} Attachments at most."
+msgstr "An Entry takes {limit} Attachments at most."
 
 #: src/features/activity/activity-list.tsx
 msgid "an Item"
@@ -422,6 +431,10 @@ msgstr "Archived: hidden from your Wallets, its Entries kept."
 #: src/features/search/entry-search.tsx
 msgid "As YYYY-MM-DD."
 msgstr "As YYYY-MM-DD."
+
+#: src/features/attachments/attachment-list.tsx
+msgid "Attachments"
+msgstr "Attachments"
 
 #: src/features/recurring/labels.ts
 msgid "Auto-record"
@@ -582,6 +595,14 @@ msgstr "Change the total"
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Choose PDF or image"
+msgstr "Choose PDF or image"
+
+#: src/features/attachments/attachment-list.tsx
+msgid "Choose photo"
+msgstr "Choose photo"
+
 #: src/features/search/entry-search.tsx
 msgid "Clear"
 msgstr "Clear"
@@ -590,6 +611,10 @@ msgstr "Clear"
 #: src/features/shell/quick-add.tsx
 msgid "Close"
 msgstr "Close"
+
+#: src/features/attachments/attachment-list.tsx
+msgid "Close {viewingName}"
+msgstr "Close {viewingName}"
 
 #: src/features/auth/sign-in-form.tsx
 msgid "Code"
@@ -1134,6 +1159,11 @@ msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 msgid "Icon"
 msgstr "Icon"
 
+#: src/features/attachments/attachment-list.tsx
+#: src/features/attachments/entry-attachments.tsx
+msgid "Image"
+msgstr "Image"
+
 #: src/features/wallets/balance.tsx
 msgid "In credit"
 msgstr "In credit"
@@ -1508,6 +1538,10 @@ msgstr "Next Budget month"
 msgid "No archived Categories in this list."
 msgstr "No archived Categories in this list."
 
+#: src/features/attachments/attachment-list.tsx
+msgid "No Attachments yet."
+msgstr "No Attachments yet."
+
 #: src/features/budgets/budget-month.tsx
 msgid "No Budgets this month."
 msgstr "No Budgets this month."
@@ -1653,6 +1687,10 @@ msgstr "Only whoever made this cross-household transfer changes it."
 msgid "Only whoever made this cross-household transfer edits it, while they're in both households."
 msgstr "Only whoever made this cross-household transfer edits it, while they're in both households."
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Open {name}"
+msgstr "Open {name}"
+
 #: src/features/invites/join-with-link-form.tsx
 msgid "Open Invite"
 msgstr "Open Invite"
@@ -1719,6 +1757,10 @@ msgstr "Owed"
 #: src/features/loans/loans-tile.tsx
 msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
+
+#: src/features/attachments/attachment-list.tsx
+msgid "PDF"
+msgstr "PDF"
 
 #: src/app/_layout.tsx
 #: src/app/pending.tsx
@@ -1823,6 +1865,7 @@ msgstr "Recurring rules"
 msgid "Red"
 msgstr "Red"
 
+#: src/features/attachments/attachment-list.tsx
 #: src/features/entries/items-section.tsx
 #: src/features/members/member-list.tsx
 msgid "Remove"
@@ -1832,6 +1875,7 @@ msgstr "Remove"
 msgid "Remove {description}"
 msgstr "Remove {description}"
 
+#: src/features/attachments/attachment-list.tsx
 #: src/features/members/member-list.tsx
 msgid "Remove {name}"
 msgstr "Remove {name}"
@@ -2123,6 +2167,22 @@ msgstr "Synced {synced}"
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Take photo"
+msgstr "Take photo"
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "That Attachment opens once you're online and it has uploaded."
+msgstr "That Attachment opens once you're online and it has uploaded."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "That didn't attach. Try again."
+msgstr "That didn't attach. Try again."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "That didn't remove. Try again."
+msgstr "That didn't remove. Try again."
+
 #: src/features/categories/category-form.tsx
 #: src/features/entries/form-checks.ts
 #: src/features/entries/quick-add-form.tsx
@@ -2146,6 +2206,10 @@ msgstr "That's already its Balance; there's nothing to adjust."
 #: src/features/loans/repayment-form.tsx
 msgid "That's more than the {most} outstanding."
 msgstr "That's more than the {most} outstanding."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "That's over {megabytes} MB; an Attachment takes {megabytes} MB at most."
+msgstr "That's over {megabytes} MB; an Attachment takes {megabytes} MB at most."
 
 #: src/app/activity.tsx
 msgid "The Activity log needs a connection. Try again once you're online."

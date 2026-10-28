@@ -22,6 +22,7 @@ const SYNCED_TABLES = [
 	"recurring_rules",
 	"occurrences",
 	"saved_filters",
+	"attachments",
 	"invites",
 ] as const;
 

@@ -20,7 +20,6 @@
 		"apps/app/src/locales/**/*.ts"
 	],
 	"words": [
-		"sqlerrm",
 		"aparajita",
 		"apikey",
 		"Appflow",
@@ -93,6 +92,7 @@
 		"sideload",
 		"sideloaded",
 		"signups",
+		"sqlerrm",
 		"SQLSTATE",
 		"sslmode",
 		"supabase",
@@ -113,6 +113,7 @@
 		"uuidv",
 		"vitest",
 		"Wayfinder",
+		"webp",
 		"worklets"
 	],
 	"ignoreRegExpList": ["sb_(?:publishable|secret)_[\\w-]+"]
