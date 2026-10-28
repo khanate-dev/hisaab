@@ -34,6 +34,8 @@ catalog:
   expo-local-authentication: 57.0.3
   # Spreadsheet export (#57): handing the CSV to another app on native; SDK 57's bundled version
   expo-sharing: 57.0.24
+  # Push delivery (#61): permission and the Expo push token on native; SDK 57's bundled version
+  expo-notifications: 57.0.23
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3

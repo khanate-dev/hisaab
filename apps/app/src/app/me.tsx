@@ -4,6 +4,7 @@ import { router } from "expo-router";
 
 import { Button } from "@/components/ui/button";
 import { ThisDevice } from "@/features/device/this-device";
+import { forgetDevice } from "@/lib/device/push-registration";
 import {
 	Sheet,
 	SheetContent,
@@ -88,7 +89,12 @@ export default function MeAndHousehold() {
 			<SyncStatusSheet />
 			<ThisDevice />
 			<Button
-				onPress={() => void supabase.auth.signOut()}
+				// This device stops getting the User's pushes at once (#13), then signs out, online or not.
+				onPress={() =>
+					void forgetDevice()
+						.catch(() => {})
+						.finally(() => void supabase.auth.signOut())
+				}
 				variant="secondary"
 			>
 				{t`Sign out`}

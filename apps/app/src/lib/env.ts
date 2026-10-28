@@ -22,4 +22,6 @@ export const env = {
 	),
 	/** Where the web app lives, for links people open anywhere (Invites); unset, links use this app's own URL. */
 	webUrl: process.env.EXPO_PUBLIC_WEB_URL || null,
+	/** Web Push's VAPID public key (#61); unset, web push isn't offered. */
+	vapidPublicKey: process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || null,
 };

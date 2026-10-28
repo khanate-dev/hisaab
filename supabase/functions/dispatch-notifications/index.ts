@@ -1,11 +1,16 @@
 // Notifications (spec §3.5; issue #13): sends what's due in the push and email outbox, every minute (pg_cron calls this
 // with the service role's key). The logic is in packages/domain behind adapters (ADR-0010); this wires them to
-// PostgREST. No sender is wired yet: push (8.2) and the Monthly summary's email bring theirs.
+// PostgREST, and sends through Expo Push (mobile) and VAPID Web Push (web); email arrives with the Monthly summary.
 import {
 	type ClaimedDelivery,
 	type DispatchAdapters,
 	DispatchForbidden,
+	type ExpoTicket,
+	expoOutcome,
 	handleDispatchRequest,
+	pushMessage,
+	type Sender,
+	webPushOutcome,
 } from "../../../packages/domain/src/notifications.ts";
 
 const url = Deno.env.get("SUPABASE_URL");
@@ -68,7 +73,57 @@ const adaptersFor = (key: string): DispatchAdapters => {
 		settle: async (results) => {
 			await rpc("settle_deliveries", { results });
 		},
+		forget: async (targets) => {
+			await rpc("forget_push_targets", { targets });
+		},
 	};
 };
 
-Deno.serve((request) => handleDispatchRequest(adaptersFor, {}, request));
+/** Mobile push through the Expo Push Service, which holds the APNs and FCM credentials (#13). */
+const expo: Sender = async (delivery) => {
+	const { title, body } = pushMessage(delivery.trigger, delivery.payload);
+	const response = await fetch("https://exp.host/--/api/v2/push/send", {
+		method: "POST",
+		headers: { "content-type": "application/json", accept: "application/json" },
+		body: JSON.stringify({
+			to: delivery.target,
+			title,
+			body,
+			data: { notificationId: delivery.notificationId },
+		}),
+	});
+	if (!response.ok)
+		return { status: "failed", error: `Expo answered ${response.status}` };
+	const { data } = (await response.json()) as { data?: ExpoTicket };
+	return expoOutcome(data);
+};
+
+/** Web push with VAPID (keys in the Edge Function's secrets; #30 adds them). Without them it waits and retries. */
+const webpush: Sender = async (delivery) => {
+	const publicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+	const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+	const subject = Deno.env.get("VAPID_SUBJECT");
+	if (!publicKey || !privateKey || !subject)
+		return { status: "failed", error: "Web Push isn't set up yet" };
+	const { default: client } = await import("npm:web-push@3.6.7");
+	try {
+		const result = await client.sendNotification(
+			JSON.parse(delivery.target),
+			JSON.stringify({
+				...pushMessage(delivery.trigger, delivery.payload),
+				notificationId: delivery.notificationId,
+			}),
+			{ vapidDetails: { subject, publicKey, privateKey } },
+		);
+		return webPushOutcome(result.statusCode);
+	} catch (error) {
+		const status = (error as { statusCode?: number }).statusCode;
+		return status === undefined
+			? { status: "failed", error: String(error) }
+			: webPushOutcome(status);
+	}
+};
+
+Deno.serve((request) =>
+	handleDispatchRequest(adaptersFor, { expo, webpush }, request),
+);

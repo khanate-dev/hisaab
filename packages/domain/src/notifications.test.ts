@@ -15,6 +15,9 @@ import {
 	type MemberRole,
 	NOTIFICATION_TRIGGERS,
 	readMembershipPayload,
+	expoOutcome,
+	pushMessage,
+	webPushOutcome,
 } from "./notifications";
 
 const role = fc.constantFrom<MemberRole>("admin", "member", "viewer");
@@ -126,10 +129,13 @@ describe("dispatchDeliveries", () => {
 	});
 	const store = (claimed: ClaimedDelivery[]) => {
 		const settle = vi.fn<DispatchAdapters["settle"]>(async () => {});
+		const forget = vi.fn<DispatchAdapters["forget"]>(async () => {});
 		return {
+			forget,
 			adapters: {
 				claim: async () => claimed,
 				settle,
+				forget,
 			} satisfies DispatchAdapters,
 			settle,
 		};
@@ -230,5 +236,110 @@ describe("dispatchDeliveries", () => {
 			status: "ok",
 			settled: 0,
 		});
+	});
+});
+
+describe("pushMessage", () => {
+	it("says what happened in names only", () => {
+		const payload = JSON.stringify({
+			change: "joined",
+			userId: "u2",
+			name: "Bilal",
+			role: "member",
+			householdName: "Family",
+		});
+		expect(pushMessage("membership", payload)).toEqual({
+			title: "Hisaab",
+			body: "Bilal joined Family.",
+		});
+		expect(
+			pushMessage("loan_due", JSON.stringify({ householdName: "Family" })),
+		).toEqual({
+			title: "Loan due",
+			body: "In Family.",
+		});
+	});
+
+	it("never carries an amount, whatever else the payload holds", () => {
+		fc.assert(
+			fc.property(
+				trigger,
+				fc.constantFrom("joined", "left", "removed", "role_changed"),
+				role,
+				fc.stringMatching(/^[A-Za-z ]{0,12}$/),
+				fc.stringMatching(/^[A-Za-z ]{1,12}$/),
+				fc.dictionary(
+					fc.constantFrom("amount", "spent", "budget", "outstanding", "total"),
+					fc.double({ noNaN: true }),
+				),
+				(t, change, r, name, household, money) => {
+					const { title, body } = pushMessage(
+						t,
+						JSON.stringify({
+							change,
+							userId: "u1",
+							name,
+							role: r,
+							householdName: household,
+							...money,
+						}),
+					);
+					expect(`${title} ${body}`).not.toMatch(/\d/);
+				},
+			),
+		);
+	});
+});
+
+describe("push outcomes", () => {
+	it("forget a target the push service says is gone, and retry other failures", () => {
+		expect(expoOutcome({ status: "ok", id: "t" })).toEqual({ status: "sent" });
+		expect(
+			expoOutcome({
+				status: "error",
+				details: { error: "DeviceNotRegistered" },
+			}),
+		).toEqual({
+			status: "dead",
+			error: "DeviceNotRegistered",
+			gone: true,
+		});
+		expect(
+			expoOutcome({
+				status: "error",
+				details: { error: "MessageRateExceeded" },
+			}).status,
+		).toBe("failed");
+		expect(expoOutcome(undefined).status).toBe("failed");
+		expect(webPushOutcome(201)).toEqual({ status: "sent" });
+		expect(webPushOutcome(410)).toEqual(
+			expect.objectContaining({ status: "dead", gone: true }),
+		);
+		expect(webPushOutcome(500).status).toBe("failed");
+	});
+
+	it("dispatch forgets the gone targets once each", async () => {
+		const claimed: ClaimedDelivery[] = ["d1", "d2"].map((id) => ({
+			id,
+			notificationId: "n1",
+			userId: "u1",
+			channel: "expo",
+			target: "ExponentPushToken[gone]",
+			attempts: 1,
+			trigger: "membership",
+			payload: "{}",
+		}));
+		const forget = vi.fn<DispatchAdapters["forget"]>(async () => {});
+		await dispatchDeliveries(
+			{ claim: async () => claimed, settle: async () => {}, forget },
+			{
+				expo: async () => ({
+					status: "dead",
+					error: "DeviceNotRegistered",
+					gone: true,
+				}),
+			},
+		);
+		expect(forget).toHaveBeenCalledWith(["ExponentPushToken[gone]"]);
 	});
 });
