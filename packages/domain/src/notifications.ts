@@ -14,6 +14,11 @@ export const NOTIFICATION_TRIGGERS = [
 ] as const;
 export type NotificationTrigger = (typeof NOTIFICATION_TRIGGERS)[number];
 
+export const isNotificationTrigger = (
+	value: string,
+): value is NotificationTrigger =>
+	NOTIFICATION_TRIGGERS.some((t) => t === value);
+
 export type MemberRole = "admin" | "member" | "viewer";
 
 /**

@@ -47,6 +47,10 @@ msgstr "{first} to {last}"
 msgid "{how} · {mode} · {when}"
 msgstr "{how} · {mode} · {when}"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "{label} in {household}."
+msgstr "{label} in {household}."
+
 #: src/features/activity/activity-list.tsx
 msgid "{label}: {was} → {now}"
 msgstr "{label}: {was} → {now}"
@@ -74,6 +78,22 @@ msgstr "{name} · {amount}"
 #: src/features/members/member-list.tsx
 msgid "{name} (you)"
 msgstr "{name} (you)"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{name} is now {role} in {household}."
+msgstr "{name} is now {role} in {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{name} joined {household}."
+msgstr "{name} joined {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{name} left {household}."
+msgstr "{name} left {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "{name} was removed from {household}."
+msgstr "{name} was removed from {household}."
 
 #: src/features/households/household-list.tsx
 msgid "{name}, {role}"
@@ -218,6 +238,10 @@ msgstr "a Budget"
 msgid "a Budget override"
 msgstr "a Budget override"
 
+#: src/features/notifications/labels.ts
+msgid "A Budget passes 80%, then 100%."
+msgstr "A Budget passes 80%, then 100%."
+
 #: src/features/activity/activity-list.tsx
 msgid "a Category"
 msgstr "a Category"
@@ -237,6 +261,18 @@ msgstr "A change to a household couldn't sync"
 #: src/features/sync/sync-status.tsx
 msgid "A change to a membership couldn't sync"
 msgstr "A change to a membership couldn't sync"
+
+#: src/features/notifications/labels.ts
+msgid "A daily digest of what others changed."
+msgstr "A daily digest of what others changed."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "a household"
+msgstr "a household"
+
+#: src/features/notifications/labels.ts
+msgid "A Loan is nearly due, due, or overdue."
+msgstr "A Loan is nearly due, due, or overdue."
 
 #: src/features/entries/entry-detail.tsx
 msgid "A Loan's principal is deleted along with its Loan."
@@ -262,9 +298,17 @@ msgstr "A quote opened on line {unclosedAt} never closes, so nothing from there 
 msgid "a record"
 msgstr "a record"
 
+#: src/features/notifications/labels.ts
+msgid "A recurring Entry waits for you to confirm it."
+msgstr "A recurring Entry waits for you to confirm it."
+
 #: src/features/activity/activity-list.tsx
 msgid "a Recurring rule"
 msgstr "a Recurring rule"
+
+#: src/features/notifications/labels.ts
+msgid "A Recurring rule recorded an Entry."
+msgstr "A Recurring rule recorded an Entry."
 
 #: src/features/recurring/rule-form.tsx
 msgid "A shorter month has it on its last day."
@@ -415,6 +459,10 @@ msgstr "an Item"
 msgid "an Occurrence"
 msgstr "an Occurrence"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "another Role"
+msgstr "another Role"
+
 #: src/features/invites/invite-list.tsx
 msgid "anyone with the link"
 msgstr "anyone with the link"
@@ -477,6 +525,10 @@ msgstr "Auto-record"
 #: src/features/recurring/rule-form.tsx
 msgid "Auto-record needs an amount; leave it to Confirm for a bill that varies."
 msgstr "Auto-record needs an amount; leave it to Confirm for a bill that varies."
+
+#: src/features/notifications/labels.ts
+msgid "Auto-recorded"
+msgstr "Auto-recorded"
 
 #: src/features/categories/labels.ts
 msgid "Baby"
@@ -546,6 +598,10 @@ msgstr "Budget month starts on"
 #: src/features/households/household-settings.tsx
 msgid "Budget month starts on day {startDay}"
 msgstr "Budget month starts on day {startDay}"
+
+#: src/features/notifications/labels.ts
+msgid "Budget threshold"
+msgstr "Budget threshold"
 
 #: src/app/(tabs)/budgets.tsx
 #: src/features/budgets/budget-month.tsx
@@ -1222,6 +1278,10 @@ msgstr "Home"
 msgid "House"
 msgstr "House"
 
+#: src/features/notifications/labels.ts
+msgid "Household activity"
+msgstr "Household activity"
+
 #: src/app/_layout.tsx
 #: src/app/me.tsx
 #: src/features/shell/household-pill.tsx
@@ -1239,6 +1299,10 @@ msgstr "Households"
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
+
+#: src/features/notifications/labels.ts
+msgid "How the last Budget month went."
+msgstr "How the last Budget month went."
 
 #: src/features/categories/category-form.tsx
 msgid "Icon"
@@ -1511,6 +1575,10 @@ msgstr "Loading the Activity log…"
 msgid "Loan"
 msgstr "Loan"
 
+#: src/features/notifications/labels.ts
+msgid "Loan due"
+msgstr "Loan due"
+
 #: src/app/_layout.tsx
 #: src/app/loans/index.tsx
 #: src/app/me.tsx
@@ -1559,6 +1627,14 @@ msgstr "Members & Roles"
 msgid "Members and your preferences arrive here."
 msgstr "Members and your preferences arrive here."
 
+#: src/features/notifications/labels.ts
+msgid "Membership"
+msgstr "Membership"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "Membership changed in {household}."
+msgstr "Membership changed in {household}."
+
 #: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
@@ -1579,6 +1655,10 @@ msgstr "Monthly"
 msgid "Monthly on day {day}"
 msgstr "Monthly on day {day}"
 
+#: src/features/notifications/labels.ts
+msgid "Monthly summary"
+msgstr "Monthly summary"
+
 #: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 #: src/features/households/household-form.tsx
@@ -1595,6 +1675,10 @@ msgstr "Name it in 1 to 60 characters."
 #: src/features/loans/loan-form.tsx
 msgid "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
 msgstr "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "New · {when}"
+msgstr "New · {when}"
 
 #: src/app/_layout.tsx
 #: src/app/categories/new.tsx
@@ -1657,6 +1741,10 @@ msgstr "New Transfer"
 msgid "New Wallet"
 msgstr "New Wallet"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "New: {message}"
+msgstr "New: {message}"
+
 #: src/features/budgets/budget-month.tsx
 msgid "Next"
 msgstr "Next"
@@ -1714,9 +1802,9 @@ msgstr "No Invites yet."
 msgid "No Loans yet."
 msgstr "No Loans yet."
 
-#: src/app/inbox.tsx
-msgid "No notifications yet."
-msgstr "No notifications yet."
+#: src/features/notifications/inbox-list.tsx
+msgid "No Notifications yet."
+msgstr "No Notifications yet."
 
 #: src/features/sync/sync-status.tsx
 msgid "No permission, or someone else deleted it."
@@ -1783,6 +1871,16 @@ msgstr "Nothing more becomes due from it. The Entries it already made stay."
 #: src/features/categories/category-form.tsx
 msgid "Nothing: a top-level Category"
 msgstr "Nothing: a top-level Category"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "Notification"
+msgstr "Notification"
+
+#: src/app/_layout.tsx
+#: src/app/inbox.tsx
+#: src/app/notification-preferences.tsx
+msgid "Notification preferences"
+msgstr "Notification preferences"
 
 #: src/app/_layout.tsx
 #: src/app/inbox.tsx
@@ -2009,6 +2107,10 @@ msgstr "Recorded by"
 #: src/features/recurring/rule-list.tsx
 msgid "Recurring"
 msgstr "Recurring"
+
+#: src/features/notifications/labels.ts
+msgid "Recurring due"
+msgstr "Recurring due"
 
 #: src/app/_layout.tsx
 #: src/app/recurring/[id].tsx
@@ -2296,8 +2398,13 @@ msgstr "someone"
 #: src/app/(tabs)/entries.tsx
 #: src/features/activity/activity-list.tsx
 #: src/features/members/member-list.tsx
+#: src/features/notifications/inbox-list.tsx
 msgid "Someone"
 msgstr "Someone"
+
+#: src/features/notifications/labels.ts
+msgid "Someone joins, leaves, or changes Role."
+msgstr "Someone joins, leaves, or changes Role."
 
 #: src/features/loans/loan-form.tsx
 msgid "Someone new"
@@ -2680,6 +2787,10 @@ msgstr "What's your name?"
 msgid "When it's due"
 msgstr "When it's due"
 
+#: src/features/notifications/preferences-list.tsx
+msgid "Which Notifications you get from {householdName}. Each one you get lands in your inbox."
+msgstr "Which Notifications you get from {householdName}. Each one you get lands in your inbox."
+
 #: src/features/loans/loan-form.tsx
 msgid "Which way"
 msgstr "Which way"
@@ -2721,9 +2832,21 @@ msgstr "Yellow"
 msgid "Yesterday"
 msgstr "Yesterday"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "You joined {household}."
+msgstr "You joined {household}."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "You left {household}."
+msgstr "You left {household}."
+
 #: src/features/loans/loans-tile.tsx
 msgid "You owe: {oweTotal}"
 msgstr "You owe: {oweTotal}"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "You were removed from {household}."
+msgstr "You were removed from {household}."
 
 #: src/features/invites/invite-landing.tsx
 msgid "You're in. Getting {name} ready…"
@@ -2740,6 +2863,10 @@ msgstr "You're invited as {role}. This Invite is for one email address; sign in 
 #: src/features/members/household-exit.tsx
 msgid "You're its only Admin: make someone else an Admin before you leave."
 msgstr "You're its only Admin: make someone else an Admin before you leave."
+
+#: src/features/notifications/inbox-list.tsx
+msgid "You're now {role} in {household}."
+msgstr "You're now {role} in {household}."
 
 #: src/features/auth/sign-in-form.tsx
 msgid "you@example.com"

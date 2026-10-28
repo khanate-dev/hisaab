@@ -1109,4 +1109,77 @@ describe("sync scenarios", () => {
 			},
 		]);
 	});
+	it("a Notification marked read and a preference set offline upload, and only the read mark changes", async () => {
+		const { users, household } = await seedHousehold({
+			alice: "admin",
+			bob: "member",
+		});
+		const admin = adminClient();
+		// The seed's Memberships raised Membership Notifications; drain them to Alice as the drain would.
+		const pending = await admin.rpc("pending_notifications", { batch: 500 });
+		if (pending.error) throw pending.error;
+		const raised = (
+			pending.data as {
+				id: string;
+				household_id: string;
+				trigger: string;
+				payload: string;
+			}[]
+		).filter((n) => n.household_id === household);
+		expect(raised.length).toBeGreaterThan(0);
+		const delivered = await admin.rpc("deliver_notifications", {
+			deliveries: raised.map((n) => ({
+				notification_id: n.id,
+				household_id: household,
+				user_id: users.alice.id,
+				channel: "inbox",
+				trigger: n.trigger,
+				payload: n.payload,
+			})),
+			drained: raised.map((n) => n.id),
+		});
+		if (delivered.error) throw delivered.error;
+
+		const alice = await connectClient(users.alice);
+		const delivery = await vi.waitFor(
+			() =>
+				alice.get<{ id: string; payload: string }>(
+					"SELECT id, payload FROM notification_deliveries LIMIT 1",
+				),
+			{ timeout: 10_000 },
+		);
+		await goOffline(alice);
+		await alice.execute(
+			"UPDATE notification_deliveries SET read_at = ?, _metadata = ? WHERE id = ?",
+			[new Date().toISOString(), stamped({})._metadata, delivery.id],
+		);
+		await alice.execute(
+			"INSERT INTO notification_preferences (id, household_id, user_id, trigger, enabled, created_at, _metadata) VALUES (?, ?, ?, 'membership', 0, ?, ?)",
+			[
+				uuidv7(),
+				household,
+				users.alice.id,
+				new Date().toISOString(),
+				stamped({})._metadata,
+			],
+		);
+		await goOnline(alice);
+		await waitForUploads(alice);
+
+		expect(await uploadErrors(alice)).toEqual([]);
+		const row = await admin
+			.from("notification_deliveries")
+			.select("read_at, payload")
+			.eq("id", delivery.id)
+			.single();
+		if (row.error) throw row.error;
+		expect(row.data.read_at).not.toBeNull();
+		expect(row.data.payload).toBe(delivery.payload);
+		const prefs = await admin
+			.from("notification_preferences")
+			.select("enabled")
+			.eq("user_id", users.alice.id);
+		if (prefs.error) throw prefs.error;
+		expect(prefs.data).toEqual([{ enabled: false }]);
+	});
 });
