@@ -36,6 +36,8 @@ catalog:
   expo-sharing: 57.0.24
   # Push delivery (#61): permission and the Expo push token on native; SDK 57's bundled version
   expo-notifications: 57.0.23
+  # Full backup (#58): the ZIP of JSON and Attachment files, built and read on the device; pure JS, so web too
+  fflate: 0.8.3
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3

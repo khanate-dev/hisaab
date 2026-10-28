@@ -190,6 +190,10 @@ msgstr "{rule} is still Pending in {household}."
 msgid "{rule} was recorded in {household}."
 msgstr "{rule} was recorded in {household}."
 
+#: src/features/backup/restore-form.tsx
+msgid "{short} (restored)"
+msgstr "{short} (restored)"
+
 #: src/features/search/entry-search.tsx
 msgid "{shown} of {total} Entries"
 msgstr "{shown} of {total} Entries"
@@ -285,6 +289,10 @@ msgstr "A change to a membership couldn't sync"
 #: src/features/notifications/labels.ts
 msgid "A daily digest of what others changed."
 msgstr "A daily digest of what others changed."
+
+#: src/features/backup/restore-form.tsx
+msgid "A Full backup restores into a new household, with you as its Admin. Invite the others again once it's in."
+msgstr "A Full backup restores into a new household, with you as its Admin. Invite the others again once it's in."
 
 #: src/features/notifications/labels.ts
 msgid "A Loan is nearly due, due, or overdue."
@@ -722,6 +730,14 @@ msgstr "Change the total"
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 
+#: src/features/backup/restore-form.tsx
+msgid "Choose a Full backup"
+msgstr "Choose a Full backup"
+
+#: src/features/backup/restore-form.tsx
+msgid "Choose another file"
+msgstr "Choose another file"
+
 #: src/features/import/import-wizard.tsx
 msgid "Choose CSV file"
 msgstr "Choose CSV file"
@@ -808,6 +824,10 @@ msgstr "Contribution from {name}"
 #: src/features/invites/invite-landing.tsx
 msgid "Couldn't join just now. Check your connection and try again."
 msgstr "Couldn't join just now. Check your connection and try again."
+
+#: src/features/backup/full-backup-section.tsx
+msgid "Couldn't make the backup. Attachment files need a connection; check you're online and try again."
+msgstr "Couldn't make the backup. Attachment files need a connection; check you're online and try again."
 
 #: src/features/invites/invite-landing.tsx
 msgid "Couldn't open the Invite. Check your connection and try again."
@@ -1194,6 +1214,10 @@ msgstr "Every change to the household's data. Nobody can edit it."
 msgid "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
 msgstr "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
 
+#: src/features/backup/full-backup-section.tsx
+msgid "Everything in this household, Attachments included, as one file. Restore it into a new household from the household switcher."
+msgstr "Everything in this household, Attachments included, as one file. Restore it into a new household from the household switcher."
+
 #: src/features/budgets/budget-month.tsx
 msgid "Expected income"
 msgstr "Expected income"
@@ -1273,6 +1297,10 @@ msgstr "From"
 msgid "From Wallet"
 msgstr "From Wallet"
 
+#: src/features/backup/full-backup-section.tsx
+msgid "Full backup"
+msgstr "Full backup"
+
 #: src/features/shell/syncing.tsx
 msgid "Getting your households ready…"
 msgstr "Getting your households ready…"
@@ -1292,6 +1320,10 @@ msgstr "Give the Category a name."
 #: src/features/households/household-settings.tsx
 msgid "Give the household a name."
 msgstr "Give the household a name."
+
+#: src/features/backup/restore-form.tsx
+msgid "Go to the household"
+msgstr "Go to the household"
 
 #: src/features/categories/labels.ts
 msgid "Graduation cap"
@@ -1647,6 +1679,10 @@ msgstr "Loans with"
 msgid "Made {made}, synced {synced}"
 msgstr "Made {made}, synced {synced}"
 
+#: src/features/backup/restore-form.tsx
+msgid "Made {madeOn}: {walletCount, plural, one {# Wallet} other {# Wallets}}, {entryCount, plural, one {# Entry} other {# Entries}} and {fileCount, plural, one {# Attachment file} other {# Attachment files}}."
+msgstr "Made {madeOn}: {walletCount, plural, one {# Wallet} other {# Wallets}}, {entryCount, plural, one {# Entry} other {# Entries}} and {fileCount, plural, one {# Attachment file} other {# Attachment files}}."
+
 #: src/features/sync/sync-status.tsx
 msgid "Made by an older version of the app, and it no longer fits."
 msgstr "Made by an older version of the app, and it no longer fits."
@@ -1654,6 +1690,14 @@ msgstr "Made by an older version of the app, and it no longer fits."
 #: src/features/categories/labels.ts
 msgid "Magenta"
 msgstr "Magenta"
+
+#: src/features/backup/full-backup-section.tsx
+msgid "Make a Full backup"
+msgstr "Make a Full backup"
+
+#: src/features/backup/full-backup-section.tsx
+msgid "Making the backup…"
+msgstr "Making the backup…"
 
 #: src/features/import/import-wizard.tsx
 msgid "Map columns"
@@ -1760,6 +1804,10 @@ msgstr "New Expense"
 #: src/app/households/new.tsx
 msgid "New household"
 msgstr "New household"
+
+#: src/features/backup/restore-form.tsx
+msgid "New household's name"
+msgstr "New household's name"
 
 #: src/app/entries/new.tsx
 msgid "New Income"
@@ -2253,6 +2301,24 @@ msgstr "Rest"
 msgid "Restore"
 msgstr "Restore"
 
+#: src/app/_layout.tsx
+#: src/app/restore.tsx
+#: src/features/shell/household-pill.tsx
+msgid "Restore a Full backup"
+msgstr "Restore a Full backup"
+
+#: src/features/backup/restore-form.tsx
+msgid "Restore into a new household"
+msgstr "Restore into a new household"
+
+#: src/features/backup/restore-form.tsx
+msgid "Restored, but {missing, plural, one {# Attachment file} other {# Attachment files}} didn't come back."
+msgstr "Restored, but {missing, plural, one {# Attachment file} other {# Attachment files}} didn't come back."
+
+#: src/features/backup/restore-form.tsx
+msgid "Restoring…"
+msgstr "Restoring…"
+
 #: src/features/import/import-wizard.tsx
 msgid "Review rows"
 msgstr "Review rows"
@@ -2523,6 +2589,14 @@ msgstr "Take photo"
 msgid "That Attachment opens once you're online and it has uploaded."
 msgstr "That Attachment opens once you're online and it has uploaded."
 
+#: src/features/backup/restore-form.tsx
+msgid "That backup is damaged and can't be restored."
+msgstr "That backup is damaged and can't be restored."
+
+#: src/features/backup/restore-form.tsx
+msgid "That backup is from a newer version of Hisaab. Update the app, then restore it."
+msgstr "That backup is from a newer version of Hisaab. Update the app, then restore it."
+
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't attach. Try again."
 msgstr "That didn't attach. Try again."
@@ -2538,6 +2612,10 @@ msgstr "That didn't import. Try again."
 #: src/features/attachments/entry-attachments.tsx
 msgid "That didn't remove. Try again."
 msgstr "That didn't remove. Try again."
+
+#: src/features/backup/restore-form.tsx
+msgid "That didn't restore. Try again."
+msgstr "That didn't restore. Try again."
 
 #: src/features/categories/category-form.tsx
 #: src/features/entries/form-checks.ts
@@ -2558,6 +2636,10 @@ msgstr "That Entry couldn't be restored. Try again once you're online."
 #: src/features/import/import-wizard.tsx
 msgid "That file couldn't be read. Paste its contents instead."
 msgstr "That file couldn't be read. Paste its contents instead."
+
+#: src/features/backup/restore-form.tsx
+msgid "That file isn't a Hisaab Full backup."
+msgstr "That file isn't a Hisaab Full backup."
 
 #: src/features/invites/join-with-link-form.tsx
 msgid "That isn't an Invite link. Paste the whole link you were sent."
@@ -2599,6 +2681,14 @@ msgstr "The day each Budget month starts, from 1 to 28."
 #: src/features/import/import-wizard.tsx
 msgid "The first row is a header"
 msgstr "The first row is a header"
+
+#: src/features/backup/full-backup-section.tsx
+msgid "The Full backup is made, but {missing, plural, one {# Attachment file} other {# Attachment files}} couldn't be had and {missing, plural, one {isn't} other {aren't}} in it. Make it again online to include them."
+msgstr "The Full backup is made, but {missing, plural, one {# Attachment file} other {# Attachment files}} couldn't be had and {missing, plural, one {isn't} other {aren't}} in it. Make it again online to include them."
+
+#: src/features/backup/full-backup-section.tsx
+msgid "The Full backup is made."
+msgstr "The Full backup is made."
 
 #: src/features/activity/activity-list.tsx
 msgid "the household"

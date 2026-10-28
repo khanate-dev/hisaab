@@ -16,6 +16,7 @@ const family = {
 	budget_month_start_day: 1,
 	created_by: "u1",
 	created_at: "2026-10-01T00:00:00.000Z",
+	restored_at: null,
 	_metadata: null,
 	_deleted: null,
 };

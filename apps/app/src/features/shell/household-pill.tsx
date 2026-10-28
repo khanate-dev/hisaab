@@ -73,6 +73,14 @@ export const HouseholdPill = () => {
 					</SheetClose>
 					<SheetClose asChild>
 						<Button
+							onPress={() => router.push("/restore")}
+							variant="secondary"
+						>
+							{t`Restore a Full backup`}
+						</Button>
+					</SheetClose>
+					<SheetClose asChild>
+						<Button
 							onPress={() => router.push("/household")}
 							variant="secondary"
 						>
