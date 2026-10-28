@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+	PURGE_BATCH,
 	type PurgeAdapters,
 	type PurgeCandidate,
 	purgeAttachments,
@@ -24,6 +25,25 @@ const store = (due: PurgeCandidate[], removeFails = false) => {
 };
 
 describe("purgeAttachments", () => {
+	it("keeps going batch by batch until nothing is due", async () => {
+		const full = Array.from({ length: PURGE_BATCH }, (_, i) => ({
+			path: `h/${i}.jpg`,
+			attachmentId: null,
+		}));
+		const batches = [
+			full,
+			full,
+			[{ path: "h/last.jpg", attachmentId: "a" }],
+			[],
+		];
+		const adapters: PurgeAdapters = {
+			candidates: async () => batches.shift() ?? [],
+			removeFiles: async () => {},
+			markPurged: async () => {},
+		};
+		expect(await purgeAttachments(adapters)).toBe(2 * PURGE_BATCH + 1);
+	});
+
 	it("deletes every due file, then marks purged exactly the rows that stay", async () => {
 		await fc.assert(
 			fc.asyncProperty(

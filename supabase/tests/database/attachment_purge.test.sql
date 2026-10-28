@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000033a1', 'member@example.com');
 insert into public.households (id, name) values
@@ -63,8 +63,13 @@ select ok(not exists (select 1 from public.attachments_to_purge(100) where attac
 	'a purged one isn''t due again');
 reset role;
 
+select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-4000-8000-0000000033a1', 'role', 'authenticated')::text, true);
 set local role authenticated;
 select throws_ok($$ select * from public.attachments_to_purge(10) $$, '42501', null, 'a User can''t list what''s due');
+update public.attachments set purged_at = null where id = '00000000-0000-7000-8000-000000003302';
+reset role;
+select isnt((select purged_at from public.attachments where id = '00000000-0000-7000-8000-000000003302'), null,
+	'nor clear a purge by re-sending the row');
 
 select * from finish();
 rollback;
