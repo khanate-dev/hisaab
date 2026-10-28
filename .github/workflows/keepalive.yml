@@ -1,0 +1,54 @@
+name: keepalive
+
+# Free tiers stop idle projects: Supabase pauses after 7 days without activity; PowerSync Cloud deprovisions after
+# 7 days with no deploys or client connections (ADR-0011).
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  supabase:
+    if: vars.PROD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: prod
+    steps:
+      - name: Ping Supabase Auth
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl --fail --silent --show-error --retry 3 \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/auth/v1/settings" > /dev/null
+
+  powersync:
+    if: vars.PROD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: prod
+    steps:
+      # A ping isn't activity, so this opens a sync stream for a few seconds, as a User with no households. Its token
+      # is signed with the keep-alive's own HS256 key (kid `keepalive`), which the instance's client auth also accepts.
+      - name: Open a sync connection
+        env:
+          POWERSYNC_URL: ${{ secrets.POWERSYNC_URL }}
+          POWERSYNC_KEEPALIVE_KEY: ${{ secrets.POWERSYNC_KEEPALIVE_KEY }}
+        run: |
+          b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+          now=$(date +%s)
+          header=$(printf '{"alg":"HS256","typ":"JWT","kid":"keepalive"}' | b64url)
+          claims=$(printf '{"sub":"keepalive","aud":"authenticated","iat":%d,"exp":%d}' "$now" $((now + 300)) | b64url)
+          signature=$(printf '%s.%s' "$header" "$claims" \
+            | openssl dgst -sha256 -mac HMAC -macopt "hexkey:$POWERSYNC_KEEPALIVE_KEY" -binary | b64url)
+          # The stream never ends by itself; the timeout ends it, and the status says whether it was accepted.
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 10 \
+            -X POST "$POWERSYNC_URL/sync/stream" \
+            -H "Authorization: Token $header.$claims.$signature" \
+            -H "Content-Type: application/json" \
+            -d '{"raw_data":true}' || true)
+          echo "sync/stream answered $status"
+          test "$status" = 200

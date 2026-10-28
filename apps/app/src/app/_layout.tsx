@@ -189,6 +189,15 @@ const AppStack = ({ userId }: { userId: string | null }) => {
 				name="invite/[token]"
 				options={{ title: t`Invite` }}
 			/>
+			{/* Open signed in or out: the stores link to both. */}
+			<Stack.Screen
+				name="privacy"
+				options={{ title: t`Privacy policy` }}
+			/>
+			<Stack.Screen
+				name="support"
+				options={{ title: t`Support` }}
+			/>
 			<Stack.Protected guard={!signedIn}>
 				<Stack.Screen
 					name="sign-in"
