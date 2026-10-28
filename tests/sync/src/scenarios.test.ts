@@ -1,5 +1,10 @@
 import { CONTRACT_VERSION, stamped } from "@hisaab/client-schema";
-import { budgetFor, occurrenceEntryId, occurrenceId } from "@hisaab/domain";
+import {
+	budgetFor,
+	occurrenceEntryId,
+	occurrenceId,
+	preferenceId,
+} from "@hisaab/domain";
 import type { AbstractPowerSyncDatabase } from "@powersync/common";
 import { v7 as uuidv7 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -1115,48 +1120,24 @@ describe("sync scenarios", () => {
 			bob: "member",
 		});
 		const admin = adminClient();
-		// The seed's Memberships raised Membership Notifications; drain them to Alice as the drain would.
-		const pending = await admin.rpc("pending_notifications", { batch: 500 });
-		if (pending.error) throw pending.error;
-		const raised = (
-			pending.data as {
-				id: string;
-				household_id: string;
-				trigger: string;
-				payload: string;
-			}[]
-		).filter((n) => n.household_id === household);
-		expect(raised.length).toBeGreaterThan(0);
-		const delivered = await admin.rpc("deliver_notifications", {
-			deliveries: raised.map((n) => ({
-				notification_id: n.id,
-				household_id: household,
-				user_id: users.alice.id,
-				channel: "inbox",
-				trigger: n.trigger,
-				payload: n.payload,
-			})),
-			drained: raised.map((n) => n.id),
-		});
-		if (delivered.error) throw delivered.error;
-
 		const alice = await connectClient(users.alice);
-		const delivery = await vi.waitFor(
+		// The seed's joins raised Membership Notifications into Alice's inbox.
+		const notification = await vi.waitFor(
 			() =>
 				alice.get<{ id: string; payload: string }>(
-					"SELECT id, payload FROM notification_deliveries LIMIT 1",
+					"SELECT id, payload FROM notifications LIMIT 1",
 				),
 			{ timeout: 10_000 },
 		);
 		await goOffline(alice);
 		await alice.execute(
-			"UPDATE notification_deliveries SET read_at = ?, _metadata = ? WHERE id = ?",
-			[new Date().toISOString(), stamped({})._metadata, delivery.id],
+			"UPDATE notifications SET read_at = ?, _metadata = ? WHERE id = ?",
+			[new Date().toISOString(), stamped({})._metadata, notification.id],
 		);
 		await alice.execute(
 			"INSERT INTO notification_preferences (id, household_id, user_id, trigger, enabled, created_at, _metadata) VALUES (?, ?, ?, 'membership', 0, ?, ?)",
 			[
-				uuidv7(),
+				preferenceId(users.alice.id, household, "membership"),
 				household,
 				users.alice.id,
 				new Date().toISOString(),
@@ -1168,13 +1149,13 @@ describe("sync scenarios", () => {
 
 		expect(await uploadErrors(alice)).toEqual([]);
 		const row = await admin
-			.from("notification_deliveries")
+			.from("notifications")
 			.select("read_at, payload")
-			.eq("id", delivery.id)
+			.eq("id", notification.id)
 			.single();
 		if (row.error) throw row.error;
 		expect(row.data.read_at).not.toBeNull();
-		expect(row.data.payload).toBe(delivery.payload);
+		expect(row.data.payload).toBe(notification.payload);
 		const prefs = await admin
 			.from("notification_preferences")
 			.select("enabled")

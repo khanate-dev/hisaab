@@ -47,10 +47,6 @@ msgstr "{first} to {last}"
 msgid "{how} · {mode} · {when}"
 msgstr "{how} · {mode} · {when}"
 
-#: src/features/notifications/inbox-list.tsx
-msgid "{label} in {household}."
-msgstr "{label} in {household}."
-
 #: src/features/activity/activity-list.tsx
 msgid "{label}: {was} → {now}"
 msgstr "{label}: {was} → {now}"
@@ -266,10 +262,6 @@ msgstr "A change to a membership couldn't sync"
 msgid "A daily digest of what others changed."
 msgstr "A daily digest of what others changed."
 
-#: src/features/notifications/inbox-list.tsx
-msgid "a household"
-msgstr "a household"
-
 #: src/features/notifications/labels.ts
 msgid "A Loan is nearly due, due, or overdue."
 msgstr "A Loan is nearly due, due, or overdue."
@@ -458,10 +450,6 @@ msgstr "an Item"
 #: src/features/activity/activity-list.tsx
 msgid "an Occurrence"
 msgstr "an Occurrence"
-
-#: src/features/notifications/inbox-list.tsx
-msgid "another Role"
-msgstr "another Role"
 
 #: src/features/invites/invite-list.tsx
 msgid "anyone with the link"
@@ -1631,10 +1619,6 @@ msgstr "Members and your preferences arrive here."
 msgid "Membership"
 msgstr "Membership"
 
-#: src/features/notifications/inbox-list.tsx
-msgid "Membership changed in {household}."
-msgstr "Membership changed in {household}."
-
 #: src/features/wallets/labels.ts
 msgid "Mobile wallet"
 msgstr "Mobile wallet"
@@ -1888,6 +1872,10 @@ msgstr "Notification preferences"
 #: src/features/shell/top-bar.tsx
 msgid "Notifications"
 msgstr "Notifications"
+
+#: src/features/shell/top-bar.tsx
+msgid "Notifications, {unread} new"
+msgstr "Notifications, {unread} new"
 
 #: src/features/sync/sync-status.tsx
 msgid "Offline. Changes sync when you're back online."
@@ -2787,10 +2775,6 @@ msgstr "What's your name?"
 msgid "When it's due"
 msgstr "When it's due"
 
-#: src/features/notifications/preferences-list.tsx
-msgid "Which Notifications you get from {householdName}. Each one you get lands in your inbox."
-msgstr "Which Notifications you get from {householdName}. Each one you get lands in your inbox."
-
 #: src/features/loans/loan-form.tsx
 msgid "Which way"
 msgstr "Which way"
@@ -2879,6 +2863,10 @@ msgstr "Your default Wallet"
 #: src/app/onboarding.tsx
 msgid "Your first Wallet"
 msgstr "Your first Wallet"
+
+#: src/features/notifications/preferences-list.tsx
+msgid "Your inbox gets every Notification from {householdName}. Choose which also come to your devices as push notifications."
+msgstr "Your inbox gets every Notification from {householdName}. Choose which also come to your devices as push notifications."
 
 #: src/features/onboarding/name-form.tsx
 msgid "Your name"

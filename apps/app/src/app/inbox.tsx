@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import { router } from "expo-router";
-import { useEffect } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { markRead } from "@/features/notifications/actions";
@@ -13,15 +13,25 @@ export default function Inbox() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
 	const items = useInbox(userId);
-	const unread = items
-		?.filter((i) => i.read_at === null)
-		.map((i) => i.id)
-		.join(",");
+	// What was unread while the inbox was on screen: shown as new here, marked read once the User leaves.
+	const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
+	const seen = useRef(new Set<string>());
+	const unread =
+		items?.filter((i) => i.read_at === null).map((i) => i.id) ?? [];
+	const unreadKey = unread.join(",");
 
-	// What's been shown is read; they're still marked new until the next look.
-	useEffect(() => {
-		if (unread) void markRead(unread.split(","));
-	}, [unread]);
+	useFocusEffect(
+		useCallback(() => {
+			for (const id of unreadKey === "" ? [] : unreadKey.split(","))
+				seen.current.add(id);
+			setFresh(new Set(seen.current));
+			return () => {
+				const shown = [...seen.current];
+				seen.current = new Set();
+				void markRead(shown);
+			};
+		}, [unreadKey]),
+	);
 
 	return (
 		<Screen title={t`Notifications`}>
@@ -33,6 +43,7 @@ export default function Inbox() {
 			</Button>
 			{items !== undefined && (
 				<InboxList
+					fresh={fresh}
 					items={items}
 					userId={userId}
 				/>

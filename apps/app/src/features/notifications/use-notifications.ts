@@ -1,10 +1,7 @@
-import {
-	notificationDeliveries,
-	notificationPreferences,
-} from "@hisaab/client-schema";
+import { notificationPreferences, notifications } from "@hisaab/client-schema";
 import { toCompilableQuery } from "@powersync/drizzle-driver";
 import { useQuery } from "@powersync/react";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/powersync";
 import { whenLoaded } from "@/lib/watched";
@@ -16,18 +13,31 @@ export const useInbox = (userId: string) =>
 			toCompilableQuery(
 				db
 					.select()
-					.from(notificationDeliveries)
-					.where(eq(notificationDeliveries.user_id, userId))
-					.orderBy(desc(notificationDeliveries.created_at)),
+					.from(notifications)
+					.where(eq(notifications.user_id, userId))
+					.orderBy(desc(notifications.created_at)),
 			),
 		),
 	);
 
+/** How many of the User's Notifications are unread, for the bell. */
+export const useUnreadCount = (userId: string | undefined) =>
+	useQuery(
+		toCompilableQuery(
+			db
+				.select({ id: notifications.id })
+				.from(notifications)
+				.where(
+					and(
+						eq(notifications.user_id, userId ?? ""),
+						isNull(notifications.read_at),
+					),
+				),
+		),
+	).data.length;
+
 /** The User's own preferences in a household; undefined while loading. */
-export const usePreferences = (
-	householdId: string | undefined,
-	userId: string,
-) =>
+export const usePreferences = (householdId: string, userId: string) =>
 	whenLoaded(
 		useQuery(
 			toCompilableQuery(
@@ -36,11 +46,10 @@ export const usePreferences = (
 					.from(notificationPreferences)
 					.where(
 						and(
-							eq(notificationPreferences.household_id, householdId ?? ""),
+							eq(notificationPreferences.household_id, householdId),
 							eq(notificationPreferences.user_id, userId),
 						),
 					),
 			),
 		),
-		householdId !== undefined,
 	);

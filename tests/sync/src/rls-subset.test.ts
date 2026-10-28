@@ -24,7 +24,7 @@ const SYNCED_TABLES = [
 	"saved_filters",
 	"attachments",
 	"import_mappings",
-	"notification_deliveries",
+	"notifications",
 	"notification_preferences",
 	"invites",
 ] as const;
@@ -56,7 +56,7 @@ describe("RLS ⊇ Sync Streams", () => {
 				if (readable.error) throw readable.error;
 
 				// dave is in no shared household, so nothing has notified him.
-				if (!(table === "notification_deliveries" && name === "dave"))
+				if (!(table === "notifications" && name === "dave"))
 					expect(synced.length, `${table} synced something`).toBeGreaterThan(0);
 				expect(readable.data.map((row) => row.id)).toEqual(
 					expect.arrayContaining(synced),
@@ -142,14 +142,11 @@ describe("RLS ⊇ Sync Streams", () => {
 			const device = await connectClient(user);
 			await vi.waitFor(async () =>
 				expect(
-					(await device.getAll("SELECT id FROM notification_deliveries"))
-						.length,
+					(await device.getAll("SELECT id FROM notifications")).length,
 				).toBeGreaterThan(0),
 			);
 			expect(
-				await device.getAll(
-					"SELECT DISTINCT user_id FROM notification_deliveries",
-				),
+				await device.getAll("SELECT DISTINCT user_id FROM notifications"),
 			).toEqual([{ user_id: user.id }]);
 		}
 	});

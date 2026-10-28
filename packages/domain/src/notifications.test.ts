@@ -1,56 +1,26 @@
 import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 
+import { preferenceId } from "./notification-preferences";
 import {
+	type ClaimedDelivery,
 	defaultOn,
-	type Delivery,
-	type DrainAdapters,
-	DrainForbidden,
-	drainNotifications,
-	handleDrainRequest,
+	type DispatchAdapters,
+	dispatchDeliveries,
+	DispatchForbidden,
+	handleDispatchRequest,
 	isOn,
+	MAX_ATTEMPTS,
 	type MemberRole,
 	NOTIFICATION_TRIGGERS,
-	type NotificationPreference,
-	type OutboxNotification,
-	recipients,
+	readMembershipPayload,
 } from "./notifications";
 
 const role = fc.constantFrom<MemberRole>("admin", "member", "viewer");
 const trigger = fc.constantFrom(...NOTIFICATION_TRIGGERS);
-const members = fc.uniqueArray(
-	fc.record({ userId: fc.constantFrom("u1", "u2", "u3", "u4"), role }),
-	{
-		selector: (m) => m.userId,
-		maxLength: 4,
-	},
-);
-const preferences = fc.array(
-	fc.record({
-		user_id: fc.constantFrom("u1", "u2", "u3", "u4"),
-		trigger,
-		enabled: fc.boolean(),
-		created_at: fc.constantFrom(
-			"2026-10-01T00:00:00Z",
-			"2026-10-02T00:00:00Z",
-			"2026-10-03T00:00:00Z",
-		),
-	}),
-	{ maxLength: 8 },
-);
 
-const membership = (
-	subjectUserId: string | null = "u2",
-): OutboxNotification => ({
-	id: "n1",
-	householdId: "h1",
-	trigger: "membership",
-	subjectUserId,
-	payload: JSON.stringify({ change: "joined", userId: subjectUserId }),
-});
-
-describe("defaultOn", () => {
-	it("gives Viewers only the Monthly summary and nobody the activity digest unasked", () => {
+describe("defaultOn and isOn", () => {
+	it("give Viewers only the Monthly summary and nobody the activity digest unasked", () => {
 		expect(NOTIFICATION_TRIGGERS.filter((t) => defaultOn(t, "viewer"))).toEqual(
 			["monthly_summary"],
 		);
@@ -58,136 +28,183 @@ describe("defaultOn", () => {
 			NOTIFICATION_TRIGGERS.filter((t) => !defaultOn(t, "member")),
 		).toEqual(["household_activity"]);
 	});
-});
 
-describe("isOn", () => {
-	it("is the User's latest choice for the trigger, else their Role's default", () => {
+	it("follow the User's own choice when there is one, else the Role's default", () => {
 		fc.assert(
-			fc.property(trigger, role, preferences, (t, r, prefs) => {
-				const mine = prefs.filter((p) => p.user_id === "u1" && p.trigger === t);
-				const latest = mine.reduce<NotificationPreference | undefined>(
-					(a, p) => (!a || p.created_at > a.created_at ? p : a),
-					undefined,
-				);
-				expect(isOn(t, { userId: "u1", role: r }, prefs)).toBe(
-					latest ? latest.enabled : defaultOn(t, r),
+			fc.property(trigger, role, fc.option(fc.boolean()), (t, r, enabled) => {
+				expect(isOn(t, r, enabled === null ? undefined : { enabled })).toBe(
+					enabled ?? defaultOn(t, r),
 				);
 			}),
 		);
 	});
 });
 
-describe("recipients", () => {
-	it("are a Membership change's Admins and the person it's about, if they want it", () => {
-		const people = [
-			{ userId: "u1", role: "admin" as const },
-			{ userId: "u2", role: "member" as const },
-			{ userId: "u3", role: "member" as const },
-		];
-		expect(recipients(membership(), people, []).toSorted()).toEqual([
-			"u1",
-			"u2",
-		]);
-		expect(
-			recipients(membership(), people, [
-				{
-					user_id: "u1",
-					trigger: "membership",
-					enabled: false,
-					created_at: "x",
-				},
-			]),
-		).toEqual(["u2"]);
-	});
-
-	it("reach someone who just left, though they're no longer a Member", () => {
-		expect(
-			recipients(
-				membership("u9"),
-				[{ userId: "u1", role: "admin" }],
-				[],
-			).toSorted(),
-		).toEqual(["u1", "u9"]);
-	});
-
-	it("are only ever people it's on for, each once", () => {
-		fc.assert(
-			fc.property(members, preferences, trigger, (people, prefs, t) => {
-				const got = recipients({ ...membership(), trigger: t }, people, prefs);
-				expect(new Set(got).size).toBe(got.length);
-				for (const userId of got) {
-					const member = people.find((m) => m.userId === userId) ?? {
-						userId,
-						role: "member" as const,
-					};
-					expect(isOn(t, member, prefs)).toBe(true);
-				}
-			}),
-		);
-	});
-});
-
-describe("drainNotifications", () => {
-	const adapters = (pending: OutboxNotification[]) => {
-		const deliver = vi.fn(async (_d: Delivery[], _ids: string[]) => {});
-		const store: DrainAdapters = {
-			pending: async () => pending,
-			members: async () => [
-				{ userId: "u1", role: "admin" },
-				{ userId: "u2", role: "member" },
-			],
-			preferences: async () => [],
-			deliver,
+describe("readMembershipPayload", () => {
+	it("reads what the Membership trigger writes, and nothing malformed", () => {
+		const payload = {
+			change: "joined",
+			userId: "u2",
+			name: "Bilal",
+			role: "member",
+			householdName: "Family",
 		};
-		return { store, deliver };
+		expect(readMembershipPayload(JSON.stringify(payload))).toEqual(payload);
+		expect(
+			readMembershipPayload(JSON.stringify({ ...payload, name: null }))?.name,
+		).toBeNull();
+		for (const bad of [
+			"nope",
+			"null",
+			"[]",
+			JSON.stringify({ ...payload, change: "exploded" }),
+			JSON.stringify({ ...payload, role: "owner" }),
+		])
+			expect(readMembershipPayload(bad)).toBeNull();
+	});
+});
+
+describe("preferenceId", () => {
+	it("matches what Postgres's uuid_generate_v5 derives, which the server checks it against", () => {
+		expect(
+			preferenceId(
+				"00000000-0000-4000-8000-0000000011a1",
+				"00000000-0000-7000-8000-0000000011f1",
+				"membership",
+			),
+		).toBe("c77a5500-dcc4-50a2-b152-7d77342f026a");
+	});
+
+	it("is one per User, household and trigger", () => {
+		fc.assert(
+			fc.property(
+				fc.uuid(),
+				fc.uuid(),
+				trigger,
+				fc.uuid(),
+				trigger,
+				(u, h, t, u2, t2) => {
+					expect(preferenceId(u, h, t)).toBe(preferenceId(u, h, t));
+					if (u !== u2 || t !== t2)
+						expect(preferenceId(u, h, t)).not.toBe(preferenceId(u2, h, t2));
+				},
+			),
+		);
+	});
+});
+
+describe("dispatchDeliveries", () => {
+	const delivery = (
+		id: string,
+		channel: ClaimedDelivery["channel"],
+		attempts = 1,
+	): ClaimedDelivery => ({
+		id,
+		notificationId: "n1",
+		userId: "u1",
+		channel,
+		target: "t",
+		attempts,
+		trigger: "membership",
+		payload: "{}",
+	});
+	const store = (claimed: ClaimedDelivery[]) => {
+		const settle = vi.fn<DispatchAdapters["settle"]>(async () => {});
+		return {
+			adapters: {
+				claim: async () => claimed,
+				settle,
+			} satisfies DispatchAdapters,
+			settle,
+		};
 	};
 
-	it("delivers each pending Notification to its recipients' inboxes and marks it drained", async () => {
-		const { store, deliver } = adapters([membership("u2")]);
-		expect(await drainNotifications(store)).toBe(1);
-		expect(deliver).toHaveBeenCalledWith(
-			[
-				expect.objectContaining({
-					userId: "u1",
-					channel: "inbox",
-					trigger: "membership",
-				}),
-				expect.objectContaining({
-					userId: "u2",
-					channel: "inbox",
-					trigger: "membership",
-				}),
-			],
-			["n1"],
+	it("settles each claimed delivery as its sender says, failing a channel with none, and dead past the attempts", async () => {
+		const { adapters, settle } = store([
+			delivery("d1", "expo"),
+			delivery("d2", "webpush"),
+			delivery("d3", "email"),
+			delivery("d4", "expo", MAX_ATTEMPTS),
+			delivery("d5", "webpush", MAX_ATTEMPTS),
+		]);
+		const expo = vi.fn(async (d: ClaimedDelivery) =>
+			d.id === "d1"
+				? { status: "sent" as const }
+				: { status: "failed" as const, error: "timeout" },
 		);
+		const webpush = vi.fn(async (d: ClaimedDelivery) => {
+			if (d.id === "d5") return { status: "dead" as const, error: "410" };
+			throw new Error("boom");
+		});
+		expect(await dispatchDeliveries(adapters, { expo, webpush })).toBe(5);
+		expect(settle).toHaveBeenCalledWith([
+			{ id: "d1", status: "sent", error: null },
+			{ id: "d2", status: "failed", error: "boom" },
+			{ id: "d3", status: "failed", error: "No sender for email yet" },
+			{ id: "d4", status: "dead", error: "timeout" },
+			{ id: "d5", status: "dead", error: "410" },
+		]);
 	});
 
-	it("does nothing when nothing's pending", async () => {
-		const { store, deliver } = adapters([]);
-		expect(await drainNotifications(store)).toBe(0);
-		expect(deliver).not.toHaveBeenCalled();
+	it("never settles a delivery as sent unless its sender sent it", () => {
+		fc.assert(
+			fc.asyncProperty(
+				fc.array(
+					fc.record({
+						attempts: fc.integer({ min: 1, max: 7 }),
+						sent: fc.boolean(),
+					}),
+					{ maxLength: 8 },
+				),
+				async (rows) => {
+					const claimed = rows.map((r, i) =>
+						delivery(`d${i}`, "expo", r.attempts),
+					);
+					const { adapters, settle } = store(claimed);
+					await dispatchDeliveries(adapters, {
+						expo: async (d) =>
+							rows[Number(d.id.slice(1))]?.sent
+								? { status: "sent" }
+								: { status: "failed", error: "x" },
+					});
+					const results = settle.mock.calls[0]?.[0] ?? [];
+					results.forEach((r, i) => {
+						const row = rows[i];
+						if (!row) return;
+						expect(r.status).toBe(
+							row.sent
+								? "sent"
+								: row.attempts >= MAX_ATTEMPTS
+									? "dead"
+									: "failed",
+						);
+					});
+				},
+			),
+		);
 	});
 
 	it("runs with the caller's key, refused unless the database takes it as the service role's", async () => {
-		const { store } = adapters([]);
-		const forKey = (key: string): DrainAdapters =>
+		const { adapters } = store([]);
+		const forKey = (key: string): DispatchAdapters =>
 			key === "service"
-				? store
+				? adapters
 				: {
-						...store,
-						pending: async () => {
-							throw new DrainForbidden();
+						...adapters,
+						claim: async () => {
+							throw new DispatchForbidden();
 						},
 					};
 		const post = (headers: Record<string, string>) =>
-			handleDrainRequest(
+			handleDispatchRequest(
 				forKey,
+				{},
 				new Request("http://x", { method: "POST", headers }),
 			);
 		expect((await post({})).status).toBe(403);
 		expect((await post({ authorization: "Bearer nope" })).status).toBe(403);
 		expect(
 			await (await post({ authorization: "Bearer service" })).json(),
-		).toEqual({ status: "ok", drained: 0 });
+		).toEqual({ status: "ok", settled: 0 });
 	});
 });

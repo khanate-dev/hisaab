@@ -32,7 +32,7 @@ export const schema = new Schema({
 	invites: toPowerSyncTable(tables.invites),
 	loans: toPowerSyncTable(tables.loans),
 	memberships: toPowerSyncTable(tables.memberships),
-	notification_deliveries: toPowerSyncTable(tables.notificationDeliveries),
+	notifications: toPowerSyncTable(tables.notifications),
 	notification_preferences: toPowerSyncTable(tables.notificationPreferences),
 	occurrences: toPowerSyncTable(tables.occurrences),
 	profiles: toPowerSyncTable(tables.profiles),

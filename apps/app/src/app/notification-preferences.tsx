@@ -8,23 +8,42 @@ import { usePreferences } from "@/features/notifications/use-notifications";
 import { Screen } from "@/features/shell/screen";
 import { useSignedInUserId } from "@/lib/session";
 
+const HouseholdPreferences = ({
+	household,
+	userId,
+}: {
+	household: { id: string; name: string };
+	userId: string;
+}) => {
+	const membership = useMembership(household.id, userId);
+	const choices = usePreferences(household.id, userId);
+	if (!membership || choices === undefined) return null;
+	return (
+		<PreferencesList
+			choices={choices}
+			householdName={household.name}
+			onChange={(trigger, enabled) =>
+				void setPreference(
+					{ householdId: household.id, userId },
+					trigger,
+					enabled,
+				)
+			}
+			role={membership.role}
+		/>
+	);
+};
+
 export default function NotificationPreferences() {
 	const { t } = useLingui();
 	const userId = useSignedInUserId();
 	const household = useCurrentHousehold(userId);
-	const membership = useMembership(household?.id, userId);
-	const preferences = usePreferences(household?.id, userId);
-
 	return (
 		<Screen title={t`Notification preferences`}>
-			{household && membership && preferences !== undefined && (
-				<PreferencesList
-					householdName={household.name}
-					onChange={(trigger, enabled) =>
-						void setPreference(household.id, userId, trigger, enabled)
-					}
-					preferences={preferences}
-					role={membership.role}
+			{household && (
+				<HouseholdPreferences
+					household={household}
+					key={household.id}
 					userId={userId}
 				/>
 			)}

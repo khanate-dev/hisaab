@@ -1,5 +1,5 @@
 import type { Role } from "@hisaab/client-schema";
-import { occurrenceId } from "@hisaab/domain";
+import { occurrenceId, preferenceId } from "@hisaab/domain";
 import { v7 as uuidv7 } from "uuid";
 
 import { adminClient, type SignedInUser, signInNewUser } from "./users";
@@ -126,11 +126,14 @@ export const seedHouseholds = async () => {
 	]);
 	if (filters.error) throw filters.error;
 
-	// Every User sets a preference at home; the Membership Notifications the joins raised are drained to the Admins and
-	// the person each is about (`recipients`), as the drain Edge Function would.
+	// Every User sets a preference at home. (Their Membership Notifications were raised as the joins happened.)
 	const preferences = await admin.from("notification_preferences").insert(
 		personal.data.map((row) => ({
-			id: uuidv7(),
+			id: preferenceId(
+				row.personal_user_id as string,
+				row.id,
+				"monthly_summary",
+			),
 			household_id: row.id,
 			user_id: row.personal_user_id as string,
 			trigger: "monthly_summary",
@@ -138,41 +141,6 @@ export const seedHouseholds = async () => {
 		})),
 	);
 	if (preferences.error) throw preferences.error;
-	const pending = await admin.rpc("pending_notifications", { batch: 200 });
-	if (pending.error) throw pending.error;
-	const members = await admin
-		.from("memberships")
-		.select("household_id, user_id, role");
-	if (members.error) throw members.error;
-	const raised = (
-		pending.data as {
-			id: string;
-			household_id: string;
-			trigger: string;
-			subject_user_id: string;
-			payload: string;
-		}[]
-	).filter((n) => n.household_id === family || n.household_id === side);
-	const delivered = await admin.rpc("deliver_notifications", {
-		deliveries: raised.flatMap((n) =>
-			members.data
-				.filter(
-					(m) =>
-						m.household_id === n.household_id &&
-						(m.role === "admin" || m.user_id === n.subject_user_id),
-				)
-				.map((m) => ({
-					notification_id: n.id,
-					household_id: n.household_id,
-					user_id: m.user_id,
-					channel: "inbox",
-					trigger: n.trigger,
-					payload: n.payload,
-				})),
-		),
-		drained: raised.map((n) => n.id),
-	});
-	if (delivered.error) throw delivered.error;
 
 	return { users, households: { family, side } };
 };

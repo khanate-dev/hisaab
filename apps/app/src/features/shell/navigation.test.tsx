@@ -23,6 +23,9 @@ jest.mock("@/features/households/use-current-household", () => ({
 jest.mock("@/features/households/actions", () => ({
 	setCurrentHousehold: async () => {},
 }));
+jest.mock("@/features/notifications/use-notifications", () => ({
+	useUnreadCount: () => 0,
+}));
 jest.mock("@/lib/session", () => ({
 	useSession: () => ({ user: { id: "u1" } }),
 }));

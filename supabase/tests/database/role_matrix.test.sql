@@ -66,14 +66,16 @@ insert into public.attachments (id, household_id, entry_id, media_type, size_byt
 	 'image/jpeg', 1000, '00000000-0000-4000-8000-00000000aaa1');
 insert into public.import_mappings (id, household_id, wallet_id, mapping) values
 	('00000000-0000-7000-8000-00000000aaa9', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aac1', '{}');
-insert into private.notifications (id, household_id, trigger, payload) values
-	('00000000-0000-7000-8000-00000000aab9', '00000000-0000-7000-8000-00000000aaf1', 'membership', '{}');
-insert into public.notification_deliveries (id, notification_id, household_id, user_id, trigger, payload) values
-	('00000000-0000-7000-8000-00000000aabb', '00000000-0000-7000-8000-00000000aab9', '00000000-0000-7000-8000-00000000aaf1',
-	 '00000000-0000-4000-8000-00000000aaa1', 'membership', '{}');
+insert into public.notifications (id, household_id, user_id, trigger, payload) values
+	('00000000-0000-7000-8000-00000000aab9', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
+	 'membership', '{}');
+insert into public.notification_deliveries (id, notification_id, user_id, channel, target) values
+	('00000000-0000-7000-8000-00000000aabb', '00000000-0000-7000-8000-00000000aab9', '00000000-0000-4000-8000-00000000aaa1',
+	 'expo', 'ExponentPushToken[x]');
 insert into public.notification_preferences (id, household_id, user_id, trigger, enabled) values
-	('00000000-0000-7000-8000-00000000aabc', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
-	 'membership', false);
+	(extensions.uuid_generate_v5('8a3c2f1e-5b7d-4e9a-a6c1-2d4f6b8e0a13',
+		'preference/00000000-0000-4000-8000-00000000aaa1/00000000-0000-7000-8000-00000000aaf1/membership'),
+	 '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1', 'membership', false);
 insert into public.saved_filters (id, household_id, user_id, name, criteria) values
 	('00000000-0000-7000-8000-00000000aa81', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
 	 'Mine', '{}');
@@ -164,15 +166,19 @@ insert into attempts values
 	('import_mappings.select', $$ select 1 from public.import_mappings where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('import_mappings.update', $$ update public.import_mappings set mapping = mapping where id = '00000000-0000-7000-8000-00000000aaa9' $$),
 	('import_mappings.delete', $$ delete from public.import_mappings where id = '00000000-0000-7000-8000-00000000aaa9' $$),
-	-- A Notification and a preference are their User's alone: the Admin's here.
-	('notification_deliveries.select', $$ select 1 from public.notification_deliveries where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
-	('notification_deliveries.update', $$ update public.notification_deliveries set read_at = now() where id = '00000000-0000-7000-8000-00000000aabb' $$),
-	('notification_deliveries.delete', $$ delete from public.notification_deliveries where id = '00000000-0000-7000-8000-00000000aabb' $$),
+	-- A Notification, its deliveries and a preference are their User's alone: the Admin's here.
+	('notifications.select', $$ select 1 from public.notifications where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('notifications.update', $$ update public.notifications set read_at = now() where id = '00000000-0000-7000-8000-00000000aab9' $$),
+	('notifications.delete', $$ delete from public.notifications where id = '00000000-0000-7000-8000-00000000aab9' $$),
+	('notification_deliveries.select', $$ select 1 from public.notification_deliveries where id = '00000000-0000-7000-8000-00000000aabb' $$),
+	('notification_deliveries.update', $$ update public.notification_deliveries set status = status where id = '00000000-0000-7000-8000-00000000aabb' $$),
 	('notification_preferences.select', $$ select 1 from public.notification_preferences where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('notification_preferences.insert', $$ insert into public.notification_preferences (id, household_id, user_id, trigger, enabled)
-		values ('00000000-0000-7000-8000-00000000ab17', '00000000-0000-7000-8000-00000000aaf1', (select auth.uid()), 'loan_due', true) $$),
-	('notification_preferences.update', $$ update public.notification_preferences set enabled = enabled where id = '00000000-0000-7000-8000-00000000aabc' $$),
-	('notification_preferences.delete', $$ delete from public.notification_preferences where id = '00000000-0000-7000-8000-00000000aabc' $$),
+		values (extensions.uuid_generate_v5('8a3c2f1e-5b7d-4e9a-a6c1-2d4f6b8e0a13',
+			'preference/' || (select auth.uid()) || '/00000000-0000-7000-8000-00000000aaf1/loan_due'),
+		        '00000000-0000-7000-8000-00000000aaf1', (select auth.uid()), 'loan_due', true) $$),
+	('notification_preferences.update', $$ update public.notification_preferences set enabled = enabled
+		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = '00000000-0000-4000-8000-00000000aaa1' $$),
 	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
 	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('saved_filters.insert', $$ insert into public.saved_filters (id, household_id, user_id, name, criteria)
@@ -247,9 +253,9 @@ select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa1') $$,
 	pg_temp.reads() || pg_temp.writes() || array['households.update', 'households.delete', 'invites.select',
 		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'import_mappings.select',
-		'import_mappings.update', 'import_mappings.delete', 'notification_deliveries.select',
-		'notification_deliveries.update', 'notification_deliveries.delete', 'notification_preferences.select',
-		'notification_preferences.insert', 'notification_preferences.update', 'notification_preferences.delete',
+		'import_mappings.update', 'import_mappings.delete', 'notifications.select', 'notifications.update',
+		'notification_deliveries.select', 'notification_preferences.select', 'notification_preferences.insert',
+		'notification_preferences.update',
 		'saved_filters.select',
 		'saved_filters.insert', 'saved_filters.update', 'saved_filters.delete'],
 	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '
@@ -258,13 +264,14 @@ select set_eq(
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa2') $$,
 	pg_temp.reads() || pg_temp.writes() || array['memberships.leave', 'saved_filters.insert',
-		'notification_preferences.insert'],
+		'notification_preferences.insert', 'notifications.select'],
 	'a Member reads everything but Invites, records and manages the household''s money, and may leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa3') $$,
+	-- Their own inbox has their joining in it.
 	pg_temp.reads() || array['households.insert', 'profiles.update', 'memberships.leave', 'saved_filters.insert',
-		'notification_preferences.insert'],
+		'notification_preferences.insert', 'notifications.select'],
 	'a Viewer only reads, beyond their own name, households of their own and leaving'
 );
 select set_eq(

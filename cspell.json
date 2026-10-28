@@ -116,6 +116,7 @@
 		"vitest",
 		"Wayfinder",
 		"webp",
+		"webpush",
 		"worklets"
 	],
 	"ignoreRegExpList": ["sb_(?:publishable|secret)_[\\w-]+"]

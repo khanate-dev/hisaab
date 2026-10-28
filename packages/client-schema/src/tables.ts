@@ -220,15 +220,16 @@ export const importMappings = sqliteTable("import_mappings", {
 	_deleted: deleteFlag(),
 });
 
-/** One Notification in the User's Notification inbox; written by the drain, only marked read here. */
-export const notificationDeliveries = sqliteTable("notification_deliveries", {
+/** One Notification in the User's Notification inbox (CONTEXT.md); raised by the server, only marked read here. */
+export const notifications = sqliteTable("notifications", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
+	/** The recipient: always the signed-in User. */
 	user_id: text("user_id").notNull(),
-	channel: text("channel").notNull(),
 	/** One of `NOTIFICATION_TRIGGERS`. */
 	trigger: text("trigger").notNull(),
-	/** JSON text of what happened; never an amount. */
+	subject_user_id: text("subject_user_id"),
+	/** JSON text of what happened (`readMembershipPayload`); never an amount. */
 	payload: text("payload").notNull(),
 	created_at: text("created_at").notNull(),
 	read_at: text("read_at"),
@@ -236,7 +237,7 @@ export const notificationDeliveries = sqliteTable("notification_deliveries", {
 	_deleted: deleteFlag(),
 });
 
-/** A User's own choice for a trigger in a household; the latest wins, else the Role's default (`isOn`). */
+/** Whether a trigger also reaches the User by push in a household; one per trigger, its id from `preferenceId`. */
 export const notificationPreferences = sqliteTable("notification_preferences", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
