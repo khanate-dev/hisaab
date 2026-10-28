@@ -220,6 +220,34 @@ export const importMappings = sqliteTable("import_mappings", {
 	_deleted: deleteFlag(),
 });
 
+/** One Notification in the User's Notification inbox; written by the drain, only marked read here. */
+export const notificationDeliveries = sqliteTable("notification_deliveries", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	user_id: text("user_id").notNull(),
+	channel: text("channel").notNull(),
+	/** One of `NOTIFICATION_TRIGGERS`. */
+	trigger: text("trigger").notNull(),
+	/** JSON text of what happened; never an amount. */
+	payload: text("payload").notNull(),
+	created_at: text("created_at").notNull(),
+	read_at: text("read_at"),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
+/** A User's own choice for a trigger in a household; the latest wins, else the Role's default (`isOn`). */
+export const notificationPreferences = sqliteTable("notification_preferences", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	user_id: text("user_id").notNull(),
+	trigger: text("trigger").notNull(),
+	enabled: integer("enabled", { mode: "boolean" }).notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 /** A named set of search and filter criteria, private to the User who saved it (CONTEXT.md). */
 export const savedFilters = sqliteTable("saved_filters", {
 	id: text("id").primaryKey(),

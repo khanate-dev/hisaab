@@ -16,6 +16,7 @@ export * from "./invites";
 export * from "./items";
 export * from "./loans";
 export * from "./money";
+export * from "./notifications";
 export * from "./recurring";
 export * from "./search";
 export * from "./upcasters";

@@ -24,6 +24,8 @@ const SYNCED_TABLES = [
 	"saved_filters",
 	"attachments",
 	"import_mappings",
+	"notification_deliveries",
+	"notification_preferences",
 	"invites",
 ] as const;
 
@@ -53,7 +55,9 @@ describe("RLS ⊇ Sync Streams", () => {
 				const readable = await api.from(table).select("id");
 				if (readable.error) throw readable.error;
 
-				expect(synced.length, `${table} synced something`).toBeGreaterThan(0);
+				// dave is in no shared household, so nothing has notified him.
+				if (!(table === "notification_deliveries" && name === "dave"))
+					expect(synced.length, `${table} synced something`).toBeGreaterThan(0);
 				expect(readable.data.map((row) => row.id)).toEqual(
 					expect.arrayContaining(synced),
 				);
@@ -129,6 +133,24 @@ describe("RLS ⊇ Sync Streams", () => {
 				"SELECT DISTINCT user_id FROM saved_filters",
 			);
 			expect(owners).toEqual([{ user_id: user.id }]);
+		}
+	});
+
+	it("streams each User only their own Notifications", async () => {
+		for (const name of ["alice", "bob", "carol"] as const) {
+			const user = seed.users[name];
+			const device = await connectClient(user);
+			await vi.waitFor(async () =>
+				expect(
+					(await device.getAll("SELECT id FROM notification_deliveries"))
+						.length,
+				).toBeGreaterThan(0),
+			);
+			expect(
+				await device.getAll(
+					"SELECT DISTINCT user_id FROM notification_deliveries",
+				),
+			).toEqual([{ user_id: user.id }]);
 		}
 	});
 });

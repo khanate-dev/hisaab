@@ -53,3 +53,11 @@ token=$(printf 'a%.0s' $(seq 32))
 results="preview:$(ask "{\"action\":\"preview\",\"token\":\"$token\"}") accept:$(ask "{\"action\":\"accept\",\"token\":\"$token\"}")"
 echo "accept-invite: $results"
 [[ $results == "preview:404 accept:401" ]] || { cat "$log" >&2; exit 1; }
+
+# drain-notifications runs only for the service role (pg_cron calls it with that key), and drains through the domain.
+drain="$api/functions/v1/drain-notifications"
+service_key=$(pnpm exec supabase status --output json 2>/dev/null | node -p 'JSON.parse(require("fs").readFileSync(0)).SERVICE_ROLE_KEY')
+run() { curl --silent --output /dev/null --write-out "%{http_code}" --max-time 20 -X POST "$drain" "$@"; }
+results="anyone:$(run -H "authorization: Bearer nope") service:$(run -H "authorization: Bearer $service_key")"
+echo "drain-notifications: $results"
+[[ $results == "anyone:403 service:200" ]] || { cat "$log" >&2; exit 1; }
