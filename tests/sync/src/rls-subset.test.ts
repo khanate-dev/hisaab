@@ -21,6 +21,7 @@ const SYNCED_TABLES = [
 	"budget_overrides",
 	"recurring_rules",
 	"occurrences",
+	"saved_filters",
 	"invites",
 ] as const;
 
@@ -107,5 +108,25 @@ describe("RLS ⊇ Sync Streams", () => {
 				),
 			).toEqual([{ household_id: family }]),
 		);
+	});
+
+	it("streams each User only their own Saved filters", async () => {
+		for (const name of ["alice", "bob", "carol", "dave"] as const) {
+			const user = seed.users[name];
+			const device = await connectClient(user);
+			await vi.waitFor(async () =>
+				expect(
+					(
+						await device.getAll<{ user_id: string }>(
+							"SELECT user_id FROM saved_filters",
+						)
+					).length,
+				).toBeGreaterThan(0),
+			);
+			const owners = await device.getAll<{ user_id: string }>(
+				"SELECT DISTINCT user_id FROM saved_filters",
+			);
+			expect(owners).toEqual([{ user_id: user.id }]);
+		}
 	});
 });

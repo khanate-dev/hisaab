@@ -60,6 +60,11 @@ streams:
     auto_subscribe: true
     query: SELECT invites.id, invites.household_id, invites.token, invites.role, invites.email, invites.expires_at, invites.revoked_at, invites.accepted_by, invites.accepted_at, invites.created_by, invites.created_at FROM invites WHERE invites.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id() AND memberships.role = 'admin')
 
+  # The User's own Saved filters, in households they belong to; private, so nobody else's.
+  saved_filters:
+    auto_subscribe: true
+    query: SELECT saved_filters.id, saved_filters.household_id, saved_filters.user_id, saved_filters.name, saved_filters.criteria, saved_filters.created_at FROM saved_filters WHERE saved_filters.user_id = auth.user_id() AND saved_filters.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
+
   # The User's own profile and the profiles of everyone they share a household with.
   profiles:
     auto_subscribe: true

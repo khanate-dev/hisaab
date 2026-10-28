@@ -61,6 +61,9 @@ insert into public.recurring_rules (id, household_id, kind, wallet_id, category_
 insert into public.occurrences (id, household_id, rule_id, due_on, state, snoozed_until) values
 	('e2f0dfa8-e3e5-5073-8755-1a166004d19a', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61',
 	 '2026-10-01', 'snoozed', '2026-10-03');
+insert into public.saved_filters (id, household_id, user_id, name, criteria) values
+	('00000000-0000-7000-8000-00000000aa81', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-4000-8000-00000000aaa1',
+	 'Mine', '{}');
 insert into public.invites (id, household_id, token, role, expires_at, created_by) values
 	('00000000-0000-7000-8000-00000000aa31', '00000000-0000-7000-8000-00000000aaf1', repeat('m', 32), 'member',
 	 now() + interval '7 days', '00000000-0000-4000-8000-00000000aaa1');
@@ -139,6 +142,12 @@ insert into attempts values
 		values ('33ab105a-b894-5b94-9498-2517333a31d8', '00000000-0000-7000-8000-00000000aaf1', '00000000-0000-7000-8000-00000000aa61', '2026-11-01', 'skipped') $$),
 	('occurrences.update', $$ update public.occurrences set snoozed_until = snoozed_until where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
 	('occurrences.delete', $$ delete from public.occurrences where id = 'e2f0dfa8-e3e5-5073-8755-1a166004d19a' $$),
+	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
+	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
+	('saved_filters.insert', $$ insert into public.saved_filters (id, household_id, user_id, name, criteria)
+		values ('00000000-0000-7000-8000-00000000ab15', '00000000-0000-7000-8000-00000000aaf1', (select auth.uid()), 'New', '{}') $$),
+	('saved_filters.update', $$ update public.saved_filters set name = name where id = '00000000-0000-7000-8000-00000000aa81' $$),
+	('saved_filters.delete', $$ delete from public.saved_filters where id = '00000000-0000-7000-8000-00000000aa81' $$),
 	('activity_log.select', $$ select 1 from public.activity_log where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
 	('activity_log.insert', $$ insert into public.activity_log (household_id, table_name, row_id, action)
 		values ('00000000-0000-7000-8000-00000000aaf1', 'wallets', '00000000-0000-7000-8000-00000000ab09', 'insert') $$),
@@ -205,18 +214,19 @@ $$;
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa1') $$,
 	pg_temp.reads() || pg_temp.writes() || array['households.update', 'households.delete', 'invites.select',
-		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete'],
+		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'saved_filters.select',
+		'saved_filters.insert', 'saved_filters.update', 'saved_filters.delete'],
 	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '
 		|| 'Members, but as its last Admin can''t leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa2') $$,
-	pg_temp.reads() || pg_temp.writes() || array['memberships.leave'],
+	pg_temp.reads() || pg_temp.writes() || array['memberships.leave', 'saved_filters.insert'],
 	'a Member reads everything but Invites, records and manages the household''s money, and may leave'
 );
 select set_eq(
 	$$ select * from pg_temp.allowed('authenticated', '00000000-0000-4000-8000-00000000aaa3') $$,
-	pg_temp.reads() || array['households.insert', 'profiles.update', 'memberships.leave'],
+	pg_temp.reads() || array['households.insert', 'profiles.update', 'memberships.leave', 'saved_filters.insert'],
 	'a Viewer only reads, beyond their own name, households of their own and leaving'
 );
 select set_eq(

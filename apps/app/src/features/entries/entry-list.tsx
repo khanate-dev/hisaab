@@ -1,5 +1,6 @@
 import { isNegative } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
+import { useCallback } from "react";
 import { Pressable, View } from "react-native";
 
 import { Text } from "@/components/ui/text";
@@ -15,16 +16,19 @@ import { type EntryView, shownAmount } from "./views";
  */
 export const useEntryTitle = () => {
 	const { t, i18n } = useLingui();
-	return ({ entry, category, amount, madeBy }: EntryView) => {
-		if (entry.description !== null) return entry.description;
-		if (entry.kind === "household_transfer") {
-			const name = madeBy ?? t`someone`;
-			return isNegative(amount)
-				? t`Sent to another household`
-				: t`Contribution from ${name}`;
-		}
-		return category?.name ?? i18n._(entryKindLabel(entry.kind));
-	};
+	return useCallback(
+		({ entry, category, amount, madeBy }: EntryView) => {
+			if (entry.description !== null) return entry.description;
+			if (entry.kind === "household_transfer") {
+				const name = madeBy ?? t`someone`;
+				return isNegative(amount)
+					? t`Sent to another household`
+					: t`Contribution from ${name}`;
+			}
+			return category?.name ?? i18n._(entryKindLabel(entry.kind));
+		},
+		[t, i18n],
+	);
 };
 
 const EntryRow = ({

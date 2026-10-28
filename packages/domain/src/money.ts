@@ -74,6 +74,16 @@ export class Money {
 		);
 	}
 
+	/** -1, 0 or 1 as this is less than, equal to or more than `other`, exactly. */
+	compare(other: Money) {
+		if (other.currency !== this.currency) {
+			throw new Error(
+				`Can't compare ${this.currency} and ${other.currency}: convert the currency first`,
+			);
+		}
+		return this.#amount.comparedTo(other.#amount);
+	}
+
 	/** This many times over, exactly; `factor` is a whole number. */
 	times(factor: number) {
 		if (!Number.isInteger(factor))
@@ -110,8 +120,9 @@ export const negateMoney = (a: Money) => a.negated();
 export const isZero = (a: Money) => a.isZero();
 export const isNegative = (a: Money) => a.isNegative();
 export const moneyEquals = (a: Money, b: Money) => a.equals(b);
-/** `part` as a whole percentage of `whole`; null when `whole` is zero. */
+export const compareMoney = (a: Money, b: Money) => a.compare(b);
 export const timesMoney = (a: Money, factor: number) => a.times(factor);
+/** `part` as a whole percentage of `whole`; null when `whole` is zero. */
 export const percentOf = (part: Money, whole: Money) => part.percentOf(whole);
 
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */

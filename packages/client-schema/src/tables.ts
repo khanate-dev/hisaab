@@ -191,6 +191,19 @@ export const occurrences = sqliteTable("occurrences", {
 	_deleted: deleteFlag(),
 });
 
+/** A named set of search and filter criteria, private to the User who saved it (CONTEXT.md). */
+export const savedFilters = sqliteTable("saved_filters", {
+	id: text("id").primaryKey(),
+	household_id: text("household_id").notNull(),
+	user_id: text("user_id").notNull(),
+	name: text("name").notNull(),
+	/** JSON text: `writeSavedCriteria` writes it, `readSavedCriteria` reads it back. */
+	criteria: text("criteria").notNull(),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 export const entries = sqliteTable("entries", {
 	id: text("id").primaryKey(),
 	household_id: text("household_id").notNull(),
