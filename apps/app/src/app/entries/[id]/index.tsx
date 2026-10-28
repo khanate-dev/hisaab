@@ -2,6 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { Text } from "@/components/ui/text";
+import { EntryAttachments } from "@/features/attachments/entry-attachments";
 import { deleteEntry } from "@/features/entries/actions";
 import { EntryDetail } from "@/features/entries/entry-detail";
 import { useEntryTitle } from "@/features/entries/entry-list";
@@ -57,6 +58,11 @@ export default function EntryScreen() {
 				recordedBy={recordedBy}
 				rights={entryRights(view.entry, userId)}
 				view={view}
+			/>
+			<EntryAttachments
+				canEdit={canWrite}
+				entry={view.entry}
+				userId={userId}
 			/>
 		</Screen>
 	);

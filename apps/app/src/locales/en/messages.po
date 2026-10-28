@@ -288,6 +288,10 @@ msgstr "Add Contact"
 msgid "Add Expense"
 msgstr "Add Expense"
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Add file"
+msgstr "Add file"
+
 #: src/app/(tabs)/entries.tsx
 msgid "Add Income"
 msgstr "Add Income"
@@ -299,6 +303,10 @@ msgstr "Add Item"
 #: src/features/entries/items-section.tsx
 msgid "Add Items"
 msgstr "Add Items"
+
+#: src/features/attachments/attachment-list.tsx
+msgid "Add photo"
+msgstr "Add photo"
 
 #: src/app/categories/[id].tsx
 #: src/app/categories/new.tsx
@@ -364,6 +372,14 @@ msgstr "Amount varies"
 msgid "an Entry"
 msgstr "an Entry"
 
+#: src/features/attachments/attachment-list.tsx
+msgid "An Entry takes {most} Attachments at most."
+msgstr "An Entry takes {most} Attachments at most."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "An Entry takes 5 Attachments at most."
+msgstr "An Entry takes 5 Attachments at most."
+
 #: src/features/activity/activity-list.tsx
 msgid "an Item"
 msgstr "an Item"
@@ -422,6 +438,14 @@ msgstr "Archived: hidden from your Wallets, its Entries kept."
 #: src/features/search/entry-search.tsx
 msgid "As YYYY-MM-DD."
 msgstr "As YYYY-MM-DD."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "Attach an image or a PDF."
+msgstr "Attach an image or a PDF."
+
+#: src/features/attachments/attachment-list.tsx
+msgid "Attachments"
+msgstr "Attachments"
 
 #: src/features/recurring/labels.ts
 msgid "Auto-record"
@@ -1134,6 +1158,10 @@ msgstr "How much cash do you have on you? Hisaab starts your Cash Wallet there."
 msgid "Icon"
 msgstr "Icon"
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Image"
+msgstr "Image"
+
 #: src/features/wallets/balance.tsx
 msgid "In credit"
 msgstr "In credit"
@@ -1508,6 +1536,10 @@ msgstr "Next Budget month"
 msgid "No archived Categories in this list."
 msgstr "No archived Categories in this list."
 
+#: src/features/attachments/attachment-list.tsx
+msgid "No Attachments yet."
+msgstr "No Attachments yet."
+
 #: src/features/budgets/budget-month.tsx
 msgid "No Budgets this month."
 msgstr "No Budgets this month."
@@ -1653,6 +1685,10 @@ msgstr "Only whoever made this cross-household transfer changes it."
 msgid "Only whoever made this cross-household transfer edits it, while they're in both households."
 msgstr "Only whoever made this cross-household transfer edits it, while they're in both households."
 
+#: src/features/attachments/attachment-list.tsx
+msgid "Open {name}"
+msgstr "Open {name}"
+
 #: src/features/invites/join-with-link-form.tsx
 msgid "Open Invite"
 msgstr "Open Invite"
@@ -1719,6 +1755,10 @@ msgstr "Owed"
 #: src/features/loans/loans-tile.tsx
 msgid "Owed to you: {owedTotal}"
 msgstr "Owed to you: {owedTotal}"
+
+#: src/features/attachments/attachment-list.tsx
+msgid "PDF"
+msgstr "PDF"
 
 #: src/app/_layout.tsx
 #: src/app/pending.tsx
@@ -1823,6 +1863,7 @@ msgstr "Recurring rules"
 msgid "Red"
 msgstr "Red"
 
+#: src/features/attachments/attachment-list.tsx
 #: src/features/entries/items-section.tsx
 #: src/features/members/member-list.tsx
 msgid "Remove"
@@ -1832,6 +1873,7 @@ msgstr "Remove"
 msgid "Remove {description}"
 msgstr "Remove {description}"
 
+#: src/features/attachments/attachment-list.tsx
 #: src/features/members/member-list.tsx
 msgid "Remove {name}"
 msgstr "Remove {name}"
@@ -2123,6 +2165,10 @@ msgstr "Synced {synced}"
 msgid "Syncing your households…"
 msgstr "Syncing your households…"
 
+#: src/features/attachments/entry-attachments.tsx
+msgid "That didn't attach. Try again."
+msgstr "That didn't attach. Try again."
+
 #: src/features/categories/category-form.tsx
 #: src/features/entries/form-checks.ts
 #: src/features/entries/quick-add-form.tsx
@@ -2135,9 +2181,17 @@ msgstr "That didn't save. Try again."
 msgid "That Entry couldn't be restored. Try again once you're online."
 msgstr "That Entry couldn't be restored. Try again once you're online."
 
+#: src/features/attachments/entry-attachments.tsx
+msgid "That file is over 10 MB; try a smaller one."
+msgstr "That file is over 10 MB; try a smaller one."
+
 #: src/features/invites/join-with-link-form.tsx
 msgid "That isn't an Invite link. Paste the whole link you were sent."
 msgstr "That isn't an Invite link. Paste the whole link you were sent."
+
+#: src/features/attachments/entry-attachments.tsx
+msgid "That opens once you're online and it has uploaded."
+msgstr "That opens once you're online and it has uploaded."
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "That's already its Balance; there's nothing to adjust."
