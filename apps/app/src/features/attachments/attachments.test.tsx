@@ -10,12 +10,14 @@ const receipt: AttachmentItem = {
 	mediaType: "image/jpeg",
 	fileName: "receipt.jpg",
 	thumbnail: "data:image/jpeg;base64,AAAA",
+	expired: false,
 };
 const bill: AttachmentItem = {
 	id: "a2",
 	mediaType: "application/pdf",
 	fileName: "bill.pdf",
 	thumbnail: null,
+	expired: false,
 };
 
 const setup = async (
@@ -88,6 +90,16 @@ describe("AttachmentList", () => {
 		expect(
 			screen.getByText("An Entry takes 5 Attachments at most."),
 		).toBeVisible();
+	});
+
+	it("shows a purged one as expired, and doesn't open it", async () => {
+		const { onOpen, user } = await setup({
+			attachments: [{ ...receipt, expired: true }],
+		});
+		const tile = screen.getByRole("button", { name: "receipt.jpg, expired" });
+		expect(tile).toBeDisabled();
+		await user.press(tile);
+		expect(onOpen).not.toHaveBeenCalled();
 	});
 
 	it("says why a file didn't attach", async () => {

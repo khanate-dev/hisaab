@@ -99,6 +99,10 @@ msgstr "{name}, {role}"
 msgid "{name}, due {dueDate}"
 msgstr "{name}, due {dueDate}"
 
+#: src/features/attachments/attachment-list.tsx
+msgid "{name}, expired"
+msgstr "{name}, expired"
+
 #: src/features/categories/category-list.tsx
 msgid "{name}, in {parentName}"
 msgstr "{name}, in {parentName}"
@@ -1183,6 +1187,7 @@ msgstr "Expense"
 msgid "Expense or Income instead"
 msgstr "Expense or Income instead"
 
+#: src/features/attachments/attachment-list.tsx
 #: src/features/invites/invite-list.tsx
 msgid "Expired"
 msgstr "Expired"
