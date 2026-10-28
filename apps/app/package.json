@@ -47,6 +47,7 @@
 		"expo-image-manipulator": "catalog:",
 		"expo-image-picker": "catalog:",
 		"expo-linking": "catalog:",
+		"expo-local-authentication": "catalog:",
 		"expo-localization": "catalog:",
 		"expo-router": "catalog:",
 		"expo-status-bar": "catalog:",

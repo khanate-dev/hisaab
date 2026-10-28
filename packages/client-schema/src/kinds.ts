@@ -35,3 +35,11 @@ export {
 	RECURRING_MODES,
 	type RecurringMode,
 } from "@hisaab/domain";
+
+/** How a device looks: following the OS, or always light or dark (spec §4.1); the local `device_state.appearance`. */
+export const APPEARANCES = ["system", "light", "dark"] as const;
+export type Appearance = (typeof APPEARANCES)[number];
+
+/** A device's saved appearance, read safely: anything else is the default, following the OS. */
+export const appearanceOf = (saved: string | null | undefined): Appearance =>
+	APPEARANCES.find((a) => a === saved) ?? "system";

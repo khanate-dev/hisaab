@@ -3,6 +3,7 @@ import { useStatus } from "@powersync/react";
 import { router } from "expo-router";
 
 import { Button } from "@/components/ui/button";
+import { ThisDevice } from "@/features/device/this-device";
 import {
 	Sheet,
 	SheetContent,
@@ -91,6 +92,7 @@ export default function MeAndHousehold() {
 			>
 				{t`Sign out`}
 			</Button>
+			<ThisDevice />
 		</Screen>
 	);
 }

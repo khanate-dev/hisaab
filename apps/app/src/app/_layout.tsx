@@ -15,6 +15,8 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 
+import { AppLock } from "@/features/device/app-lock";
+import { AppearanceSync } from "@/features/device/appearance-sync";
 import {
 	ONBOARDING_STEP,
 	useOnboardingStep,
@@ -22,6 +24,7 @@ import {
 import { Syncing } from "@/features/shell/syncing";
 import { UpdateRequired } from "@/features/update/update-required";
 import { useUpdateRequired } from "@/features/update/use-update-required";
+import { useWebStorageGuard } from "@/lib/device/web-storage";
 import { i18n } from "@/lib/i18n";
 import { powersync } from "@/lib/powersync";
 import { queryClient } from "@/lib/query";
@@ -212,6 +215,7 @@ export default function RootLayout() {
 		SpaceGrotesk_500Medium,
 		SpaceGrotesk_700Bold,
 	});
+	useWebStorageGuard();
 	if (!fontsLoaded) return null;
 
 	return (
@@ -219,8 +223,11 @@ export default function RootLayout() {
 			<QueryClientProvider client={queryClient}>
 				<PowerSyncContext value={powersync}>
 					<ThemeProvider>
+						<AppearanceSync />
 						<SessionProvider>
-							<Routes />
+							<AppLock>
+								<Routes />
+							</AppLock>
 						</SessionProvider>
 						<PortalHost />
 					</ThemeProvider>
