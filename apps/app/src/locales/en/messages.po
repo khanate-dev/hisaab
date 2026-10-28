@@ -455,6 +455,14 @@ msgstr "an Occurrence"
 msgid "anyone with the link"
 msgstr "anyone with the link"
 
+#: src/features/device/device-settings.tsx
+msgid "App lock"
+msgstr "App lock"
+
+#: src/features/device/device-settings.tsx
+msgid "Appearance"
+msgstr "Appearance"
+
 #: src/features/categories/category-actions.tsx
 #: src/features/contacts/contact-list.tsx
 #: src/features/wallets/wallet-detail.tsx
@@ -501,6 +509,10 @@ msgstr "Archived: hidden from your Wallets, its Entries kept."
 #: src/features/search/entry-search.tsx
 msgid "As YYYY-MM-DD."
 msgstr "As YYYY-MM-DD."
+
+#: src/features/device/device-settings.tsx
+msgid "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here."
+msgstr "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here."
 
 #: src/features/attachments/attachment-list.tsx
 msgid "Attachments"
@@ -812,6 +824,10 @@ msgstr "Cutlery"
 #: src/features/categories/labels.ts
 msgid "Cyan"
 msgstr "Cyan"
+
+#: src/features/device/device-settings.tsx
+msgid "Dark"
+msgstr "Dark"
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -1256,6 +1272,10 @@ msgstr "Heartbeat"
 msgid "Hisaab"
 msgstr "Hisaab"
 
+#: src/features/device/lock-screen.tsx
+msgid "Hisaab is locked"
+msgstr "Hisaab is locked"
+
 #: src/app/_layout.tsx
 #: src/app/(tabs)/index.tsx
 #: src/features/shell/sections.ts
@@ -1533,9 +1553,17 @@ msgstr "Lent {howMuch} to {name}"
 msgid "Lent to"
 msgstr "Lent to"
 
+#: src/features/device/device-settings.tsx
+msgid "Light"
+msgstr "Light"
+
 #: src/features/categories/labels.ts
 msgid "Lightning bolt"
 msgstr "Lightning bolt"
+
+#: src/features/device/device-settings.tsx
+msgid "Like the device"
+msgstr "Like the device"
 
 #: src/features/import/import-wizard.tsx
 msgid "Likely duplicate"
@@ -2466,6 +2494,10 @@ msgstr "That didn't remove. Try again."
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
 
+#: src/features/device/lock-screen.tsx
+msgid "That didn't unlock it. Try again."
+msgstr "That didn't unlock it. Try again."
+
 #: src/app/activity.tsx
 msgid "That Entry couldn't be restored. Try again once you're online."
 msgstr "That Entry couldn't be restored. Try again once you're online."
@@ -2527,6 +2559,10 @@ msgstr "The Items add up to more than the total, so the total is now {grownTotal
 msgid "The Loan is settled without it. Its Repayments stay, and you can undo this."
 msgstr "The Loan is settled without it. Its Repayments stay, and you can undo this."
 
+#: src/features/device/this-device.tsx
+msgid "The unlock didn't pass, so the app lock stays off."
+msgstr "The unlock didn't pass, so the app lock stays off."
+
 #: src/features/loans/loan-form.tsx
 msgid "Their name"
 msgstr "Their name"
@@ -2546,6 +2582,10 @@ msgstr "This Budget month"
 #: src/app/categories/[id].tsx
 msgid "This Category isn't here. It may not have synced yet."
 msgstr "This Category isn't here. It may not have synced yet."
+
+#: src/features/device/device-settings.tsx
+msgid "This device"
+msgstr "This device"
 
 #: src/app/entries/[id]/edit.tsx
 #: src/app/entries/[id]/index.tsx
@@ -2657,6 +2697,10 @@ msgstr "Transfer"
 msgid "Try again"
 msgstr "Try again"
 
+#: src/features/device/this-device.tsx
+msgid "Turn on the app lock"
+msgstr "Turn on the app lock"
+
 #: src/features/activity/fields.ts
 #: src/features/wallets/wallet-form.tsx
 msgid "Type"
@@ -2687,6 +2731,14 @@ msgstr "Undo"
 #: src/features/loans/loan-detail.tsx
 msgid "Undo write-off"
 msgstr "Undo write-off"
+
+#: src/features/device/lock-screen.tsx
+msgid "Unlock"
+msgstr "Unlock"
+
+#: src/features/device/app-lock.tsx
+msgid "Unlock Hisaab"
+msgstr "Unlock Hisaab"
 
 #: src/features/recurring/pending-list.tsx
 msgid "Until tomorrow"

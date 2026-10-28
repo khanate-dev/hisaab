@@ -30,6 +30,8 @@ catalog:
   expo-file-system: 57.0.7
   expo-image-manipulator: 57.0.21
   expo-image-picker: 57.0.20
+  # Device settings (#65): the optional biometric app lock; SDK 57's bundled version
+  expo-local-authentication: 57.0.3
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3

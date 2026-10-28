@@ -3,6 +3,7 @@ import { useStatus } from "@powersync/react";
 import { router } from "expo-router";
 
 import { Button } from "@/components/ui/button";
+import { ThisDevice } from "@/features/device/this-device";
 import {
 	Sheet,
 	SheetContent,
@@ -85,6 +86,7 @@ export default function MeAndHousehold() {
 				{t`Contacts`}
 			</Button>
 			<SyncStatusSheet />
+			<ThisDevice />
 			<Button
 				onPress={() => void supabase.auth.signOut()}
 				variant="secondary"
