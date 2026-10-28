@@ -42,6 +42,16 @@ describe("defaultOn and isOn", () => {
 			}),
 		);
 	});
+
+	it("tell someone no longer in the household only that they're out, whatever they chose there", () => {
+		fc.assert(
+			fc.property(trigger, fc.option(fc.boolean()), (t, enabled) => {
+				expect(isOn(t, null, enabled === null ? undefined : { enabled })).toBe(
+					t === "membership",
+				);
+			}),
+		);
+	});
 });
 
 describe("readMembershipPayload", () => {
@@ -136,6 +146,8 @@ describe("dispatchDeliveries", () => {
 				claim: async () => claimed,
 				settle,
 				forget,
+				receiptsDue: async () => [],
+				settleReceipts: async () => {},
 			} satisfies DispatchAdapters,
 			settle,
 		};
@@ -151,7 +163,7 @@ describe("dispatchDeliveries", () => {
 		]);
 		const expo = vi.fn(async (d: ClaimedDelivery) =>
 			d.id === "d1"
-				? { status: "sent" as const }
+				? { status: "sent" as const, ticket: "k1" }
 				: { status: "failed" as const, error: "timeout" },
 		);
 		const webpush = vi.fn(async (d: ClaimedDelivery) => {
@@ -160,11 +172,16 @@ describe("dispatchDeliveries", () => {
 		});
 		expect(await dispatchDeliveries(adapters, { expo, webpush })).toBe(5);
 		expect(settle).toHaveBeenCalledWith([
-			{ id: "d1", status: "sent", error: null },
-			{ id: "d2", status: "failed", error: "boom" },
-			{ id: "d3", status: "failed", error: "No sender for email yet" },
-			{ id: "d4", status: "dead", error: "timeout" },
-			{ id: "d5", status: "dead", error: "410" },
+			{ id: "d1", status: "sent", error: null, ticket: "k1" },
+			{ id: "d2", status: "failed", error: "boom", ticket: null },
+			{
+				id: "d3",
+				status: "failed",
+				error: "No sender for email yet",
+				ticket: null,
+			},
+			{ id: "d4", status: "dead", error: "timeout", ticket: null },
+			{ id: "d5", status: "dead", error: "410", ticket: null },
 		]);
 	});
 
@@ -260,31 +277,43 @@ describe("pushMessage", () => {
 		});
 	});
 
-	it("never carries an amount, whatever else the payload holds", () => {
+	it("says the same whatever else the payload holds, so no amount ever rides along", () => {
 		fc.assert(
 			fc.property(
 				trigger,
 				fc.constantFrom("joined", "left", "removed", "role_changed"),
 				role,
-				fc.stringMatching(/^[A-Za-z ]{0,12}$/),
-				fc.stringMatching(/^[A-Za-z ]{1,12}$/),
+				fc.option(fc.string()),
+				fc.string(),
 				fc.dictionary(
-					fc.constantFrom("amount", "spent", "budget", "outstanding", "total"),
-					fc.double({ noNaN: true }),
+					fc
+						.string()
+						.filter(
+							(k) =>
+								!["change", "userId", "name", "role", "householdName"].includes(
+									k,
+								),
+						),
+					fc.oneof(
+						fc.double({ noNaN: true }),
+						fc.stringMatching(/^-?\d{1,9}(\.\d{1,4})?$/),
+					),
 				),
 				(t, change, r, name, household, money) => {
-					const { title, body } = pushMessage(
-						t,
-						JSON.stringify({
-							change,
-							userId: "u1",
-							name,
-							role: r,
-							householdName: household,
-							...money,
-						}),
-					);
-					expect(`${title} ${body}`).not.toMatch(/\d/);
+					const names = {
+						change,
+						userId: "u1",
+						name,
+						role: r,
+						householdName: household,
+					};
+					const plain = pushMessage(t, JSON.stringify(names));
+					expect(
+						pushMessage(t, JSON.stringify({ ...money, ...names })),
+					).toEqual(plain);
+					// And built from nothing but the names: no digit appears that wasn't in one.
+					if (!/\d/.test(`${name ?? ""}${household}`))
+						expect(`${plain.title} ${plain.body}`).not.toMatch(/\d/);
 				},
 			),
 		);
@@ -293,7 +322,10 @@ describe("pushMessage", () => {
 
 describe("push outcomes", () => {
 	it("forget a target the push service says is gone, and retry other failures", () => {
-		expect(expoOutcome({ status: "ok", id: "t" })).toEqual({ status: "sent" });
+		expect(expoOutcome({ status: "ok", id: "t" })).toEqual({
+			status: "sent",
+			ticket: "t",
+		});
 		expect(
 			expoOutcome({
 				status: "error",
@@ -331,7 +363,13 @@ describe("push outcomes", () => {
 		}));
 		const forget = vi.fn<DispatchAdapters["forget"]>(async () => {});
 		await dispatchDeliveries(
-			{ claim: async () => claimed, settle: async () => {}, forget },
+			{
+				claim: async () => claimed,
+				settle: async () => {},
+				forget,
+				receiptsDue: async () => [],
+				settleReceipts: async () => {},
+			},
 			{
 				expo: async () => ({
 					status: "dead",
@@ -341,5 +379,40 @@ describe("push outcomes", () => {
 			},
 		);
 		expect(forget).toHaveBeenCalledWith(["ExponentPushToken[gone]"]);
+	});
+
+	it("settle the receipts that are in, forget a device Expo says is gone, and leave the rest for later", async () => {
+		const settleReceipts = vi.fn<DispatchAdapters["settleReceipts"]>(
+			async () => {},
+		);
+		const forget = vi.fn<DispatchAdapters["forget"]>(async () => {});
+		const fetchReceipts = vi.fn(async () => ({
+			k1: { status: "ok" as const },
+			k2: {
+				status: "error" as const,
+				details: { error: "DeviceNotRegistered" },
+			},
+		}));
+		await dispatchDeliveries(
+			{
+				claim: async () => [],
+				settle: async () => {},
+				forget,
+				receiptsDue: async () => [
+					{ id: "d1", target: "ExponentPushToken[a]", ticket: "k1" },
+					{ id: "d2", target: "ExponentPushToken[b]", ticket: "k2" },
+					{ id: "d3", target: "ExponentPushToken[c]", ticket: "k3" },
+				],
+				settleReceipts,
+			},
+			{},
+			fetchReceipts,
+		);
+		expect(fetchReceipts).toHaveBeenCalledWith(["k1", "k2", "k3"]);
+		expect(settleReceipts).toHaveBeenCalledWith([
+			{ id: "d1", error: null },
+			{ id: "d2", error: "DeviceNotRegistered" },
+		]);
+		expect(forget).toHaveBeenCalledWith(["ExponentPushToken[b]"]);
 	});
 });

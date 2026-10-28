@@ -2,22 +2,23 @@ import { supabase } from "../supabase";
 
 import { deviceId } from "./device-id";
 
-/** Records this device's push target for the signed-in User (an online call; the server keeps it). */
-export const registerDevice = async (
-	userId: string,
-	target: {
-		platform: "ios" | "android" | "web";
-		kind: "expo" | "webpush";
-		token: string;
-	},
-) => {
-	const { error } = await supabase.from("devices").upsert({
-		id: await deviceId(),
-		user_id: userId,
-		platform: target.platform,
-		push_kind: target.kind,
-		push_token: target.token,
-		last_seen_at: new Date().toISOString(),
+/** A device's push target: its Expo token, or its Web Push subscription as JSON. */
+export type PushTarget = {
+	platform: "ios" | "android" | "web";
+	kind: "expo" | "webpush";
+	token: string;
+};
+
+/**
+ * Records this device's push target for the signed-in User (an online call; the server keeps it). The server takes the
+ * device or token over from anyone who left it there, so a shared device never pushes the last User's Notifications.
+ */
+export const registerDevice = async (target: PushTarget) => {
+	const { error } = await supabase.rpc("register_device", {
+		device_id: await deviceId(),
+		device_platform: target.platform,
+		kind: target.kind,
+		token: target.token,
 	});
 	if (error) throw error;
 };

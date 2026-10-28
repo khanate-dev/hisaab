@@ -1,8 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 
-import { pushAvailable, turnOnPush } from "@/lib/device/push";
+import { pushAvailable, pushBlocked, turnOnPush } from "@/lib/device/push";
 import { deviceRegistered, forgetDevice } from "@/lib/device/push-registration";
 
 import { type PushState, PushSetting } from "./push-setting";
@@ -12,42 +11,37 @@ const OFF: PushState = "off";
 const UNAVAILABLE: PushState = "unavailable";
 const DENIED: PushState = "denied";
 
-const KEY = ["device-push"] as const;
+/** Push on this device: whether the build can, whether the device allows it, and whether the server has it. */
+const pushState = async (): Promise<PushState> => {
+	if (!(await pushAvailable())) return UNAVAILABLE;
+	if (await deviceRegistered()) return ON;
+	return (await pushBlocked()) ? DENIED : OFF;
+};
 
-/** Push on this device: whether the build can, and whether the server has this device (online calls). */
+/** Push on this device, for the signed-in User (online calls). */
 export const ThisDevicePush = ({ userId }: { userId: string }) => {
 	const { t } = useLingui();
 	const client = useQueryClient();
-	const [denied, setDenied] = useState(false);
-	const [problem, setProblem] = useState<string | null>(null);
-	const status = useQuery({
-		queryKey: KEY,
-		queryFn: async () =>
-			(await pushAvailable())
-				? (await deviceRegistered())
-					? ON
-					: OFF
-				: UNAVAILABLE,
-	});
+	const queryKey = ["device-push", userId] as const;
+	const status = useQuery({ queryKey, queryFn: pushState });
 	const change = useMutation({
 		mutationFn: async (on: boolean) => {
-			setProblem(null);
-			if (!on) return forgetDevice();
-			setDenied((await turnOnPush(userId)) === DENIED);
+			if (on) await turnOnPush();
+			else await forgetDevice();
 		},
-		onError: () =>
-			setProblem(t`That didn't change. Check you're online and try again.`),
-		onSettled: () => client.invalidateQueries({ queryKey: KEY }),
+		onSettled: () => client.invalidateQueries({ queryKey }),
 	});
-	if (status.data === undefined) return null;
-	const state: PushState = denied && status.data === OFF ? DENIED : status.data;
+	const problem =
+		change.isError || status.isError
+			? t`Couldn't reach the server. Check you're online and try again.`
+			: null;
 	return (
 		<PushSetting
-			busy={change.isPending}
+			busy={change.isPending || status.isFetching}
 			onTurnOff={() => change.mutate(false)}
 			onTurnOn={() => change.mutate(true)}
 			problem={problem}
-			state={state}
+			state={status.data ?? OFF}
 		/>
 	);
 };

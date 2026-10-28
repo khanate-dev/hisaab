@@ -183,9 +183,8 @@ insert into attempts values
 		where household_id = '00000000-0000-7000-8000-00000000aaf1' and user_id = '00000000-0000-4000-8000-00000000aaa1' $$),
 	-- A device is its User's alone: the Admin's here, and anyone signed in registers their own.
 	('devices.select', $$ select 1 from public.devices where id = '00000000-0000-7000-8000-00000000aabd' $$),
-	('devices.insert', $$ insert into public.devices (id, user_id, platform, push_kind, push_token)
-		values ('00000000-0000-7000-8000-00000000ab18', (select auth.uid()), 'web', 'webpush', '{}') $$),
-	('devices.update', $$ update public.devices set last_seen_at = now() where id = '00000000-0000-7000-8000-00000000aabd' $$),
+	('devices.insert', $$ select public.register_device('00000000-0000-7000-8000-00000000ab18', 'android', 'expo',
+		'ExponentPushToken[matrix]') $$),
 	('devices.delete', $$ delete from public.devices where id = '00000000-0000-7000-8000-00000000aabd' $$),
 	-- A Saved filter is its User's alone: the Admin's here, and anyone in the household saves their own.
 	('saved_filters.select', $$ select 1 from public.saved_filters where household_id = '00000000-0000-7000-8000-00000000aaf1' $$),
@@ -263,7 +262,7 @@ select set_eq(
 		'invites.insert', 'invites.update', 'memberships.role', 'memberships.delete', 'import_mappings.select',
 		'import_mappings.update', 'import_mappings.delete', 'notifications.select', 'notifications.update',
 		'notification_deliveries.select', 'notification_preferences.select', 'notification_preferences.insert',
-		'notification_preferences.update', 'devices.select', 'devices.insert', 'devices.update', 'devices.delete',
+		'notification_preferences.update', 'devices.select', 'devices.insert', 'devices.delete',
 		'saved_filters.select',
 		'saved_filters.insert', 'saved_filters.update', 'saved_filters.delete'],
 	'an Admin reads and changes everything, and alone renames or deletes the household, manages its Invites and '

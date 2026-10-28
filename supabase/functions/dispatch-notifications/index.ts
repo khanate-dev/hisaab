@@ -5,10 +5,12 @@ import {
 	type ClaimedDelivery,
 	type DispatchAdapters,
 	DispatchForbidden,
+	type ExpoReceipt,
 	type ExpoTicket,
 	expoOutcome,
 	handleDispatchRequest,
 	pushMessage,
+	type ReceiptFetcher,
 	type Sender,
 	webPushOutcome,
 } from "../../../packages/domain/src/notifications.ts";
@@ -76,6 +78,21 @@ const adaptersFor = (key: string): DispatchAdapters => {
 		forget: async (targets) => {
 			await rpc("forget_push_targets", { targets });
 		},
+		receiptsDue: async (limit) =>
+			(
+				(await rpc("expo_receipts_due", { batch: limit })) as {
+					id: string;
+					target: string;
+					ticket_id: string;
+				}[]
+			).map((row) => ({
+				id: row.id,
+				target: row.target,
+				ticket: row.ticket_id,
+			})),
+		settleReceipts: async (results) => {
+			await rpc("settle_receipts", { results });
+		},
 	};
 };
 
@@ -98,6 +115,20 @@ const expo: Sender = async (delivery) => {
 	return expoOutcome(data);
 };
 
+/** Expo's receipts for its tickets: whether each message reached APNs or FCM. */
+const expoReceipts: ReceiptFetcher = async (tickets) => {
+	const response = await fetch("https://exp.host/--/api/v2/push/getReceipts", {
+		method: "POST",
+		headers: { "content-type": "application/json", accept: "application/json" },
+		body: JSON.stringify({ ids: tickets }),
+	});
+	if (!response.ok) return {};
+	const { data } = (await response.json()) as {
+		data?: Record<string, ExpoReceipt>;
+	};
+	return data ?? {};
+};
+
 /** Web push with VAPID (keys in the Edge Function's secrets; #30 adds them). Without them it waits and retries. */
 const webpush: Sender = async (delivery) => {
 	const publicKey = Deno.env.get("VAPID_PUBLIC_KEY");
@@ -105,7 +136,7 @@ const webpush: Sender = async (delivery) => {
 	const subject = Deno.env.get("VAPID_SUBJECT");
 	if (!publicKey || !privateKey || !subject)
 		return { status: "failed", error: "Web Push isn't set up yet" };
-	const { default: client } = await import("npm:web-push@3.6.7");
+	const { default: client } = await import("web-push");
 	try {
 		const result = await client.sendNotification(
 			JSON.parse(delivery.target),
@@ -125,5 +156,5 @@ const webpush: Sender = async (delivery) => {
 };
 
 Deno.serve((request) =>
-	handleDispatchRequest(adaptersFor, { expo, webpush }, request),
+	handleDispatchRequest(adaptersFor, { expo, webpush }, request, expoReceipts),
 );
