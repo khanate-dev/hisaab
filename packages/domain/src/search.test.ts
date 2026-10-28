@@ -2,13 +2,18 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { compareMoney, parseMoney } from "./money";
+import { shiftCalendarDate } from "./dates";
 import {
+	DATE_PRESETS,
 	type EntryFilter,
 	filterEntries,
+	filtersOn,
 	isFiltering,
+	keepKnown,
 	matchesFilter,
 	NO_FILTER,
 	parseSearch,
+	presetRange,
 	readSavedCriteria,
 	type Searchable,
 	writeSavedCriteria,
@@ -18,6 +23,8 @@ const entry = (more: Partial<Searchable> = {}): Searchable => ({
 	kind: "expense",
 	walletIds: ["w1"],
 	categoryIds: ["groceries", "food"],
+	currencies: ["PKR"],
+	contactIds: [],
 	createdBy: "u1",
 	occurredOn: "2026-10-20",
 	text: ["Weekly shop", "Groceries", "Cash"],
@@ -29,6 +36,8 @@ const searchable: fc.Arbitrary<Searchable> = fc.record({
 	kind: fc.constantFrom("expense", "income", "transfer"),
 	walletIds: fc.subarray(["w1", "w2", "w3"], { minLength: 1 }),
 	categoryIds: fc.subarray(["food", "groceries", "rent"]),
+	currencies: fc.subarray(["PKR", "USD"], { minLength: 1 }),
+	contactIds: fc.subarray(["k1", "k2"], { maxLength: 1 }),
 	createdBy: fc.constantFrom("u1", "u2"),
 	occurredOn: fc.constantFrom(
 		"2026-09-30",
@@ -62,6 +71,8 @@ const filter: fc.Arbitrary<EntryFilter> = fc.record({
 	kinds: fc.subarray(["expense", "income", "transfer"]),
 	walletIds: fc.subarray(["w1", "w2", "w3"]),
 	categoryIds: fc.subarray(["food", "groceries", "rent"]),
+	currencies: fc.subarray(["PKR", "USD"]),
+	contactIds: fc.subarray(["k1", "k2"]),
 	memberIds: fc.subarray(["u1", "u2"]),
 	from: fc.constantFrom(null, "2026-10-01"),
 	to: fc.constantFrom(null, "2026-10-15"),
@@ -77,6 +88,89 @@ describe("parseSearch", () => {
 				{ comparison: "<=", amount: "10.5" },
 			],
 		});
+	});
+});
+
+describe("parseSearch while typing", () => {
+	it("reads a negative amount by its size, a comparison typed apart, and drops half-typed terms", () => {
+		expect(parseSearch("-2500")).toEqual({
+			words: [],
+			amounts: [{ comparison: "=", amount: "2500" }],
+		});
+		expect(parseSearch("> 2000 rent")).toEqual({
+			words: ["rent"],
+			amounts: [{ comparison: ">", amount: "2000" }],
+		});
+		expect(parseSearch(">")).toEqual({ words: [], amounts: [] });
+		expect(parseSearch('"weekly sh')).toEqual({
+			words: ["weekly sh"],
+			amounts: [],
+		});
+		expect(parseSearch("1,2")).toEqual({ words: ["1,2"], amounts: [] });
+		expect(parseSearch("12,500.50")).toEqual({
+			words: [],
+			amounts: [{ comparison: "=", amount: "12500.50" }],
+		});
+	});
+
+	it("never fails on whatever is typed", () => {
+		fc.assert(
+			fc.property(fc.string(), (text) => {
+				const { words, amounts } = parseSearch(text);
+				expect(words.every((w) => w.length > 0)).toBe(true);
+				for (const a of amounts)
+					expect(() => parseMoney(a.amount, "PKR")).not.toThrow();
+			}),
+		);
+	});
+});
+
+describe("presetRange", () => {
+	it("covers today for this month, this year and the last three months, and ends before this month for the last", () => {
+		fc.assert(
+			fc.property(
+				fc
+					.integer({ min: 0, max: 365 * 20 })
+					.map((d) => shiftCalendarDate("2010-01-01", d)),
+				fc.integer({ min: 1, max: 28 }),
+				(today, startDay) => {
+					for (const preset of DATE_PRESETS) {
+						const { from, to } = presetRange(preset, today, startDay);
+						expect(from <= to).toBe(true);
+						if (preset === "last_month") expect(to < today).toBe(true);
+						else expect(from <= today && today <= to).toBe(true);
+					}
+					const last = presetRange("last_month", today, startDay);
+					const three = presetRange("last_3_months", today, startDay);
+					expect(three.from <= last.from && last.to < three.to).toBe(true);
+				},
+			),
+		);
+	});
+});
+
+describe("keepKnown and filtersOn", () => {
+	it("drop what's gone, and count what's on", () => {
+		const f = {
+			...NO_FILTER,
+			walletIds: ["w1", "gone"],
+			memberIds: ["u1"],
+			from: "2026-10-01",
+		};
+		const known = {
+			kinds: new Set<string>(),
+			walletIds: new Set(["w1"]),
+			categoryIds: new Set<string>(),
+			currencies: new Set<string>(),
+			contactIds: new Set<string>(),
+			memberIds: new Set<string>(),
+		};
+		expect(keepKnown(f, known)).toEqual({
+			...f,
+			walletIds: ["w1"],
+			memberIds: [],
+		});
+		expect(filtersOn(f)).toBe(4);
 	});
 });
 
@@ -116,6 +210,8 @@ describe("matchesFilter", () => {
 					{ ...NO_FILTER, kinds: f.kinds },
 					{ ...NO_FILTER, walletIds: f.walletIds },
 					{ ...NO_FILTER, categoryIds: f.categoryIds },
+					{ ...NO_FILTER, currencies: f.currencies },
+					{ ...NO_FILTER, contactIds: f.contactIds },
 					{ ...NO_FILTER, memberIds: f.memberIds },
 					{ ...NO_FILTER, from: f.from, to: f.to },
 				];

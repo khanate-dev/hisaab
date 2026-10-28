@@ -2,6 +2,7 @@ import { ENTRY_KINDS } from "@hisaab/client-schema";
 import {
 	type EntryFilter,
 	filterEntries,
+	keepKnown,
 	NO_FILTER,
 	readSavedCriteria,
 } from "@hisaab/domain";
@@ -18,6 +19,7 @@ import { entryKindLabel } from "@/features/entries/labels";
 import { useEntryViews } from "@/features/entries/use-entries";
 import { useCanWrite } from "@/features/households/use-can-write";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
+import { useLoans } from "@/features/loans/use-loans";
 import { useMembers } from "@/features/members/use-members";
 import { deleteSavedFilter, saveFilter } from "@/features/search/actions";
 import { EntrySearch } from "@/features/search/entry-search";
@@ -25,15 +27,20 @@ import { toSearchable } from "@/features/search/searchable";
 import { useSavedFilters } from "@/features/search/use-saved-filters";
 import { Screen } from "@/features/shell/screen";
 import { useWalletRows } from "@/features/wallets/use-wallets";
+import { entryTimeZone, todayIn } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
 
 /** One household's Entries with their search: a household switch starts it afresh (spec §3.4). */
 const SearchableEntries = ({
 	householdId,
 	userId,
+	today,
+	startDay,
 }: {
 	householdId: string;
 	userId: string;
+	today: string;
+	startDay: number;
 }) => {
 	const { t, i18n } = useLingui();
 	const views = useEntryViews(householdId);
@@ -41,6 +48,7 @@ const SearchableEntries = ({
 	const wallets = useWalletRows(householdId);
 	const members = useMembers(householdId);
 	const saved = useSavedFilters(householdId, userId);
+	const loans = useLoans(householdId);
 	const title = useEntryTitle();
 	const [filter, setFilter] = useState<EntryFilter>(NO_FILTER);
 
@@ -48,16 +56,27 @@ const SearchableEntries = ({
 		() => new Map((categories ?? []).map((c) => [c.id, c.parent_id])),
 		[categories],
 	);
+	const contactOf = useMemo(
+		() =>
+			new Map(
+				(loans ?? []).flatMap(({ loan, contact }) =>
+					contact
+						? [[loan.id, { id: contact.id, name: contact.name }] as const]
+						: [],
+				),
+			),
+		[loans],
+	);
 	const shown = useMemo(
 		() =>
 			views === undefined
 				? undefined
 				: filterEntries(
 						views,
-						(v) => toSearchable(v, title(v), parentOf),
+						(v) => toSearchable(v, title(v), parentOf, contactOf),
 						filter,
 					),
-		[views, filter, parentOf, title],
+		[views, filter, parentOf, contactOf, title],
 	);
 	const choices = useMemo(() => {
 		const names = new Map((categories ?? []).map((c) => [c.id, c.name]));
@@ -78,21 +97,42 @@ const SearchableEntries = ({
 					};
 				})
 				.toSorted((a, b) => a.label.localeCompare(b.label)),
+			currencies: [...new Set((wallets ?? []).map((w) => w.currency))]
+				.toSorted()
+				.map((c) => ({ value: c, label: c })),
+			contacts: [
+				...new Map(
+					(loans ?? []).flatMap(({ contact }) =>
+						contact ? [[contact.id, contact.name] as const] : [],
+					),
+				),
+			]
+				.map(([value, label]) => ({ value, label }))
+				.toSorted((a, b) => a.label.localeCompare(b.label)),
 			members: (members ?? []).map((m) => ({
 				value: m.userId,
 				label: m.name ?? t`Someone`,
 			})),
 		};
-	}, [categories, wallets, members, i18n, t]);
-	const savedFilters = useMemo(
-		() =>
-			(saved ?? []).map((s) => ({
-				id: s.id,
-				name: s.name,
-				filter: readSavedCriteria(s.criteria),
-			})),
-		[saved],
-	);
+	}, [categories, wallets, members, loans, i18n, t]);
+	// A Saved filter naming a Wallet, Category, Contact or Member since gone drops it, rather than finding nothing.
+	const savedFilters = useMemo(() => {
+		const known = (list: readonly { value: string }[]) =>
+			new Set(list.map((c) => c.value));
+		const choicesNow = {
+			kinds: known(choices.kinds),
+			walletIds: known(choices.wallets),
+			categoryIds: known(choices.categories),
+			currencies: known(choices.currencies),
+			contactIds: known(choices.contacts),
+			memberIds: known(choices.members),
+		};
+		return (saved ?? []).map((s) => ({
+			id: s.id,
+			name: s.name,
+			filter: keepKnown(readSavedCriteria(s.criteria), choicesNow),
+		}));
+	}, [saved, choices]);
 
 	if (shown === undefined || views === undefined) return null;
 	return (
@@ -105,6 +145,8 @@ const SearchableEntries = ({
 				onSave={(name) => saveFilter(householdId, userId, name, filter)}
 				saved={savedFilters}
 				shown={shown.length}
+				startDay={startDay}
+				today={today}
 				total={views.length}
 			/>
 			{shown.length === 0 && views.length > 0 ? (
@@ -155,6 +197,8 @@ export default function Entries() {
 				<SearchableEntries
 					householdId={household.id}
 					key={household.id}
+					startDay={household.budget_month_start_day}
+					today={todayIn(entryTimeZone(household))}
 					userId={userId}
 				/>
 			)}

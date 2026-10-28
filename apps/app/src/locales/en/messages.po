@@ -672,6 +672,7 @@ msgstr "Credit card"
 
 #: src/features/activity/fields.ts
 #: src/features/onboarding/first-wallet-form.tsx
+#: src/features/search/entry-search.tsx
 #: src/features/wallets/wallet-form.tsx
 msgid "Currency"
 msgstr "Currency"
@@ -701,6 +702,10 @@ msgstr "Date for {name}"
 #: src/features/entries/quick-add-form.tsx
 msgid "Date: {dateName}"
 msgstr "Date: {dateName}"
+
+#: src/features/search/entry-search.tsx
+msgid "Dates"
+msgstr "Dates"
 
 #: src/features/budgets/budget-month.tsx
 msgid "Day {day} of {days}"
@@ -1283,6 +1288,14 @@ msgstr "Keep the quantity to 40 characters or fewer."
 msgid "Kind"
 msgstr "Kind"
 
+#: src/features/search/entry-search.tsx
+msgid "Last 3 Budget months"
+msgstr "Last 3 Budget months"
+
+#: src/features/search/entry-search.tsx
+msgid "Last Budget month"
+msgstr "Last Budget month"
+
 #: src/features/members/household-exit.tsx
 msgid "Leave"
 msgstr "Leave"
@@ -1347,6 +1360,10 @@ msgstr "Loan"
 #: src/features/loans/loans-tile.tsx
 msgid "Loans"
 msgstr "Loans"
+
+#: src/features/search/entry-search.tsx
+msgid "Loans with"
+msgstr "Loans with"
 
 #: src/features/activity/activity-list.tsx
 msgid "Made {made}, synced {synced}"
@@ -1551,6 +1568,10 @@ msgstr "No Wallets yet."
 #: src/features/households/household-settings.tsx
 msgid "None"
 msgstr "None"
+
+#: src/features/search/entry-search.tsx
+msgid "Not a date yet, so not filtering: YYYY-MM-DD."
+msgstr "Not a date yet, so not filtering: YYYY-MM-DD."
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -2105,6 +2126,7 @@ msgstr "Syncing your households…"
 #: src/features/categories/category-form.tsx
 #: src/features/entries/form-checks.ts
 #: src/features/entries/quick-add-form.tsx
+#: src/features/search/entry-search.tsx
 #: src/features/wallets/adjust-balance.tsx
 msgid "That didn't save. Try again."
 msgstr "That didn't save. Try again."
@@ -2170,6 +2192,10 @@ msgstr "They lose this household from their devices. What they recorded stays."
 msgid "This becomes your Base currency. It locks after your first Entry."
 msgstr "This becomes your Base currency. It locks after your first Entry."
 
+#: src/features/search/entry-search.tsx
+msgid "This Budget month"
+msgstr "This Budget month"
+
 #: src/app/categories/[id].tsx
 msgid "This Category isn't here. It may not have synced yet."
 msgstr "This Category isn't here. It may not have synced yet."
@@ -2222,6 +2248,10 @@ msgstr "This version of Hisaab is too old to sync. Your changes are safe on this
 #: src/app/wallets/[id]/index.tsx
 msgid "This Wallet isn't here. It may not have synced yet."
 msgstr "This Wallet isn't here. It may not have synced yet."
+
+#: src/features/search/entry-search.tsx
+msgid "This year"
+msgstr "This year"
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-form.tsx

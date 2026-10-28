@@ -1,7 +1,16 @@
 // Search (spec §3.4): on the device, one household at a time. A query is free text and amounts: `2500` finds Entries
-// of exactly that much, `>2000`, `<500`, `>=` and `<=` compare, and `"two words"` keeps a phrase together; every term
-// must match. The full filter set narrows it further, and a Saved filter keeps the lot under a name, privately.
+// of exactly that much whichever way the money went (`-2500` too), `>2000`, `<500`, `>=` and `<=` compare (`> 2000`
+// as well), and `"two words"` keeps a phrase together; every term must match. Amounts are compared as typed against
+// each Entry in its own currency. The filter set narrows it further, and a Saved filter keeps the lot under a name,
+// privately.
 
+import {
+	type BudgetMonth,
+	budgetMonthOf,
+	budgetMonthRange,
+	shiftBudgetMonth,
+} from "./budgets";
+import { isCalendarDate } from "./dates";
 import { magnitude } from "./entries";
 import { compareMoney, isDecimalAmount, type Money, parseMoney } from "./money";
 
@@ -9,28 +18,39 @@ export type AmountComparison = "=" | ">" | "<" | ">=" | "<=";
 export type AmountTerm = { comparison: AmountComparison; amount: string };
 export type SearchQuery = { words: string[]; amounts: AmountTerm[] };
 
-const AMOUNT = /^(>=|<=|>|<|=)?(\d+(?:\.\d+)?)$/;
-// A phrase in double quotes, or a run of anything but whitespace.
-const TOKEN = /"([^"]*)"|(\S+)/g;
+const COMPARISON = /^(>=|<=|>|<|=)$/;
+// An optional comparison, an optional sign (the size is what's compared), and a number, with thousands separators
+// only where they belong (`2,500`, never `1,2`).
+const AMOUNT = /^(>=|<=|>|<|=)?-?(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)$/;
+// A phrase in double quotes (closed or still being typed), or a run of anything but whitespace.
+const TOKEN = /"([^"]*)"?|(\S+)/g;
 
-/** Free text and amount terms, as typed. Thousands separators in an amount (`2,500`) are dropped. */
+/** Free text and amount terms, as typed. A comparison on its own is joined to the number after it, else dropped. */
 export const parseSearch = (text: string): SearchQuery => {
 	const words: string[] = [];
 	const amounts: AmountTerm[] = [];
+	let pending: string | null = null;
 	for (const [, phrase, bare] of text.matchAll(TOKEN)) {
 		if (phrase !== undefined) {
+			pending = null;
 			const kept = phrase.trim().toLowerCase();
 			if (kept !== "") words.push(kept);
 			continue;
 		}
 		const token = bare ?? "";
-		const amount = AMOUNT.exec(token.replaceAll(",", ""));
-		if (amount && isDecimalAmount(amount[2] ?? ""))
+		if (COMPARISON.test(token)) {
+			pending = token;
+			continue;
+		}
+		const amount = AMOUNT.exec(pending === null ? token : pending + token);
+		const number = amount?.[2]?.replaceAll(",", "");
+		if (amount && number !== undefined && isDecimalAmount(number))
 			amounts.push({
 				comparison: (amount[1] ?? "=") as AmountComparison,
-				amount: amount[2] ?? "",
+				amount: number,
 			});
 		else words.push(token.toLowerCase());
+		pending = null;
 	}
 	return { words, amounts };
 };
@@ -57,20 +77,30 @@ export type Searchable = {
 	walletIds: readonly string[];
 	/** Its Category and its Items', each with its parent. */
 	categoryIds: readonly string[];
+	/** Its Wallets' currencies. */
+	currencies: readonly string[];
+	/** A Loan's principal or Repayment: the Loan's Contact. */
+	contactIds: readonly string[];
 	createdBy: string;
 	occurredOn: string;
-	/** What free text matches: description, notes, Category, Wallet and Item names. */
+	/** What free text matches: description, notes, Category, Wallet, Item and Contact names. */
 	text: readonly string[];
 	/** What amount terms match, whichever way the money went: the Entry's and its Items'. */
 	amounts: readonly Money[];
 };
 
-/** The full filter set (spec §3.4); an empty list or a null date doesn't narrow. */
+/**
+ * The filter set (spec §3.4, issue #10): an empty list or a null date doesn't narrow. Having an Attachment joins with
+ * Attachments (#55).
+ */
 export type EntryFilter = {
 	query: string;
 	kinds: readonly string[];
 	walletIds: readonly string[];
 	categoryIds: readonly string[];
+	currencies: readonly string[];
+	/** Loans with these Contacts: their principals and Repayments. */
+	contactIds: readonly string[];
 	/** Who recorded it. */
 	memberIds: readonly string[];
 	/** YYYY-MM-DD, both included. */
@@ -83,6 +113,8 @@ export const NO_FILTER: EntryFilter = {
 	kinds: [],
 	walletIds: [],
 	categoryIds: [],
+	currencies: [],
+	contactIds: [],
 	memberIds: [],
 	from: null,
 	to: null,
@@ -101,6 +133,8 @@ export const matchesFilter = (
 		return false;
 	if (!anyOf(filter.walletIds, entry.walletIds)) return false;
 	if (!anyOf(filter.categoryIds, entry.categoryIds)) return false;
+	if (!anyOf(filter.currencies, entry.currencies)) return false;
+	if (!anyOf(filter.contactIds, entry.contactIds)) return false;
 	if (
 		filter.memberIds.length > 0 &&
 		!filter.memberIds.includes(entry.createdBy)
@@ -133,22 +167,86 @@ export const filterEntries = <T>(
 	);
 };
 
+/** How many choices in the filter set (not the query) are on: each kind, Wallet, Category and so on, and each date. */
+export const filtersOn = (filter: EntryFilter) =>
+	filter.kinds.length +
+	filter.walletIds.length +
+	filter.categoryIds.length +
+	filter.currencies.length +
+	filter.contactIds.length +
+	filter.memberIds.length +
+	(filter.from === null ? 0 : 1) +
+	(filter.to === null ? 0 : 1);
+
 /** Whether a filter narrows anything at all. */
 export const isFiltering = (filter: EntryFilter) =>
-	filter.query.trim() !== "" ||
-	filter.kinds.length > 0 ||
-	filter.walletIds.length > 0 ||
-	filter.categoryIds.length > 0 ||
-	filter.memberIds.length > 0 ||
-	filter.from !== null ||
-	filter.to !== null;
+	filter.query.trim() !== "" || filtersOn(filter) > 0;
+
+/** The choices a filter can be made of, as the household has them now. */
+export type KnownChoices = {
+	kinds: ReadonlySet<string>;
+	walletIds: ReadonlySet<string>;
+	categoryIds: ReadonlySet<string>;
+	currencies: ReadonlySet<string>;
+	contactIds: ReadonlySet<string>;
+	memberIds: ReadonlySet<string>;
+};
+
+/** A filter with only the choices still there: a Saved filter naming a Wallet or Contact since gone drops it. */
+export const keepKnown = (
+	filter: EntryFilter,
+	known: KnownChoices,
+): EntryFilter => ({
+	...filter,
+	kinds: filter.kinds.filter((v) => known.kinds.has(v)),
+	walletIds: filter.walletIds.filter((v) => known.walletIds.has(v)),
+	categoryIds: filter.categoryIds.filter((v) => known.categoryIds.has(v)),
+	currencies: filter.currencies.filter((v) => known.currencies.has(v)),
+	contactIds: filter.contactIds.filter((v) => known.contactIds.has(v)),
+	memberIds: filter.memberIds.filter((v) => known.memberIds.has(v)),
+});
+
+export type DatePreset =
+	"this_month" | "last_month" | "last_3_months" | "this_year";
+export const DATE_PRESETS: readonly DatePreset[] = [
+	"this_month",
+	"last_month",
+	"last_3_months",
+	"this_year",
+];
+
+/**
+ * A date range preset in the household's Budget months, as the reports have them (spec §3.5): this Budget month, the
+ * last one, the last three including this one, or the calendar year so far.
+ */
+export const presetRange = (
+	preset: DatePreset,
+	today: string,
+	startDay: number,
+): { from: string; to: string } => {
+	const month: BudgetMonth = budgetMonthOf(today, startDay);
+	const range = (first: BudgetMonth, last: BudgetMonth) => ({
+		from: budgetMonthRange(first, startDay).first,
+		to: budgetMonthRange(last, startDay).last,
+	});
+	switch (preset) {
+		case "this_month":
+			return range(month, month);
+		case "last_month":
+			return range(shiftBudgetMonth(month, -1), shiftBudgetMonth(month, -1));
+		case "last_3_months":
+			return range(shiftBudgetMonth(month, -2), month);
+		case "this_year":
+			return { from: `${today.slice(0, 4)}-01-01`, to: today };
+	}
+};
 
 const strings = (value: unknown) =>
 	Array.isArray(value)
 		? value.filter((v): v is string => typeof v === "string")
 		: [];
 const dateOrNull = (value: unknown) =>
-	typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+	typeof value === "string" && isCalendarDate(value) ? value : null;
 
 /**
  * A Saved filter's criteria read back from its stored JSON. Whatever a newer build added is dropped and whatever is
@@ -168,6 +266,8 @@ export const readSavedCriteria = (json: string): EntryFilter => {
 		kinds: strings(r.kinds),
 		walletIds: strings(r.walletIds),
 		categoryIds: strings(r.categoryIds),
+		currencies: strings(r.currencies),
+		contactIds: strings(r.contactIds),
 		memberIds: strings(r.memberIds),
 		from: dateOrNull(r.from),
 		to: dateOrNull(r.to),

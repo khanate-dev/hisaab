@@ -1,12 +1,18 @@
 import {
+	DATE_PRESETS,
+	type DatePreset,
 	type EntryFilter,
+	filtersOn,
 	isCalendarDate,
 	isFiltering,
 	NO_FILTER,
+	presetRange,
 } from "@hisaab/domain";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
@@ -26,7 +32,16 @@ export type FilterChoices = {
 	kinds: readonly Choice[];
 	wallets: readonly Choice[];
 	categories: readonly Choice[];
+	currencies: readonly Choice[];
+	contacts: readonly Choice[];
 	members: readonly Choice[];
+};
+
+const PRESET_LABELS: Record<DatePreset, MessageDescriptor> = {
+	this_month: msg`This Budget month`,
+	last_month: msg`Last Budget month`,
+	last_3_months: msg`Last 3 Budget months`,
+	this_year: msg`This year`,
 };
 
 type Props = {
@@ -39,6 +54,9 @@ type Props = {
 	/** How many Entries match, of how many. */
 	shown: number;
 	total: number;
+	/** For the date presets: today in the household's timezone, and its Budget month start day. */
+	today: string;
+	startDay: number;
 };
 
 /** Chips any number of which can be on, each a checkbox. */
@@ -60,32 +78,25 @@ const Toggles = ({
 				{choices.map(({ value, label: name }) => {
 					const on = chosen.includes(value);
 					return (
-						<Pressable
+						<Chip
 							accessibilityLabel={name}
-							accessibilityState={{ checked: on }}
-							className={`min-h-9 justify-center rounded-full border-2 border-border ps-3 pe-3 py-1 ${on ? "bg-butter" : "bg-surface"}`}
+							checked={on}
 							key={value}
 							onPress={() =>
 								onChange(
 									on ? chosen.filter((v) => v !== value) : [...chosen, value],
 								)
 							}
-							role="checkbox"
 						>
-							<Text
-								className={on ? "text-on-accent" : ""}
-								variant="label"
-							>
-								{name}
-							</Text>
-						</Pressable>
+							{name}
+						</Chip>
 					);
 				})}
 			</View>
 		</View>
 	);
 
-/** A date filter's field: kept while it's being typed, applied once it's a real date (or empty). */
+/** A date filter's field: applied once it's a real date; while it isn't (or is empty), it doesn't narrow. */
 const DateField = ({
 	label,
 	value,
@@ -97,15 +108,19 @@ const DateField = ({
 }) => {
 	const { t } = useLingui();
 	const [text, setText] = useState(value ?? "");
+	const unfinished = text.trim() !== "" && !isCalendarDate(text.trim());
 	return (
 		<Input
-			hint={t`As YYYY-MM-DD.`}
+			hint={
+				unfinished
+					? t`Not a date yet, so not filtering: YYYY-MM-DD.`
+					: t`As YYYY-MM-DD.`
+			}
 			label={label}
 			onChangeText={(next) => {
 				setText(next);
 				const trimmed = next.trim();
-				if (trimmed === "") onChange(null);
-				else if (isCalendarDate(trimmed)) onChange(trimmed);
+				onChange(isCalendarDate(trimmed) ? trimmed : null);
 			}}
 			value={text}
 		/>
@@ -113,7 +128,7 @@ const DateField = ({
 };
 
 /**
- * Search over the household's Entries (spec §3.4): free text and amounts (`2500`, `>2000`), the full filter set in a
+ * Search over the household's Entries (spec §3.4): free text and amounts (`2500`, `>2000`), the filter set in a
  * sheet, and the User's own Saved filters.
  */
 export const EntrySearch = ({
@@ -125,28 +140,32 @@ export const EntrySearch = ({
 	onDeleteSaved,
 	shown,
 	total,
+	today,
+	startDay,
 }: Props) => {
-	const { t } = useLingui();
+	const { t, i18n } = useLingui();
 	const [naming, setNaming] = useState(false);
 	const [name, setName] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const narrowed =
-		filter.kinds.length +
-		filter.walletIds.length +
-		filter.categoryIds.length +
-		filter.memberIds.length +
-		(filter.from === null ? 0 : 1) +
-		(filter.to === null ? 0 : 1);
+	// Bumped when a preset sets the dates, so their fields show the new ones.
+	const [presetRound, setPresetRound] = useState(0);
+	const narrowed = filtersOn(filter);
 	const filtering = isFiltering(filter);
 
 	const save = async () => {
 		const trimmed = name.trim();
-		if (trimmed.length < 1 || trimmed.length > 60)
+		// Counted as Postgres counts it, by character rather than by UTF-16 unit.
+		const length = [...trimmed].length;
+		if (length < 1 || length > 60)
 			return setError(t`Name it in 1 to 60 characters.`);
 		setError(null);
-		await onSave(trimmed);
-		setNaming(false);
-		setName("");
+		try {
+			await onSave(trimmed);
+			setNaming(false);
+			setName("");
+		} catch {
+			setError(t`That didn't save. Try again.`);
+		}
 	};
 
 	return (
@@ -167,6 +186,37 @@ export const EntrySearch = ({
 					<SheetContent>
 						<SheetTitle>{t`Filters`}</SheetTitle>
 						<ScrollView contentContainerClassName="gap-4">
+							<View className="gap-2">
+								<Text variant="label">{t`Dates`}</Text>
+								<View className="flex-row flex-wrap gap-2">
+									{DATE_PRESETS.map((preset) => (
+										<Chip
+											key={preset}
+											onPress={() => {
+												onChange({
+													...filter,
+													...presetRange(preset, today, startDay),
+												});
+												setPresetRound((n) => n + 1);
+											}}
+										>
+											{i18n._(PRESET_LABELS[preset])}
+										</Chip>
+									))}
+								</View>
+							</View>
+							<DateField
+								key={`from-${presetRound}`}
+								label={t`From`}
+								onChange={(from) => onChange({ ...filter, from })}
+								value={filter.from}
+							/>
+							<DateField
+								key={`to-${presetRound}`}
+								label={t`To`}
+								onChange={(to) => onChange({ ...filter, to })}
+								value={filter.to}
+							/>
 							<Toggles
 								chosen={filter.kinds}
 								choices={choices.kinds}
@@ -186,20 +236,22 @@ export const EntrySearch = ({
 								onChange={(categoryIds) => onChange({ ...filter, categoryIds })}
 							/>
 							<Toggles
+								chosen={filter.currencies}
+								choices={choices.currencies}
+								label={t`Currency`}
+								onChange={(currencies) => onChange({ ...filter, currencies })}
+							/>
+							<Toggles
+								chosen={filter.contactIds}
+								choices={choices.contacts}
+								label={t`Loans with`}
+								onChange={(contactIds) => onChange({ ...filter, contactIds })}
+							/>
+							<Toggles
 								chosen={filter.memberIds}
 								choices={choices.members}
 								label={t`Recorded by`}
 								onChange={(memberIds) => onChange({ ...filter, memberIds })}
-							/>
-							<DateField
-								label={t`From`}
-								onChange={(from) => onChange({ ...filter, from })}
-								value={filter.from}
-							/>
-							<DateField
-								label={t`To`}
-								onChange={(to) => onChange({ ...filter, to })}
-								value={filter.to}
 							/>
 						</ScrollView>
 					</SheetContent>

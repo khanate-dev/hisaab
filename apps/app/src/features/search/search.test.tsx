@@ -22,6 +22,8 @@ const choices: FilterChoices = {
 		{ value: "w2", label: "HBL" },
 	],
 	categories: [{ value: "c1", label: "Food" }],
+	currencies: [{ value: "PKR", label: "PKR" }],
+	contacts: [{ value: "k1", label: "Ali" }],
 	members: [{ value: "u1", label: "Ayesha" }],
 };
 
@@ -51,6 +53,8 @@ const Harness = ({
 				onSave={onSave}
 				saved={saved}
 				shown={2}
+				startDay={1}
+				today="2026-10-28"
 				total={7}
 			/>
 			<PortalHost />
@@ -101,6 +105,35 @@ describe("EntrySearch", () => {
 		expect(screen.getByRole("button", { name: "Filters (4)" })).toBeVisible();
 		await user.press(screen.getByRole("button", { name: "Clear" }));
 		expect(onFilter).toHaveBeenLastCalledWith(NO_FILTER);
+	});
+
+	it("sets the dates from a Budget-month preset, and filters by currency and Loan Contact", async () => {
+		const { onFilter, user } = await setup();
+		await user.press(screen.getByRole("button", { name: "Filters" }));
+		await user.press(screen.getByRole("button", { name: "Last Budget month" }));
+		expect(onFilter).toHaveBeenLastCalledWith({
+			...NO_FILTER,
+			from: "2026-09-01",
+			to: "2026-09-30",
+		});
+		expect(screen.getByLabelText("From")).toHaveDisplayValue("2026-09-01");
+		await user.press(screen.getByRole("checkbox", { name: "PKR" }));
+		await user.press(screen.getByRole("checkbox", { name: "Ali" }));
+		expect(onFilter).toHaveBeenLastCalledWith(
+			expect.objectContaining({ currencies: ["PKR"], contactIds: ["k1"] }),
+		);
+	});
+
+	it("stops filtering by a date while it's half typed", async () => {
+		const { onFilter, user } = await setup();
+		await user.press(screen.getByRole("button", { name: "Filters" }));
+		await user.type(screen.getByLabelText("To"), "2026-10-3");
+		expect(onFilter).toHaveBeenLastCalledWith(NO_FILTER);
+		await user.type(screen.getByLabelText("To"), "1");
+		expect(onFilter).toHaveBeenLastCalledWith({
+			...NO_FILTER,
+			to: "2026-10-31",
+		});
 	});
 
 	it("saves a search under a name", async () => {
@@ -176,6 +209,7 @@ describe("toSearchable", () => {
 				["c2", "c1"],
 				["c3", null],
 			]),
+			new Map(),
 		);
 		expect(s.walletIds).toEqual(["w1"]);
 		expect(s.categoryIds).toEqual(["c2", "c1", "c3"]);
@@ -191,5 +225,18 @@ describe("toSearchable", () => {
 			]),
 		);
 		expect(s.amounts.map((m) => m.toString())).toEqual(["-2500", "300"]);
+		expect(s.currencies).toEqual(["PKR"]);
+		const repayment = toSearchable(
+			{
+				...view,
+				entry: { ...view.entry, kind: "repayment", loan_id: "l1" },
+				items: [],
+			},
+			"Repayment",
+			new Map(),
+			new Map([["l1", { id: "k1", name: "Ali" }]]),
+		);
+		expect(repayment.contactIds).toEqual(["k1"]);
+		expect(repayment.text).toContain("Ali");
 	});
 });

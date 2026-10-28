@@ -120,9 +120,9 @@ export const negateMoney = (a: Money) => a.negated();
 export const isZero = (a: Money) => a.isZero();
 export const isNegative = (a: Money) => a.isNegative();
 export const moneyEquals = (a: Money, b: Money) => a.equals(b);
-/** `part` as a whole percentage of `whole`; null when `whole` is zero. */
 export const compareMoney = (a: Money, b: Money) => a.compare(b);
 export const timesMoney = (a: Money, factor: number) => a.times(factor);
+/** `part` as a whole percentage of `whole`; null when `whole` is zero. */
 export const percentOf = (part: Money, whole: Money) => part.percentOf(whole);
 
 /** The total of the amounts, which must all be in `currency`; an empty list totals zero. */
