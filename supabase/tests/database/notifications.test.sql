@@ -65,19 +65,23 @@ create temporary table drain as
 		(select jsonb_agg(jsonb_build_object('notification_id', id, 'household_id', household_id, 'user_id', u,
 			'channel', 'inbox', 'trigger', trigger, 'payload', payload))
 		 from private.notifications,
-		 unnest(array['00000000-0000-4000-8000-0000000011a1'::uuid, '00000000-0000-4000-8000-0000000011a2'::uuid]) as u)
+		 unnest(array['00000000-0000-4000-8000-0000000011a1'::uuid, '00000000-0000-4000-8000-0000000011a2'::uuid]) as u
+		 where household_id = '00000000-0000-7000-8000-0000000011f1')
 			as deliveries,
-		(select array_agg(id) from private.notifications) as drained;
+		(select array_agg(id) from private.notifications where household_id = '00000000-0000-7000-8000-0000000011f1') as drained;
 grant select on drain to service_role;
 set local role service_role;
-select is((select count(*)::int from public.pending_notifications(10)), 3, 'the service role reads what''s pending');
+select is((select count(*)::int from public.pending_notifications(1000) where household_id = '00000000-0000-7000-8000-0000000011f1'), 3,
+	'the service role reads what''s pending');
 select lives_ok($$ select public.deliver_notifications(deliveries, drained) from drain $$, 'and delivers it');
-select is((select count(*)::int from public.pending_notifications(10)), 0, 'leaving nothing pending');
+select is((select count(*)::int from public.pending_notifications(1000) where household_id = '00000000-0000-7000-8000-0000000011f1'), 0,
+	'leaving nothing pending');
 reset role;
 
 -- Inboxes.
 select pg_temp.act_as('00000000-0000-4000-8000-0000000011a2');
-select is((select count(*)::int from public.notification_deliveries), 3, 'a User reads their own inbox');
+select is((select count(*)::int from public.notification_deliveries where household_id = '00000000-0000-7000-8000-0000000011f1'), 3,
+	'a User reads their own inbox');
 update public.notification_deliveries set read_at = now();
 select throws_ok($$ update public.notification_deliveries set payload = '{}' $$, '42501', null,
 	'and marks it read, but changes nothing it says');
