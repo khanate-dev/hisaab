@@ -5,7 +5,7 @@
 -- Expand-only: a nullable column, functions and a job.
 
 alter table public.attachments add column purged_at timestamptz;
-create index attachments_unpurged_idx on public.attachments (entry_id) where purged_at is null;
+create index attachments_not_purged_idx on public.attachments (entry_id) where purged_at is null;
 
 -- Only the purge marks an Attachment purged; nobody clears or sets it by re-sending the row.
 create or replace function private.keep_attachment_origin() returns trigger
