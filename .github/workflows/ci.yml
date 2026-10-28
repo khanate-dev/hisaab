@@ -41,6 +41,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: 2.9.7
+      - name: Type-check Edge Functions
+        run: pnpm check:functions
       # A fresh runner has an empty database, so this applies every migration from zero.
       - name: Start the local stack
         run: pnpm stack:up

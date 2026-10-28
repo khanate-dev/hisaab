@@ -38,6 +38,7 @@
 		"CRDT",
 		"currencyapi",
 		"dedup",
+		"dedupe",
 		"Dexie",
 		"errcode",
 		"estree",

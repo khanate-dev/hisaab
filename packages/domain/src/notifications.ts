@@ -101,6 +101,120 @@ export const readMembershipPayload = (
 	};
 };
 
+/** What an event Notification (#62) says happened: a Recurring rule due or recorded, a Budget passed, a Loan due. */
+export type EventPayload =
+	| {
+			trigger: "recurring_due";
+			householdName: string;
+			ruleId: string;
+			ruleName: string;
+			dueOn: string;
+			/** Still Pending 3 days on. */
+			reminder: boolean;
+	  }
+	| {
+			trigger: "auto_recorded";
+			householdName: string;
+			ruleId: string;
+			ruleName: string;
+			dueOn: string;
+	  }
+	| {
+			trigger: "budget_threshold";
+			householdName: string;
+			categoryId: string;
+			categoryName: string;
+			month: string;
+			level: 80 | 100;
+	  }
+	| {
+			trigger: "loan_due";
+			householdName: string;
+			loanId: string;
+			contactName: string;
+			direction: "lent" | "borrowed";
+			dueOn: string;
+			when: "soon" | "today" | "overdue";
+	  };
+
+const LOAN_WHEN: readonly string[] = ["soon", "today", "overdue"];
+
+/** An event Notification's payload, as `scheduledNotifications` writes it, or null when it's malformed. */
+export const readEventPayload = (
+	trigger: string,
+	json: string,
+): EventPayload | null => {
+	let raw: unknown;
+	try {
+		raw = JSON.parse(json);
+	} catch {
+		return null;
+	}
+	if (raw === null || typeof raw !== "object") return null;
+	const p = raw as Record<string, unknown>;
+	const text = (key: string) => (typeof p[key] === "string" ? p[key] : null);
+	const householdName = text("householdName");
+	if (householdName === null) return null;
+	const ruleId = text("ruleId");
+	const ruleName = text("ruleName");
+	const dueOn = text("dueOn");
+	switch (trigger) {
+		case "recurring_due":
+			return ruleId !== null &&
+				ruleName !== null &&
+				dueOn !== null &&
+				typeof p.reminder === "boolean"
+				? {
+						trigger,
+						householdName,
+						ruleId,
+						ruleName,
+						dueOn,
+						reminder: p.reminder,
+					}
+				: null;
+		case "auto_recorded":
+			return ruleId !== null && ruleName !== null && dueOn !== null
+				? { trigger, householdName, ruleId, ruleName, dueOn }
+				: null;
+		case "budget_threshold": {
+			const categoryId = text("categoryId");
+			const categoryName = text("categoryName");
+			const month = text("month");
+			const { level } = p;
+			return categoryId !== null &&
+				categoryName !== null &&
+				month !== null &&
+				(level === 80 || level === 100)
+				? { trigger, householdName, categoryId, categoryName, month, level }
+				: null;
+		}
+		case "loan_due": {
+			const loanId = text("loanId");
+			const contactName = text("contactName");
+			const { direction, when } = p;
+			return loanId !== null &&
+				contactName !== null &&
+				dueOn !== null &&
+				(direction === "lent" || direction === "borrowed") &&
+				typeof when === "string" &&
+				LOAN_WHEN.includes(when)
+				? {
+						trigger,
+						householdName,
+						loanId,
+						contactName,
+						direction,
+						dueOn,
+						when: when as "soon" | "today" | "overdue",
+					}
+				: null;
+		}
+		default:
+			return null;
+	}
+};
+
 export const DELIVERY_CHANNELS = ["expo", "webpush", "email"] as const;
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 
@@ -333,6 +447,8 @@ export const pushMessage = (
 		}[membership.change];
 		return { title: "Hisaab", body };
 	}
+	const event = readEventPayload(trigger, payload);
+	if (event) return { title: TRIGGER_TITLES[trigger], body: eventBody(event) };
 	let household: string | null = null;
 	try {
 		const raw: unknown = JSON.parse(payload);
@@ -349,6 +465,31 @@ export const pushMessage = (
 		title: TRIGGER_TITLES[trigger],
 		body: household === null ? "Open Hisaab to see it." : `In ${household}.`,
 	};
+};
+
+/** An event push's body, from the names in it alone. */
+const eventBody = (event: EventPayload) => {
+	const where = event.householdName;
+	switch (event.trigger) {
+		case "recurring_due":
+			return event.reminder
+				? `${event.ruleName} is still Pending in ${where}.`
+				: `${event.ruleName} is due in ${where}.`;
+		case "auto_recorded":
+			return `${event.ruleName} was recorded in ${where}.`;
+		case "budget_threshold":
+			return event.level === 100
+				? `${event.categoryName} has used its Budget in ${where}.`
+				: `${event.categoryName} is close to its Budget in ${where}.`;
+		case "loan_due": {
+			const loan = `The Loan with ${event.contactName}`;
+			return {
+				soon: `${loan} is due soon, in ${where}.`,
+				today: `${loan} is due today, in ${where}.`,
+				overdue: `${loan} is overdue, in ${where}.`,
+			}[event.when];
+		}
+	}
 };
 
 const ROLE_NAMES: Record<MemberRole, string> = {

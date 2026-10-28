@@ -47,6 +47,57 @@ describe("InboxList", () => {
 		expect(screen.getByLabelText("Someone joined Family.")).toBeVisible();
 	});
 
+	it("says what's due, recorded, passed or owed, by name", async () => {
+		const event = (
+			id: string,
+			trigger: NotificationTrigger,
+			payload: object,
+		): InboxItem => ({
+			id,
+			trigger,
+			payload: JSON.stringify({ householdName: "Family", ...payload }),
+			created_at: "2026-11-10T04:00:00.000Z",
+		});
+		const rule = { ruleId: "r1", ruleName: "Rent", dueOn: "2026-11-10" };
+		const loan = {
+			loanId: "l1",
+			contactName: "Bilal",
+			direction: "lent",
+			dueOn: "2026-11-13",
+		};
+		await render(
+			<InboxList
+				fresh={new Set()}
+				items={[
+					event("e1", "recurring_due", { ...rule, reminder: false }),
+					event("e2", "recurring_due", { ...rule, reminder: true }),
+					event("e3", "auto_recorded", rule),
+					event("e4", "budget_threshold", {
+						categoryId: "c1",
+						categoryName: "Groceries",
+						month: "2026-11",
+						level: 80,
+					}),
+					event("e5", "loan_due", { ...loan, when: "soon" }),
+					event("e6", "loan_due", { ...loan, when: "overdue" }),
+					// Malformed: just what kind of Notification it is.
+					event("e7", "budget_threshold", { categoryName: "Fuel" }),
+				]}
+				userId="u1"
+			/>,
+		);
+		for (const said of [
+			"Rent is due in Family.",
+			"Rent is still Pending in Family.",
+			"Rent was recorded in Family.",
+			"Groceries has used 80% of its Budget in Family.",
+			"The Loan with Bilal is due in 3 days, in Family.",
+			"The Loan with Bilal is overdue, in Family.",
+			"Budget threshold",
+		])
+			expect(screen.getByLabelText(said)).toBeVisible();
+	});
+
 	it("says when there's nothing yet", async () => {
 		await render(
 			<InboxList
