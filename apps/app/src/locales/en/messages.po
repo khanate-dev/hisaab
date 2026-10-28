@@ -2799,6 +2799,10 @@ msgstr "Their name"
 msgid "They lose this household from their devices. What they recorded stays."
 msgstr "They lose this household from their devices. What they recorded stays."
 
+#: src/features/account/delete-account-flow.tsx
+msgid "This account has no email to send a code to, so it can't be deleted here. Contact support."
+msgstr "This account has no email to send a code to, so it can't be deleted here. Contact support."
+
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "This becomes your Base currency. It locks after your first Entry."
 msgstr "This becomes your Base currency. It locks after your first Entry."

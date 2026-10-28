@@ -98,7 +98,14 @@ const handle = withContractVersion((request) =>
 Deno.serve(async (request) => {
 	if (request.method === "OPTIONS")
 		return new Response("ok", { headers: CORS });
-	const response = await handle(request);
+	// A fault (say, two deletions in one household at once) still answers JSON, CORS and all, so the app can say so.
+	let response: Response;
+	try {
+		response = await handle(request);
+	} catch (error) {
+		console.error(error);
+		response = Response.json({ status: "error" }, { status: 500 });
+	}
 	for (const [name, value] of Object.entries(CORS))
 		response.headers.set(name, value);
 	return response;

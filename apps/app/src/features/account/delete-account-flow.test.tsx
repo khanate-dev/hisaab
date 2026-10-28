@@ -8,6 +8,7 @@ import { render } from "@/test/render";
 import { DeleteAccountFlow } from "./delete-account-flow";
 
 const setup = async ({
+	email = "leila@example.com",
 	blockers = [] as { householdId: string; name: string }[][],
 	answers = [{ status: "deleted" }] as DeleteAccountAnswer[],
 	verify = async (_code: string) => {},
@@ -26,7 +27,7 @@ const setup = async ({
 	await render(
 		<DeleteAccountFlow
 			backup={<Text>Backup offered</Text>}
-			email="leila@example.com"
+			email={email}
 			{...handlers}
 		/>,
 	);
@@ -110,5 +111,15 @@ describe("DeleteAccountFlow", () => {
 			/code didn't work/,
 		);
 		expect(screen.queryByLabelText("Confirmation")).toBeNull();
+	});
+
+	it("says when there's no email to send a code to", async () => {
+		const { user, onSendCode } = await setup({ email: "" });
+		await press(user, "Continue");
+		expect(await screen.findByRole("alert")).toHaveTextContent(/no email/);
+		expect(
+			screen.queryByRole("button", { name: "Email me a code" }),
+		).toBeNull();
+		expect(onSendCode).not.toHaveBeenCalled();
 	});
 });

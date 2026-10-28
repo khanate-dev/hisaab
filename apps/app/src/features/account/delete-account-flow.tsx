@@ -156,7 +156,14 @@ export const DeleteAccountFlow = ({
 			{step === CODE && (
 				<>
 					<Text>{t`Confirm it's you: we'll email a code to sign in with again.`}</Text>
-					{sent ? (
+					{email === "" ? (
+						<Text
+							className="text-bad"
+							role="alert"
+						>
+							{t`This account has no email to send a code to, so it can't be deleted here. Contact support.`}
+						</Text>
+					) : sent ? (
 						<>
 							<Text variant="muted">
 								<Trans>We emailed a code to {email}.</Trans>

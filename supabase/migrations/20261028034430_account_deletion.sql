@@ -268,7 +268,20 @@ begin
 	if jsonb_array_length(blocked) > 0 then
 		return jsonb_build_object('status', 'blocked', 'households', blocked);
 	end if;
+	-- Held to the end: a write of theirs racing this one either lands first (and is moved below) or waits and is
+	-- refused (`keep_maker_known`), so nothing is left carrying their id.
+	perform 1 from auth.users where id = target_user for update;
 	perform set_config('hisaab.anonymizing', 'on', true);
+
+	-- Their cross-household transfers unlink (ADR-0003), as on leaving, before their halves change hands.
+	perform set_config('hisaab.breaking_links', 'on', true);
+	update public.entries set link_id = null
+	where link_id in (select e.link_id from public.entries e where e.created_by = target_user and e.link_id is not null);
+	perform set_config('hisaab.breaking_links', 'off', true);
+
+	-- No email of theirs is kept: Invites they accepted, or that were sent to them.
+	update public.invites set email = null
+	where accepted_by = target_user or email = (select lower(u.email) from auth.users u where u.id = target_user);
 
 	-- Their Personal household, and shared ones with nobody else in them: hard-deleted, as deleting a household is.
 	with deleted as (
@@ -297,6 +310,8 @@ begin
 		union select h.id from public.households h where h.created_by = target_user
 	loop
 		former := private.uuid_v7();
+		-- One deletion numbers its Former member at a time in a household.
+		perform 1 from public.households where id = household for update;
 		insert into public.former_members (id, household_id, number)
 		values (former, household,
 			coalesce((select max(f.number) from public.former_members f where f.household_id = household), 0) + 1);
@@ -307,14 +322,15 @@ begin
 		update public.invites set created_by = former where household_id = household and created_by = target_user;
 		update public.invites set accepted_by = former where household_id = household and accepted_by = target_user;
 		update public.households set created_by = former where id = household and created_by = target_user;
+		-- What others' inboxes say about them is about their Former member now, with no name.
+		update public.notifications
+		set payload = (payload::jsonb || jsonb_build_object('userId', former, 'name', null))::text, subject_user_id = former
+		where household_id = household
+			and (payload::jsonb ->> 'userId' = target_user::text or subject_user_id = target_user);
 	end loop;
 
-	-- Leaving each household (which also unlinks their cross-household transfers, ADR-0003, and tells its Admins);
-	-- what the others' inboxes say about them keeps no name.
+	-- Leaving each household, quietly: nobody removed them, and there's no name to tell.
 	delete from public.memberships where user_id = target_user;
-	update public.notifications
-	set payload = (payload::jsonb || '{"name": null}'::jsonb)::text, subject_user_id = null
-	where payload::jsonb ->> 'userId' = target_user::text or subject_user_id = target_user;
 
 	insert into private.deletion_ledger (user_id) values (target_user) on conflict (user_id) do nothing;
 	-- The Auth user goes, and with it their profile, Saved filters, Notifications and preferences, push devices and
@@ -325,6 +341,94 @@ end;
 $$;
 revoke all on function public.delete_account(uuid) from public, anon, authenticated;
 grant execute on function public.delete_account(uuid) to service_role;
+
+-- What stands in for the foreign keys dropped above: a new row is made by a User (held, so one being deleted waits for
+-- that and is then refused) or by its household's Former member, never by an id that's gone.
+create function private.keep_maker_known() returns trigger
+language plpgsql security definer
+set search_path = ''
+as $$
+begin
+	if new.created_by is null
+		or exists (select 1 from public.former_members f where f.id = new.created_by) then
+		return new;
+	end if;
+	perform 1 from auth.users where id = new.created_by for key share;
+	if not found then
+		raise exception 'Whoever made it is no longer a User' using errcode = '23503';
+	end if;
+	return new;
+end;
+$$;
+revoke all on function private.keep_maker_known() from public;
+create trigger keep_maker_known before insert on public.entries
+	for each row execute function private.keep_maker_known();
+create trigger keep_maker_known before insert on public.recurring_rules
+	for each row execute function private.keep_maker_known();
+create trigger keep_maker_known before insert on public.attachments
+	for each row execute function private.keep_maker_known();
+create trigger keep_maker_known before insert on public.households
+	for each row execute function private.keep_maker_known();
+
+-- Leaving by deleting the account raises no Membership Notification (it'd read as a removal, with no name to give).
+create or replace function private.notify_membership() returns trigger
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+	changed public.memberships;
+	change text;
+	household_name text;
+	payload text;
+begin
+	if private.anonymizing() then
+		return null;
+	end if;
+	-- NEW is read only when there is one.
+	if tg_op = 'DELETE' then
+		changed := old;
+	else
+		changed := new;
+	end if;
+	select name into household_name from public.households where id = changed.household_id and personal_user_id is null;
+	if not found then
+		return null;
+	end if;
+	if tg_op = 'INSERT' then
+		if not exists (select 1 from public.memberships where household_id = new.household_id and id <> new.id) then
+			return null;
+		end if;
+		change := 'joined';
+	elsif tg_op = 'DELETE' then
+		if not exists (select 1 from auth.users where id = old.user_id) then
+			return null;
+		end if;
+		change := case when (select auth.uid()) = old.user_id then 'left' else 'removed' end;
+	else
+		if new.role is not distinct from old.role then
+			return null;
+		end if;
+		change := 'role_changed';
+	end if;
+	payload := jsonb_build_object(
+		'change', change,
+		'userId', changed.user_id,
+		'name', (select display_name from public.profiles where id = changed.user_id),
+		'role', changed.role,
+		'householdName', household_name
+	)::text;
+	insert into public.notifications (household_id, user_id, trigger, subject_user_id, payload)
+	select changed.household_id, recipient, 'membership', changed.user_id, payload
+	from (
+		select user_id as recipient from public.memberships
+		where household_id = changed.household_id and role = 'admin'
+		union
+		select changed.user_id
+	) as recipients
+	where exists (select 1 from auth.users where id = recipient);
+	return null;
+end;
+$$;
 
 -- A Former member's Recurring rules keep running (issue #12): Auto-record records them in its name.
 create or replace function private.auto_record() returns integer

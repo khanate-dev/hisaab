@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(30);
 
 -- Leaver: Admin of Shared (with Admin Ada and Viewer Vee) and alone in Solo. Blocker: sole Admin of Blocked, with Bo.
 insert into auth.users (id, email) values
@@ -18,6 +18,7 @@ insert into auth.users (id, email) values
 insert into public.households (id, name, timezone, created_by) values
 	('00000000-0000-7000-8000-0000000077f1', 'Shared', 'Asia/Karachi', '00000000-0000-4000-8000-0000000077a1');
 insert into public.households (id, name, timezone) values
+	('00000000-0000-7000-8000-0000000077f4', 'Shared too', 'Asia/Karachi'),
 	('00000000-0000-7000-8000-0000000077f2', 'Solo', 'Asia/Karachi'),
 	('00000000-0000-7000-8000-0000000077f3', 'Blocked', 'Asia/Karachi');
 insert into public.memberships (id, household_id, user_id, role) values
@@ -25,12 +26,28 @@ insert into public.memberships (id, household_id, user_id, role) values
 	('00000000-0000-7000-8000-0000000077e2', '00000000-0000-7000-8000-0000000077f1', '00000000-0000-4000-8000-0000000077a2', 'admin'),
 	('00000000-0000-7000-8000-0000000077e3', '00000000-0000-7000-8000-0000000077f1', '00000000-0000-4000-8000-0000000077a3', 'viewer'),
 	('00000000-0000-7000-8000-0000000077e4', '00000000-0000-7000-8000-0000000077f2', '00000000-0000-4000-8000-0000000077a1', 'admin'),
+	('00000000-0000-7000-8000-0000000077e7', '00000000-0000-7000-8000-0000000077f4', '00000000-0000-4000-8000-0000000077a2', 'admin'),
+	('00000000-0000-7000-8000-0000000077e8', '00000000-0000-7000-8000-0000000077f4', '00000000-0000-4000-8000-0000000077a1', 'member'),
 	('00000000-0000-7000-8000-0000000077e5', '00000000-0000-7000-8000-0000000077f3', '00000000-0000-4000-8000-0000000077b1', 'admin'),
 	('00000000-0000-7000-8000-0000000077e6', '00000000-0000-7000-8000-0000000077f3', '00000000-0000-4000-8000-0000000077b2', 'member');
 insert into public.profiles (id, display_name) values ('00000000-0000-4000-8000-0000000077a1', 'Leila')
 	on conflict (id) do update set display_name = excluded.display_name;
 insert into public.wallets (id, household_id, name, type, currency) values
-	('00000000-0000-7000-8000-0000000077c1', '00000000-0000-7000-8000-0000000077f1', 'Cash', 'cash', 'PKR');
+	('00000000-0000-7000-8000-0000000077c1', '00000000-0000-7000-8000-0000000077f1', 'Cash', 'cash', 'PKR'),
+	('00000000-0000-7000-8000-0000000077c2', '00000000-0000-7000-8000-0000000077f4', 'Cash', 'cash', 'PKR');
+-- A cross-household transfer the Leaver made between Shared and Shared too: two halves sharing a link.
+insert into public.entries (id, household_id, wallet_id, kind, amount, link_id, occurred_on, created_by) values
+	('00000000-0000-7000-8000-000000007711', '00000000-0000-7000-8000-0000000077f1', '00000000-0000-7000-8000-0000000077c1',
+	 'household_transfer', -500, '00000000-0000-7000-8000-000000007799', current_date, '00000000-0000-4000-8000-0000000077a1'),
+	('00000000-0000-7000-8000-000000007712', '00000000-0000-7000-8000-0000000077f4', '00000000-0000-7000-8000-0000000077c2',
+	 'household_transfer', 500, '00000000-0000-7000-8000-000000007799', current_date, '00000000-0000-4000-8000-0000000077a1');
+-- An Invite sent to the Leaver's address, and one they accepted.
+insert into public.invites (id, household_id, token, role, email, expires_at, created_by, accepted_by, accepted_at) values
+	('00000000-0000-7000-8000-000000007705', '00000000-0000-7000-8000-0000000077f1', repeat('q', 32), 'member',
+	 'leaver@example.com', now() + interval '7 days', '00000000-0000-4000-8000-0000000077a2', null, null),
+	('00000000-0000-7000-8000-000000007706', '00000000-0000-7000-8000-0000000077f4', repeat('r', 32), 'member',
+	 'leaver@example.com', now() + interval '7 days', '00000000-0000-4000-8000-0000000077a2',
+	 '00000000-0000-4000-8000-0000000077a1', now());
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
 	select set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
@@ -74,12 +91,14 @@ select throws_ok($$ select * from public.account_deletion_blockers('00000000-000
 	null, 'nor ask for the blockers');
 reset role;
 
+create temporary table notified as
+	select count(*) as n from public.notifications where user_id <> '00000000-0000-4000-8000-0000000077a1';
 create temporary table leaver_log as
 	select count(*) as n from public.activity_log where household_id = '00000000-0000-7000-8000-0000000077f1'
 		and table_name <> 'memberships';
 create temporary table personal as
 	select id from public.households where personal_user_id = '00000000-0000-4000-8000-0000000077a1';
-grant select on leaver_log, personal to public;
+grant select on leaver_log, personal, notified to public;
 
 select pg_temp.as_service();
 select is(public.delete_account('00000000-0000-4000-8000-0000000077a1') ->> 'status', 'deleted', 'otherwise it''s deleted');
@@ -118,6 +137,24 @@ select ok(not exists (select 1 from public.notifications
 	'and the others'' inboxes keep no name for them');
 select ok(exists (select 1 from private.deletion_ledger where user_id = '00000000-0000-4000-8000-0000000077a1'),
 	'the deletion ledger has them');
+select is((select count(*)::int from public.entries where link_id = '00000000-0000-7000-8000-000000007799'), 0,
+	'their cross-household transfers unlink, each half its household''s own');
+select ok(not exists (select 1 from public.invites where email = 'leaver@example.com'),
+	'no Invite keeps their email, sent to them or accepted');
+select is((select count(*) from public.notifications), (select n from notified),
+	'and leaving this way raises no Membership Notification');
+select throws_ok(
+	$$ insert into public.entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by) values
+	   (gen_random_uuid(), '00000000-0000-7000-8000-0000000077f1', '00000000-0000-7000-8000-0000000077c1',
+	    'balance_adjustment', 1, current_date, '00000000-0000-4000-8000-0000000077a1') $$,
+	'23503', null, 'nothing new is made in their name after'
+);
+select lives_ok(
+	$$ insert into public.entries (id, household_id, wallet_id, kind, amount, occurred_on, created_by) values
+	   (gen_random_uuid(), '00000000-0000-7000-8000-0000000077f1', '00000000-0000-7000-8000-0000000077c1',
+	    'balance_adjustment', 1, current_date, (select id from former)) $$,
+	'but their Former member''s may be (Auto-record)'
+);
 
 -- The Viewer goes too: Former member 2, in the same household.
 select pg_temp.as_service();
@@ -128,7 +165,8 @@ select results_eq($$ select number from public.former_members where household_id
 
 -- The Admin who's left sees them; nobody else does, and nobody writes them.
 select pg_temp.act_as('00000000-0000-4000-8000-0000000077a2');
-select is((select count(*)::int from public.former_members), 2, 'Members see their household''s Former members');
+-- Two in Shared (the Leaver and the Viewer), one in Shared too (the Leaver).
+select is((select count(*)::int from public.former_members), 3, 'Members see their households'' Former members');
 select throws_ok($$ insert into public.former_members (id, household_id, number)
 	values (gen_random_uuid(), '00000000-0000-7000-8000-0000000077f1', 9) $$, '42501', null, 'but can''t make one');
 reset role;
