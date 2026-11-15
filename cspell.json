@@ -44,8 +44,10 @@
 		"DMARC",
 		"dmarc",
 		"domainkey",
+		"dtrace",
 		"envsubst",
 		"errcode",
+		"esbuild",
 		"estree",
 		"fawazahmed",
 		"fflate",
@@ -86,6 +88,7 @@
 		"powersync",
 		"prereqs",
 		"Pressable",
+		"protobufjs",
 		"psql",
 		"psqlrc",
 		"PSYNC",
@@ -129,6 +132,7 @@
 		"Wayfinder",
 		"webp",
 		"webpush",
+		"workerd",
 		"worklets"
 	],
 	"ignoreRegExpList": ["sb_(?:publishable|secret)_[\\w-]+"]

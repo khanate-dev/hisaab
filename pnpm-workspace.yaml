@@ -3,11 +3,18 @@ packages:
   - packages/*
   - tests/*
 
-# Packages whose install scripts must run: the Supabase CLI downloads its binary;
-# better-sqlite3 (the @powersync/node driver in tests/sync) fetches or compiles its native addon.
-onlyBuiltDependencies:
-  - better-sqlite3
-  - supabase
+# Which packages' install scripts run. pnpm refuses to install while any is left unlisted.
+allowBuilds:
+  # The Supabase CLI downloads its binary
+  supabase: true
+  # better-sqlite3 (the @powersync/node driver in tests/sync) fetches or compiles its native addon
+  better-sqlite3: true
+  # Not needed: these were never run before
+  dtrace-provider: false
+  esbuild: false
+  protobufjs: false
+  workerd: false
+  yarn: false
 
 # `pnpm add` must go through the catalog.
 catalogMode: strict
