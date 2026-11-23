@@ -29,6 +29,7 @@
 		"globals": "catalog:",
 		"powersync": "catalog:",
 		"prettier": "catalog:",
+		"squawk-cli": "catalog:",
 		"supabase": "catalog:",
 		"typescript": "catalog:",
 		"typescript-eslint": "catalog:",

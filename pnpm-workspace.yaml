@@ -19,6 +19,14 @@ allowBuilds:
 # `pnpm add` must go through the catalog.
 catalogMode: strict
 
+# Deterministic peers under pnpm 12 (#115). Re-resolving used to attach debug's optional supports-color peer as 8 or 10
+# depending on the importer, and to give client-schema the drizzle-orm variant tests/sync's better-sqlite3 picks: the
+# app then saw two drizzle-orm and react-native copies and its queries lost their types. debug never needs the peer
+# (it only colours its output), and each package resolves peers from its own dependents, not the workspace root.
+overrides:
+  debug>supports-color: "-"
+resolvePeersFromWorkspaceRoot: false
+
 # Every dependency version lives here, exact. package.json files reference `catalog:` only.
 catalog:
   # Expo SDK 57 set (seeded from the Spike, #14; matches expo@57.0.31's bundledNativeModules.json)
@@ -121,6 +129,8 @@ catalog:
   supabase: 2.120.0
   # Prod deploy (#30): Sync Streams to PowerSync Cloud, the EAS client config, the web app on Workers
   eas-cli: 24.13.0
+  # Migration linting (#67): destructive DDL needs the contract label (ADR-0011)
+  squawk-cli: 2.72.0
   powersync: 0.10.2
   wrangler: 4.150.0
   typescript: 6.0.3
