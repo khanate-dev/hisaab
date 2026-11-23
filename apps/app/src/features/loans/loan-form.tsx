@@ -16,11 +16,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import type { Contact } from "@/features/contacts/use-contacts";
-import {
-	orNull,
-	recordableWallets,
-	startingWallet,
-} from "@/features/entries/draft";
+import { orNull, entryWallets, startingWallet } from "@/features/entries/draft";
 import { useCommonChecks, useSave } from "@/features/entries/form-checks";
 import type { WalletChoice } from "@/features/entries/types";
 import { todayIn } from "@/lib/dates";
@@ -35,7 +31,7 @@ const DEFAULT_DIRECTION: LoanDirection = "lent";
 type Props = {
 	contacts: readonly Contact[];
 	wallets: readonly WalletChoice[];
-	/** Loans move money in Base-currency Wallets until Base amounts land (#45). */
+	/** A Wallet in another currency is named with it; a Loan is in its Wallet's currency (#119). */
 	baseCurrency: string | null;
 	/** The Member's default Wallet in the household: where a new one starts, when it can. */
 	defaultWalletId?: string | null;
@@ -59,7 +55,13 @@ export const LoanForm = ({
 	const checks = useCommonChecks();
 	const { busy, error, setError, save } = useSave();
 	const active = contacts.filter((c) => c.archived_at === null);
-	const recordable = recordableWallets(wallets, baseCurrency);
+	// Any active Wallet, whatever its currency: the Loan is in that currency, Repayments too (#119).
+	const recordable = entryWallets(wallets);
+	/** A Wallet not in the Base currency names its currency too: "Dollars (USD)". */
+	const walletLabel = (w: WalletChoice) => {
+		const { name, currency: code } = w;
+		return code === baseCurrency ? name : t`${name} (${code})`;
+	};
 	const [direction, setDirection] = useState<LoanDirection>(DEFAULT_DIRECTION);
 	const [contactId, setContactId] = useState(active[0]?.id ?? NEW_CONTACT);
 	const [newName, setNewName] = useState("");
@@ -147,7 +149,10 @@ export const LoanForm = ({
 				<RadioGroup
 					label={direction === "lent" ? t`From Wallet` : t`Into Wallet`}
 					onValueChange={setWalletId}
-					options={recordable.map((w) => ({ value: w.id, label: w.name }))}
+					options={recordable.map((w) => ({
+						value: w.id,
+						label: walletLabel(w),
+					}))}
 					value={walletId}
 				/>
 			</View>

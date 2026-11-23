@@ -19,6 +19,7 @@ import type { LoanView } from "./use-loans";
 const wallets: WalletChoice[] = [
 	{ id: "w1", name: "Cash", currency: "PKR", archived_at: null },
 	{ id: "w2", name: "HBL", currency: "PKR", archived_at: null },
+	{ id: "w3", name: "Dollars", currency: "USD", archived_at: null },
 ];
 const ali: Contact = {
 	id: "k1",
@@ -118,6 +119,17 @@ describe("LoanForm", () => {
 		);
 	});
 
+	it("records a Loan from a Wallet in another currency, in that currency", async () => {
+		const { onSubmit, user } = await setup();
+		await user.press(screen.getByRole("radio", { name: "Dollars (USD)" }));
+		await user.type(screen.getByLabelText("Amount (USD)"), "250");
+		await user.press(screen.getByRole("button", { name: "Save Loan" }));
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({ walletId: "w3", amount: "250" }),
+			"USD",
+		);
+	});
+
 	it("asks for an amount more than zero", async () => {
 		const { onSubmit, user } = await setup();
 		await user.press(screen.getByRole("button", { name: "Save Loan" }));
@@ -214,9 +226,10 @@ describe("LoanDetail", () => {
 		});
 	});
 
-	it("records a Repayment into a Wallet", async () => {
+	it("records a Repayment into a Wallet, only ever one in the Loan's currency", async () => {
 		const { onRepay, user } = await setup();
 		await user.press(screen.getByRole("button", { name: "Record Repayment" }));
+		expect(screen.queryByRole("radio", { name: /Dollars/ })).toBeNull();
 		await user.press(screen.getByRole("radio", { name: "HBL" }));
 		await user.type(screen.getByLabelText("Repayment (PKR)"), "200");
 		await user.press(screen.getByRole("button", { name: "Save Repayment" }));
@@ -313,6 +326,26 @@ describe("LoanList", () => {
 		expect(loan).toHaveTextContent(`${left} outstanding`, { exact: false });
 		await userEvent.press(loan);
 		expect(onOpen).toHaveBeenCalledWith("l1");
+	});
+
+	it("shows a Loan in another currency in its own", async () => {
+		await render(
+			<LoanList
+				loans={[
+					view({
+						currency: "USD",
+						principalAmount: parseMoney("100", "USD"),
+						outstanding: parseMoney("40", "USD"),
+					}),
+				]}
+				onOpen={jest.fn()}
+			/>,
+		);
+		const left = formatMoney(parseMoney("40", "USD"));
+		expect(screen.getByRole("button", { name: /Ali/ })).toHaveTextContent(
+			`${left} outstanding`,
+			{ exact: false },
+		);
 	});
 
 	it("says when there are none", async () => {
