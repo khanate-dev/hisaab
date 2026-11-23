@@ -11,12 +11,6 @@ import { readFileSync } from "node:fs";
 
 export const CONTRACT_LABEL = "contract";
 
-/**
- * The Squawk run by `pnpm dlx`, at least two weeks old as the catalog's are. It stays out of the workspace because adding
- * a dependency under pnpm 12 currently re-resolves the lockfile into duplicate peer copies (#115).
- */
-const SQUAWK = "squawk-cli@2.72.0";
-
 /** A finding from `squawk --reporter json`. */
 export type SquawkViolation = {
 	file: string;
@@ -189,16 +183,7 @@ const check = (base: string) => {
 	if (added.length > 0) {
 		const run = spawnSync(
 			"pnpm",
-			[
-				"--silent",
-				"dlx",
-				"--package",
-				SQUAWK,
-				"squawk",
-				"--reporter",
-				"json",
-				...added.map((m) => m.file),
-			],
+			["exec", "squawk", "--reporter", "json", ...added.map((m) => m.file)],
 			{
 				encoding: "utf8",
 				// Its own Actions annotations would land in the JSON; this prints the warnings itself.
