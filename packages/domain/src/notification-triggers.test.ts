@@ -2,12 +2,16 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
+	activityDigests,
+	type DigestFacts,
 	type HouseholdFacts,
 	loanDueWhen,
+	monthlySummaries,
 	type RaiseAdapters,
 	type RaisedNotification,
 	raiseScheduledNotifications,
 	scheduledNotifications,
+	type SummaryFacts,
 } from "./notification-triggers";
 import { pushMessage, readEventPayload } from "./notifications";
 
@@ -335,10 +339,16 @@ describe("loanDueWhen", () => {
 
 describe("raiseScheduledNotifications", () => {
 	// A fake database: raising keeps one per User and dedupe key, as the unique index does.
-	const fakeDatabase = (facts: HouseholdFacts[]) => {
+	const fakeDatabase = (
+		facts: HouseholdFacts[],
+		digests: DigestFacts[] = [],
+		summaries: SummaryFacts[] = [],
+	) => {
 		const stored = new Map<string, RaisedNotification>();
 		const adapters: RaiseAdapters = {
 			facts: async () => facts,
+			digestFacts: async () => digests,
+			summaryFacts: async () => summaries,
 			raise: async (notifications) => {
 				let added = 0;
 				for (const n of notifications) {
@@ -376,6 +386,29 @@ describe("raiseScheduledNotifications", () => {
 			"budget_threshold",
 			"budget_threshold",
 			"recurring_due",
+		]);
+	});
+
+	it("raises the digest and the Monthly summary alongside, each once", async () => {
+		const { adapters, stored } = fakeDatabase(
+			[],
+			[digest()],
+			[
+				{
+					householdId: "h1",
+					householdName: "Family",
+					month: "2026-10",
+					members: [ADMIN, VIEWER],
+				},
+			],
+		);
+		const at = new Date("2026-11-01T15:02:00Z");
+		expect(await raiseScheduledNotifications(adapters, at)).toBe(3);
+		expect(await raiseScheduledNotifications(adapters, at)).toBe(0);
+		expect([...stored.values()].map((n) => n.trigger).toSorted()).toEqual([
+			"household_activity",
+			"monthly_summary",
+			"monthly_summary",
 		]);
 	});
 
@@ -472,5 +505,83 @@ describe("event push text", () => {
 				},
 			),
 		);
+	});
+});
+
+const digest = (facts: Partial<DigestFacts> = {}): DigestFacts => ({
+	householdId: "h1",
+	householdName: "Family",
+	today: "2026-11-01",
+	optedIn: [ADMIN],
+	changes: [{ actorId: MEMBER, actorName: "Bilal", count: 2 }],
+	...facts,
+});
+
+describe("activityDigests", () => {
+	const people: string[] = [ADMIN, MEMBER, VIEWER];
+	const facts = fc.record({
+		optedIn: fc.subarray(people),
+		changes: fc.uniqueArray(
+			fc.record({
+				actorId: fc.constantFrom(...people),
+				actorName: fc.constantFrom("Ayesha", "Bilal", "Sara"),
+				count: fc.integer({ min: 0, max: 20 }),
+			}),
+			{ selector: (c) => c.actorId },
+		),
+	});
+
+	it("tells only those who opted in, of the others' changes alone, and nothing when there were none", () => {
+		fc.assert(
+			fc.property(facts, (f) => {
+				const raised = activityDigests(digest(f));
+				for (const userId of f.optedIn) {
+					const others = f.changes
+						.filter((c) => c.actorId !== userId)
+						.reduce((n, c) => n + c.count, 0);
+					const theirs = raised.filter((n) => n.userId === userId);
+					expect(theirs).toHaveLength(others > 0 ? 1 : 0);
+					const event =
+						theirs[0] && readEventPayload(theirs[0].trigger, theirs[0].payload);
+					if (event?.trigger === "household_activity")
+						expect(event.changes).toBe(others);
+				}
+				expect(raised.every((n) => f.optedIn.includes(n.userId))).toBe(true);
+			}),
+		);
+	});
+
+	it("names who made them in push, most active first, with no amount", () => {
+		const [raised] = activityDigests(
+			digest({
+				changes: [
+					{ actorId: MEMBER, actorName: "Bilal", count: 1 },
+					{ actorId: VIEWER, actorName: "Sara", count: 3 },
+					{ actorId: ADMIN, actorName: "Ayesha", count: 9 },
+				],
+			}),
+		);
+		expect(raised && pushMessage(raised.trigger, raised.payload)).toEqual({
+			title: "Household activity",
+			body: "Sara and Bilal made 4 changes in Family today.",
+		});
+	});
+});
+
+describe("monthlySummaries", () => {
+	it("tells everyone in the household, once a Budget month, which month it was", () => {
+		const raised = monthlySummaries({
+			householdId: "h1",
+			householdName: "Family",
+			month: "2026-10",
+			members: [ADMIN, MEMBER, VIEWER],
+		});
+		expect(raised.map((n) => n.userId)).toEqual([ADMIN, MEMBER, VIEWER]);
+		expect(new Set(raised.map((n) => n.dedupeKey)).size).toBe(1);
+		const [first] = raised;
+		expect(first && pushMessage(first.trigger, first.payload)).toEqual({
+			title: "Monthly summary",
+			body: "How October 2026 went in Family.",
+		});
 	});
 });

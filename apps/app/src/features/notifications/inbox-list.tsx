@@ -1,9 +1,12 @@
 import {
 	type EventPayload,
 	isNotificationTrigger,
+	monthName,
+	namePeople,
 	readEventPayload,
 	readMembershipPayload,
 } from "@hisaab/domain";
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -82,6 +85,15 @@ const useEventMessage = () => {
 				return event.level === FULL
 					? t`${category} has used all its Budget in ${household}.`
 					: t`${category} has used 80% of its Budget in ${household}.`;
+			}
+			case "household_activity": {
+				const { changes } = event;
+				const people = namePeople(event.people);
+				return t`${people} made ${plural(changes, { one: "# change", other: "# changes" })} in ${household} that day.`;
+			}
+			case "monthly_summary": {
+				const month = monthName(event.month);
+				return t`How ${month} went in ${household}: see Reports, or the email if you turned it on.`;
 			}
 			case "loan_due": {
 				const { contactName: contact } = event;

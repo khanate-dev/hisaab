@@ -240,6 +240,10 @@ msgstr "{parentName} › {categoryName} · {walletName}"
 msgid "{parentName} › {name}"
 msgstr "{parentName} › {name}"
 
+#: src/features/notifications/inbox-list.tsx
+msgid "{people} made {changes, plural, one {# change} other {# changes}} in {household} that day."
+msgstr "{people} made {changes, plural, one {# change} other {# changes}} in {household} that day."
+
 #: src/features/reports/budget-vs-actual.tsx
 msgid "{percent}%"
 msgstr "{percent}%"
@@ -1375,9 +1379,17 @@ msgstr "Edited: kept as you set it."
 msgid "Email"
 msgstr "Email"
 
+#: src/features/notifications/preferences-list.tsx
+msgid "Email it to me too"
+msgstr "Email it to me too"
+
 #: src/features/account/delete-account-flow.tsx
 msgid "Email me a code"
 msgstr "Email me a code"
+
+#: src/features/notifications/preferences-list.tsx
+msgid "Email me the Monthly summary"
+msgstr "Email me the Monthly summary"
 
 #: src/features/legal/support-info.tsx
 msgid "Email support"
@@ -1689,6 +1701,10 @@ msgstr "Household transfer"
 #: src/features/shell/household-pill.tsx
 msgid "Households"
 msgstr "Households"
+
+#: src/features/notifications/inbox-list.tsx
+msgid "How {month} went in {household}: see Reports, or the email if you turned it on."
+msgstr "How {month} went in {household}: see Reports, or the email if you turned it on."
 
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "How much cash do you have on you? Hisaab starts your Cash Wallet there."

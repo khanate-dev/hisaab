@@ -2,7 +2,10 @@ import { useLingui } from "@lingui/react/macro";
 
 import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { useMembership } from "@/features/households/use-membership";
-import { setPreference } from "@/features/notifications/actions";
+import {
+	setPreference,
+	setSummaryEmail,
+} from "@/features/notifications/actions";
 import { PreferencesList } from "@/features/notifications/preferences-list";
 import { ThisDevicePush } from "@/features/notifications/this-device-push";
 import { usePreferences } from "@/features/notifications/use-notifications";
@@ -28,6 +31,13 @@ const HouseholdPreferences = ({
 					{ householdId: household.id, userId },
 					trigger,
 					enabled,
+				)
+			}
+			onEmailChange={(pushOn, emailOn) =>
+				void setSummaryEmail(
+					{ householdId: household.id, userId },
+					pushOn,
+					emailOn,
 				)
 			}
 			role={membership.role}
