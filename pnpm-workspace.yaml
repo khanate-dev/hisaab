@@ -22,7 +22,8 @@ catalogMode: strict
 # Deterministic peers under pnpm 12 (#115). Re-resolving used to attach debug's optional supports-color peer as 8 or 10
 # depending on the importer, and to give client-schema the drizzle-orm variant tests/sync's better-sqlite3 picks: the
 # app then saw two drizzle-orm and react-native copies and its queries lost their types. debug never needs the peer
-# (it only colours its output), and each package resolves peers from its own dependents, not the workspace root.
+# (it only widens its colour palette), and each package resolves peers from its own dependents, not the workspace root.
+# tooling/pnpm/lockfile.test.ts fails if the copies split again.
 overrides:
   debug>supports-color: "-"
 resolvePeersFromWorkspaceRoot: false
