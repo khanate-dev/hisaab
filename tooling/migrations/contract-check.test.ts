@@ -21,11 +21,31 @@ describe("contractChanges", () => {
 		],
 		[
 			`drop policy "Members read" on public.entries;`,
-			`drops the policy "members read"`,
+			`drops the policy "Members read"`,
 		],
 		[
 			"update public.app_config set min_contract_version = 3 where id = 'app';",
 			"raises min_contract_version to 3",
+		],
+		[
+			"drop function public.accept_invite(text);",
+			"drops the function public.accept_invite",
+		],
+		[
+			"alter table public.entries add constraint positive check (amount > 0) not valid;",
+			"adds the CHECK positive to an existing table",
+		],
+		[
+			"alter table public.entries validate constraint positive;",
+			"validates a constraint",
+		],
+		[
+			`alter policy "Members read" on public.entries using (false);`,
+			"alters a policy",
+		],
+		[
+			`drop policy "Members read" on public.entries;\ncreate policy "members read" on public.entries for select using (true);`,
+			`drops the policy "Members read"`,
 		],
 	])("flags %s", (sql, reason) => {
 		expect(contractChanges(sql)).toContain(reason);
@@ -36,7 +56,10 @@ describe("contractChanges", () => {
 		["alter table public.entries add column notes text;"],
 		["alter table public.entries alter column notes drop not null;"],
 		[
-			"drop function if exists public.old_rpc(); drop trigger t on public.entries; drop index public.i;",
+			"drop trigger t on public.entries; drop index public.i;\ndrop function if exists private.f(uuid);\ncreate or replace function private.f(uuid, text) returns void language sql as $$ select $$;",
+		],
+		[
+			"alter table public.entries drop constraint entries_kind_check;\nalter table public.entries add constraint entries_kind_check check (kind in ('a', 'b', 'c'));",
 		],
 		[
 			`drop policy "Members read" on public.entries;\ncreate policy "Members read" on public.entries for select using (true);`,
@@ -57,6 +80,11 @@ describe("contractRaise", () => {
 		expect(
 			contractRaise("select min_contract_version from public.app_config;"),
 		).toBe(null);
+		expect(
+			contractRaise(
+				"select 1 from public.app_config where min_contract_version = 2;",
+			),
+		).toBe(null);
 	});
 });
 
@@ -69,8 +97,8 @@ describe("contractFindings", () => {
 					{
 						file: "/repo/supabase/migrations/1_x.sql",
 						line: 4,
-						rule_name: "constraint-missing-not-valid",
-						message: "adding a constraint blocks writes",
+						rule_name: "ban-drop-column",
+						message: "dropping a column may break existing clients",
 					},
 					{
 						file: "/repo/supabase/migrations/1_x.sql",
@@ -81,7 +109,7 @@ describe("contractFindings", () => {
 				],
 			),
 		).toEqual([
-			"supabase/migrations/1_x.sql:5: adding a constraint blocks writes (squawk constraint-missing-not-valid)",
+			"supabase/migrations/1_x.sql:5: dropping a column may break existing clients (squawk ban-drop-column)",
 		]);
 	});
 });

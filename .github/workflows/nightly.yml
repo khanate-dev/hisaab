@@ -35,6 +35,8 @@ jobs:
           AWS_REQUEST_CHECKSUM_CALCULATION: when_required
           SUPABASE_S3_ENDPOINT: ${{ secrets.SUPABASE_S3_ENDPOINT }}
         run: |
+          # A config of its own for this step, so path-style stays with Storage and never reaches the R2 upload.
+          export AWS_CONFIG_FILE="$RUNNER_TEMP/supabase-s3.config"
           aws configure set default.s3.addressing_style path
           aws s3 sync --only-show-errors --endpoint-url "$SUPABASE_S3_ENDPOINT" \
             s3://attachments "$RUNNER_TEMP/backup/attachments"

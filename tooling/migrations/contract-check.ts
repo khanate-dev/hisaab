@@ -19,7 +19,10 @@ export type SquawkViolation = {
 	message: string;
 };
 
-/** Squawk's rules whose findings are contract changes; the rest of its advice is only shown. */
+/**
+ * Squawk's rules whose findings are contract changes; the rest of its advice (locks, timeouts, robustness) is only
+ * shown. Its `constraint-missing-not-valid` is about locking, not contracts: a CHECK is judged below instead.
+ */
 export const CONTRACT_RULES = new Set([
 	"ban-drop-column",
 	"ban-drop-table",
@@ -31,45 +34,96 @@ export const CONTRACT_RULES = new Set([
 	"renaming-column",
 	"renaming-table",
 	"renaming-object",
-	"constraint-missing-not-valid",
 ]);
 
-/** SQL without its comments, lowercased, so a comment never trips or hides a check. */
-const code = (sql: string) =>
-	sql
-		.replace(/--[^\n]*/g, "")
-		.replace(/\/\*[\s\S]*?\*\//g, "")
-		.toLowerCase();
+/** SQL without its comments, so a comment never trips or hides a check. Case is kept: quoted names keep theirs. */
+const withoutComments = (sql: string) =>
+	sql.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
-/** The contract version a migration raises `min_contract_version` to, or null if it doesn't. */
+/** A name as SQL compares it: quoted, exactly; unquoted, folded to lower case. */
+const sqlName = (name: string) =>
+	name.startsWith('"') ? name : name.toLowerCase();
+
+const names = (text: string, pattern: RegExp) =>
+	new Set([...text.matchAll(pattern)].map((m) => sqlName(m[1] ?? "")));
+
+const NAME = String.raw`((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)`;
+
+/** The contract version a migration raises `min_contract_version` to (an UPDATE's SET), or null if it doesn't. */
 export const contractRaise = (sql: string): number | null => {
 	const raises = [
-		...code(sql).matchAll(/min_contract_version\s*=\s*(\d+)/g),
+		...withoutComments(sql).matchAll(
+			/\bset\s+min_contract_version\s*=\s*(\d+)/gi,
+		),
 	].map((m) => Number(m[1]));
 	return raises.length > 0 ? Math.max(...raises) : null;
 };
 
 /**
- * Why a migration is a contract change, beyond what Squawk finds: dropping a table, column, type, view or schema, a
- * policy it doesn't recreate (which narrows access), a SET NOT NULL, a retype, and a contract version raise.
+ * Why a migration is a contract change, beyond what Squawk finds (ADR-0009, ADR-0011): dropping a table, column, type,
+ * view or schema; dropping a function (an RPC older builds call) or a policy it doesn't recreate under the same name;
+ * altering a policy; a SET NOT NULL; a retype; a CHECK added to an existing table that doesn't replace one of the same
+ * name, or validated; and a contract version raise. Replacing a CHECK under its own name is how a list of kinds grows
+ * (expand), so it passes: narrowing one that way is the PR's to label.
  */
 export const contractChanges = (sql: string): string[] => {
-	const text = code(sql);
+	const text = withoutComments(sql);
 	const reasons: string[] = [];
 	for (const [, what] of text.matchAll(
-		/\bdrop\s+(table|column|type|view|materialized\s+view|schema)\b/g,
+		/\bdrop\s+(table|column|type|view|materialized\s+view|schema)\b/gi,
 	))
-		reasons.push(`drops a ${what?.replace(/\s+/g, " ")}`);
-	const created = new Set(
-		[...text.matchAll(/\bcreate\s+policy\s+("[^"]+"|\S+)/g)].map((m) => m[1]),
+		reasons.push(`drops a ${(what ?? "").toLowerCase().replace(/\s+/g, " ")}`);
+
+	const createdPolicies = names(
+		text,
+		new RegExp(String.raw`\bcreate\s+policy\s+("[^"]+"|\S+)`, "gi"),
 	);
-	for (const [, name] of text.matchAll(
-		/\bdrop\s+policy\s+(?:if\s+exists\s+)?("[^"]+"|\S+)/g,
+	for (const [, name = ""] of text.matchAll(
+		/\bdrop\s+policy\s+(?:if\s+exists\s+)?("[^"]+"|\S+)/gi,
 	))
-		if (!created.has(name)) reasons.push(`drops the policy ${name}`);
-	if (/\bset\s+not\s+null\b/.test(text)) reasons.push("sets a column NOT NULL");
-	if (/\balter\s+column\s+\S+\s+(set\s+data\s+)?type\b/.test(text))
+		if (!createdPolicies.has(sqlName(name)))
+			reasons.push(`drops the policy ${name}`);
+	if (/\balter\s+policy\b/i.test(text)) reasons.push("alters a policy");
+
+	const createdFunctions = names(
+		text,
+		new RegExp(
+			String.raw`\bcreate\s+(?:or\s+replace\s+)?function\s+${NAME}`,
+			"gi",
+		),
+	);
+	for (const [, name = ""] of text.matchAll(
+		new RegExp(
+			String.raw`\bdrop\s+function\s+(?:if\s+exists\s+)?${NAME}`,
+			"gi",
+		),
+	))
+		if (!createdFunctions.has(sqlName(name)))
+			reasons.push(`drops the function ${name}`);
+
+	if (/\bset\s+not\s+null\b/i.test(text))
+		reasons.push("sets a column NOT NULL");
+	if (/\balter\s+column\s+\S+\s+(set\s+data\s+)?type\b/i.test(text))
 		reasons.push("changes a column's type");
+
+	const droppedConstraints = names(
+		text,
+		new RegExp(
+			String.raw`\bdrop\s+constraint\s+(?:if\s+exists\s+)?("[^"]+"|[\w$]+)`,
+			"gi",
+		),
+	);
+	for (const [, name = ""] of text.matchAll(
+		new RegExp(
+			String.raw`\balter\s+table\b[^;]*?\badd\s+constraint\s+("[^"]+"|[\w$]+)\s+check\b`,
+			"gi",
+		),
+	))
+		if (!droppedConstraints.has(sqlName(name)))
+			reasons.push(`adds the CHECK ${name} to an existing table`);
+	if (/\bvalidate\s+constraint\b/i.test(text))
+		reasons.push("validates a constraint");
+
 	const raise = contractRaise(sql);
 	if (raise !== null) reasons.push(`raises min_contract_version to ${raise}`);
 	return reasons;
@@ -95,7 +149,7 @@ const git = (...args: string[]) => {
 	return run.stdout.trim();
 };
 
-/** Migration files a range changed, each with its git status letter: A for added, M, D or R for anything else. */
+/** Migration files a range changed, each with its git status letter: A for added; anything else is a rewrite. */
 const changedMigrations = (range: string) =>
 	git(
 		"diff",
@@ -130,9 +184,20 @@ const check = (base: string) => {
 		const run = spawnSync(
 			"pnpm",
 			["exec", "squawk", "--reporter", "json", ...added.map((m) => m.file)],
-			{ encoding: "utf8" },
+			{
+				encoding: "utf8",
+				// Its own Actions annotations would land in the JSON; this prints the warnings itself.
+				env: { ...process.env, SQUAWK_DISABLE_GITHUB_ANNOTATIONS: "true" },
+			},
 		);
-		squawk = JSON.parse(run.stdout || "[]") as SquawkViolation[];
+		// Squawk exits 1 when it finds anything; anything else, or no JSON, means it didn't run: never a pass.
+		if (
+			run.error ||
+			(run.status !== 0 && run.status !== 1) ||
+			!run.stdout.trim()
+		)
+			throw new Error(`squawk didn't run: ${run.error?.message ?? run.stderr}`);
+		squawk = JSON.parse(run.stdout) as SquawkViolation[];
 		for (const v of squawk.filter((v) => !CONTRACT_RULES.has(v.rule_name)))
 			console.log(
 				`::warning file=${v.file},line=${v.line + 1}::${v.message} (squawk ${v.rule_name})`,

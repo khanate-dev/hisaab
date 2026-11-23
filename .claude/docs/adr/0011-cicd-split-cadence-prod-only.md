@@ -25,7 +25,7 @@
 - **`runtimeVersion` uses `{ policy: "fingerprint" }`,** so the runtime changes only when native code or deps change. We rejected `appVersion`, which would force a store build for JS-only releases, and there's no Mac and only 15 builds a month.
 - **There are two EAS channels, `preview` and `production`.** Both point at prod data. Internal builds (an Android APK and TestFlight) listen on `preview`.
 - **`version` is user-facing semver,** set by the release input. Build numbers use `appVersionSource: "remote"` with `autoIncrement`, so the repo never needs a bump commit.
-- **Every update's metadata is stamped with its contract version.** That stamp feeds the CI check above.
+- **Every update is stamped with its contract version,** by starting its message with `[contract N]`, which `eas update:list --json` shows. The stamp must survive `eas update:republish` to `production` (pass the message on if the CLI doesn't). It feeds the raise check above.
 
 ## Secrets
 

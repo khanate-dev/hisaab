@@ -74,7 +74,7 @@ day per User). A date that fails is tried again hourly, 5 times at most.
 1. Create the Environment `prod` and add its secrets. Limit it to the `main` branch.
 2. Create the Environment `prod-contract` with the same secrets as `prod`'s database job (the `SUPABASE_*`,
    `RESEND_SMTP_PASSWORD`, `VAPID_*`, `OXR_APP_ID` and `EXPO_TOKEN` ones), you as required reviewer and self-approval allowed. `deploy` runs the
-   database job there when the merged PR carries the `contract` label.
+   database job there when a merged PR carries the `contract` label, and always for a `min_contract_version` raise.
 3. Turn on secret scanning and push protection.
 4. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets.
 
@@ -84,3 +84,19 @@ day per User). A date that fails is tried again hourly, 5 times at most.
    `deploy` and `keepalive` skip. Then re-run the latest `ci` on `main` (or merge anything): `deploy` follows it.
 2. Run `keepalive` by hand once and check it passes.
 3. Open `https://hisaab.khanate.pk`, sign in with an email code (Resend delivers it), and check a second device syncs.
+
+## Restoring
+
+Backups live in the R2 bucket for 30 days: `deploys/<time>-<sha>/` before each deploy, `nightly/<date>/` each night
+(the database as `roles`, `schema` and `data` dumps, and the Attachment files).
+
+1. Pick the newest backup from before whatever went wrong.
+2. Before restoring over a live database, export `private.deletion_ledger` from it: the spec has it re-applied after
+   any restore, and the backup's own copy stops at the night it was taken.
+3. Restore into a fresh project (or the reset one): `roles.sql`, then `schema.sql`, then `data.sql` with
+   `session_replication_role = replica` (the data dump has circular foreign keys), then the Attachment files into the
+   `attachments` bucket.
+4. Re-apply the ledger: for every User it lists whom the restore brought back, run `public.delete_account(<id>)` as
+   the service role, as the original deletion did.
+5. Redeploy (`deploy` re-runs migrations newer than the backup, config, functions and Sync Streams) and check a
+   device syncs.

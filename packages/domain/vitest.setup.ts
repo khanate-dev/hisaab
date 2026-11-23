@@ -6,10 +6,17 @@ import fc from "fast-check";
 const env =
 	(globalThis as { process?: { env: Record<string, string | undefined> } })
 		.process?.env ?? {};
-const runs = env["FC_NUM_RUNS"];
-const seed = env["FC_SEED"];
-if (runs || seed)
+const integer = (name: string) => {
+	const text = env[name];
+	if (!text) return undefined;
+	const value = Number(text);
+	if (!Number.isInteger(value)) throw new Error(`${name} must be an integer`);
+	return value;
+};
+const numRuns = integer("FC_NUM_RUNS");
+const seed = integer("FC_SEED");
+if (numRuns !== undefined || seed !== undefined)
 	fc.configureGlobal({
-		...(runs ? { numRuns: Number(runs) } : {}),
-		...(seed ? { seed: Number(seed) } : {}),
+		...(numRuns !== undefined ? { numRuns } : {}),
+		...(seed !== undefined ? { seed } : {}),
 	});

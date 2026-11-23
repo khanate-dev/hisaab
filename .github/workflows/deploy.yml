@@ -10,8 +10,9 @@ on:
 
 permissions:
   contents: read
-  # The gate reads the merged PR's labels.
+  # The gate reads the merged PRs' labels and when the last deploy succeeded.
   pull-requests: read
+  actions: read
 
 concurrency:
   group: deploy-prod
@@ -42,7 +43,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.SHA }}
-          fetch-depth: 2
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -51,9 +52,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+        # Everything since the last successful deploy, so a push of several commits (a rebase merge) hides nothing;
+        # before the first deploy, everything.
         run: |
-          contract=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[].labels[].name] | index("contract") != null')
-          raise=$(node tooling/migrations/contract-check.ts raise "$SHA^1" "$SHA")
+          since=$(gh run list --repo "$REPO" --workflow deploy.yml --status success --limit 1 --json headSha --jq '.[0].headSha // empty')
+          since=${since:-$(git rev-list --max-parents=0 "$SHA" | tail -1)}
+          contract=false
+          for commit in $(git rev-list "$since..$SHA"); do
+            labelled=$(gh api "repos/$REPO/commits/$commit/pulls" --jq '[.[].labels[].name] | index("contract") != null')
+            [[ $labelled == true ]] && contract=true
+          done
+          raise=$(node tooling/migrations/contract-check.ts raise "$since" "$SHA")
           echo "raise=$raise" >> "$GITHUB_OUTPUT"
           echo "environment=$([[ $contract == true || -n $raise ]] && echo prod-contract || echo prod)" >> "$GITHUB_OUTPUT"
 
@@ -109,8 +118,8 @@ jobs:
           RAISE: ${{ needs.gate.outputs.raise }}
         run: |
           pnpm exec eas build:list --channel production --distribution store --status finished --platform all \
-            --limit 100 --json --non-interactive > "$RUNNER_TEMP/builds.json"
-          pnpm exec eas update:list --branch production --limit 100 --json --non-interactive > "$RUNNER_TEMP/updates.json"
+            --limit 50 --json --non-interactive > "$RUNNER_TEMP/builds.json"
+          pnpm exec eas update:list --branch production --limit 50 --json --non-interactive > "$RUNNER_TEMP/updates.json"
           node ../../tooling/release/contract-ready.ts "$RAISE" "$RUNNER_TEMP/builds.json" "$RUNNER_TEMP/updates.json"
       # The prod overrides (supabase/remotes/prod.toml) apply only under the literal ref. The config loader also wants
       # signing_keys.json, which is local-only and never pushed, so an empty one stands in.

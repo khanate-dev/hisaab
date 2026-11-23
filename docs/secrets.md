@@ -6,7 +6,7 @@ No prod secret lives on a dev machine; locally, a gitignored `.env.local` points
 
 ## GitHub Environment `prod`
 
-The only place `deploy`, `keepalive` (and later `release` and `nightly`) get secrets from.
+The only place `deploy`, `keepalive`, `nightly` (and later `release`) get secrets from.
 
 | Name | What it is | Used by | Rotate |
 |---|---|---|---|
