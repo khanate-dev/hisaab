@@ -4,7 +4,7 @@
 
 import { type CategoryLike, categoryTree } from "./categories";
 import { shiftCalendarDate } from "./dates";
-import { baseValue, itemBaseShares } from "./base-amounts";
+import { type BaseRate, baseValue, itemBaseShares } from "./base-amounts";
 import { isFlowKind, magnitude } from "./entries";
 import {
 	addMoney,
@@ -131,13 +131,14 @@ export type CountedEntry = {
 	occurred_on: string;
 	/** Set for an Entry in another currency than the Base one (`baseValue`); absent or null for a Base-currency one. */
 	base_amount?: string | null;
-	base_rate?: string | null;
+	base_rate?: BaseRate | null;
 };
 export type CountedItem = {
+	id?: string;
 	entry_id: string;
 	amount: string;
 	category_id: string;
-	/** The Items' order, which splits a Base amount across them (`itemBaseShares`). */
+	/** The Items' order, which splits a Base amount across them (`itemBaseShares`); ties go by id, as in SQL. */
 	position?: number;
 };
 
@@ -178,7 +179,9 @@ export const categoryTotals = (
 		const own = itemsOf.get(entry.id);
 		if (own && own.length > 0) {
 			const ordered = own.toSorted(
-				(a, b) => (a.position ?? 0) - (b.position ?? 0),
+				(a, b) =>
+					(a.position ?? 0) - (b.position ?? 0) ||
+					(a.id ?? "").localeCompare(b.id ?? ""),
 			);
 			// The Items are in the Wallet's currency; any currency code does for splitting, as only their ratio counts.
 			const shares = itemBaseShares(
@@ -278,7 +281,7 @@ export const budgetMonthView = <T extends CategoryLike>({
 	month: BudgetMonth;
 	today: string;
 	startDay: number;
-	/** The Base currency: Budgets, and every Expense and Income until Base amounts (#45), are in it. */
+	/** The Base currency: Budgets are in it, and each Expense and Income counts in it (its Base value). */
 	currency: string;
 	categories: readonly T[];
 	standing: readonly StandingBudget[];

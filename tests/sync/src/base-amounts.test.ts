@@ -14,7 +14,7 @@ import {
 } from "@hisaab/domain";
 import fc from "fast-check";
 import { v7 as uuidv7 } from "uuid";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { seedHousehold } from "./seed";
 import { adminClient, userClient } from "./users";
@@ -87,20 +87,35 @@ type Row = {
 	base_rate: string | null;
 };
 
+/** Every date this file uses (2015, which the rate tests' early dates never reach): asks for them fulfilled after. */
+const used = [
+	...Array.from({ length: 21 }, (_, i) => shiftCalendarDate("2015-01-01", i)),
+	"2015-03-01",
+	"2015-03-05",
+	...Array.from({ length: 20 }, (_, i) => shiftCalendarDate("2015-06-01", i)),
+];
+
 describe("Base amounts", () => {
 	beforeAll(clearRates);
+	afterAll(async () => {
+		for (const date of used)
+			await must(
+				admin.rpc("store_exchange_rates", { on_date: date, rates: {} }),
+			);
+		await clearRates();
+	});
 
 	it("are the market figure when the date's rates are held, an estimate until then, and the User's when edited", async () => {
 		const h = await household();
 		const api = userClient(h.owner);
-		await store("2001-03-01", "0.377", "2");
+		await store("2015-03-01", "0.377", "2");
 		const entry = (extra: object) => ({
 			id: uuidv7(),
 			household_id: h.id,
 			wallet_id: h.wallets.foreign,
 			kind: "balance_adjustment",
 			amount: "-10",
-			occurred_on: "2001-03-01",
+			occurred_on: "2015-03-01",
 			created_by: h.owner.id,
 			...extra,
 		});
@@ -124,7 +139,7 @@ describe("Base amounts", () => {
 		});
 
 		// A date without its rates is estimated at the nearest held, and those rates are asked for.
-		const estimated = entry({ occurred_on: "2001-03-05" });
+		const estimated = entry({ occurred_on: "2015-03-05" });
 		await must(api.from("entries").insert(estimated));
 		expect(await read(estimated.id)).toMatchObject({
 			base_amount: "-1.885",
@@ -133,18 +148,18 @@ describe("Base amounts", () => {
 		const facts = (await must(admin.rpc("exchange_rate_facts"))) as {
 			requested: { date: string }[];
 		};
-		expect(facts.requested.map((r) => r.date)).toContain("2001-03-05");
+		expect(facts.requested.map((r) => r.date)).toContain("2015-03-05");
 
 		// The User's own figure stays, whatever the rates.
 		const edited = entry({
-			occurred_on: "2001-03-05",
+			occurred_on: "2015-03-05",
 			base_amount: "-2",
 			base_rate: "edited",
 		});
 		await must(api.from("entries").insert(edited));
 
 		// Storing the date's rates corrects the estimate, never the edit.
-		await store("2001-03-05", "0.4", "2");
+		await store("2015-03-05", "0.4", "2");
 		expect(await read(estimated.id)).toEqual({
 			amount: "-10",
 			base_amount: "-2.000",
@@ -154,6 +169,25 @@ describe("Base amounts", () => {
 			base_amount: "-2",
 			base_rate: "edited",
 		});
+
+		// Taking the edit back prices it again; an edited figure must go the amount's way, in the Base's minor units.
+		await must(
+			api
+				.from("entries")
+				.update({ base_amount: null, base_rate: null })
+				.eq("id", edited.id),
+		);
+		expect(await read(edited.id)).toMatchObject({
+			base_amount: "-2.000",
+			base_rate: "market",
+		});
+		for (const wrong of ["2", "-2.0001"]) {
+			const { error } = await api
+				.from("entries")
+				.update({ base_amount: wrong, base_rate: "edited" })
+				.eq("id", edited.id);
+			expect(error?.code, wrong).toBe("23514");
+		}
 
 		// Changing the amount re-prices it; a Base-currency Entry never carries one.
 		await must(
@@ -203,7 +237,7 @@ describe("Base amounts", () => {
 				async (rateDays, entrySpec) => {
 					await clearRates();
 					await must(admin.from("entries").delete().eq("household_id", h.id));
-					const day = (n: number) => shiftCalendarDate("2002-01-01", n);
+					const day = (n: number) => shiftCalendarDate("2015-01-01", n);
 					for (const r of rateDays) await store(day(r.day), r.base, r.foreign);
 					const entries = entrySpec.map((e) => ({
 						id: uuidv7(),
@@ -273,7 +307,7 @@ describe("Base amounts", () => {
 				.select("id, kind, parent_id, name, archived_at")
 				.eq("household_id", h.id),
 		)) as CategoryLike[];
-		const today = "2003-06-20";
+		const today = "2015-06-20";
 		const month = budgetMonthOf(today, 1);
 		const amount = fc
 			.integer({ min: 1, max: 40_000 })
@@ -304,7 +338,7 @@ describe("Base amounts", () => {
 					await clearRates();
 					for (const table of ["budgets", "entries"])
 						await must(admin.from(table).delete().eq("household_id", h.id));
-					if (withRates) await store("2003-06-01", "0.376", "1.7");
+					if (withRates) await store("2015-06-01", "0.376", "1.7");
 					const standing = [
 						{ category: food, budget: foodBudget },
 						{ category: fuel, budget: fuelBudget },
@@ -314,7 +348,7 @@ describe("Base amounts", () => {
 						category_id: category,
 						valid_from: month,
 						amount: budget,
-						created_at: new Date(Date.UTC(2003, 0, 1, 0, 0, i)).toISOString(),
+						created_at: new Date(Date.UTC(2015, 0, 1, 0, 0, i)).toISOString(),
 					}));
 					await must(admin.from("budgets").insert(standing));
 					const items: object[] = [];
@@ -339,7 +373,7 @@ describe("Base amounts", () => {
 							kind: "expense",
 							amount: `-${(total / 100).toFixed(2)}`,
 							category_id: e.category,
-							occurred_on: shiftCalendarDate("2003-06-01", e.day),
+							occurred_on: shiftCalendarDate("2015-06-01", e.day),
 							created_by: h.owner.id,
 							...(e.foreign && e.edited
 								? { base_amount: `-${e.edited}`, base_rate: "edited" }

@@ -11,6 +11,8 @@
 alter table public.entries
 	add column base_amount numeric,
 	add column base_rate text check (base_rate in ('market', 'estimated', 'edited'));
+-- The estimates `store_exchange_rates` and the daily sweep look for.
+create index entries_estimated_on on public.entries (occurred_on) where base_rate = 'estimated';
 
 -- ISO 4217 minor units, as packages/domain's `currencyDecimals` has them.
 create function private.currency_decimals(code text) returns integer
@@ -51,7 +53,8 @@ returns numeric
 language sql immutable
 set search_path = ''
 as $$
-	select round(amount * to_per_usd / from_per_usd, private.currency_decimals(to_currency));
+	-- Divided at 40 decimal places, so the rounding sees what the domain's 60-digit decimals do.
+	select round((amount * to_per_usd)::numeric(1000, 40) / from_per_usd, private.currency_decimals(to_currency));
 $$;
 revoke all on function private.converted(numeric, numeric, numeric, text) from public;
 
@@ -120,10 +123,12 @@ declare
 	to_rate numeric;
 	moved boolean := false;
 begin
-	-- Moved: its amount, date or Wallet changed while its Base amount didn't, so that figure is stale.
+	-- Moved: its amount, date or Wallet changed while its Base amount didn't, so that figure is stale; or the User took
+	-- back their own figure, which no longer stands either.
 	if tg_op = 'UPDATE' then
 		if (new.amount, new.occurred_on, new.wallet_id) is distinct from (old.amount, old.occurred_on, old.wallet_id)
-			and new.base_amount is not distinct from old.base_amount then
+			and new.base_amount is not distinct from old.base_amount
+			or old.base_rate = 'edited' and new.base_rate is distinct from 'edited' then
 			moved := true;
 		end if;
 	end if;
@@ -133,6 +138,16 @@ begin
 		return new;
 	end if;
 	if new.base_rate = 'edited' and new.base_amount is not null then
+		if sign(new.base_amount) <> sign(new.amount)
+			or new.base_amount <> round(new.base_amount, private.currency_decimals(base_currency)) then
+			raise exception 'A Base amount goes the same way as its amount, in the Base currency''s minor units'
+				using errcode = '23514';
+		end if;
+		return new;
+	end if;
+	-- A market figure is frozen (ADR-0005): it stays until the Entry moves.
+	if tg_op = 'UPDATE' and new.base_rate = 'market' and old.base_rate = 'market' and not moved
+		and new.base_amount is not distinct from old.base_amount then
 		return new;
 	end if;
 	from_rate := private.rate_per_usd(new.occurred_on, wallet_currency, false);
@@ -150,7 +165,9 @@ begin
 		new.base_amount := case when from_rate is not null and to_rate is not null
 			then private.converted(new.amount, from_rate, to_rate, base_currency) end;
 	end if;
-	perform private.ask_for_rates(coalesce((select auth.uid()), new.created_by), array[new.occurred_on]);
+	if tg_op = 'INSERT' or moved then
+		perform private.ask_for_rates(coalesce((select auth.uid()), new.created_by), array[new.occurred_on]);
+	end if;
 	return new;
 end;
 $$;
@@ -190,6 +207,7 @@ as $$
 	), flows as (
 		select e.id, e.category_id, abs(e.amount) as amount,
 			case when e.base_rate is null then abs(e.amount) else abs(e.base_amount) end as base,
+			e.base_rate is null as in_base,
 			private.currency_decimals(h.base_currency) as decimals
 		from public.entries e, bounds b, public.households h
 		where e.household_id = target_household and h.id = target_household and e.kind in ('expense', 'income')
@@ -197,8 +215,9 @@ as $$
 			and (e.base_rate is null or e.base_amount is not null)
 	), itemized as (
 		select i.category_id, f.base, i.position,
-			case when f.base = f.amount then i.amount else round(i.amount * f.base / f.amount, f.decimals) end as share,
-			row_number() over (partition by i.entry_id order by i.position desc) = 1 as last_item,
+			case when f.in_base then i.amount
+				else round((i.amount * f.base)::numeric(1000, 40) / f.amount, f.decimals) end as share,
+			row_number() over (partition by i.entry_id order by i.position desc, i.id desc) = 1 as last_item,
 			i.entry_id
 		from public.entry_items i join flows f on f.id = i.entry_id
 	), counted as (
@@ -231,3 +250,30 @@ as $$
 	from budgeted
 	where budget > 0 and used * 5 >= budget * 4;
 $$;
+
+-- Estimates whose date's rates a User's allowance left unasked: asked for again daily, in their maker's name (the
+-- month's quota and each date's tries still bound the fetching).
+create function private.ask_again_for_estimates() returns void
+language sql security definer
+set search_path = ''
+as $$
+	insert into private.exchange_rate_requests (on_date, requested_by)
+	select distinct on (e.occurred_on) e.occurred_on, e.created_by
+	from public.entries e
+	join auth.users u on u.id = e.created_by
+	where e.base_rate = 'estimated'
+		and e.occurred_on >= date '1999-01-01'
+		and e.occurred_on < (now() at time zone 'utc')::date
+		and not exists (select 1 from public.exchange_rates r where r.on_date = e.occurred_on)
+	order by e.occurred_on
+	on conflict (on_date) do update
+		set requested_by = excluded.requested_by, requested_at = now(), fulfilled_at = null
+		where private.exchange_rate_requests.fulfilled_at is not null;
+$$;
+revoke all on function private.ask_again_for_estimates() from public;
+select cron.schedule('ask-again-for-estimates', '31 0 * * *', 'select private.ask_again_for_estimates()');
+
+-- Entries already in a Wallet not in the Base currency (Balance adjustments could be) get theirs now.
+update public.entries e set base_rate = e.base_rate
+from public.wallets w, public.households h
+where w.id = e.wallet_id and h.id = e.household_id and h.base_currency is not null and w.currency <> h.base_currency;

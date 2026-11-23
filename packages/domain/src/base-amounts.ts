@@ -1,3 +1,4 @@
+import { magnitude } from "./entries";
 import { addMoney, type Money, parseMoney, zeroMoney } from "./money";
 
 // Base amounts (ADR-0005; CONTEXT.md; #45): an Entry in a Wallet whose currency isn't the household's Base currency
@@ -68,7 +69,7 @@ export const baseValue = (
 	entry: {
 		amount: string;
 		base_amount?: string | null;
-		base_rate?: string | null;
+		base_rate?: BaseRate | null;
 	},
 	baseCurrency: string,
 ): Money | null => {
@@ -88,8 +89,8 @@ export const itemBaseShares = (
 	entryAmount: Money,
 	entryBase: Money,
 ): Money[] => {
-	const whole = entryAmount.isNegative() ? entryAmount.negated() : entryAmount;
-	const base = entryBase.isNegative() ? entryBase.negated() : entryBase;
+	const whole = magnitude(entryAmount);
+	const base = magnitude(entryBase);
 	const shares = items
 		.slice(0, -1)
 		.map((item) =>

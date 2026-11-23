@@ -45,6 +45,40 @@ describe("rateFor", () => {
 	});
 });
 
+describe("rateFor properties", () => {
+	it("takes the date's own rate when held, else the nearest, never another currency's", () => {
+		const day = fc
+			.integer({ min: 1, max: 30 })
+			.map((n) => `2026-11-${String(n).padStart(2, "0")}`);
+		fc.assert(
+			fc.property(
+				fc.uniqueArray(fc.record({ on_date: day, currency, per_usd: rate }), {
+					maxLength: 12,
+					selector: (r) => `${r.on_date} ${r.currency}`,
+				}),
+				currency,
+				day,
+				(held, code, date) => {
+					const found = rateFor(held, code, date);
+					const mine = held.filter((r) => r.currency === code);
+					if (mine.length === 0) {
+						expect(found).toBe(null);
+						return;
+					}
+					const own = mine.find((r) => r.on_date === date);
+					expect(found?.exact).toBe(own !== undefined);
+					const dates = mine.map((r) => r.on_date).toSorted();
+					const nearest =
+						own?.on_date ?? dates.filter((d) => d < date).at(-1) ?? dates[0];
+					expect(found?.perUsd).toBe(
+						mine.find((r) => r.on_date === nearest)?.per_usd,
+					);
+				},
+			),
+		);
+	});
+});
+
 describe("baseAmountOf", () => {
 	it("prices an Entry at its date's market rate, and estimates without one", () => {
 		const usd = parseMoney("-100", "USD");
@@ -142,8 +176,8 @@ describe("baseAmountOf", () => {
 						exact
 							.minus(value?.toString() ?? "0")
 							.abs()
-							.toNumber(),
-					).toBeLessThanOrEqual(0.5 * 10 ** -currencyDecimals(to));
+							.lte(new DecimalBase(10).pow(-currencyDecimals(to)).dividedBy(2)),
+					).toBe(true);
 				},
 			),
 		);
@@ -167,6 +201,34 @@ describe("baseValue", () => {
 				"PKR",
 			),
 		).toBe(null);
+	});
+});
+
+describe("baseValue properties", () => {
+	it("is the amount for a Base-currency Entry, the Base amount otherwise, and nothing without one", () => {
+		fc.assert(
+			fc.property(
+				decimal(2),
+				fc.option(decimal(3)),
+				fc.constantFrom<"market" | "estimated" | "edited" | null>(
+					null,
+					"market",
+					"estimated",
+					"edited",
+				),
+				(amount, base, rateKind) => {
+					const expected = rateKind === null ? amount : base;
+					expect(
+						baseValue(
+							{ amount, base_amount: base, base_rate: rateKind },
+							"PKR",
+						)?.toString() ?? null,
+					).toBe(
+						expected === null ? null : parseMoney(expected, "PKR").toString(),
+					);
+				},
+			),
+		);
 	});
 });
 
@@ -201,8 +263,8 @@ describe("itemBaseShares", () => {
 								.dividedBy(total)
 								.minus(share.toString())
 								.abs()
-								.toNumber(),
-						).toBeLessThanOrEqual(0.005);
+								.lte("0.005"),
+						).toBe(true);
 				},
 			),
 		);
