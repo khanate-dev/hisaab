@@ -3,6 +3,8 @@ import {
 	budgetVsActual,
 	categoryTrend,
 	incomeVsExpense,
+	loansSummary,
+	netWorth,
 	parseMoney,
 	periodEnding,
 	type ReportEntry,
@@ -23,6 +25,8 @@ import {
 import { BudgetVsActualReport } from "./budget-vs-actual";
 import { CategoryTrendReport } from "./category-trend";
 import { IncomeVsExpenseReport } from "./income-vs-expense";
+import { LoansSummaryReport } from "./loans-summary";
+import { NetWorthReport } from "./net-worth";
 import { SpendingByCategoryReport } from "./spending-by-category";
 
 const categories = [
@@ -331,5 +335,116 @@ describe("CategoryTrendReport", () => {
 		const month = formatBudgetMonth("2026-08-01");
 		await user.press(screen.getByRole("button", { name: month }));
 		expect(onDrillDown).toHaveBeenCalledWith("food", "2026-08");
+	});
+});
+
+describe("NetWorthReport", () => {
+	it("adds the Wallets up at the latest rates, shows each in its own currency, and opens their Entries", async () => {
+		const onDrillDown = jest.fn();
+		const user = userEvent.setup();
+		const wallets = [
+			{ id: "w1", name: "Cash", currency: "PKR", archived_at: null },
+			{ id: "w2", name: "Dollars", currency: "USD", archived_at: null },
+		];
+		const adjust = (id: string, wallet: string, amount: string) => ({
+			id,
+			kind: "balance_adjustment",
+			amount,
+			category_id: null,
+			occurred_on: "2026-08-01",
+			created_by: "u1",
+			wallet_id: wallet,
+		});
+		await render(
+			<NetWorthReport
+				comparison="previous"
+				monthStart={monthStart}
+				onDrillDown={onDrillDown}
+				report={netWorth({
+					wallets,
+					entries: [adjust("a", "w1", "5000"), adjust("b", "w2", "10")],
+					members: [],
+					period: august,
+					startDay: 1,
+					currency: "PKR",
+					rates: [
+						{ on_date: "2026-08-01", currency: "USD", per_usd: "1" },
+						{ on_date: "2026-08-01", currency: "PKR", per_usd: "280" },
+					],
+					today: "2026-08-20",
+				})}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: "Net worth" }),
+		).toHaveAccessibilityValue({
+			text: `${pkr("7800")}, ${pkr("7800")} more`,
+		});
+		expect(
+			screen.getByRole("button", { name: "Dollars" }),
+		).toHaveAccessibilityValue({
+			text: `${formatMoney(parseMoney("10", "USD"))}, about ${pkr("2800")}`,
+		});
+		await user.press(screen.getByRole("button", { name: "Dollars" }));
+		expect(onDrillDown).toHaveBeenLastCalledWith("w2");
+	});
+});
+
+describe("LoansSummaryReport", () => {
+	it("shows what's owed each way, Loan by Loan, each opening its Entries", async () => {
+		const onDrillDown = jest.fn();
+		const user = userEvent.setup();
+		const loans = [
+			{
+				id: "l1",
+				direction: "lent" as const,
+				contact_id: "k1",
+				written_off_at: null,
+			},
+			{
+				id: "l2",
+				direction: "borrowed" as const,
+				contact_id: "k2",
+				written_off_at: null,
+			},
+		];
+		const loanEntry = (id: string, loanId: string, amount: string) => ({
+			id,
+			kind: "loan_principal",
+			amount,
+			category_id: null,
+			occurred_on: "2026-08-01",
+			created_by: "u1",
+			loan_id: loanId,
+			wallet_id: "w1",
+		});
+		await render(
+			<LoansSummaryReport
+				comparison="previous"
+				contactName={(id) => (id === "k1" ? "Ali" : "Sara")}
+				onDrillDown={onDrillDown}
+				report={loansSummary({
+					loans,
+					entries: [loanEntry("a", "l1", "-1000"), loanEntry("b", "l2", "250")],
+					wallets: [{ id: "w1", currency: "PKR" }],
+					members: [],
+					period: august,
+					startDay: 1,
+					currency: "PKR",
+					rates: [],
+					today: "2026-08-20",
+				})}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: "Owed to the household" }),
+		).toHaveAccessibilityValue({ text: `${pkr("1000")}, ${pkr("1000")} more` });
+		expect(
+			screen.getByRole("button", { name: "Sara" }),
+		).toHaveAccessibilityValue({
+			text: pkr("250"),
+		});
+		await user.press(screen.getByRole("button", { name: "Ali" }));
+		expect(onDrillDown).toHaveBeenLastCalledWith(["k1"]);
 	});
 });

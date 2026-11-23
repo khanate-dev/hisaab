@@ -25,8 +25,10 @@ const SPENDING = "spending" as const;
 const BUDGET = "budget" as const;
 const FLOW = "flow" as const;
 const TREND = "trend" as const;
-/** The reports so far (spec §3.5), in the hub's order. */
-export const REPORTS = [SPENDING, BUDGET, FLOW, TREND] as const;
+const WORTH = "worth" as const;
+const LOANS = "loans" as const;
+/** The six reports (spec §3.5), in the hub's order. */
+export const REPORTS = [SPENDING, BUDGET, FLOW, TREND, WORTH, LOANS] as const;
 export type Report = (typeof REPORTS)[number];
 
 export const REPORT_LABELS: Record<Report, MessageDescriptor> = {
@@ -34,4 +36,6 @@ export const REPORT_LABELS: Record<Report, MessageDescriptor> = {
 	budget: msg`Budget vs actual`,
 	flow: msg`Income vs expense`,
 	trend: msg`Category trend`,
+	worth: msg`Net worth`,
+	loans: msg`Loans summary`,
 };

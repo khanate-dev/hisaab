@@ -28,6 +28,7 @@ msgid "{amount} more"
 msgstr "{amount} more"
 
 #: src/features/reports/income-vs-expense.tsx
+#: src/features/reports/loans-summary.tsx
 #: src/features/reports/spending-by-category.tsx
 msgid "{amount}, {versus}"
 msgstr "{amount}, {versus}"
@@ -211,6 +212,10 @@ msgstr "{name}: {spent} of {of}, {percentUsed}%"
 msgid "{name}'s Role"
 msgstr "{name}'s Role"
 
+#: src/features/reports/net-worth.tsx
+msgid "{own}, about {converted}"
+msgstr "{own}, about {converted}"
+
 #: src/features/loans/loan-detail.tsx
 msgid "{paid} on {day}"
 msgstr "{paid} on {day}"
@@ -315,8 +320,13 @@ msgid "{total}, {totalAgainst}"
 msgstr "{total}, {totalAgainst}"
 
 #: src/features/reports/category-trend.tsx
+#: src/features/reports/net-worth.tsx
 msgid "{total}, {versus}"
 msgstr "{total}, {versus}"
+
+#: src/features/reports/net-worth.tsx
+msgid "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
+msgstr "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
 
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} received"
@@ -402,6 +412,10 @@ msgstr "A change to a household couldn't sync"
 msgid "A change to a membership couldn't sync"
 msgstr "A change to a membership couldn't sync"
 
+#: src/app/(tabs)/reports.tsx
+msgid "A Contact since gone"
+msgstr "A Contact since gone"
+
 #: src/features/notifications/labels.ts
 msgid "A daily digest of what others changed."
 msgstr "A daily digest of what others changed."
@@ -473,6 +487,10 @@ msgstr "a Wallet"
 #: src/features/activity/activity-list.tsx
 msgid "a Wallet since gone"
 msgstr "a Wallet since gone"
+
+#: src/features/reports/net-worth.tsx
+msgid "about {converted}"
+msgstr "about {converted}"
 
 #: src/app/_layout.tsx
 #: src/app/activity.tsx
@@ -673,6 +691,10 @@ msgstr "Ask for Face ID, a fingerprint or the device passcode to open Hisaab her
 #: src/features/entries/base-amount.tsx
 msgid "At {day}'s market rate."
 msgstr "At {day}'s market rate."
+
+#: src/features/reports/net-worth.tsx
+msgid "At each month's end"
+msgstr "At each month's end"
 
 #: src/features/entries/transfer-form.tsx
 msgid "At the day's market rate; change it to what actually arrived."
@@ -1975,6 +1997,10 @@ msgstr "Loan due"
 msgid "Loans"
 msgstr "Loans"
 
+#: src/features/reports/labels.ts
+msgid "Loans summary"
+msgstr "Loans summary"
+
 #: src/features/search/entry-search.tsx
 msgid "Loans with"
 msgstr "Loans with"
@@ -2080,6 +2106,11 @@ msgstr "Name it in 1 to 60 characters."
 #: src/features/loans/loan-form.tsx
 msgid "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
 msgstr "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
+
+#: src/features/reports/labels.ts
+#: src/features/reports/net-worth.tsx
+msgid "Net worth"
+msgstr "Net worth"
 
 #: src/features/notifications/inbox-list.tsx
 msgid "New · {when}"
@@ -2222,6 +2253,10 @@ msgstr "No Expenses in this period."
 #: src/features/invites/invite-list.tsx
 msgid "No Invites yet."
 msgstr "No Invites yet."
+
+#: src/features/reports/loans-summary.tsx
+msgid "No Loan is outstanding."
+msgstr "No Loan is outstanding."
 
 #: src/features/loans/loan-list.tsx
 msgid "No Loans yet."
@@ -2436,6 +2471,14 @@ msgstr "Outstanding"
 #: src/features/wallets/balance.tsx
 msgid "Owed"
 msgstr "Owed"
+
+#: src/features/reports/loans-summary.tsx
+msgid "Owed by the household"
+msgstr "Owed by the household"
+
+#: src/features/reports/loans-summary.tsx
+msgid "Owed to the household"
+msgstr "Owed to the household"
 
 #: src/features/loans/loans-tile.tsx
 msgid "Owed to you: {owedTotal}"
@@ -2857,6 +2900,7 @@ msgstr "Show older changes"
 
 #: src/features/reports/category-trend.tsx
 #: src/features/reports/income-vs-expense.tsx
+#: src/features/reports/net-worth.tsx
 msgid "Shows these Entries"
 msgstr "Shows these Entries"
 
@@ -2870,6 +2914,18 @@ msgstr "Shows these Expenses"
 #: src/features/reports/income-vs-expense.tsx
 msgid "Shows these Incomes"
 msgstr "Shows these Incomes"
+
+#: src/features/reports/loans-summary.tsx
+msgid "Shows these Loans' Entries"
+msgstr "Shows these Loans' Entries"
+
+#: src/features/reports/loans-summary.tsx
+msgid "Shows this Loan's Entries"
+msgstr "Shows this Loan's Entries"
+
+#: src/features/reports/net-worth.tsx
+msgid "Shows this Wallet's Entries"
+msgstr "Shows this Wallet's Entries"
 
 #: src/app/_layout.tsx
 #: src/features/auth/sign-in-form.tsx
