@@ -34,6 +34,8 @@ const shared = {
 	moduleNameMapper: {
 		"^lucide-react-native$":
 			"<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js",
+		// Drawn for the eye only; its timers outlive a test (src/test/gifted-charts.tsx).
+		"^react-native-gifted-charts$": "<rootDir>/src/test/gifted-charts.tsx",
 	},
 };
 
