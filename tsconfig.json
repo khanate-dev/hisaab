@@ -3,7 +3,9 @@
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,
-		"types": ["node"]
+		"types": ["node"],
+		// Tooling runs straight from a checkout under Node's type stripping, which needs the `.ts` in an import.
+		"allowImportingTsExtensions": true
 	},
 	"include": ["*.js", "*.ts", "tooling/**/*"]
 }

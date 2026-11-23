@@ -4,6 +4,12 @@
 		"slug": "hisaab",
 		"scheme": "hisaab",
 		"version": "0.0.0",
+		"runtimeVersion": {
+			"policy": "fingerprint"
+		},
+		"updates": {
+			"url": "https://u.expo.dev/f2606caf-6dd9-4f37-a418-6d37074b014b"
+		},
 		"orientation": "portrait",
 		"userInterfaceStyle": "automatic",
 		"ios": {
@@ -28,6 +34,11 @@
 		],
 		"experiments": {
 			"typedRoutes": true
+		},
+		"extra": {
+			"eas": {
+				"projectId": "f2606caf-6dd9-4f37-a418-6d37074b014b"
+			}
 		}
 	}
 }

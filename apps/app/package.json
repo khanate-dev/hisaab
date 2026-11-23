@@ -52,6 +52,7 @@
 		"expo-localization": "catalog:",
 		"expo-notifications": "catalog:",
 		"expo-router": "catalog:",
+		"expo-updates": "catalog:",
 		"expo-sharing": "catalog:",
 		"expo-status-bar": "catalog:",
 		"fflate": "catalog:",

@@ -66,8 +66,18 @@ day per User). A date that fails is tried again hourly, 5 times at most.
 
 1. Make a robot user and its access token (`EXPO_TOKEN`).
 2. Run `eas init` in `apps/app` and commit the project id it writes into `app.json`; the web deploy refuses to run
-   without it.
+   without it. (Done: `apps/app/app.json` holds it, with the updates URL.)
 3. Add the `production` environment variables from [`secrets.md`](secrets.md#eas-production-environment).
+4. Store signing and submitting, once, in EAS (`eas credentials` in `apps/app`): the Android keystore (EAS makes one)
+   and FCM v1 service account; the iOS distribution certificate, provisioning profile and APNs key; a Google Play
+   service account key with release access, for `eas submit`; and an App Store Connect API key.
+5. Create the store listings: the app in App Store Connect (bundle id `pk.khanate.hisaab`) and in the Play Console
+   (package `pk.khanate.hisaab`). Put the App Store Connect app's numeric id (App Information → Apple ID) in the repo
+   variable `ASC_APP_ID`: `release` submits to TestFlight and the App Store with it, and refuses to run without it. Play takes the very first AAB only by hand: run `eas build --profile production
+   --platform android` once and upload it in the Play Console; `release` submits every one after.
+6. In App Store Connect, turn on **Phased Release for Automatic Updates** for each version (`eas submit` can't);
+   Play's staged rollout (10% first) is in `eas.json`. Raise either to 100% in its console once the version looks
+   well.
 
 ## 7. GitHub
 
@@ -75,8 +85,11 @@ day per User). A date that fails is tried again hourly, 5 times at most.
 2. Create the Environment `prod-contract` with the same secrets as `prod`'s database job (the `SUPABASE_*`,
    `RESEND_SMTP_PASSWORD`, `VAPID_*`, `OXR_APP_ID` and `EXPO_TOKEN` ones), you as required reviewer and self-approval allowed. `deploy` runs the
    database job there when a merged PR carries the `contract` label, and always for a `min_contract_version` raise.
-3. Turn on secret scanning and push protection.
-4. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets.
+3. Create the Environment `prod-release` with `EXPO_TOKEN`, you as required reviewer and self-approval allowed.
+   `release` waits there with an OTA update on `preview` until you've passed the
+   [smoke checklist](release-smoke.md) against it, then republishes it to `production`.
+4. Turn on secret scanning and push protection.
+5. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets.
 
 ## 8. First deploy
 
