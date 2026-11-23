@@ -43,8 +43,8 @@ export const LOGGED_FIELDS: Record<string, Record<string, Field>> = {
 	},
 	entry_items: {
 		description: { label: msg`Item`, kind: "text" },
-		// In its Expense's Wallet's currency, which the row doesn't name: shown as the figure alone.
-		amount: { label: msg`Amount`, kind: "text" },
+		// In its Expense's Wallet's currency.
+		amount: { label: msg`Amount`, kind: "money", currencyFrom: "entry_id" },
 		quantity: { label: msg`Quantity`, kind: "text" },
 		category_id: { label: msg`Category`, kind: "category" },
 	},

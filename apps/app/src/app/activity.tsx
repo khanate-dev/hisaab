@@ -40,9 +40,15 @@ export default function Activity() {
 				]),
 			),
 			categories: new Map((categories ?? []).map((c) => [c.id, c.name])),
+			entries: new Map(
+				(entries ?? []).flatMap((e) => {
+					const currency = wallets?.find((w) => w.id === e.wallet_id)?.currency;
+					return currency ? [[e.id, currency] as const] : [];
+				}),
+			),
 			baseCurrency: household?.base_currency ?? null,
 		}),
-		[wallets, categories, household?.base_currency],
+		[wallets, categories, entries, household?.base_currency],
 	);
 	const rows = useMemo(() => log.data?.pages.flat(), [log.data]);
 

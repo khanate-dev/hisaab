@@ -7,6 +7,14 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/entries/base-amount.tsx
+msgid "{baseCurrency} has at most {decimals} decimals."
+msgstr "{baseCurrency} has at most {decimals} decimals."
+
+#: src/features/entries/base-amount.tsx
+msgid "{baseCurrency} has no decimals."
+msgstr "{baseCurrency} has no decimals."
+
 #: src/features/notifications/inbox-list.tsx
 msgid "{category} has used 80% of its Budget in {household}."
 msgstr "{category} has used 80% of its Budget in {household}."
@@ -78,6 +86,11 @@ msgstr "{monthName} on"
 #: src/features/recurring/rule-list.tsx
 msgid "{name} · {amount}"
 msgstr "{name} · {amount}"
+
+#: src/features/entries/entry-form.tsx
+#: src/features/entries/quick-add-form.tsx
+msgid "{name} ({code})"
+msgstr "{name} ({code})"
 
 #: src/features/members/member-list.tsx
 msgid "{name} (you)"
@@ -555,8 +568,8 @@ msgid "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here
 msgstr "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here."
 
 #: src/features/entries/base-amount.tsx
-msgid "At {date}'s market rate."
-msgstr "At {date}'s market rate."
+msgid "At {day}'s market rate."
+msgstr "At {day}'s market rate."
 
 #: src/features/attachments/attachment-list.tsx
 msgid "Attachments"
@@ -2705,10 +2718,6 @@ msgstr "Starts"
 #: src/features/import/import-wizard.tsx
 msgid "Statement CSV"
 msgstr "Statement CSV"
-
-#: src/app/wallets/[id]/import.tsx
-msgid "Statements import into Wallets in the household's Base currency for now."
-msgstr "Statements import into Wallets in the household's Base currency for now."
 
 #: src/features/budgets/budget-form.tsx
 msgid "Stop from {monthName}"

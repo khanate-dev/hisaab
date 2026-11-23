@@ -168,10 +168,40 @@ export const updateEntry = async (
 	currency: string,
 ) => {
 	await db.transaction(async (tx) => {
-		const base = await baseColumns(tx, householdId, draft, currency);
+		const [saved] = await tx
+			.select({
+				amount: entries.amount,
+				occurred_on: entries.occurred_on,
+				wallet_id: entries.wallet_id,
+				base_amount: entries.base_amount,
+				base_rate: entries.base_rate,
+			})
+			.from(entries)
+			.where(eq(entries.id, entryId));
+		const changed = columns(draft, currency);
+		const savedEdit =
+			saved?.base_rate === "edited" && saved.base_amount !== null
+				? parseMoney(saved.base_amount, currency).toString()
+				: null;
+		const draftEdit = draft.baseEdited
+			? signedAmount(
+					draft.kind,
+					parseMoney(draft.baseEdited, currency),
+				).toString()
+			: null;
+		// A Base amount is frozen (ADR-0005): it's priced again only when what it priced, or the User's edit, changed.
+		const reprice =
+			!saved ||
+			saved.amount !== changed.amount ||
+			saved.occurred_on !== changed.occurred_on ||
+			saved.wallet_id !== changed.wallet_id ||
+			savedEdit !== draftEdit;
+		const base = reprice
+			? await baseColumns(tx, householdId, draft, currency)
+			: {};
 		await tx
 			.update(entries)
-			.set(stamped({ ...columns(draft, currency), ...base }))
+			.set(stamped({ ...changed, ...base }))
 			.where(eq(entries.id, entryId));
 		await writeItems(tx, householdId, entryId, draft, currency);
 	});

@@ -75,6 +75,11 @@ export const QuickAddForm = ({
 	onOpenTransfer,
 }: Props) => {
 	const { t, i18n } = useLingui();
+	/** A Wallet not in the Base currency names its currency too: "Dollars (USD)". */
+	const walletLabel = (w: WalletChoice) => {
+		const { name, currency: code } = w;
+		return code === baseCurrency ? name : t`${name} (${code})`;
+	};
 	const recordable = entryWallets(wallets);
 	const [kind, setKind] = useState<FlowKind>(DEFAULT_KIND);
 	const [amount, setAmount] = useState("");
@@ -165,7 +170,7 @@ export const QuickAddForm = ({
 	};
 
 	const yesterday = shiftCalendarDate(today, -1);
-	const walletName = wallet?.name ?? "";
+	const walletName = wallet ? walletLabel(wallet) : "";
 	const dateName =
 		occurredOn === today
 			? t`Today`
@@ -270,7 +275,10 @@ export const QuickAddForm = ({
 						setWalletId(id);
 						setChoosingWallet(false);
 					}}
-					options={recordable.map((w) => ({ value: w.id, label: w.name }))}
+					options={recordable.map((w) => ({
+						value: w.id,
+						label: walletLabel(w),
+					}))}
 					value={walletId}
 				/>
 			)}

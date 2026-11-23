@@ -188,7 +188,9 @@ describe("QuickAddForm", () => {
 		await tap("Date: Today");
 		await tap("Yesterday", "radio");
 		await tap("Wallet: Cash");
-		expect(screen.getByRole("radio", { name: "Dollars" })).toBeOnTheScreen();
+		expect(
+			screen.getByRole("radio", { name: "Dollars (USD)" }),
+		).toBeOnTheScreen();
 		await tap("HBL", "radio");
 		await tap("7");
 		await tap("Travel", "radio");

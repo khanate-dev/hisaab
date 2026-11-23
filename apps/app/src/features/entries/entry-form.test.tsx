@@ -3,7 +3,7 @@ import { parseMoney } from "@hisaab/domain";
 import { PortalHost } from "@rn-primitives/portal";
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -97,7 +97,7 @@ describe("EntryForm", () => {
 				text: formatMoney(parseMoney("2805", "PKR")),
 			});
 			expect(
-				screen.getByText("At 2026-10-26's market rate."),
+				screen.getByText(`At ${formatDate("2026-10-26")}'s market rate.`),
 			).toBeOnTheScreen();
 			await user.clear(screen.getByLabelText("Date"));
 			await user.type(screen.getByLabelText("Date"), "2026-10-27");
@@ -125,6 +125,12 @@ describe("EntryForm", () => {
 			await user.press(screen.getByRole("radio", { name: "Food › Groceries" }));
 			await user.press(screen.getByRole("button", { name: "Change" }));
 			const field = await screen.findByLabelText("Base amount (PKR)");
+			await user.clear(field);
+			await user.type(field, "2900.555");
+			await user.press(screen.getByRole("button", { name: "Use this amount" }));
+			expect(screen.getByRole("alert")).toHaveTextContent(
+				"PKR has at most 2 decimals.",
+			);
 			await user.clear(field);
 			await user.type(field, "2900");
 			await user.press(screen.getByRole("button", { name: "Use this amount" }));

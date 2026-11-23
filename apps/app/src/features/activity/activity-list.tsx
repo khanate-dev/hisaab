@@ -45,6 +45,8 @@ const text = (value: unknown) =>
 export type ActivityLookup = {
 	wallets: ReadonlyMap<string, { name: string; currency: string }>;
 	categories: ReadonlyMap<string, string>;
+	/** Each Entry's Wallet's currency, which its Items are in; an Item of an Entry since gone shows its figure alone. */
+	entries?: ReadonlyMap<string, string>;
 	/** Budgets and Base amounts are in it. */
 	baseCurrency: string | null;
 };
@@ -105,9 +107,15 @@ export const ActivityList = ({
 		const raw = text(value);
 		switch (field.kind) {
 			case "money": {
-				const currency = field.currencyFrom
-					? lookup.wallets.get(text(values?.[field.currencyFrom]))?.currency
-					: lookup.baseCurrency;
+				const from = field.currencyFrom
+					? text(values?.[field.currencyFrom])
+					: undefined;
+				const currency =
+					field.currencyFrom === "entry_id"
+						? lookup.entries?.get(from ?? "")
+						: from !== undefined
+							? lookup.wallets.get(from)?.currency
+							: lookup.baseCurrency;
 				return currency && isCurrencyCode(currency) && isDecimalAmount(raw)
 					? formatMoney(parseMoney(raw, currency))
 					: raw;

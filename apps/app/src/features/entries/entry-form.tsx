@@ -85,7 +85,7 @@ export const EntryForm = ({
 	categories,
 	history,
 	baseCurrency,
-	rates = [],
+	rates,
 	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
@@ -93,6 +93,7 @@ export const EntryForm = ({
 	onSubmit,
 }: Props) => {
 	const { t, i18n } = useLingui();
+	const walletInCurrency = (name: string, code: string) => t`${name} (${code})`;
 	const walletOf = (id: string | undefined) => wallets.find((w) => w.id === id);
 	const active = entryWallets(wallets);
 	const recordable = (w: WalletChoice) => active.includes(w);
@@ -109,7 +110,7 @@ export const EntryForm = ({
 			? entry.kind
 			: (initial.kind ?? DEFAULT_KIND),
 	);
-	const [amount, setAmount] = useState(
+	const [amount, setTypedAmount] = useState(
 		entry && startWallet
 			? magnitude(parseMoney(entry.amount, startWallet.currency)).toString()
 			: (initial.amount ?? ""),
@@ -121,8 +122,13 @@ export const EntryForm = ({
 			? magnitude(parseMoney(entry.base_amount, baseCurrency)).toString()
 			: null,
 	);
+	// An edited Base amount was for this amount in this Wallet: changing either drops it.
 	const chooseWallet = (id: string) => {
 		setWalletId(id);
+		setBaseEdited(null);
+	};
+	const setAmount = (text: string) => {
+		setTypedAmount(text);
 		setBaseEdited(null);
 	};
 	const [categoryId, setCategoryId] = useState(
@@ -331,13 +337,17 @@ export const EntryForm = ({
 						label:
 							w.currency === baseCurrency
 								? w.name
-								: `${w.name} (${w.currency})`,
+								: walletInCurrency(w.name, w.currency),
 					}))}
 					value={walletId}
 				/>
 				{baseCurrency && currency && currency !== baseCurrency && (
 					<BaseAmountField
-						amount={shownTotal?.toString() ?? amount}
+						amount={
+							kind === "expense" && items.length > 0 && shownTotal
+								? shownTotal.toString()
+								: amount
+						}
 						baseCurrency={baseCurrency}
 						currency={currency}
 						date={occurredOn.trim()}

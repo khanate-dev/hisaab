@@ -1,3 +1,4 @@
+import { parseMoney } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { View } from "react-native";
 
@@ -14,8 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { CategoryBadge } from "@/features/categories/category-badge";
-import { parseMoney } from "@hisaab/domain";
-
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { useBaseAmountNote } from "./base-amount";
@@ -102,7 +101,7 @@ export const EntryDetail = ({
 								? baseNote.estimated
 								: entry.base_rate === "edited"
 									? baseNote.edited
-									: null,
+									: baseNote.market(entry.occurred_on),
 				}
 			: null;
 

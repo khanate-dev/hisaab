@@ -1,5 +1,6 @@
 import {
 	baseAmountOf,
+	currencyDecimals,
 	isDecimalAmount,
 	isNegative,
 	isZero,
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 
 /** How an Entry's Base amount stands, as the form and the Entry's page say it. */
 export const useBaseAmountNote = () => {
@@ -24,6 +25,10 @@ export const useBaseAmountNote = () => {
 		estimated: t`Rate estimated: corrected once that day's rate arrives.`,
 		edited: t`Edited: kept as you set it.`,
 		missing: t`No exchange rate yet: it's priced once one arrives.`,
+		market: (date: string) => {
+			const day = formatDate(date);
+			return t`At ${day}'s market rate.`;
+		},
 	};
 };
 
@@ -33,7 +38,8 @@ type Props = {
 	currency: string;
 	baseCurrency: string;
 	date: string;
-	rates: readonly RateRow[];
+	/** The exchange rates this device holds; undefined while they load. */
+	rates: readonly RateRow[] | undefined;
 	/** The User's own figure, unsigned, in the Base currency; null when it's priced at the rates. */
 	edited: string | null;
 	onEdit: (edited: string | null) => void;
@@ -59,7 +65,9 @@ export const BaseAmountField = ({
 	const [error, setError] = useState<string | null>(null);
 
 	const priced =
-		isDecimalAmount(amount.trim()) && currency !== baseCurrency
+		rates !== undefined &&
+		isDecimalAmount(amount.trim()) &&
+		currency !== baseCurrency
 			? baseAmountOf({
 					amount: parseMoney(amount.trim(), currency),
 					baseCurrency,
@@ -84,6 +92,13 @@ export const BaseAmountField = ({
 		const money = parseMoney(text, baseCurrency);
 		if (isNegative(money) || isZero(money))
 			return setError(t`The amount is more than zero.`);
+		const decimals = currencyDecimals(baseCurrency);
+		if ((text.split(".")[1]?.length ?? 0) > decimals)
+			return setError(
+				decimals === 0
+					? t`${baseCurrency} has no decimals.`
+					: t`${baseCurrency} has at most ${decimals} decimals.`,
+			);
 		onEdit(money.toString());
 		setEditing(false);
 	};
@@ -107,15 +122,17 @@ export const BaseAmountField = ({
 					{t`Change`}
 				</Button>
 			</View>
-			<Text variant="muted">
-				{edited !== null
-					? note.edited
-					: priced?.amount == null
-						? note.missing
-						: priced.rate === "estimated"
-							? note.estimated
-							: t`At ${date}'s market rate.`}
-			</Text>
+			{(edited !== null || rates !== undefined) && (
+				<Text variant="muted">
+					{edited !== null
+						? note.edited
+						: priced?.amount == null
+							? note.missing
+							: priced.rate === "estimated"
+								? note.estimated
+								: note.market(date)}
+				</Text>
+			)}
 			<Sheet
 				onOpenChange={setEditing}
 				open={editing}
