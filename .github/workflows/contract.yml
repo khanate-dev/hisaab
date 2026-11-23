@@ -1,0 +1,32 @@
+# ADR-0009/0011: a PR's new migrations that are contract changes (Squawk's destructive rules, a DROP, SET NOT NULL, a
+# retype, a new CHECK, a min_contract_version raise) need the `contract` label, and a merged migration is never edited.
+# Squawk's other advice shows as warnings. Its own workflow, so a label change re-runs this alone, not all of ci.
+name: contract
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Contract changes are labelled
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Check the new migrations
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tooling/migrations/contract-check.ts check "$BASE"

@@ -6,7 +6,7 @@
 
 ## Workflows
 
-- **`ci.yml`** runs on every PR and on every push to `main`, with no secrets. That matters because the repo is public and forks open PRs. It runs everything in ADR-0010, the ADR-0009 drift checks, migrations applied from zero and a `supabase functions serve` smoke run. It also runs Squawk on the migration SQL, plus a custom check for writes to `min_contract_version`. Any destructive DDL (`DROP`, `SET NOT NULL`, a tightened `CHECK`, a retype) or a contract-version raise requires the PR to carry a `contract` label, or CI fails. A raise to N also requires the EAS `production` channel to already hold an update stamped with contract version ≥ N for every live `runtimeVersion` (checked with `eas update:list --json`).
+- **`ci.yml`** runs on every PR and on every push to `main`, with no secrets. That matters because the repo is public and forks open PRs. It runs everything in ADR-0010, the ADR-0009 drift checks, migrations applied from zero and a `supabase functions serve` smoke run. It also runs Squawk on the migration SQL, plus a custom check for writes to `min_contract_version`. Any destructive DDL (`DROP`, `SET NOT NULL`, a tightened `CHECK`, a retype) or a contract-version raise requires the PR to carry a `contract` label, or CI fails. A raise to N also requires the EAS `production` channel to already hold an update stamped with contract version ≥ N for every live `runtimeVersion` (checked with `eas update:list --json`). That check needs an Expo token, so it runs in `deploy.yml`, just before the migration, rather than in secret-less CI. An update is stamped by starting its message with `[contract N]`.
 - **`deploy.yml`** runs on merge to `main` once `ci` has passed, in the GitHub Environment `prod`. Its jobs are chained with `needs:`, which enforces the ADR-0009 expand order:
   1. A `pg_dump` snapshot to R2, so a restore is never more than one merge behind.
   2. `supabase db push`, `config push`, `secrets set` and `functions deploy`. When the commit holds a `contract` migration, this job runs in the `prod-contract` Environment, whose required reviewer (the owner, self-approval allowed) confirms that the store builds are approved and at 100% on both stores. Store rollout isn't automated, which would need App Store Connect and Play API keys in CI, for a step that happens rarely.
@@ -25,7 +25,7 @@
 - **`runtimeVersion` uses `{ policy: "fingerprint" }`,** so the runtime changes only when native code or deps change. We rejected `appVersion`, which would force a store build for JS-only releases, and there's no Mac and only 15 builds a month.
 - **There are two EAS channels, `preview` and `production`.** Both point at prod data. Internal builds (an Android APK and TestFlight) listen on `preview`.
 - **`version` is user-facing semver,** set by the release input. Build numbers use `appVersionSource: "remote"` with `autoIncrement`, so the repo never needs a bump commit.
-- **Every update's metadata is stamped with its contract version.** That stamp feeds the CI check above.
+- **Every update is stamped with its contract version,** by starting its message with `[contract N]`, which `eas update:list --json` shows. The stamp must survive `eas update:republish` to `production` (pass the message on if the CLI doesn't). It feeds the raise check above.
 
 ## Secrets
 
