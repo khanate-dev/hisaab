@@ -72,7 +72,7 @@ echo "purge-attachments: $results"
 [[ $results == "bogus:403 anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
 
 # A key that looks like a secret one but isn't is refused by the database itself, for each service-only function.
-for fn in dispatch-notifications purge-attachments raise-notifications; do
+for fn in dispatch-notifications purge-attachments raise-notifications fetch-exchange-rates; do
 	code=$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$api/functions/v1/$fn" -H "authorization: Bearer sb_secret_wrong")
 	echo "$fn wrong secret: $code"
 	[[ $code == 403 ]] || { cat "$log" >&2; exit 1; }
@@ -82,6 +82,13 @@ done
 raise="$api/functions/v1/raise-notifications"
 results="anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$raise" -H "authorization: Bearer $service_key")"
 echo "raise-notifications: $results"
+[[ $results == "anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
+
+# fetch-exchange-rates likewise. With no OXR_APP_ID here, a due date is tried (and counted) and fails, and the run
+# still answers: nothing reaches Open Exchange Rates.
+rates="$api/functions/v1/fetch-exchange-rates"
+results="anon:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$rates" -H "authorization: Bearer $anon_key") service:$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 30 -X POST "$rates" -H "authorization: Bearer $service_key")"
+echo "fetch-exchange-rates: $results"
 [[ $results == "anon:403 service:200" ]] || { cat "$log" >&2; exit 1; }
 
 # delete-account boots and answers through the domain handler: no session, or one Auth doesn't know, is a 401.

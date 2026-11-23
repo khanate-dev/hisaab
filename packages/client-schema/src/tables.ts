@@ -352,6 +352,15 @@ export const appConfig = sqliteTable("app_config", {
 	min_contract_version: integer("min_contract_version").notNull(),
 });
 
+// Read-only on the device: each date's rates per USD (#44), for the currencies of the User's households. per_usd is
+// numeric in Postgres and arrives as text; the cross rate is decimal math in packages/domain, never a float.
+export const exchangeRates = sqliteTable("exchange_rates", {
+	id: text("id").primaryKey(),
+	on_date: text("on_date").notNull(),
+	currency: text("currency").notNull(),
+	per_usd: text("per_usd").notNull(),
+});
+
 // Local-only: never synced. Rejected changes, shown as "couldn't sync" items (ADR-0007).
 export const uploadErrors = sqliteTable("upload_errors", {
 	id: text("id").primaryKey(),

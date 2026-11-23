@@ -29,6 +29,7 @@ const SYNCED_TABLES = [
 	"notifications",
 	"notification_preferences",
 	"invites",
+	"exchange_rates",
 ] as const;
 
 const syncedIds = async (

@@ -52,23 +52,28 @@ store support contact (and, once the app sends its own mail through Resend, the 
 In Resend, add the domain `mail.hisaab.khanate.pk` and make an API key limited to sending from it: that key is
 `RESEND_SMTP_PASSWORD`.
 
-## 5. Expo
+## 5. Open Exchange Rates
+
+Sign up for the free plan (USD base, 1,000 requests a month) and copy the App ID into `OXR_APP_ID`. The fetcher spends
+at most 900 a month: today's rates once a day, and the past dates devices ask for.
+
+## 6. Expo
 
 1. Make a robot user and its access token (`EXPO_TOKEN`).
 2. Run `eas init` in `apps/app` and commit the project id it writes into `app.json`; the web deploy refuses to run
    without it.
 3. Add the `production` environment variables from [`secrets.md`](secrets.md#eas-production-environment).
 
-## 6. GitHub
+## 7. GitHub
 
 1. Create the Environment `prod` and add its secrets. Limit it to the `main` branch.
 2. Create the Environment `prod-contract` with the same secrets as `prod`'s database job (the `SUPABASE_*`,
-   `RESEND_SMTP_PASSWORD` and `VAPID_*` ones), you as required reviewer and self-approval allowed. `deploy` runs the
+   `RESEND_SMTP_PASSWORD`, `VAPID_*` and `OXR_APP_ID` ones), you as required reviewer and self-approval allowed. `deploy` runs the
    database job there when the merged PR carries the `contract` label.
 3. Turn on secret scanning and push protection.
 4. Generate the Web Push keys on your machine (`npx web-push generate-vapid-keys`) straight into the secrets.
 
-## 7. First deploy
+## 8. First deploy
 
 1. Add the repo variable `PROD_ENABLED` = `true` (Settings → Secrets and variables → Actions → Variables); until then
    `deploy` and `keepalive` skip. Then re-run the latest `ci` on `main` (or merge anything): `deploy` follows it.

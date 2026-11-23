@@ -407,4 +407,11 @@ const seedWallets = async (
 		})),
 	);
 	if (invites.error) throw invites.error;
+
+	// A date's rates, as fetch-exchange-rates stores them: every household's PKR syncs, JPY (nobody's) doesn't.
+	const rates = await admin.rpc("store_exchange_rates", {
+		on_date: "2026-10-26",
+		rates: { PKR: "280.5", USD: "1", JPY: "152.1" },
+	});
+	if (rates.error) throw rates.error;
 };
