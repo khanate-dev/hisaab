@@ -250,7 +250,7 @@ export type BudgetMonthView<T extends CategoryLike> = {
 };
 
 /** One list's Categories: the active ones in list order (each parent, then its Subcategories), then archived ones. */
-const inListOrder = <T extends CategoryLike>(
+export const inListOrder = <T extends CategoryLike>(
 	categories: readonly T[],
 	kind: CategoryLike["kind"],
 ) => {

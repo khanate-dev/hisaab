@@ -56,6 +56,10 @@ msgstr "{categoryName} · {walletName}"
 msgid "{contactName} (archived)"
 msgstr "{contactName} (archived)"
 
+#: src/features/reports/unpriced-note.tsx
+msgid "{count, plural, one {# Entry in another currency isn't} other {# Entries in other currencies aren't}} counted yet: no exchange rate is held for {count, plural, one {its date} other {their dates}}."
+msgstr "{count, plural, one {# Entry in another currency isn't} other {# Entries in other currencies aren't}} counted yet: no exchange rate is held for {count, plural, one {its date} other {their dates}}."
+
 #: src/features/recurring/pending-tile.tsx
 msgid "{count} recurring Entries wait for you to confirm them."
 msgstr "{count} recurring Entries wait for you to confirm them."
@@ -183,6 +187,10 @@ msgstr "{name}, expired"
 msgid "{name}, in {parentName}"
 msgstr "{name}, in {parentName}"
 
+#: src/features/reports/income-vs-expense.tsx
+msgid "{name}, left over"
+msgstr "{name}, left over"
+
 #: src/features/categories/category-list.tsx
 msgid "{name}, under {parentName}"
 msgstr "{name}, under {parentName}"
@@ -309,10 +317,6 @@ msgstr "{total}, {totalAgainst}"
 #: src/features/reports/category-trend.tsx
 msgid "{total}, {versus}"
 msgstr "{total}, {versus}"
-
-#: src/features/reports/spending-by-category.tsx
-msgid "{unpriced, plural, one {# Expense in another currency isn't} other {# Expenses in other currencies aren't}} counted yet: no exchange rate is held for {unpriced, plural, one {its date} other {their dates}}."
-msgstr "{unpriced, plural, one {# Expense in another currency isn't} other {# Expenses in other currencies aren't}} counted yet: no exchange rate is held for {unpriced, plural, one {its date} other {their dates}}."
 
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} received"
@@ -796,6 +800,7 @@ msgstr "Budget vs actual"
 #: src/app/(tabs)/budgets.tsx
 #: src/features/budgets/budget-month.tsx
 #: src/features/budgets/budgets-tile.tsx
+#: src/features/reports/budget-vs-actual.tsx
 #: src/features/shell/sections.ts
 msgid "Budgets"
 msgstr "Budgets"
@@ -1469,6 +1474,7 @@ msgid "Exchange rates are fetched without any of your data."
 msgstr "Exchange rates are fetched without any of your data."
 
 #: src/features/budgets/budget-month.tsx
+#: src/features/reports/budget-vs-actual.tsx
 msgid "Expected income"
 msgstr "Expected income"
 
@@ -2860,6 +2866,7 @@ msgstr "Shows these Entries"
 msgid "Shows these Expenses"
 msgstr "Shows these Expenses"
 
+#: src/features/reports/budget-vs-actual.tsx
 #: src/features/reports/income-vs-expense.tsx
 msgid "Shows these Incomes"
 msgstr "Shows these Incomes"

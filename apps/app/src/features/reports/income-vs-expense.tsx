@@ -8,6 +8,7 @@ import { formatBudgetMonth, formatMoney } from "@/lib/format";
 import { useColors } from "@/theme/theme";
 
 import { useDifference } from "./difference";
+import { UnpricedNote } from "./unpriced-note";
 import type { Comparison } from "./labels";
 
 const INCOME = "income" as const;
@@ -26,6 +27,7 @@ export const IncomeVsExpenseReport = ({
 	onDrillDown,
 }: {
 	report: {
+		unpriced: number;
 		months: FlowMonth[];
 		total: Flow;
 		previous: Flow;
@@ -34,8 +36,8 @@ export const IncomeVsExpenseReport = ({
 	comparison: Comparison;
 	/** A Budget month's first day, to name it. */
 	monthStart: (month: string) => string;
-	/** Opens the Incomes or Expenses of the period, or of one Budget month. */
-	onDrillDown: (kind: "income" | "expense", month?: string) => void;
+	/** Opens the Incomes or Expenses (or both, for what was left) of the period, or of one Budget month. */
+	onDrillDown: (kinds: ("income" | "expense")[], month?: string) => void;
 }) => {
 	const { t } = useLingui();
 	const colors = useColors();
@@ -71,7 +73,7 @@ export const IncomeVsExpenseReport = ({
 						accessibilityValue={{ text: t`${amount}, ${versus}` }}
 						className="flex-row items-center justify-between gap-3"
 						key={row.kind}
-						onPress={() => onDrillDown(row.kind)}
+						onPress={() => onDrillDown([row.kind])}
 					>
 						<Text variant="label">{row.label}</Text>
 						<View className="items-end">
@@ -81,18 +83,21 @@ export const IncomeVsExpenseReport = ({
 					</Pressable>
 				);
 			})}
-			<View
+			<Pressable
+				accessibilityHint={t`Shows these Entries`}
 				accessibilityLabel={t`Left over`}
+				accessibilityRole="button"
 				accessibilityValue={{ text: t`${left}, ${leftVersus}` }}
-				accessible
 				className="flex-row items-center justify-between gap-3"
+				onPress={() => onDrillDown([INCOME, EXPENSE])}
 			>
 				<Text variant="label">{t`Left over`}</Text>
 				<View className="items-end">
 					<Text variant="figure">{left}</Text>
 					<Text variant="muted">{leftVersus}</Text>
 				</View>
-			</View>
+			</Pressable>
+			<UnpricedNote count={report.unpriced} />
 			<BarChart
 				bars={report.months.flatMap((m) => {
 					const name = formatBudgetMonth(monthStart(m.month));
@@ -131,7 +136,7 @@ export const IncomeVsExpenseReport = ({
 								accessibilityRole="button"
 								accessibilityValue={{ text: income }}
 								className="flex-row justify-between"
-								onPress={() => onDrillDown(INCOME, m.month)}
+								onPress={() => onDrillDown([INCOME], m.month)}
 							>
 								<Text variant="muted">{t`Came in`}</Text>
 								<Text variant="muted">{income}</Text>
@@ -142,15 +147,22 @@ export const IncomeVsExpenseReport = ({
 								accessibilityRole="button"
 								accessibilityValue={{ text: expense }}
 								className="flex-row justify-between"
-								onPress={() => onDrillDown(EXPENSE, m.month)}
+								onPress={() => onDrillDown([EXPENSE], m.month)}
 							>
 								<Text variant="muted">{t`Went out`}</Text>
 								<Text variant="muted">{expense}</Text>
 							</Pressable>
-							<View className="flex-row justify-between">
+							<Pressable
+								accessibilityHint={t`Shows these Entries`}
+								accessibilityLabel={t`${name}, left over`}
+								accessibilityRole="button"
+								accessibilityValue={{ text: net }}
+								className="flex-row justify-between"
+								onPress={() => onDrillDown([INCOME, EXPENSE], m.month)}
+							>
 								<Text variant="muted">{t`Left over`}</Text>
 								<Text variant="muted">{net}</Text>
-							</View>
+							</Pressable>
 						</View>
 					);
 				})}

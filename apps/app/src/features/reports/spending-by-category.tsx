@@ -4,7 +4,6 @@ import {
 	type Money,
 	type SpendingByCategory,
 } from "@hisaab/domain";
-import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { Pressable, View } from "react-native";
 
@@ -15,6 +14,7 @@ import { formatMoney } from "@/lib/format";
 import { categoryColor } from "@/theme/tokens";
 
 import { useDifference } from "./difference";
+import { UnpricedNote } from "./unpriced-note";
 import type { Comparison } from "./labels";
 
 type Category = CategoryLike & { color: string };
@@ -48,12 +48,7 @@ export const SpendingByCategoryReport = <T extends Category>({
 	const spent = report.lines.filter((line) => !isZero(line.amount));
 	const { unpriced } = report;
 
-	const unpricedNote =
-		unpriced > 0 ? (
-			<Text variant="muted">
-				{t`${plural(unpriced, { one: "# Expense in another currency isn't", other: "# Expenses in other currencies aren't" })} counted yet: no exchange rate is held for ${plural(unpriced, { one: "its date", other: "their dates" })}.`}
-			</Text>
-		) : null;
+	const unpricedNote = <UnpricedNote count={unpriced} />;
 	if (report.lines.length === 0)
 		return (
 			<View className="gap-2">

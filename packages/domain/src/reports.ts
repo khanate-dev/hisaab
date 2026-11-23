@@ -6,6 +6,7 @@ import {
 	budgetMonthOf,
 	budgetMonthRange,
 	type CountedEntry,
+	inListOrder,
 	type CountedItem,
 	categoryTotals,
 	pace,
@@ -191,13 +192,7 @@ export const spendingByCategory = <T extends CategoryLike>({
 		previousTotal: sum((l) => l.previous),
 		averageTotal: sum((l) => l.average),
 		lines,
-		unpriced: mine.filter(
-			(entry) =>
-				isFlowKind(entry.kind) &&
-				entry.occurred_on >= period.first &&
-				entry.occurred_on <= period.last &&
-				baseValue(entry, currency) === null,
-		).length,
+		unpriced: unpricedIn(mine, period, currency),
 	};
 };
 
@@ -247,24 +242,43 @@ const progress = (period: ReportPeriod, today: string) => {
 	};
 };
 
-/** One budgeted Expense Category over a period: its Budgets added up against what was spent, and its Pace. */
+/** One budgeted Category over a period: its Budgets added up against what was spent (or received), and its Pace. */
 export type BudgetVsActualLine<T extends CategoryLike> = {
 	category: T;
-	/** Each Budget month's Budget, added up. */
+	/** The Budget months of the period it had a Budget (or Expected income) in; it's counted over those only. */
+	months: BudgetMonth[];
+	/** Each of those months' Budgets, added up. */
 	budget: Money;
-	/** Includes its Subcategories'. */
+	/** Spent (or received) in those months, Subcategories' included. */
 	actual: Money;
+	/** The same months a period earlier. */
 	previous: Money;
+	/** The 3-month average, scaled to those months. */
 	average: Money;
-	/** Whole percent of the Budget spent; null when it's zero. */
+	/** Whole percent of the Budget used; null when it's zero. */
 	percentUsed: number | null;
-	/** More spent than the share of the period gone (Pace). */
+	/** More used than the share of those months gone (Pace). */
 	ahead: boolean;
 };
 
+/** Expenses and Incomes over a range not priced yet: no Base amount, so counted nowhere until they are. */
+const unpricedIn = (
+	entries: readonly ReportEntry[],
+	range: { first: string; last: string },
+	currency: string,
+) =>
+	entries.filter(
+		(entry) =>
+			isFlowKind(entry.kind) &&
+			entry.occurred_on >= range.first &&
+			entry.occurred_on <= range.last &&
+			baseValue(entry, currency) === null,
+	).length;
+
 /**
- * Budget vs actual (spec §3.5): every Expense Category with a Budget in any of the period's months, its Budgets added
- * up against what was spent, with Pace through the period and both comparisons on what was spent.
+ * Budget vs actual (spec §3.5): every Category with a Budget (or Expected income) in any of the period's months, in
+ * list order, its Budgets added up against what was spent (or received) in those same months, with Pace through them
+ * up to today and both comparisons. A month without a Budget isn't counted against one.
  */
 export const budgetVsActual = <T extends CategoryLike>({
 	entries,
@@ -289,52 +303,89 @@ export const budgetVsActual = <T extends CategoryLike>({
 	overrides: readonly BudgetOverride[];
 	today: string;
 }) => {
-	const spending = spendingByCategory({
-		entries,
-		items,
-		categories,
-		members,
-		period,
-		startDay,
-		currency,
-	});
-	const mine = byMembers(entries, members).filter((e) => e.kind === "expense");
+	const mine = byMembers(entries, members);
 	const parentOf = new Map(categories.map((c) => [c.id, c.parent_id]));
-	const totals = (range: ReportPeriod) =>
-		categoryTotals(mine, items, parentOf, range, currency);
-	const now = totals(period);
-	const before = totals(previousPeriod(period, startDay));
-	const basis = totals(averageBasis(period, startDay));
 	const zero = zeroMoney(currency);
+	const totalsIn = new Map<string, Map<string, Money>>();
+	const totals = (month: BudgetMonth) => {
+		const cached = totalsIn.get(month);
+		if (cached) return cached;
+		const found = categoryTotals(
+			mine,
+			items,
+			parentOf,
+			budgetMonthRange(month, startDay),
+			currency,
+		);
+		totalsIn.set(month, found);
+		return found;
+	};
+	const add = (months: readonly BudgetMonth[], categoryId: string) =>
+		months.reduce<Money>(
+			(sum, month) => addMoney(sum, totals(month).get(categoryId) ?? zero),
+			zero,
+		);
+	const back = (month: BudgetMonth, by: number) => shiftBudgetMonth(month, -by);
+	const lines = (kind: CategoryLike["kind"]) =>
+		inListOrder(categories, kind).flatMap(
+			(category): BudgetVsActualLine<T>[] => {
+				const months = period.months.filter(
+					(month) =>
+						budgetFor(category.id, month, standing, overrides, currency) !==
+						null,
+				);
+				if (months.length === 0) return [];
+				const budget = months.reduce<Money>(
+					(sum, month) =>
+						addMoney(
+							sum,
+							budgetFor(category.id, month, standing, overrides, currency) ??
+								zero,
+						),
+					zero,
+				);
+				const actual = add(months, category.id);
+				const progressed = months.map((month) =>
+					progress(
+						{ months: [month], ...budgetMonthRange(month, startDay) },
+						today,
+					),
+				);
+				const day = progressed.reduce((sum, p) => sum + p.day, 0);
+				const days = progressed.reduce((sum, p) => sum + p.days, 0);
+				const { percentUsed, ahead } = pace(actual, budget, day, days);
+				const basis = [1, 2, 3].map((by) => back(months[0] ?? "", by));
+				return [
+					{
+						category,
+						months,
+						budget,
+						actual,
+						previous: add(
+							months.map((month) => back(month, period.months.length)),
+							category.id,
+						),
+						average: add(basis, category.id)
+							.times(months.length)
+							.dividedInto(3),
+						percentUsed,
+						ahead,
+					},
+				];
+			},
+		);
 	const { day, days } = progress(period, today);
-	const lines = categories
-		.filter((c) => c.kind === "expense")
-		.flatMap((category): BudgetVsActualLine<T>[] => {
-			const monthly = period.months.map((month) =>
-				budgetFor(category.id, month, standing, overrides, currency),
-			);
-			if (monthly.every((b) => b === null)) return [];
-			const budget = monthly.reduce<Money>(
-				(sum, b) => addMoney(sum, b ?? zero),
-				zero,
-			);
-			const actual = now.get(category.id) ?? zero;
-			const { percentUsed, ahead } = pace(actual, budget, day, days);
-			return [
-				{
-					category,
-					budget,
-					actual,
-					previous: before.get(category.id) ?? zero,
-					average: (basis.get(category.id) ?? zero)
-						.times(period.months.length)
-						.dividedInto(3),
-					percentUsed,
-					ahead,
-				},
-			];
-		});
-	return { period, currency, day, days, lines, unpriced: spending.unpriced };
+	return {
+		period,
+		currency,
+		day,
+		days,
+		/** Whether today falls inside the period, so Pace means how it's going. */
+		current: today >= period.first && today <= period.last,
+		budgets: lines("expense"),
+		expectedIncome: lines("income"),
+		unpriced: unpricedIn(mine, period, currency),
+	};
 };
 
 /** What came in and went out in one Budget month. */
@@ -394,6 +445,7 @@ export const incomeVsExpense = ({
 	return {
 		period,
 		currency,
+		unpriced: unpricedIn(mine, period, currency),
 		months,
 		total,
 		previous,
@@ -444,6 +496,7 @@ export const categoryTrend = <T extends CategoryLike>({
 		period,
 		currency,
 		category,
+		unpriced: unpricedIn(mine, period, currency),
 		months,
 		total: of(period),
 		previous: of(previousPeriod(period, startDay)),

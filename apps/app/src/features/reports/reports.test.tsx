@@ -142,7 +142,7 @@ describe("SpendingByCategoryReport notes", () => {
 			"No Expenses in this period.",
 		);
 		expect(
-			screen.getByText(/1 Expense in another currency isn't counted yet/),
+			screen.getByText(/1 Entry in another currency isn't counted yet/),
 		).toBeOnTheScreen();
 	});
 
@@ -267,7 +267,9 @@ describe("BudgetVsActualReport", () => {
 			text: `${pkr("100")} of ${pkr("1000")}, 10%, ${pkr("100")} more`,
 		});
 		await user.press(screen.getByRole("button", { name: "Fuel" }));
-		expect(onDrillDown).toHaveBeenCalledWith("fuel");
+		expect(onDrillDown).toHaveBeenCalledWith(
+			expect.objectContaining({ months: ["2026-08"] }),
+		);
 	});
 });
 
@@ -288,14 +290,18 @@ describe("IncomeVsExpenseReport", () => {
 		).toHaveAccessibilityValue({
 			text: `${pkr("1000")}, ${pkr("1000")} more`,
 		});
-		expect(screen.getByLabelText("Left over")).toHaveAccessibilityValue({
+		expect(
+			screen.getByRole("button", { name: "Left over" }),
+		).toHaveAccessibilityValue({
 			text: `${pkr("400")}, ${pkr("400")} more`,
 		});
 		await user.press(screen.getByRole("button", { name: "Went out" }));
-		expect(onDrillDown).toHaveBeenLastCalledWith("expense");
+		expect(onDrillDown).toHaveBeenLastCalledWith(["expense"]);
 		const month = formatBudgetMonth("2026-08-01");
 		await user.press(screen.getByRole("button", { name: `${month}, came in` }));
-		expect(onDrillDown).toHaveBeenLastCalledWith("income", "2026-08");
+		expect(onDrillDown).toHaveBeenLastCalledWith(["income"], "2026-08");
+		await user.press(screen.getByRole("button", { name: "Left over" }));
+		expect(onDrillDown).toHaveBeenLastCalledWith(["income", "expense"]);
 	});
 });
 

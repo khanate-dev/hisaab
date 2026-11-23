@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { formatBudgetMonth, formatMoney } from "@/lib/format";
 
 import { useDifference } from "./difference";
+import { UnpricedNote } from "./unpriced-note";
 import type { Comparison } from "./labels";
 
 /**
@@ -30,6 +31,7 @@ export const CategoryTrendReport = <T extends CategoryLike>({
 	report:
 		| {
 				category: T;
+				unpriced: number;
 				months: { month: string; amount: Money }[];
 				total: Money;
 				previous: Money;
@@ -84,6 +86,7 @@ export const CategoryTrendReport = <T extends CategoryLike>({
 							)}
 						</Text>
 					</Pressable>
+					<UnpricedNote count={report.unpriced} />
 					<BarChart
 						bars={report.months.map((m) => ({
 							key: m.month,

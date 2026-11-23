@@ -38,6 +38,15 @@ import { useSignedInUserId } from "@/lib/session";
 
 const EXPENSE = "expense" as const;
 
+/** How many Budget months run from one to another, both included. */
+const monthsBetween = (first: string, last: string) => {
+	const index = (month: string) => {
+		const [year, number] = month.split("-").map(Number) as [number, number];
+		return year * 12 + number;
+	};
+	return index(last) - index(first) + 1;
+};
+
 /** What the hub shows in a household, kept until another household is on screen. */
 type HubState = {
 	report: Report;
@@ -102,15 +111,42 @@ export default function Reports() {
 		entries && items && categories && currency && period && startDay && today
 			? { entries, items, categories, currency, period, startDay, today }
 			: undefined;
-	const scope = ready && {
-		entries: ready.entries,
-		items: ready.items,
-		categories: ready.categories,
-		members: settings.members,
-		period: ready.period,
-		startDay: ready.startDay,
-		currency: ready.currency,
-	};
+	const scope = useMemo(
+		() =>
+			entries && items && categories && currency && period && startDay
+				? {
+						entries,
+						items,
+						categories,
+						members: settings.members,
+						period,
+						startDay,
+						currency,
+					}
+				: undefined,
+		[entries, items, categories, currency, period, startDay, settings.members],
+	);
+	// Each report only once its data or settings change, not on every render.
+	const spending = useMemo(
+		() => (scope ? spendingByCategory(scope) : undefined),
+		[scope],
+	);
+	const budgetReport = useMemo(
+		() =>
+			scope && budgets && today
+				? budgetVsActual({
+						...scope,
+						standing: budgets.standing,
+						overrides: budgets.overrides,
+						today,
+					})
+				: undefined,
+		[scope, budgets, today],
+	);
+	const flow = useMemo(
+		() => (scope ? incomeVsExpense(scope) : undefined),
+		[scope],
+	);
 	const trendChoices = useMemo(
 		() =>
 			(categories ?? [])
@@ -122,17 +158,31 @@ export default function Reports() {
 				),
 		[categories],
 	);
-	const trendCategory = trendChoices.find(
-		(c) => c.id === state.trendCategoryId,
+	// The Category followed: the one picked, else the period's top spender.
+	const trendCategory =
+		trendChoices.find((c) => c.id === state.trendCategoryId) ??
+		trendChoices.find((c) => c.id === spending?.lines[0]?.category.id);
+	const trend = useMemo(
+		() =>
+			scope && trendCategory
+				? categoryTrend({ ...scope, category: trendCategory })
+				: undefined,
+		[scope, trendCategory],
 	);
 
 	/** Opens the Entries a figure counts: of these kinds, over the period or one Budget month, maybe one Category. */
-	const open = (kinds: string[], categoryId?: string, month?: string) => {
+	const open = (
+		kinds: string[],
+		categoryId?: string,
+		month?: string,
+		range?: ReportPeriod,
+	) => {
 		if (!household || !ready) return;
 		const over: ReportPeriod =
-			month === undefined
+			range ??
+			(month === undefined
 				? ready.period
-				: periodEnding(month, 1, ready.startDay);
+				: periodEnding(month, 1, ready.startDay));
 		router.push({
 			pathname: "/entries",
 			params: {
@@ -183,32 +233,36 @@ export default function Reports() {
 					settings={settings}
 				/>
 			)}
-			{ready && scope && state.report === "spending" && (
+			{ready && spending && state.report === "spending" && (
 				<SpendingByCategoryReport
 					comparison={settings.comparison}
 					onDrillDown={(categoryId) => open([EXPENSE], categoryId)}
-					report={spendingByCategory(scope)}
+					report={spending}
 					today={ready.today}
 				/>
 			)}
-			{ready && scope && budgets && state.report === "budget" && (
+			{ready && budgetReport && state.report === "budget" && (
 				<BudgetVsActualReport
 					comparison={settings.comparison}
-					onDrillDown={(categoryId) => open([EXPENSE], categoryId)}
-					report={budgetVsActual({
-						...scope,
-						standing: budgets.standing,
-						overrides: budgets.overrides,
-						today: ready.today,
-					})}
+					onDrillDown={(line) => {
+						const first = line.months[0] ?? "";
+						const last = line.months.at(-1) ?? first;
+						open(
+							[line.category.kind],
+							line.category.id,
+							undefined,
+							periodEnding(last, monthsBetween(first, last), ready.startDay),
+						);
+					}}
+					report={budgetReport}
 				/>
 			)}
-			{ready && scope && state.report === "flow" && (
+			{ready && flow && state.report === "flow" && (
 				<IncomeVsExpenseReport
 					comparison={settings.comparison}
 					monthStart={monthStart}
-					onDrillDown={(kind, month) => open([kind], undefined, month)}
-					report={incomeVsExpense(scope)}
+					onDrillDown={(kinds, month) => open(kinds, undefined, month)}
+					report={flow}
 				/>
 			)}
 			{ready && scope && state.report === "trend" && (
@@ -222,11 +276,7 @@ export default function Reports() {
 						const kind = trendChoices.find((c) => c.id === categoryId)?.kind;
 						open(kind ? [kind] : [], categoryId, month);
 					}}
-					report={
-						trendCategory
-							? categoryTrend({ ...scope, category: trendCategory })
-							: undefined
-					}
+					report={trend}
 				/>
 			)}
 		</Screen>
