@@ -1,6 +1,6 @@
 // Notifications (spec §3.5; issue #13): sends what's due in the push and email outbox, every minute (pg_cron calls this
 // with the service role's key). The logic is in packages/domain behind adapters (ADR-0010); this wires them to
-// PostgREST, and sends through Expo Push (mobile) and VAPID Web Push (web); email arrives with the Monthly summary.
+// PostgREST, and sends through Expo Push (mobile), VAPID Web Push (web) and Resend (the Monthly summary's email).
 import {
 	type ClaimedDelivery,
 	type DispatchAdapters,
@@ -18,6 +18,11 @@ import {
 	type SendOutcome,
 	webPushOutcome,
 } from "../../../packages/domain/src/notifications.ts";
+import {
+	type EmailAdapters,
+	sendSummaryEmail,
+	type SummaryFigures,
+} from "../../../packages/domain/src/summary-email.ts";
 
 const url = Deno.env.get("SUPABASE_URL");
 if (!url) throw new Error("SUPABASE_URL must be set");
@@ -195,6 +200,60 @@ const webpush: Sender = async (delivery) => {
 	}
 };
 
+/** Who the Monthly summary's email comes from (spec §6.2), and where replies go. */
+const FROM = "Hisaab <summary@mail.hisaab.khanate.pk>";
+const REPLY_TO = "support@hisaab.khanate.pk";
+
+/**
+ * The Monthly summary's email through Resend (`RESEND_API_KEY` in the Edge Function's secrets), its figures read with
+ * the caller's key. Without the key it waits and retries.
+ */
+const emailFor =
+	(key: string): Sender =>
+	async (delivery) => {
+		const resendKey = Deno.env.get("RESEND_API_KEY");
+		if (!resendKey)
+			return { status: "failed", error: "Email isn't set up yet" };
+		const adapters: EmailAdapters = {
+			figures: async (notificationId) => {
+				const response = await fetch(
+					`${url}/rest/v1/rpc/monthly_summary_figures`,
+					{
+						method: "POST",
+						headers: {
+							apikey: key,
+							Authorization: `Bearer ${key}`,
+							"content-type": "application/json",
+						},
+						body: JSON.stringify({ notification: notificationId }),
+					},
+				);
+				if (!response.ok)
+					throw new Error(`PostgREST answered ${response.status}`);
+				return (await response.json()) as SummaryFigures | null;
+			},
+			send: async (message) => {
+				const response = await fetch("https://api.resend.com/emails", {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${resendKey}`,
+						"content-type": "application/json",
+					},
+					body: JSON.stringify({ from: FROM, reply_to: REPLY_TO, ...message }),
+				});
+				return response.ok
+					? { status: response.status }
+					: { status: response.status, error: await response.text() };
+			},
+		};
+		return sendSummaryEmail(adapters, delivery);
+	};
+
 Deno.serve((request) =>
-	handleDispatchRequest(adaptersFor, { expo, webpush }, request, expoReceipts),
+	handleDispatchRequest(
+		adaptersFor,
+		(key) => ({ expo, webpush, email: emailFor(key) }),
+		request,
+		expoReceipts,
+	),
 );

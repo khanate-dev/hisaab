@@ -312,6 +312,26 @@ describe("dispatchDeliveries", () => {
 		]);
 	});
 
+	it("makes senders that read the database with the caller's own key", async () => {
+		const { adapters, settle } = store([delivery("d1", "email")]);
+		const keys: string[] = [];
+		await handleDispatchRequest(
+			() => adapters,
+			(key) => {
+				keys.push(key);
+				return { email: async () => ({ status: "sent" as const }) };
+			},
+			new Request("http://x", {
+				method: "POST",
+				headers: { authorization: "Bearer sb_secret_abc" },
+			}),
+		);
+		expect(keys).toEqual(["sb_secret_abc"]);
+		expect(settle).toHaveBeenCalledWith([
+			{ id: "d1", status: "sent", error: null, ticket: null },
+		]);
+	});
+
 	it("runs with the caller's key, refused unless the database takes it as the service role's", async () => {
 		const { adapters } = store([]);
 		const service = "sb_secret_abc";

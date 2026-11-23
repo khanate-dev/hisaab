@@ -47,7 +47,7 @@ describe("InboxList", () => {
 		expect(screen.getByLabelText("Someone joined Family.")).toBeVisible();
 	});
 
-	it("says what's due, recorded, passed or owed, by name", async () => {
+	it("says what's due, recorded, passed or owed, who changed things, and which month's summary it is, by name", async () => {
 		const event = (
 			id: string,
 			trigger: NotificationTrigger,
@@ -91,6 +91,12 @@ describe("InboxList", () => {
 					}),
 					// Malformed: just what kind of Notification it is.
 					event("e7", "budget_threshold", { categoryName: "Fuel" }),
+					event("e8", "household_activity", {
+						date: "2026-11-09",
+						changes: 4,
+						people: ["Sara", "Bilal"],
+					}),
+					event("e9", "monthly_summary", { month: "2026-10" }),
 				]}
 				userId="u1"
 			/>,
@@ -103,6 +109,8 @@ describe("InboxList", () => {
 			"The Loan to Bilal is due in 3 days, in Family.",
 			"The Loan from Bilal is overdue, in Family.",
 			"Budget threshold",
+			"Sara and Bilal made 4 changes in Family that day.",
+			"How October 2026 went in Family: see Reports, or the email if you turned it on.",
 		])
 			expect(screen.getByLabelText(said)).toBeVisible();
 	});
@@ -124,19 +132,44 @@ describe("InboxList", () => {
 describe("PreferencesList", () => {
 	const setup = async (
 		role: "admin" | "viewer",
-		choices: { trigger: string; enabled: boolean }[] = [],
+		choices: {
+			trigger: string;
+			enabled: boolean;
+			email_enabled?: boolean | null;
+		}[] = [],
 	) => {
 		const onChange = jest.fn((_t: NotificationTrigger, _on: boolean) => {});
+		const onEmailChange = jest.fn((_push: boolean, _email: boolean) => {});
 		await render(
 			<PreferencesList
 				choices={choices}
 				householdName="Family"
 				onChange={onChange}
+				onEmailChange={onEmailChange}
 				role={role}
 			/>,
 		);
-		return { onChange, user: userEvent.setup() };
+		return { onChange, onEmailChange, user: userEvent.setup() };
 	};
+
+	it("emails the Monthly summary only once it's turned on, keeping its push as it is", async () => {
+		const { onEmailChange, user } = await setup("viewer");
+		const email = screen.getByRole("checkbox", {
+			name: "Email me the Monthly summary",
+		});
+		expect(email).not.toBeChecked();
+		await user.press(email);
+		expect(onEmailChange).toHaveBeenCalledWith(true, true);
+	});
+
+	it("shows the email as turned on when it is", async () => {
+		await setup("admin", [
+			{ trigger: "monthly_summary", enabled: false, email_enabled: true },
+		]);
+		expect(
+			screen.getByRole("checkbox", { name: "Email me the Monthly summary" }),
+		).toBeChecked();
+	});
 
 	it("starts push from the Role's defaults: a Viewer gets only the Monthly summary", async () => {
 		await setup("viewer");

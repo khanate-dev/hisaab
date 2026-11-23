@@ -30,6 +30,43 @@ export const markRead = async (ids: readonly string[]) => {
 };
 
 /**
+ * Records whether the Monthly summary also reaches the User by email in a household (#63; off by default), keeping
+ * its push choice as it is (`pushOn`: their own, else their Role's default).
+ */
+export const setSummaryEmail = async (
+	{ householdId, userId }: { householdId: string; userId: string },
+	pushOn: boolean,
+	emailOn: boolean,
+) => {
+	const id = preferenceId(userId, householdId, MONTHLY_SUMMARY);
+	await db.transaction(async (tx) => {
+		const [existing] = await tx
+			.select({ id: notificationPreferences.id })
+			.from(notificationPreferences)
+			.where(eq(notificationPreferences.id, id));
+		if (existing)
+			await tx
+				.update(notificationPreferences)
+				.set(stamped({ email_enabled: emailOn }))
+				.where(eq(notificationPreferences.id, id));
+		else
+			await tx.insert(notificationPreferences).values(
+				stamped({
+					id,
+					household_id: householdId,
+					user_id: userId,
+					trigger: MONTHLY_SUMMARY,
+					enabled: pushOn,
+					email_enabled: emailOn,
+					created_at: nowIso(),
+				}),
+			);
+	});
+};
+
+const MONTHLY_SUMMARY = "monthly_summary" as const;
+
+/**
  * Records whether a trigger also reaches the User by push in a household. One row per trigger, under an id every
  * device derives (`preferenceId`), so two devices choosing offline write the same row and the last one wins.
  */
