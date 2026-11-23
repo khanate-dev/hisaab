@@ -38,10 +38,13 @@ export const LOGGED_FIELDS: Record<string, Record<string, Field>> = {
 		to_wallet_id: { label: msg`To`, kind: "wallet" },
 		category_id: { label: msg`Category`, kind: "category" },
 		kind: { label: msg`Kind`, kind: "entryKind" },
+		// In the Base currency; a rate's correction shows as a change Hisaab made.
+		base_amount: { label: msg`Base amount`, kind: "money" },
 	},
 	entry_items: {
 		description: { label: msg`Item`, kind: "text" },
-		amount: { label: msg`Amount`, kind: "money" },
+		// In its Expense's Wallet's currency.
+		amount: { label: msg`Amount`, kind: "money", currencyFrom: "entry_id" },
 		quantity: { label: msg`Quantity`, kind: "text" },
 		category_id: { label: msg`Category`, kind: "category" },
 	},

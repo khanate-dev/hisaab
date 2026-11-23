@@ -34,7 +34,6 @@ describe("repeatEntry", () => {
 				}),
 				[makeCategory("c2", "Groceries")],
 				wallets,
-				"PKR",
 			),
 		).toEqual({
 			description: "Bread",
@@ -59,7 +58,6 @@ describe("repeatEntry", () => {
 					}),
 				],
 				wallets,
-				"PKR",
 			),
 		).toEqual({ description: "Bread", amount: "120", categoryId: "" });
 	});

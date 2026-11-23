@@ -288,6 +288,8 @@ describe("toExportEntry", () => {
 		expect(row).toEqual(
 			expect.objectContaining({
 				amount: "-1234.567",
+				// A Base-currency Entry's Base amount is its own amount.
+				baseAmount: "-1234.567",
 				category: "Food: Groceries",
 				occurredTime: "18:30",
 				recordedBy: "Ayesha",

@@ -1,8 +1,9 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { parseMoney } from "@hisaab/domain";
+import { PortalHost } from "@rn-primitives/portal";
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { makeEntry } from "@/test/entries";
 import { render } from "@/test/render";
@@ -30,17 +31,20 @@ const categories = [
 const setup = async (props: Partial<Parameters<typeof EntryForm>[0]> = {}) => {
 	const onSubmit = jest.fn(async (_draft: EntryDraft, _currency: string) => {});
 	await render(
-		<EntryForm
-			categories={categories}
-			history={[]}
-			onSubmit={onSubmit}
-			baseCurrency="PKR"
-			submitLabel="Save Entry"
-			timeZone="Asia/Karachi"
-			today="2026-10-26"
-			wallets={wallets}
-			{...props}
-		/>,
+		<>
+			<EntryForm
+				categories={categories}
+				history={[]}
+				onSubmit={onSubmit}
+				baseCurrency="PKR"
+				submitLabel="Save Entry"
+				timeZone="Asia/Karachi"
+				today="2026-10-26"
+				wallets={wallets}
+				{...props}
+			/>
+			<PortalHost />
+		</>,
 	);
 	return { onSubmit, user: userEvent.setup() };
 };
@@ -64,9 +68,89 @@ describe("EntryForm", () => {
 				description: "Weekly shop",
 				notes: null,
 				items: [],
+				baseEdited: null,
 			},
 			"PKR",
 		);
+	});
+
+	describe("in a Wallet in another currency", () => {
+		const usd: WalletChoice = {
+			id: "w9",
+			name: "Dollars",
+			currency: "USD",
+			archived_at: null,
+		};
+		const rates = [
+			{ on_date: "2026-10-26", currency: "USD", per_usd: "1" },
+			{ on_date: "2026-10-26", currency: "PKR", per_usd: "280.5" },
+		];
+		const pickDollars = async (user: ReturnType<typeof userEvent.setup>) => {
+			await user.press(screen.getByRole("radio", { name: "Dollars (USD)" }));
+			await user.type(screen.getByLabelText("Amount (USD)"), "10");
+		};
+
+		it("shows its Base amount at the day's market rate, and estimates on a day without one", async () => {
+			const { user } = await setup({ wallets: [...wallets, usd], rates });
+			await pickDollars(user);
+			expect(screen.getByLabelText("Base amount")).toHaveAccessibilityValue({
+				text: formatMoney(parseMoney("2805", "PKR")),
+			});
+			expect(
+				screen.getByText(`At ${formatDate("2026-10-26")}'s market rate.`),
+			).toBeOnTheScreen();
+			await user.clear(screen.getByLabelText("Date"));
+			await user.type(screen.getByLabelText("Date"), "2026-10-27");
+			expect(
+				screen.getByText(
+					/Rate estimated: corrected once that day's rate arrives/,
+				),
+			).toBeOnTheScreen();
+		});
+
+		it("says when no rate is held at all yet", async () => {
+			const { user } = await setup({ wallets: [...wallets, usd], rates: [] });
+			await pickDollars(user);
+			expect(
+				screen.getByText(/No exchange rate yet: it's priced once one arrives/),
+			).toBeOnTheScreen();
+		});
+
+		it("takes the User's own Base amount from its sheet, and gives it back to the market rate", async () => {
+			const { onSubmit, user } = await setup({
+				wallets: [...wallets, usd],
+				rates,
+			});
+			await pickDollars(user);
+			await user.press(screen.getByRole("radio", { name: "Food › Groceries" }));
+			await user.press(screen.getByRole("button", { name: "Change" }));
+			const field = await screen.findByLabelText("Base amount (PKR)");
+			await user.clear(field);
+			await user.type(field, "2900.555");
+			await user.press(screen.getByRole("button", { name: "Use this amount" }));
+			expect(screen.getByRole("alert")).toHaveTextContent(
+				"PKR has at most 2 decimals.",
+			);
+			await user.clear(field);
+			await user.type(field, "2900");
+			await user.press(screen.getByRole("button", { name: "Use this amount" }));
+			expect(screen.getByText("Edited: kept as you set it.")).toBeOnTheScreen();
+			await user.press(screen.getByRole("button", { name: "Save Entry" }));
+			expect(onSubmit).toHaveBeenLastCalledWith(
+				expect.objectContaining({ walletId: "w9", baseEdited: "2900" }),
+				"USD",
+			);
+
+			await user.press(screen.getByRole("button", { name: "Change" }));
+			await user.press(
+				await screen.findByRole("button", { name: "Use the market rate" }),
+			);
+			await user.press(screen.getByRole("button", { name: "Save Entry" }));
+			expect(onSubmit).toHaveBeenLastCalledWith(
+				expect.objectContaining({ baseEdited: null }),
+				"USD",
+			);
+		});
 	});
 
 	it("records an Income into another Wallet, with a time and notes", async () => {

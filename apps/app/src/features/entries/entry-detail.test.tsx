@@ -54,6 +54,44 @@ const setup = async (
 };
 
 describe("EntryDetail", () => {
+	const dollarsView = (overrides: Parameters<typeof makeEntry>[1]) => {
+		const [first] = toEntryViews(
+			[makeEntry("e1", { wallet_id: "w9", amount: "-10", ...overrides })],
+			categories,
+			[{ id: "w9", name: "Dollars", currency: "USD", archived_at: null }],
+		);
+		if (!first) throw new Error("no view");
+		return first;
+	};
+
+	it("shows the Base amount of an Entry in another currency, saying when it's estimated", async () => {
+		await setup({
+			baseCurrency: "PKR",
+			view: dollarsView({ base_amount: "-2805", base_rate: "estimated" }),
+		});
+		expect(screen.getByLabelText("Base amount")).toHaveAccessibilityValue({
+			text: formatMoney(parseMoney("-2805", "PKR")),
+		});
+		expect(
+			screen.getByText(
+				/Rate estimated: corrected once that day's rate arrives/,
+			),
+		).toBeOnTheScreen();
+	});
+
+	it("says when a Base amount is the User's own", async () => {
+		await setup({
+			baseCurrency: "PKR",
+			view: dollarsView({ base_amount: "-2900", base_rate: "edited" }),
+		});
+		expect(screen.getByText("Edited: kept as you set it.")).toBeOnTheScreen();
+	});
+
+	it("shows no Base amount for an Entry in the Base currency", async () => {
+		await setup({ baseCurrency: "PKR" });
+		expect(screen.queryByLabelText("Base amount")).toBeNull();
+	});
+
 	it("shows how much, its Category, Wallet, date and time, notes and who recorded it", async () => {
 		await setup();
 		const has = (label: string, text: string) =>

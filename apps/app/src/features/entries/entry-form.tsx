@@ -10,6 +10,7 @@ import {
 	magnitude,
 	withRest,
 	parseMoney,
+	type RateRow,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
@@ -28,12 +29,8 @@ import { todayIn } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { newId } from "@/lib/ids";
 
-import {
-	orNull,
-	recordableWallets,
-	repeatEntry,
-	startingWallet,
-} from "./draft";
+import { BaseAmountField } from "./base-amount";
+import { entryWallets, orNull, repeatEntry, startingWallet } from "./draft";
 import { useCommonChecks, useSave } from "./form-checks";
 import { entryKindLabel, useItemNames } from "./labels";
 import { ItemsSection } from "./items-section";
@@ -61,11 +58,10 @@ type Props = {
 	categories: readonly Category[];
 	/** Past Entries, for description suggestions. */
 	history: readonly Entry[];
-	/**
-	 * Entries are recorded in the household's Base currency only until Base amounts land (#45, ADR-0005); null
-	 * before the household has one.
-	 */
+	/** The household's Base currency: an Entry in another currency's Wallet gets a Base amount (ADR-0005). */
 	baseCurrency: string | null;
+	/** The exchange rates this device holds, to price a Base amount as it's typed. */
+	rates?: readonly RateRow[] | undefined;
 	/** The Member's default Wallet in the household: where a new one starts, when it can. */
 	defaultWalletId?: string | null;
 	/** The household's timezone; the date starts as today in it. */
@@ -89,6 +85,7 @@ export const EntryForm = ({
 	categories,
 	history,
 	baseCurrency,
+	rates,
 	defaultWalletId,
 	timeZone,
 	today = todayIn(timeZone),
@@ -96,8 +93,9 @@ export const EntryForm = ({
 	onSubmit,
 }: Props) => {
 	const { t, i18n } = useLingui();
+	const walletInCurrency = (name: string, code: string) => t`${name} (${code})`;
 	const walletOf = (id: string | undefined) => wallets.find((w) => w.id === id);
-	const active = recordableWallets(wallets, baseCurrency);
+	const active = entryWallets(wallets);
 	const recordable = (w: WalletChoice) => active.includes(w);
 	const linked = walletOf(initial.walletId);
 	// An Entry keeps its own Wallet even after it's archived; a new one only starts in a Wallet it can go into.
@@ -112,12 +110,27 @@ export const EntryForm = ({
 			? entry.kind
 			: (initial.kind ?? DEFAULT_KIND),
 	);
-	const [amount, setAmount] = useState(
+	const [amount, setTypedAmount] = useState(
 		entry && startWallet
 			? magnitude(parseMoney(entry.amount, startWallet.currency)).toString()
 			: (initial.amount ?? ""),
 	);
 	const [walletId, setWalletId] = useState(startWallet?.id ?? "");
+	// The User's own Base amount, kept until they take it back or move the Entry to another Wallet.
+	const [baseEdited, setBaseEdited] = useState<string | null>(
+		entry?.base_rate === "edited" && entry.base_amount !== null && baseCurrency
+			? magnitude(parseMoney(entry.base_amount, baseCurrency)).toString()
+			: null,
+	);
+	// An edited Base amount was for this amount in this Wallet: changing either drops it.
+	const chooseWallet = (id: string) => {
+		setWalletId(id);
+		setBaseEdited(null);
+	};
+	const setAmount = (text: string) => {
+		setTypedAmount(text);
+		setBaseEdited(null);
+	};
 	const [categoryId, setCategoryId] = useState(
 		entry?.category_id ?? initial.categoryId ?? "",
 	);
@@ -156,9 +169,6 @@ export const EntryForm = ({
 		...active,
 		...(startWallet && !recordable(startWallet) ? [startWallet] : []),
 	];
-	const otherCurrencies = wallets.some(
-		(w) => w.archived_at === null && !recordable(w),
-	);
 	const categoryChoices = categoryTree(categories, kind).flatMap(
 		({ category, subcategories }) => {
 			const parentName = category.name;
@@ -190,12 +200,12 @@ export const EntryForm = ({
 	};
 
 	const applySuggestion = (past: Entry) => {
-		const filled = repeatEntry(past, categories, wallets, baseCurrency);
+		const filled = repeatEntry(past, categories, wallets);
 		setDescription(filled.description ?? "");
 		setPicked(true);
 		setAmount(filled.amount);
 		setCategoryId(filled.categoryId);
-		if (filled.walletId) setWalletId(filled.walletId);
+		if (filled.walletId) chooseWallet(filled.walletId);
 	};
 
 	const submit = async () => {
@@ -250,6 +260,7 @@ export const EntryForm = ({
 						...item,
 						amount: item.amount.toString(),
 					})),
+					baseEdited: wallet.currency === baseCurrency ? null : baseEdited,
 				},
 				wallet.currency,
 			),
@@ -320,14 +331,30 @@ export const EntryForm = ({
 				<Text variant="label">{kind === "expense" ? t`From` : t`Into`}</Text>
 				<RadioGroup
 					label={kind === "expense" ? t`From Wallet` : t`Into Wallet`}
-					onValueChange={setWalletId}
-					options={walletChoices.map((w) => ({ value: w.id, label: w.name }))}
+					onValueChange={chooseWallet}
+					options={walletChoices.map((w) => ({
+						value: w.id,
+						label:
+							w.currency === baseCurrency
+								? w.name
+								: walletInCurrency(w.name, w.currency),
+					}))}
 					value={walletId}
 				/>
-				{otherCurrencies && (
-					<Text variant="muted">
-						{t`Wallets in other currencies take Entries once exchange rates arrive.`}
-					</Text>
+				{baseCurrency && currency && currency !== baseCurrency && (
+					<BaseAmountField
+						amount={
+							kind === "expense" && items.length > 0 && shownTotal
+								? shownTotal.toString()
+								: amount
+						}
+						baseCurrency={baseCurrency}
+						currency={currency}
+						date={occurredOn.trim()}
+						edited={baseEdited}
+						onEdit={setBaseEdited}
+						rates={rates}
+					/>
 				)}
 			</View>
 			<View className="gap-2">

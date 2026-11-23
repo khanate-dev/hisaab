@@ -12,6 +12,7 @@ import { EntryForm } from "@/features/entries/entry-form";
 import { NeedsWallet } from "@/features/entries/needs-wallet";
 import { TransferForm } from "@/features/entries/transfer-form";
 import { useEntryData } from "@/features/entries/use-entry-data";
+import { useRates } from "@/features/entries/use-rates";
 import { Screen } from "@/features/shell/screen";
 import { entryTimeZone } from "@/lib/dates";
 import { leaveTo } from "@/lib/navigation";
@@ -21,6 +22,7 @@ export default function NewEntry() {
 	const params = useLocalSearchParams<DraftParams>();
 	const initial = paramsToDraft(params);
 	const data = useEntryData();
+	const rates = useRates();
 
 	// Viewers can't record Entries; reached by a link, they land on the list.
 	if (data?.canWrite === false) return <Redirect href="/entries" />;
@@ -92,6 +94,7 @@ export default function NewEntry() {
 						await createEntry(household.id, userId, draft, currency);
 						leaveTo("/entries");
 					}}
+					rates={rates}
 					submitLabel={t`Save Entry`}
 					timeZone={timeZone}
 					wallets={wallets}

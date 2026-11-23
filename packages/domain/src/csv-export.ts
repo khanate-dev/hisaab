@@ -30,6 +30,8 @@ export type ExportEntry = {
 	currency: string;
 	/** Signed exact decimal text: what it changed the Wallet's Balance by. */
 	amount: string;
+	/** Its value in the household's Base currency, signed: the amount itself for a Base-currency Entry, else its Base amount; null while it has none yet. */
+	baseAmount: string | null;
 	toWallet: string | null;
 	/** What a Transfer brought into its other Wallet, exact. */
 	received: string | null;
@@ -55,6 +57,7 @@ export const EXPORT_HEADER = [
 	"Wallet",
 	"Currency",
 	"Amount",
+	"Base amount",
 	"To Wallet",
 	"Received",
 	"Contact",
@@ -80,6 +83,7 @@ export const exportRows = (entries: readonly ExportEntry[]): string[][] => [
 			e.wallet,
 			e.currency,
 			e.amount,
+			e.baseAmount ?? "",
 			e.toWallet ?? "",
 			e.received ?? "",
 			e.contact ?? "",
@@ -95,7 +99,7 @@ export const exportRows = (entries: readonly ExportEntry[]): string[][] => [
 				...Array<string>(4).fill(""),
 				e.wallet,
 				e.currency,
-				...Array<string>(6).fill(""),
+				...Array<string>(7).fill(""),
 				item.description,
 				item.category ?? "",
 				item.amount,

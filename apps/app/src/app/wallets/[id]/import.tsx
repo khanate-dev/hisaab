@@ -48,13 +48,11 @@ export default function ImportIntoWallet() {
 		!household
 	)
 		return null;
-	// Expenses and Incomes are recorded in the Base currency until Base amounts (#45), so imports are too.
+	// A statement imports into any active Wallet; the server prices each row's Base amount (ADR-0005).
 	const blocked =
 		wallet.row.archived_at !== null
 			? t`This Wallet is archived; unarchive it to import into it.`
-			: household.base_currency !== wallet.row.currency
-				? t`Statements import into Wallets in the household's Base currency for now.`
-				: null;
+			: null;
 	if (blocked !== null) {
 		return (
 			<Screen title={t`Import CSV`}>
