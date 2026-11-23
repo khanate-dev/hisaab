@@ -32,6 +32,7 @@ export const toSearchable = (
 		]),
 		currencies: present([view.wallet.currency, view.arrival?.wallet.currency]),
 		contactIds: present([contact?.id]),
+		loanIds: present([view.entry.loan_id]),
 		createdBy: view.entry.created_by,
 		occurredOn: view.entry.occurred_on,
 		text: present([

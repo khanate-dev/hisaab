@@ -90,7 +90,7 @@ A pair of linked, mirrored Entries, one in each of two Households, created in on
 _Avoid_: Contribution pair, shared transfer
 
 **Balance adjustment**:
-An Entry recording the gap between a Wallet's Balance and reality. It is not spending or income, so it is excluded from budgets and reports. The opening balance is a Wallet's first Balance adjustment.
+An Entry recording the gap between a Wallet's Balance and reality. It is not spending or income, so it is excluded from budgets and money-flow reports; it still moves a Balance, so Net worth counts it. The opening balance is a Wallet's first Balance adjustment.
 _Avoid_: Correction, miscellaneous expense
 
 **Contact**:

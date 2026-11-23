@@ -1,4 +1,5 @@
-import { baseValue } from "./base-amounts";
+import { baseValue, convertAt, type RateRow } from "./base-amounts";
+import { walletBalances, type WalletEntry } from "./balances";
 import {
 	type BudgetMonth,
 	type BudgetOverride,
@@ -14,7 +15,9 @@ import {
 	shiftBudgetMonth,
 } from "./budgets";
 import type { CategoryLike } from "./categories";
+import { calendarDateIn } from "./dates";
 import { isFlowKind, magnitude } from "./entries";
+import { isSettled, type LoanDirection, loanOutstanding } from "./loans";
 import { addMoney, type Money, negateMoney, zeroMoney } from "./money";
 import { type EntryFilter, NO_FILTER } from "./search";
 
@@ -505,3 +508,223 @@ export const categoryTrend = <T extends CategoryLike>({
 			.dividedInto(3),
 	};
 };
+
+/** A Wallet's Balance as of a date, and its value in the Base currency at the latest rates (null without a rate). */
+export type WalletWorth<W> = { wallet: W; balance: Money; value: Money | null };
+
+/** The earlier of two dates. */
+const until = (date: string, today: string) => (date < today ? date : today);
+
+/**
+ * Net worth (spec §3.5; CONTEXT.md): every Wallet's Balance (ADR-0002) at the end of the period, or today while it
+ * runs, each converted to the Base currency at the latest rates held (not each Entry's Base amount: worth is what it's
+ * worth now), credit cards counting against it. Month by month, against the previous period's end and the average
+ * of the three month-ends before. The members filter keeps only the Entries they recorded.
+ */
+export const netWorth = <W extends { id: string; currency: string }>({
+	wallets,
+	entries,
+	members,
+	period,
+	startDay,
+	currency,
+	rates,
+	today,
+}: {
+	wallets: readonly W[];
+	entries: readonly (ReportEntry & WalletEntry)[];
+	members: readonly string[];
+	period: ReportPeriod;
+	startDay: number;
+	currency: string;
+	rates: readonly RateRow[];
+	today: string;
+}) => {
+	const mine = byMembers(entries, members);
+	const zero = zeroMoney(currency);
+	const asOf = (date: string) => {
+		const balances = walletBalances(
+			wallets,
+			mine.filter((entry) => entry.occurred_on <= date),
+		);
+		const worth = wallets.map((wallet): WalletWorth<W> => {
+			const balance = balances.get(wallet.id) ?? zeroMoney(wallet.currency);
+			const value =
+				wallet.currency === currency
+					? balance
+					: (convertAt(balance, currency, today, rates)?.amount ?? null);
+			return { wallet, balance, value };
+		});
+		return {
+			total: worth.reduce<Money>(
+				(sum, w) => addMoney(sum, w.value ?? zero),
+				zero,
+			),
+			wallets: worth,
+			/** Wallets with a Balance but no rate held for their currency: left out of the total. */
+			unconverted: worth.filter((w) => w.value === null && !w.balance.isZero())
+				.length,
+		};
+	};
+	const end = asOf(until(period.last, today));
+	const basis = averageBasis(period, startDay);
+	return {
+		period,
+		currency,
+		...end,
+		months: monthsOf(period, startDay)
+			.filter((range) => range.first <= today)
+			.map((range) => ({
+				month: range.month,
+				total: asOf(until(range.last, today)).total,
+			})),
+		previous: asOf(until(previousPeriod(period, startDay).last, today)).total,
+		average: basis.months
+			.map(
+				(month) =>
+					asOf(until(budgetMonthRange(month, startDay).last, today)).total,
+			)
+			.reduce<Money>(addMoney, zero)
+			.dividedInto(3),
+	};
+};
+
+/** A Loan outstanding at a date: in its own currency, and converted to the Base currency (null without a rate). */
+export type LoanWorth<L> = {
+	loan: L;
+	currency: string;
+	outstanding: Money;
+	value: Money | null;
+};
+
+/**
+ * Loans summary (spec §3.5): what's still owed to the household (Lent) and by it (Borrowed) at the period's end, or
+ * today while it runs, Loan by Loan, converted at the latest rates; against the previous period's end and the average
+ * of the three month-ends before. A Loan written off by then (in the household's timezone), or settled, isn't
+ * outstanding. The members filter picks Loans by who recorded the principal; each counts all its Entries.
+ */
+export const loansSummary = <
+	L extends {
+		id: string;
+		direction: LoanDirection;
+		written_off_at: string | null;
+	},
+>({
+	loans,
+	entries,
+	wallets,
+	members,
+	period,
+	startDay,
+	currency,
+	rates,
+	today,
+	timeZone,
+}: {
+	loans: readonly L[];
+	entries: readonly (ReportEntry & {
+		loan_id: string | null;
+		wallet_id: string;
+	})[];
+	wallets: readonly { id: string; currency: string }[];
+	members: readonly string[];
+	period: ReportPeriod;
+	startDay: number;
+	currency: string;
+	rates: readonly RateRow[];
+	today: string;
+	/** The household's: when a write-off happened is its date there. */
+	timeZone: string;
+}) => {
+	const zero = zeroMoney(currency);
+	const picked = new Set(
+		byMembers(
+			entries.filter((entry) => entry.kind === "loan_principal"),
+			members,
+		).map((entry) => entry.loan_id),
+	);
+	const currencyOf = new Map(wallets.map((w) => [w.id, w.currency]));
+	const asOf = (date: string) => {
+		const open = loans.flatMap((loan): LoanWorth<L>[] => {
+			if (!picked.has(loan.id)) return [];
+			const own = entries.filter(
+				(entry) => entry.loan_id === loan.id && entry.occurred_on <= date,
+			);
+			const principal = own.find((entry) => entry.kind === "loan_principal");
+			const loanCurrency = principal && currencyOf.get(principal.wallet_id);
+			if (!loanCurrency) return [];
+			const outstanding = loanOutstanding(loan.direction, loanCurrency, own);
+			const writtenOff =
+				loan.written_off_at !== null &&
+				calendarDateIn(new Date(loan.written_off_at), timeZone) <= date;
+			if (isSettled(outstanding, writtenOff)) return [];
+			return [
+				{
+					loan,
+					currency: loanCurrency,
+					outstanding,
+					value:
+						loanCurrency === currency
+							? outstanding
+							: (convertAt(outstanding, currency, today, rates)?.amount ??
+								null),
+				},
+			];
+		});
+		const total = (direction: LoanDirection) =>
+			open
+				.filter((l) => l.loan.direction === direction)
+				.reduce<Money>((sum, l) => addMoney(sum, l.value ?? zero), zero);
+		return { open, lent: total("lent"), borrowed: total("borrowed") };
+	};
+	const end = asOf(until(period.last, today));
+	const before = asOf(until(previousPeriod(period, startDay).last, today));
+	const basis = averageBasis(period, startDay).months.map((month) =>
+		asOf(until(budgetMonthRange(month, startDay).last, today)),
+	);
+	const average = (pick: (at: { lent: Money; borrowed: Money }) => Money) =>
+		basis.map(pick).reduce<Money>(addMoney, zero).dividedInto(3);
+	return {
+		period,
+		currency,
+		loans: end.open,
+		lent: end.lent,
+		borrowed: end.borrowed,
+		/** Loans with no rate held for their currency: left out of the totals. */
+		unconverted: end.open.filter((l) => l.value === null).length,
+		previous: { lent: before.lent, borrowed: before.borrowed },
+		average: {
+			lent: average((a) => a.lent),
+			borrowed: average((a) => a.borrowed),
+		},
+	};
+};
+
+/** Where a Balance drills down to: the Entries up to its date, in these Wallets (all when none), by these members. */
+export const drillToBalances = ({
+	walletIds,
+	until: last,
+	members,
+}: {
+	walletIds: readonly string[];
+	until: string;
+	members: readonly string[];
+}): EntryFilter => ({ ...NO_FILTER, walletIds, memberIds: members, to: last });
+
+const LOAN_KINDS = ["loan_principal", "repayment"];
+
+/**
+ * Where a Loan's outstanding amount drills down to: these Loans' principals and Repayments up to its date, whoever
+ * recorded them (a Loan counts all its Entries).
+ */
+export const drillToLoans = ({
+	loanIds,
+	until: last,
+}: {
+	loanIds: readonly string[];
+	until: string;
+}): EntryFilter => ({ ...NO_FILTER, kinds: LOAN_KINDS, loanIds, to: last });
+
+/** The earlier of a period's last day and today: where a report's figures stand. */
+export const standingDate = (period: ReportPeriod, today: string) =>
+	until(period.last, today);

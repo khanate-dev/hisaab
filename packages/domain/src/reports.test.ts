@@ -12,6 +12,8 @@ import {
 	categoryTrend,
 	drillDown,
 	incomeVsExpense,
+	loansSummary,
+	netWorth,
 	periodEnding,
 	previousPeriod,
 	REPORT_PRESETS,
@@ -484,6 +486,277 @@ describe("budgetVsActual", () => {
 				for (const line of report(list, "2026-09-20").budgets)
 					expect(line.ahead).toBe(line.actual.compare(line.budget) > 0);
 			}),
+		);
+	});
+});
+
+describe("netWorth", () => {
+	const period = periodEnding("2026-08", 3, 1);
+	const pkrWallets = [
+		{ id: "w1", currency: "PKR" },
+		{ id: "w2", currency: "PKR" },
+	];
+	const moves = fc.array(
+		fc.record({
+			wallet: fc.constantFrom("w1", "w2"),
+			cents: fc.integer({ min: -1_000_000, max: 1_000_000 }),
+			occurred_on: day,
+			transfer: fc.boolean(),
+		}),
+		{ maxLength: 25 },
+	);
+	const asEntries = (
+		list: {
+			wallet: string;
+			cents: number;
+			occurred_on: string;
+			transfer: boolean;
+		}[],
+	) =>
+		list.map((m, i) => ({
+			id: `e${i}`,
+			kind: m.transfer ? "transfer" : "balance_adjustment",
+			amount: (m.cents / 100).toFixed(2),
+			category_id: null,
+			occurred_on: m.occurred_on,
+			created_by: "u1",
+			wallet_id: m.wallet,
+			...(m.transfer
+				? {
+						to_wallet_id: m.wallet === "w1" ? "w2" : "w1",
+						to_amount: (-m.cents / 100).toFixed(2),
+					}
+				: {}),
+		}));
+
+	it("is what every Entry up to the date came to, a Transfer moving money without making or losing any", () => {
+		fc.assert(
+			fc.property(moves, day, (list, today) => {
+				const entries = asEntries(list);
+				const worth = netWorth({
+					wallets: pkrWallets,
+					entries,
+					members: [],
+					period,
+					startDay: 1,
+					currency: "PKR",
+					rates: [],
+					today,
+				});
+				const until = period.last < today ? period.last : today;
+				expect(worth.total.toString()).toBe(
+					sumMoney(
+						entries
+							.filter((e) => e.occurred_on <= until && e.kind !== "transfer")
+							.map((e) => parseMoney(e.amount, "PKR")),
+						"PKR",
+					).toString(),
+				);
+			}),
+		);
+	});
+
+	it("converts a Wallet in another currency at the latest rate held, and leaves one without a rate out", () => {
+		const entries = [
+			{
+				id: "e1",
+				kind: "balance_adjustment",
+				amount: "100",
+				category_id: null,
+				occurred_on: "2026-07-01",
+				created_by: "u1",
+				wallet_id: "usd",
+			},
+			{
+				id: "e2",
+				kind: "balance_adjustment",
+				amount: "5",
+				category_id: null,
+				occurred_on: "2026-07-01",
+				created_by: "u1",
+				wallet_id: "eur",
+			},
+		];
+		const worth = netWorth({
+			wallets: [
+				{ id: "usd", currency: "USD" },
+				{ id: "eur", currency: "EUR" },
+			],
+			entries,
+			members: [],
+			period,
+			startDay: 1,
+			currency: "PKR",
+			rates: [
+				{ on_date: "2026-06-01", currency: "USD", per_usd: "1" },
+				{ on_date: "2026-06-01", currency: "PKR", per_usd: "270" },
+				{ on_date: "2026-08-20", currency: "PKR", per_usd: "280" },
+			],
+			today: "2026-08-25",
+		});
+		expect(worth.total.toString()).toBe("28000");
+		expect(worth.unconverted).toBe(1);
+		expect(worth.previous.toString()).toBe("0");
+	});
+});
+
+describe("loansSummary", () => {
+	const period = periodEnding("2026-08", 1, 1);
+	const loan = (
+		id: string,
+		direction: "lent" | "borrowed",
+		written_off_at: string | null = null,
+	) => ({
+		id,
+		direction,
+		written_off_at,
+	});
+	const entry = (
+		id: string,
+		loanId: string,
+		kind: string,
+		amount: string,
+		occurred_on: string,
+	) => ({
+		id,
+		kind,
+		amount,
+		category_id: null,
+		occurred_on,
+		created_by: "u1",
+		loan_id: loanId,
+		wallet_id: "w1",
+	});
+
+	it("adds up what's still owed each way, never a settled or written-off Loan", () => {
+		const summary = loansSummary({
+			loans: [
+				loan("l1", "lent"),
+				loan("l2", "borrowed"),
+				loan("l3", "lent", "2026-08-05T10:00:00Z"),
+				loan("l4", "lent"),
+			],
+			entries: [
+				entry("a", "l1", "loan_principal", "-1000", "2026-06-01"),
+				entry("b", "l1", "repayment", "400", "2026-08-10"),
+				entry("c", "l2", "loan_principal", "5000", "2026-08-02"),
+				entry("d", "l3", "loan_principal", "-300", "2026-06-01"),
+				entry("e", "l4", "loan_principal", "-200", "2026-06-01"),
+				entry("f", "l4", "repayment", "200", "2026-07-01"),
+			],
+			wallets: [{ id: "w1", currency: "PKR" }],
+			members: [],
+			period,
+			startDay: 1,
+			currency: "PKR",
+			rates: [],
+			today: "2026-09-02",
+			timeZone: "Asia/Karachi",
+		});
+		expect(
+			summary.loans.map((l) => [l.loan.id, l.outstanding.toString()]),
+		).toEqual([
+			["l1", "600"],
+			["l2", "5000"],
+		]);
+		expect([summary.lent.toString(), summary.borrowed.toString()]).toEqual([
+			"600",
+			"5000",
+		]);
+		// At the end of July: l1's 1000 and l3's 300 lent, nothing borrowed yet.
+		expect([
+			summary.previous.lent.toString(),
+			summary.previous.borrowed.toString(),
+		]).toEqual(["1300", "0"]);
+	});
+
+	it("dates a write-off in the household's timezone", () => {
+		const summary = (today: string) =>
+			loansSummary({
+				loans: [loan("l1", "lent", "2026-07-31T21:00:00Z")],
+				entries: [entry("a", "l1", "loan_principal", "-500", "2026-06-01")],
+				wallets: [{ id: "w1", currency: "PKR" }],
+				members: [],
+				period: periodEnding("2026-07", 1, 1),
+				startDay: 1,
+				currency: "PKR",
+				rates: [],
+				today,
+				timeZone: "Asia/Karachi",
+			});
+		// 21:00 UTC on July 31 is August 1 in Karachi: still owed at July's end.
+		expect(summary("2026-09-01").lent.toString()).toBe("500");
+	});
+
+	it("adds the Loans up to its totals, member by member", () => {
+		fc.assert(
+			fc.property(
+				fc.array(
+					fc.record({
+						direction: fc.constantFrom("lent", "borrowed") as fc.Arbitrary<
+							"lent" | "borrowed"
+						>,
+						principal: fc.integer({ min: 1, max: 100_000 }),
+						repaid: fc.integer({ min: 0, max: 100_000 }),
+						by: fc.constantFrom("u1", "u2"),
+						repaidBy: fc.constantFrom("u1", "u2"),
+					}),
+					{ maxLength: 8 },
+				),
+				(specs) => {
+					const loans = specs.map((s, i) => loan(`l${i}`, s.direction));
+					const entries = specs.flatMap((s, i) => {
+						const sign = s.direction === "lent" ? -1 : 1;
+						return [
+							{
+								...entry(
+									`p${i}`,
+									`l${i}`,
+									"loan_principal",
+									String(sign * s.principal),
+									"2026-08-01",
+								),
+								created_by: s.by,
+							},
+							{
+								...entry(
+									`r${i}`,
+									`l${i}`,
+									"repayment",
+									String(-sign * Math.min(s.repaid, s.principal)),
+									"2026-08-02",
+								),
+								created_by: s.repaidBy,
+							},
+						];
+					});
+					const at = (members: string[]) =>
+						loansSummary({
+							loans,
+							entries,
+							wallets: [{ id: "w1", currency: "PKR" }],
+							members,
+							period,
+							startDay: 1,
+							currency: "PKR",
+							rates: [],
+							today: "2026-09-02",
+							timeZone: "Asia/Karachi",
+						});
+					const all = at([]);
+					expect(
+						sumMoney(
+							all.loans
+								.filter((l) => l.loan.direction === "lent")
+								.map((l) => l.outstanding),
+							"PKR",
+						).toString(),
+					).toBe(all.lent.toString());
+					expect(
+						sumMoney([at(["u1"]).lent, at(["u2"]).lent], "PKR").toString(),
+					).toBe(all.lent.toString());
+				},
+			),
 		);
 	});
 });

@@ -81,6 +81,8 @@ export type Searchable = {
 	currencies: readonly string[];
 	/** A Loan's principal or Repayment: the Loan's Contact. */
 	contactIds: readonly string[];
+	/** A Loan's principal or Repayment: its Loan. */
+	loanIds?: readonly string[];
 	createdBy: string;
 	occurredOn: string;
 	/** What free text matches: description, notes, Category, Wallet, Item and Contact names. */
@@ -101,6 +103,8 @@ export type EntryFilter = {
 	currencies: readonly string[];
 	/** Loans with these Contacts: their principals and Repayments. */
 	contactIds: readonly string[];
+	/** These Loans' principals and Repayments: what a Loans summary figure counts. */
+	loanIds: readonly string[];
 	/** Who recorded it. */
 	memberIds: readonly string[];
 	/** YYYY-MM-DD, both included. */
@@ -115,6 +119,7 @@ export const NO_FILTER: EntryFilter = {
 	categoryIds: [],
 	currencies: [],
 	contactIds: [],
+	loanIds: [],
 	memberIds: [],
 	from: null,
 	to: null,
@@ -135,6 +140,7 @@ export const matchesFilter = (
 	if (!anyOf(filter.categoryIds, entry.categoryIds)) return false;
 	if (!anyOf(filter.currencies, entry.currencies)) return false;
 	if (!anyOf(filter.contactIds, entry.contactIds)) return false;
+	if (!anyOf(filter.loanIds, entry.loanIds ?? [])) return false;
 	if (
 		filter.memberIds.length > 0 &&
 		!filter.memberIds.includes(entry.createdBy)
@@ -174,6 +180,7 @@ export const filtersOn = (filter: EntryFilter) =>
 	filter.categoryIds.length +
 	filter.currencies.length +
 	filter.contactIds.length +
+	filter.loanIds.length +
 	filter.memberIds.length +
 	(filter.from === null ? 0 : 1) +
 	(filter.to === null ? 0 : 1);
@@ -189,6 +196,8 @@ export type KnownChoices = {
 	categoryIds: ReadonlySet<string>;
 	currencies: ReadonlySet<string>;
 	contactIds: ReadonlySet<string>;
+	/** The Loans there are; a filter's Loans are kept when absent. */
+	loanIds?: ReadonlySet<string>;
 	memberIds: ReadonlySet<string>;
 };
 
@@ -203,6 +212,9 @@ export const keepKnown = (
 	categoryIds: filter.categoryIds.filter((v) => known.categoryIds.has(v)),
 	currencies: filter.currencies.filter((v) => known.currencies.has(v)),
 	contactIds: filter.contactIds.filter((v) => known.contactIds.has(v)),
+	loanIds: known.loanIds
+		? filter.loanIds.filter((v) => known.loanIds?.has(v))
+		: filter.loanIds,
 	memberIds: filter.memberIds.filter((v) => known.memberIds.has(v)),
 });
 
@@ -268,6 +280,7 @@ export const readSavedCriteria = (json: string): EntryFilter => {
 		categoryIds: strings(r.categoryIds),
 		currencies: strings(r.currencies),
 		contactIds: strings(r.contactIds),
+		loanIds: strings(r.loanIds),
 		memberIds: strings(r.memberIds),
 		from: dateOrNull(r.from),
 		to: dateOrNull(r.to),

@@ -3,11 +3,17 @@ import {
 	budgetVsActual,
 	categoryTrend,
 	drillDown,
+	drillToBalances,
+	drillToLoans,
+	type EntryFilter,
 	incomeVsExpense,
+	loansSummary,
+	netWorth,
 	periodEnding,
 	type ReportPeriod,
 	reportPeriod,
 	spendingByCategory,
+	standingDate,
 	writeSavedCriteria,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
@@ -19,12 +25,16 @@ import { Text } from "@/components/ui/text";
 import { useBudgetRows } from "@/features/budgets/use-budgets";
 import { useCategories } from "@/features/categories/use-categories";
 import { useEntries, useEntryItems } from "@/features/entries/use-entries";
+import { useRates } from "@/features/entries/use-rates";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
+import { useLoans } from "@/features/loans/use-loans";
 import { useMembers } from "@/features/members/use-members";
 import { usePeopleNames } from "@/features/members/use-people-names";
 import { BudgetVsActualReport } from "@/features/reports/budget-vs-actual";
 import { CategoryTrendReport } from "@/features/reports/category-trend";
 import { IncomeVsExpenseReport } from "@/features/reports/income-vs-expense";
+import { LoansSummaryReport } from "@/features/reports/loans-summary";
+import { NetWorthReport } from "@/features/reports/net-worth";
 import { type Report, REPORT_LABELS, REPORTS } from "@/features/reports/labels";
 import {
 	DEFAULT_SETTINGS,
@@ -33,6 +43,7 @@ import {
 } from "@/features/reports/report-controls";
 import { SpendingByCategoryReport } from "@/features/reports/spending-by-category";
 import { Screen } from "@/features/shell/screen";
+import { useWalletRows } from "@/features/wallets/use-wallets";
 import { entryTimeZone, todayIn } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
 
@@ -74,6 +85,9 @@ export default function Reports() {
 	const categories = useCategories(household?.id);
 	const members = useMembers(household?.id);
 	const budgets = useBudgetRows(household?.id);
+	const wallets = useWalletRows(household?.id);
+	const loans = useLoans(household?.id);
+	const rates = useRates();
 	const names = usePeopleNames();
 	const drills = useRef(0);
 	// Whose Entries can be picked: the household's members, and whoever recorded any of its Entries (a Former member).
@@ -147,6 +161,30 @@ export default function Reports() {
 		() => (scope ? incomeVsExpense(scope) : undefined),
 		[scope],
 	);
+	const worth = useMemo(
+		() =>
+			scope && wallets && rates && today
+				? netWorth({ ...scope, wallets, rates, today })
+				: undefined,
+		[scope, wallets, rates, today],
+	);
+	const owed = useMemo(
+		() =>
+			scope && wallets && rates && today && loans
+				? loansSummary({
+						...scope,
+						loans: loans.map((view) => view.loan),
+						wallets,
+						rates,
+						today,
+						timeZone: entryTimeZone(household),
+					})
+				: undefined,
+		[scope, wallets, rates, today, loans, household],
+	);
+	const contactName = (contactId: string) =>
+		loans?.find((view) => view.contact?.id === contactId)?.contact?.name ??
+		t`A Contact since gone`;
 	const trendChoices = useMemo(
 		() =>
 			(categories ?? [])
@@ -183,20 +221,25 @@ export default function Reports() {
 			(month === undefined
 				? ready.period
 				: periodEnding(month, 1, ready.startDay));
+		show(
+			drillDown({
+				period: over,
+				kinds,
+				members: settings.members,
+				...(categoryId !== undefined && { categoryId }),
+			}),
+		);
+	};
+	/** Opens the Entries list filtered to what a figure counts (spec §3.5). */
+	const show = (filter: EntryFilter) => {
+		if (!household) return;
 		router.push({
 			pathname: "/entries",
 			params: {
 				household: household.id,
 				// Fresh each time, so the same figure opens filtered again after the filter was cleared.
 				drilled: String((drills.current += 1)),
-				filter: writeSavedCriteria(
-					drillDown({
-						period: over,
-						kinds,
-						members: settings.members,
-						...(categoryId !== undefined && { categoryId }),
-					}),
-				),
+				filter: writeSavedCriteria(filter),
 			},
 		});
 	};
@@ -277,6 +320,38 @@ export default function Reports() {
 						open(kind ? [kind] : [], categoryId, month);
 					}}
 					report={trend}
+				/>
+			)}
+			{ready && worth && state.report === "worth" && (
+				<NetWorthReport
+					comparison={settings.comparison}
+					partial={settings.members.length > 0}
+					monthStart={monthStart}
+					onDrillDown={(walletId) =>
+						show(
+							drillToBalances({
+								walletIds: walletId === undefined ? [] : [walletId],
+								until: standingDate(ready.period, ready.today),
+								members: settings.members,
+							}),
+						)
+					}
+					report={worth}
+				/>
+			)}
+			{ready && owed && state.report === "loans" && (
+				<LoansSummaryReport
+					comparison={settings.comparison}
+					contactName={contactName}
+					onDrillDown={(loanIds) =>
+						show(
+							drillToLoans({
+								loanIds,
+								until: standingDate(ready.period, ready.today),
+							}),
+						)
+					}
+					report={owed}
 				/>
 			)}
 		</Screen>
