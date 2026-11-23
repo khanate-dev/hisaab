@@ -14,8 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { CategoryBadge } from "@/features/categories/category-badge";
+import { parseMoney } from "@hisaab/domain";
+
 import { formatDate, formatMoney } from "@/lib/format";
 
+import { useBaseAmountNote } from "./base-amount";
 import { useEntryTitle } from "./entry-list";
 import { isDeletableKind, isEditableKind } from "./draft";
 import { entryKindLabel, useItemNames } from "./labels";
@@ -23,6 +26,8 @@ import { type EntryView, shownAmount } from "./views";
 
 type Props = {
 	view: EntryView;
+	/** The household's Base currency, which an Entry in another currency's Wallet has a Base amount in. */
+	baseCurrency?: string | null;
 	/** The name of the User who recorded it, once their profile has synced. */
 	recordedBy: string | undefined;
 	/** Admins and Members edit and delete Expenses and Incomes; Viewers only look. */
@@ -59,6 +64,7 @@ const Field = ({
 /** One Entry: how much, where, when, and who recorded it. */
 export const EntryDetail = ({
 	view,
+	baseCurrency = null,
 	recordedBy,
 	canEdit,
 	rights = { edit: true, delete: true },
@@ -81,6 +87,24 @@ export const EntryDetail = ({
 	const time = entry.occurred_time;
 	const categoryName = category?.name;
 	const parentName = parent?.name;
+	const baseNote = useBaseAmountNote();
+	const base =
+		entry.base_rate !== null && baseCurrency !== null
+			? {
+					value:
+						entry.base_amount === null
+							? null
+							: formatMoney(parseMoney(entry.base_amount, baseCurrency)),
+					note:
+						entry.base_amount === null
+							? baseNote.missing
+							: entry.base_rate === "estimated"
+								? baseNote.estimated
+								: entry.base_rate === "edited"
+									? baseNote.edited
+									: null,
+				}
+			: null;
 
 	return (
 		<View className="gap-4">
@@ -138,6 +162,15 @@ export const EntryDetail = ({
 						/>
 					)}
 				</>
+			)}
+			{base !== null && (
+				<View className="gap-0.5">
+					<Field
+						label={t`Base amount`}
+						value={base.value ?? "—"}
+					/>
+					{base.note !== null && <Text variant="muted">{base.note}</Text>}
+				</View>
 			)}
 			<Field
 				label={t`Date`}

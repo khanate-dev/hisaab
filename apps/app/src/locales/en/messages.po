@@ -554,6 +554,10 @@ msgstr "As YYYY-MM-DD."
 msgid "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here."
 msgstr "Ask for Face ID, a fingerprint or the device passcode to open Hisaab here."
 
+#: src/features/entries/base-amount.tsx
+msgid "At {date}'s market rate."
+msgstr "At {date}'s market rate."
+
 #: src/features/attachments/attachment-list.tsx
 msgid "Attachments"
 msgstr "Attachments"
@@ -601,6 +605,16 @@ msgstr "Balance history"
 #: src/features/wallets/labels.ts
 msgid "Bank"
 msgstr "Bank"
+
+#: src/features/activity/fields.ts
+#: src/features/entries/base-amount.tsx
+#: src/features/entries/entry-detail.tsx
+msgid "Base amount"
+msgstr "Base amount"
+
+#: src/features/entries/base-amount.tsx
+msgid "Base amount ({baseCurrency})"
+msgstr "Base amount ({baseCurrency})"
 
 #: src/features/activity/fields.ts
 #: src/features/households/household-fields.tsx
@@ -731,6 +745,7 @@ msgid "Category for {name} on {date}: {categoryName}"
 msgstr "Category for {name} on {date}: {categoryName}"
 
 #: src/features/budgets/budget-month.tsx
+#: src/features/entries/base-amount.tsx
 msgid "Change"
 msgstr "Change"
 
@@ -1161,6 +1176,10 @@ msgstr "Edit Transfer"
 msgid "Edit Wallet"
 msgstr "Edit Wallet"
 
+#: src/features/entries/base-amount.tsx
+msgid "Edited: kept as you set it."
+msgstr "Edited: kept as you set it."
+
 #: src/features/auth/sign-in-form.tsx
 msgid "Email"
 msgstr "Email"
@@ -1195,6 +1214,7 @@ msgstr "Enter a timezone like Asia/Karachi."
 msgid "Enter an amount like 150 or 150.50."
 msgstr "Enter an amount like 150 or 150.50."
 
+#: src/features/entries/base-amount.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/onboarding/first-wallet-form.tsx
 msgid "Enter an amount like 1500 or 1500.50."
@@ -1992,6 +2012,10 @@ msgstr "No Entries match."
 msgid "No Entries yet."
 msgstr "No Entries yet."
 
+#: src/features/entries/base-amount.tsx
+msgid "No exchange rate yet: it's priced once one arrives."
+msgstr "No exchange rate yet: it's priced once one arrives."
+
 #: src/features/budgets/budget-month.tsx
 msgid "No Expected income this month."
 msgstr "No Expected income this month."
@@ -2318,6 +2342,10 @@ msgstr "Quantity"
 #: src/features/legal/privacy-policy.tsx
 msgid "Questions or requests about your data: {SUPPORT_EMAIL}."
 msgstr "Questions or requests about your data: {SUPPORT_EMAIL}."
+
+#: src/features/entries/base-amount.tsx
+msgid "Rate estimated: corrected once that day's rate arrives."
+msgstr "Rate estimated: corrected once that day's rate arrives."
 
 #: src/features/activity/fields.ts
 #: src/features/entries/entry-detail.tsx
@@ -2804,6 +2832,7 @@ msgstr "That's over {megabytes} MB; an Attachment takes {megabytes} MB at most."
 msgid "The Activity log needs a connection. Try again once you're online."
 msgstr "The Activity log needs a connection. Try again once you're online."
 
+#: src/features/entries/base-amount.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
 msgid "The amount is more than zero."
@@ -3102,6 +3131,14 @@ msgstr "Update required"
 msgid "Use the {savedName} filter"
 msgstr "Use the {savedName} filter"
 
+#: src/features/entries/base-amount.tsx
+msgid "Use the market rate"
+msgstr "Use the market rate"
+
+#: src/features/entries/base-amount.tsx
+msgid "Use this amount"
+msgstr "Use this amount"
+
 #: src/features/invites/invite-list.tsx
 msgid "Used"
 msgstr "Used"
@@ -3144,10 +3181,6 @@ msgstr "Wallet: {walletName}"
 msgid "Wallets"
 msgstr "Wallets"
 
-#: src/features/entries/entry-form.tsx
-msgid "Wallets in other currencies take Entries once exchange rates arrive."
-msgstr "Wallets in other currencies take Entries once exchange rates arrive."
-
 #: src/features/auth/sign-in-form.tsx
 msgid "We emailed a code to {codeSentTo}."
 msgstr "We emailed a code to {codeSentTo}."
@@ -3164,6 +3197,10 @@ msgstr "Weekly"
 #: src/features/legal/privacy-policy.tsx
 msgid "What Hisaab keeps"
 msgstr "What Hisaab keeps"
+
+#: src/features/entries/base-amount.tsx
+msgid "What it came to in {baseCurrency}, say what the bank charged."
+msgstr "What it came to in {baseCurrency}, say what the bank charged."
 
 #: src/features/legal/privacy-policy.tsx
 msgid "What you and your household record: Wallets, Entries, Budgets, Loans, Contacts, Recurring rules, notes and the Attachments you add."

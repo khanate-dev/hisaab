@@ -60,6 +60,7 @@ describe("exportRows", () => {
 		wallet: "Cash",
 		currency: "PKR",
 		amount: "-12345678901234.5678",
+		baseAmount: "-3456.789",
 		toWallet: null,
 		received: null,
 		notes: null,
@@ -83,6 +84,8 @@ describe("exportRows", () => {
 		expect(rows[0]).toEqual([...EXPORT_HEADER]);
 		expect(rows).toHaveLength(4);
 		expect(rows[1]?.[8]).toBe("-12345678901234.5678");
+		expect(rows[1]?.[EXPORT_HEADER.indexOf("Base amount")]).toBe("-3456.789");
+		expect(rows[2]?.[EXPORT_HEADER.indexOf("Base amount")]).toBe("");
 		expect(rows[2]?.slice(-4)).toEqual(["Milk", "Dairy", "450.10", "2"]);
 		expect(rows[2]?.[0]).toBe("e1");
 		expect(rows.every((r) => r.length === EXPORT_HEADER.length)).toBe(true);

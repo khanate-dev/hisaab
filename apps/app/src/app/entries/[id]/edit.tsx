@@ -9,6 +9,7 @@ import { EntryForm } from "@/features/entries/entry-form";
 import { TransferForm } from "@/features/entries/transfer-form";
 import { useItemsOf } from "@/features/entries/use-entries";
 import { useEntryData } from "@/features/entries/use-entry-data";
+import { useRates } from "@/features/entries/use-rates";
 import { Screen } from "@/features/shell/screen";
 import { entryTimeZone } from "@/lib/dates";
 import { leaveTo } from "@/lib/navigation";
@@ -18,6 +19,7 @@ export default function EditEntry() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const data = useEntryData();
 	const items = useItemsOf(id);
+	const rates = useRates();
 	const entry = data?.history.find((e) => e.id === id);
 
 	// Viewers can't edit; a Balance adjustment is re-recorded, not edited. Either way, back to the Entry.
@@ -87,6 +89,7 @@ export default function EditEntry() {
 					await updateEntry(household.id, entry.id, draft, currency);
 					leaveTo(`/entries/${entry.id}`);
 				}}
+				rates={rates}
 				submitLabel={t`Save`}
 				timeZone={timeZone}
 				wallets={wallets}

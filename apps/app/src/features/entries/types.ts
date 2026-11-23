@@ -31,6 +31,11 @@ export type EntryDraft = {
 	notes: string | null;
 	/** An Expense's Items, the Rest included; they add up to `amount`. Empty when it isn't itemized. */
 	items: ItemDraft[];
+	/**
+	 * The User's own Base amount (how much, unsigned, in the Base currency) for an Entry in another currency's Wallet;
+	 * null to price it at the rates held (ADR-0005). Optional: quick-add never edits it.
+	 */
+	baseEdited?: string | null;
 };
 
 /** A Wallet as the Entry form and lists need it. */

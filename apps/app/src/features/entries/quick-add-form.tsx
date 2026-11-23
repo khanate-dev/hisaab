@@ -28,12 +28,7 @@ import { todayIn } from "@/lib/dates";
 import { formatDate, formatMoney } from "@/lib/format";
 
 import { AmountKeypad } from "./amount-keypad";
-import {
-	orNull,
-	recordableWallets,
-	repeatEntry,
-	startingWallet,
-} from "./draft";
+import { orNull, entryWallets, repeatEntry, startingWallet } from "./draft";
 import { entryKindLabel } from "./labels";
 import type { Entry, EntryDraft, WalletChoice } from "./types";
 
@@ -48,7 +43,7 @@ type Props = {
 	categories: readonly Category[];
 	/** Past Entries, for Recent chips, the category grid's order and description suggestions. */
 	history: readonly Entry[];
-	/** Entries go into Base-currency Wallets only until Base amounts land (#45); null before there is one. */
+	/** The household's Base currency, shown until a Wallet is chosen; null before there is one. Its Base amount is priced on save. */
 	baseCurrency: string | null;
 	/** The Member's default Wallet in the household: where a new one starts, when it can. */
 	defaultWalletId?: string | null;
@@ -80,7 +75,7 @@ export const QuickAddForm = ({
 	onOpenTransfer,
 }: Props) => {
 	const { t, i18n } = useLingui();
-	const recordable = recordableWallets(wallets, baseCurrency);
+	const recordable = entryWallets(wallets);
 	const [kind, setKind] = useState<FlowKind>(DEFAULT_KIND);
 	const [amount, setAmount] = useState("");
 	const [categoryId, setCategoryId] = useState("");
@@ -136,7 +131,7 @@ export const QuickAddForm = ({
 
 	/** A Recent chip or a suggestion repeats that Entry. */
 	const repeat = (past: Entry) => {
-		const filled = repeatEntry(past, categories, wallets, baseCurrency);
+		const filled = repeatEntry(past, categories, wallets);
 		setDescription(filled.description ?? "");
 		setPicked(true);
 		setAmount(filled.amount);

@@ -182,13 +182,13 @@ describe("QuickAddForm", () => {
 		});
 	});
 
-	it("moves to yesterday and another Wallet through its chips, offering only Base-currency Wallets", async () => {
+	it("moves to yesterday and another Wallet through its chips, offering Wallets in any currency", async () => {
 		const { onSubmit, tap } = await setup();
 		await tap("New entry");
 		await tap("Date: Today");
 		await tap("Yesterday", "radio");
 		await tap("Wallet: Cash");
-		expect(screen.queryByRole("radio", { name: "Dollars" })).toBeNull();
+		expect(screen.getByRole("radio", { name: "Dollars" })).toBeOnTheScreen();
 		await tap("HBL", "radio");
 		await tap("7");
 		await tap("Travel", "radio");

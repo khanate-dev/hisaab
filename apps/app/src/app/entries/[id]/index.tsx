@@ -44,6 +44,7 @@ export default function EntryScreen() {
 		<Screen title={title}>
 			<Stack.Screen options={{ title }} />
 			<EntryDetail
+				baseCurrency={household?.base_currency ?? null}
 				canEdit={canWrite}
 				onDelete={async () => {
 					await deleteEntry(view.entry.id);

@@ -45,7 +45,7 @@ const text = (value: unknown) =>
 export type ActivityLookup = {
 	wallets: ReadonlyMap<string, { name: string; currency: string }>;
 	categories: ReadonlyMap<string, string>;
-	/** Budgets are in it, and Items too until Base amounts land (#45). */
+	/** Budgets and Base amounts are in it. */
 	baseCurrency: string | null;
 };
 

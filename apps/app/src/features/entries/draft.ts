@@ -17,9 +17,13 @@ import type { Entry, EntryDraft, WalletChoice } from "./types";
 export const orNull = (text: string) =>
 	text.trim() === "" ? null : text.trim();
 
+/** The Wallets a new Expense or Income can go into: every active one, in any currency (its Base amount, ADR-0005). */
+export const entryWallets = (wallets: readonly WalletChoice[]) =>
+	wallets.filter((w) => w.archived_at === null);
+
 /**
- * The Wallets a new Entry can go into: active ones, in the household's Base currency until Base amounts land (#45,
- * ADR-0005). Null before the household has a Base currency.
+ * The Wallets a Transfer, Loan or Recurring rule can use: active ones in the household's Base currency, until those
+ * take other currencies too (#46). Null before the household has a Base currency.
  */
 export const recordableWallets = (
 	wallets: readonly WalletChoice[],
@@ -46,15 +50,12 @@ export const repeatEntry = (
 	past: Entry,
 	categories: readonly Category[],
 	wallets: readonly WalletChoice[],
-	baseCurrency: string | null,
 ): Pick<EntryDraft, "description" | "amount" | "categoryId"> & {
 	walletId?: string;
 } => {
 	const category = categories.find((c) => c.id === past.category_id);
 	const pastWallet = wallets.find((w) => w.id === past.wallet_id);
-	const usable = recordableWallets(wallets, baseCurrency).some(
-		(w) => w.id === pastWallet?.id,
-	);
+	const usable = entryWallets(wallets).some((w) => w.id === pastWallet?.id);
 	return {
 		description: past.description,
 		amount: pastWallet

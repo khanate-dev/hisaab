@@ -1,10 +1,13 @@
 import {
 	entries,
 	entryItems,
+	exchangeRates,
+	households,
 	stamped,
 	stampedDelete,
 } from "@hisaab/client-schema";
 import {
+	baseAmountOf,
 	householdTransferHalves,
 	magnitude,
 	type Money,
@@ -12,7 +15,7 @@ import {
 	parseMoney,
 	signedAmount,
 } from "@hisaab/domain";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/ids";
@@ -36,6 +39,52 @@ const columns = (draft: EntryDraft, currency: string) => ({
 	description: draft.description,
 	notes: draft.notes,
 });
+
+/**
+ * A draft's Base amount (ADR-0005), when its Wallet isn't in the household's Base currency: the User's own figure if
+ * they edited it, else priced at the rates this device holds, market or estimated. The server sets the market figure
+ * whenever it holds the date's rates, so this is what shows until then.
+ */
+const baseColumns = async (
+	tx: Transaction,
+	householdId: string,
+	draft: EntryDraft,
+	currency: string,
+) => {
+	const [household] = await tx
+		.select({ baseCurrency: households.base_currency })
+		.from(households)
+		.where(eq(households.id, householdId));
+	const baseCurrency = household?.baseCurrency;
+	if (!baseCurrency || baseCurrency === currency)
+		return { base_amount: null, base_rate: null };
+	if (draft.baseEdited)
+		return {
+			base_amount: signedAmount(
+				draft.kind,
+				parseMoney(draft.baseEdited, baseCurrency),
+			).toString(),
+			base_rate: "edited" as const,
+		};
+	const rates = await tx
+		.select({
+			on_date: exchangeRates.on_date,
+			currency: exchangeRates.currency,
+			per_usd: exchangeRates.per_usd,
+		})
+		.from(exchangeRates)
+		.where(inArray(exchangeRates.currency, [currency, baseCurrency]));
+	const priced = baseAmountOf({
+		amount: signedAmount(draft.kind, parseMoney(draft.amount, currency)),
+		baseCurrency,
+		date: draft.occurredOn,
+		rates,
+	});
+	return {
+		base_amount: priced?.amount?.toString() ?? null,
+		base_rate: priced?.rate ?? null,
+	};
+};
 
 /**
  * An Entry's Items as the draft has them, kept by id: changed ones updated, new ones added, dropped ones removed, so
@@ -96,11 +145,13 @@ export const createEntry = async (
 ) => {
 	const id = newId();
 	await db.transaction(async (tx) => {
+		const base = await baseColumns(tx, householdId, draft, currency);
 		await tx.insert(entries).values(
 			stamped({
 				id,
 				household_id: householdId,
 				...columns(draft, currency),
+				...base,
 				created_by: userId,
 				created_at: nowIso(),
 			}),
@@ -117,9 +168,10 @@ export const updateEntry = async (
 	currency: string,
 ) => {
 	await db.transaction(async (tx) => {
+		const base = await baseColumns(tx, householdId, draft, currency);
 		await tx
 			.update(entries)
-			.set(stamped(columns(draft, currency)))
+			.set(stamped({ ...columns(draft, currency), ...base }))
 			.where(eq(entries.id, entryId));
 		await writeItems(tx, householdId, entryId, draft, currency);
 	});
