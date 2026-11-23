@@ -1,10 +1,11 @@
+import Decimal from "decimal.js";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { budgetMonthOf, budgetMonthRange, shiftBudgetMonth } from "./budgets";
 import type { CategoryLike } from "./categories";
 import { shiftCalendarDate } from "./dates";
-import { parseMoney, sumMoney } from "./money";
+import { currencyDecimals, parseMoney, sumMoney } from "./money";
 import {
 	averageBasis,
 	drillDown,
@@ -15,7 +16,7 @@ import {
 	reportPeriod,
 	spendingByCategory,
 } from "./reports";
-import { matchesFilter } from "./search";
+import { matchesFilter, readSavedCriteria, writeSavedCriteria } from "./search";
 
 const category = (
 	id: string,
@@ -94,6 +95,57 @@ describe("report periods", () => {
 					expect(period.months.at(-1)).toBe(
 						preset === "last_month" ? shiftBudgetMonth(current, -1) : current,
 					);
+				},
+			),
+		);
+	});
+});
+
+describe("Money.dividedInto", () => {
+	it("is within half a minor unit of the exact share, and n of it come back within n half-units", () => {
+		fc.assert(
+			fc.property(
+				fc.integer({ min: -10_000_000, max: 10_000_000 }),
+				fc.integer({ min: 1, max: 12 }),
+				fc.constantFrom("PKR", "JPY", "KWD"),
+				(units, count, code) => {
+					const decimals = currencyDecimals(code);
+					const amount = parseMoney(
+						(units / 10 ** decimals).toFixed(decimals),
+						code,
+					);
+					const back = new Decimal(amount.dividedInto(count).toString()).times(
+						count,
+					);
+					// Within count half-units: the rounding of each share, added up.
+					expect(
+						back
+							.minus(amount.toString())
+							.abs()
+							.lte(new Decimal(10).pow(-decimals).times(count).dividedBy(2)),
+					).toBe(true);
+				},
+			),
+		);
+	});
+});
+
+describe("drillDown", () => {
+	it("goes to the Entries list and back unchanged, as a Saved filter's criteria", () => {
+		fc.assert(
+			fc.property(
+				fc.constantFrom(...REPORT_PRESETS),
+				day,
+				fc.array(fc.constantFrom("u1", "u2"), { maxLength: 2 }),
+				fc.option(fc.constantFrom("food", "fuel"), { nil: undefined }),
+				(preset, today, members, categoryId) => {
+					const filter = drillDown({
+						period: reportPeriod(preset, today, 1),
+						kinds: ["expense"],
+						members,
+						...(categoryId !== undefined && { categoryId }),
+					});
+					expect(readSavedCriteria(writeSavedCriteria(filter))).toEqual(filter);
 				},
 			),
 		);

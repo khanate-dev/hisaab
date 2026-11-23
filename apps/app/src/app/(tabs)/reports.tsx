@@ -13,6 +13,7 @@ import { useCategories } from "@/features/categories/use-categories";
 import { useEntries, useEntryItems } from "@/features/entries/use-entries";
 import { useCurrentHousehold } from "@/features/households/use-current-household";
 import { useMembers } from "@/features/members/use-members";
+import { usePeopleNames } from "@/features/members/use-people-names";
 import {
 	DEFAULT_SETTINGS,
 	ReportControls,
@@ -39,6 +40,18 @@ export default function Reports() {
 	const items = useEntryItems(household?.id);
 	const categories = useCategories(household?.id);
 	const members = useMembers(household?.id);
+	const names = usePeopleNames();
+	// Whose Entries can be picked: the household's members, and whoever recorded any of its Entries (a Former member).
+	const recorders = useMemo(() => {
+		if (!members || !entries) return undefined;
+		const ids = [
+			...new Set([
+				...members.map((m) => m.userId),
+				...entries.map((e) => e.created_by),
+			]),
+		];
+		return ids.map((id) => ({ userId: id, name: names.get(id) ?? t`Someone` }));
+	}, [members, entries, names, t]);
 	// Back to the defaults in another household.
 	const [chosen, setChosen] = useState({
 		householdId: household?.id,
@@ -90,12 +103,9 @@ export default function Reports() {
 	return (
 		<Screen title={t`Reports`}>
 			<Text variant="title">{t`Spending by category`}</Text>
-			{members && (
+			{recorders && (
 				<ReportControls
-					members={members.map((m) => ({
-						userId: m.userId,
-						name: m.name ?? t`Someone`,
-					}))}
+					members={recorders}
 					onChange={choose}
 					settings={settings}
 				/>
@@ -107,6 +117,9 @@ export default function Reports() {
 						router.push({
 							pathname: "/entries",
 							params: {
+								household: household?.id ?? "",
+								// Fresh each time, so the same figure opens filtered again after the filter was cleared.
+								drilled: String(Date.now()),
 								filter: writeSavedCriteria(
 									drillDown({
 										period,
@@ -119,6 +132,7 @@ export default function Reports() {
 						})
 					}
 					report={report}
+					today={today ?? ""}
 				/>
 			)}
 		</Screen>

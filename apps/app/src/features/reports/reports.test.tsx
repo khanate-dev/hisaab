@@ -60,6 +60,7 @@ describe("SpendingByCategoryReport", () => {
 				comparison="previous"
 				onDrillDown={() => {}}
 				report={report}
+				today="2026-09-15"
 			/>,
 		);
 		expect(
@@ -96,12 +97,61 @@ describe("SpendingByCategoryReport", () => {
 				comparison="average"
 				onDrillDown={onDrillDown}
 				report={report}
+				today="2026-09-15"
 			/>,
 		);
 		await user.press(screen.getByRole("button", { name: "Snacks" }));
 		expect(onDrillDown).toHaveBeenLastCalledWith("snacks");
 		await user.press(screen.getByRole("button", { name: "Total spent" }));
 		expect(onDrillDown).toHaveBeenLastCalledWith();
+	});
+});
+
+describe("SpendingByCategoryReport notes", () => {
+	it("says a period running past today is so far, and counts Expenses not priced yet even with none counted", async () => {
+		const unpriced = spendingByCategory({
+			entries: [
+				{
+					...expense("e9", "10", "food", "2026-08-10"),
+					base_amount: null,
+					base_rate: "estimated",
+				},
+			],
+			items: [],
+			categories,
+			members: [],
+			period: periodEnding("2026-08", 1, 1),
+			startDay: 1,
+			currency: "PKR",
+		});
+		await render(
+			<SpendingByCategoryReport
+				comparison="previous"
+				onDrillDown={() => {}}
+				report={unpriced}
+				today="2026-08-20"
+			/>,
+		);
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"No Expenses in this period.",
+		);
+		expect(
+			screen.getByText(/1 Expense in another currency isn't counted yet/),
+		).toBeOnTheScreen();
+	});
+
+	it("says so when the period runs past today", async () => {
+		await render(
+			<SpendingByCategoryReport
+				comparison="previous"
+				onDrillDown={() => {}}
+				report={report}
+				today="2026-08-20"
+			/>,
+		);
+		expect(
+			screen.getByText("So far: the period runs past today."),
+		).toBeOnTheScreen();
 	});
 });
 

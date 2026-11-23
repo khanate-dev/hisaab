@@ -2743,6 +2743,10 @@ msgstr "Show archived Categories"
 msgid "Show archived Wallets"
 msgstr "Show archived Wallets"
 
+#: src/app/(tabs)/entries.tsx
+msgid "Show every Entry"
+msgstr "Show every Entry"
+
 #: src/features/import/import-wizard.tsx
 msgid "Show more rows"
 msgstr "Show more rows"
@@ -2793,6 +2797,10 @@ msgstr "Snooze"
 #: src/features/recurring/pending-list.tsx
 msgid "Snooze {name} due {dueDate}"
 msgstr "Snooze {name} due {dueDate}"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "So far: the period runs past today."
+msgstr "So far: the period runs past today."
 
 #: src/features/entries/entry-list.tsx
 #: src/features/loans/loan-detail.tsx
@@ -3349,6 +3357,10 @@ msgstr "We emailed a code to {email}."
 msgid "Weekly"
 msgstr "Weekly"
 
+#: src/app/(tabs)/entries.tsx
+msgid "What a report counted"
+msgstr "What a report counted"
+
 #: src/features/entries/transfer-form.tsx
 msgid "What actually arrived."
 msgstr "What actually arrived."
@@ -3388,6 +3400,10 @@ msgstr "Who helps run it"
 #: src/features/legal/privacy-policy.tsx
 msgid "Who sees it"
 msgstr "Who sees it"
+
+#: src/app/(tabs)/entries.tsx
+msgid "Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount."
+msgstr "Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount."
 
 #: src/features/search/entry-search.tsx
 msgid "Words, or amounts like 2500 or >2000."

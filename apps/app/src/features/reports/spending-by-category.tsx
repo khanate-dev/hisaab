@@ -40,9 +40,12 @@ export const SpendingByCategoryReport = <T extends Category>({
 	report,
 	comparison,
 	onDrillDown,
+	today,
 }: {
 	report: SpendingByCategory<T>;
 	comparison: Comparison;
+	/** The household's today: a period running past it is only so far. */
+	today: string;
 	/** Opens the Entries a figure counts: one Category's, or all of them. */
 	onDrillDown: (categoryId?: string) => void;
 }) => {
@@ -58,14 +61,23 @@ export const SpendingByCategoryReport = <T extends Category>({
 	const spent = report.lines.filter((line) => !isZero(line.amount));
 	const { unpriced } = report;
 
+	const unpricedNote =
+		unpriced > 0 ? (
+			<Text variant="muted">
+				{t`${plural(unpriced, { one: "# Expense in another currency isn't", other: "# Expenses in other currencies aren't" })} counted yet: no exchange rate is held for ${plural(unpriced, { one: "its date", other: "their dates" })}.`}
+			</Text>
+		) : null;
 	if (report.lines.length === 0)
 		return (
-			<Text
-				role="status"
-				variant="muted"
-			>
-				{t`No Expenses in this period.`}
-			</Text>
+			<View className="gap-2">
+				<Text
+					role="status"
+					variant="muted"
+				>
+					{t`No Expenses in this period.`}
+				</Text>
+				{unpricedNote}
+			</View>
 		);
 
 	return (
@@ -81,6 +93,9 @@ export const SpendingByCategoryReport = <T extends Category>({
 				<Text variant="muted">{t`Total spent`}</Text>
 				<Text variant="figure">{total}</Text>
 				<Text variant="muted">{totalAgainst}</Text>
+				{report.period.last > today && (
+					<Text variant="muted">{t`So far: the period runs past today.`}</Text>
+				)}
 			</Pressable>
 			<BarChart
 				bars={[
@@ -103,11 +118,7 @@ export const SpendingByCategoryReport = <T extends Category>({
 				}))}
 				title={t`Spending by category`}
 			/>
-			{report.unpriced > 0 && (
-				<Text variant="muted">
-					{t`${plural(unpriced, { one: "# Expense in another currency isn't", other: "# Expenses in other currencies aren't" })} counted yet: no exchange rate is held for ${plural(unpriced, { one: "its date", other: "their dates" })}.`}
-				</Text>
-			)}
+			{unpricedNote}
 			<View role="list">
 				{report.lines.map((line) => {
 					const name = line.category.name;

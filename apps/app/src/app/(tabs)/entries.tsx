@@ -230,7 +230,16 @@ export default function Entries() {
 	const household = useCurrentHousehold(userId);
 	const canWrite = useCanWrite(household?.id, userId) === true;
 	// A report's figure opens the Entries it counts: `filter` holds them as a Saved filter's criteria do.
-	const { filter: drilled } = useLocalSearchParams<{ filter?: string }>();
+	const params = useLocalSearchParams<{
+		filter?: string;
+		household?: string;
+		drilled?: string;
+	}>();
+	// Only for the household it was made in: another one's Categories and members would match nothing.
+	const drilled =
+		params.filter && params.household === household?.id
+			? params.filter
+			: undefined;
 
 	return (
 		<Screen title={t`Entries`}>
@@ -253,11 +262,34 @@ export default function Entries() {
 					</Button>
 				</View>
 			)}
+			{drilled !== undefined && (
+				<View
+					className="gap-2 rounded-control border-2 border-border p-3"
+					role="status"
+				>
+					<Text variant="label">{t`What a report counted`}</Text>
+					<Text variant="muted">
+						{t`Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount.`}
+					</Text>
+					<Button
+						onPress={() =>
+							router.setParams({
+								filter: undefined,
+								household: undefined,
+								drilled: undefined,
+							})
+						}
+						variant="secondary"
+					>
+						{t`Show every Entry`}
+					</Button>
+				</View>
+			)}
 			{household && (
 				<SearchableEntries
 					householdId={household.id}
 					initial={drilled ? readSavedCriteria(drilled) : NO_FILTER}
-					key={`${household.id} ${drilled ?? ""}`}
+					key={`${household.id} ${drilled ? (params.drilled ?? "") : ""}`}
 					startDay={household.budget_month_start_day}
 					today={todayIn(entryTimeZone(household))}
 					userId={userId}
