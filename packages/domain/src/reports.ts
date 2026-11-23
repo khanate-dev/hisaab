@@ -15,6 +15,7 @@ import {
 	shiftBudgetMonth,
 } from "./budgets";
 import type { CategoryLike } from "./categories";
+import { calendarDateIn } from "./dates";
 import { isFlowKind, magnitude } from "./entries";
 import { isSettled, type LoanDirection, loanOutstanding } from "./loans";
 import { addMoney, type Money, negateMoney, zeroMoney } from "./money";
@@ -577,9 +578,12 @@ export const netWorth = <W extends { id: string; currency: string }>({
 				month: range.month,
 				total: asOf(until(range.last, today)).total,
 			})),
-		previous: asOf(previousPeriod(period, startDay).last).total,
+		previous: asOf(until(previousPeriod(period, startDay).last, today)).total,
 		average: basis.months
-			.map((month) => asOf(budgetMonthRange(month, startDay).last).total)
+			.map(
+				(month) =>
+					asOf(until(budgetMonthRange(month, startDay).last, today)).total,
+			)
 			.reduce<Money>(addMoney, zero)
 			.dividedInto(3),
 	};
@@ -596,7 +600,8 @@ export type LoanWorth<L> = {
 /**
  * Loans summary (spec §3.5): what's still owed to the household (Lent) and by it (Borrowed) at the period's end, or
  * today while it runs, Loan by Loan, converted at the latest rates; against the previous period's end and the average
- * of the three month-ends before. A Loan written off by then, or settled, isn't outstanding.
+ * of the three month-ends before. A Loan written off by then (in the household's timezone), or settled, isn't
+ * outstanding. The members filter picks Loans by who recorded the principal; each counts all its Entries.
  */
 export const loansSummary = <
 	L extends {
@@ -614,6 +619,7 @@ export const loansSummary = <
 	currency,
 	rates,
 	today,
+	timeZone,
 }: {
 	loans: readonly L[];
 	entries: readonly (ReportEntry & {
@@ -627,13 +633,21 @@ export const loansSummary = <
 	currency: string;
 	rates: readonly RateRow[];
 	today: string;
+	/** The household's: when a write-off happened is its date there. */
+	timeZone: string;
 }) => {
-	const mine = byMembers(entries, members);
 	const zero = zeroMoney(currency);
+	const picked = new Set(
+		byMembers(
+			entries.filter((entry) => entry.kind === "loan_principal"),
+			members,
+		).map((entry) => entry.loan_id),
+	);
 	const currencyOf = new Map(wallets.map((w) => [w.id, w.currency]));
 	const asOf = (date: string) => {
 		const open = loans.flatMap((loan): LoanWorth<L>[] => {
-			const own = mine.filter(
+			if (!picked.has(loan.id)) return [];
+			const own = entries.filter(
 				(entry) => entry.loan_id === loan.id && entry.occurred_on <= date,
 			);
 			const principal = own.find((entry) => entry.kind === "loan_principal");
@@ -642,7 +656,7 @@ export const loansSummary = <
 			const outstanding = loanOutstanding(loan.direction, loanCurrency, own);
 			const writtenOff =
 				loan.written_off_at !== null &&
-				loan.written_off_at.slice(0, 10) <= date;
+				calendarDateIn(new Date(loan.written_off_at), timeZone) <= date;
 			if (isSettled(outstanding, writtenOff)) return [];
 			return [
 				{
@@ -664,9 +678,9 @@ export const loansSummary = <
 		return { open, lent: total("lent"), borrowed: total("borrowed") };
 	};
 	const end = asOf(until(period.last, today));
-	const before = asOf(previousPeriod(period, startDay).last);
+	const before = asOf(until(previousPeriod(period, startDay).last, today));
 	const basis = averageBasis(period, startDay).months.map((month) =>
-		asOf(budgetMonthRange(month, startDay).last),
+		asOf(until(budgetMonthRange(month, startDay).last, today)),
 	);
 	const average = (pick: (at: { lent: Money; borrowed: Money }) => Money) =>
 		basis.map(pick).reduce<Money>(addMoney, zero).dividedInto(3);
@@ -699,19 +713,18 @@ export const drillToBalances = ({
 
 const LOAN_KINDS = ["loan_principal", "repayment"];
 
-/** Where a Loan's outstanding amount drills down to: its principal and Repayments, by Contact, up to its date. */
+/**
+ * Where a Loan's outstanding amount drills down to: these Loans' principals and Repayments up to its date, whoever
+ * recorded them (a Loan counts all its Entries).
+ */
 export const drillToLoans = ({
-	contactIds,
+	loanIds,
 	until: last,
-	members,
 }: {
-	contactIds: readonly string[];
+	loanIds: readonly string[];
 	until: string;
-	members: readonly string[];
-}): EntryFilter => ({
-	...NO_FILTER,
-	kinds: LOAN_KINDS,
-	contactIds,
-	memberIds: members,
-	to: last,
-});
+}): EntryFilter => ({ ...NO_FILTER, kinds: LOAN_KINDS, loanIds, to: last });
+
+/** The earlier of a period's last day and today: where a report's figures stand. */
+export const standingDate = (period: ReportPeriod, today: string) =>
+	until(period.last, today);

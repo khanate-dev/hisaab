@@ -2393,6 +2393,10 @@ msgstr "Only Admins and Members change Recurring rules."
 msgid "Only Admins change these."
 msgstr "Only Admins change these."
 
+#: src/features/reports/net-worth.tsx
+msgid "Only the picked members' Entries count, so each Balance is what theirs came to."
+msgstr "Only the picked members' Entries count, so each Balance is what theirs came to."
+
 #: src/features/entries/entry-detail.tsx
 msgid "Only whoever made this cross-household transfer changes it."
 msgstr "Only whoever made this cross-household transfer changes it."

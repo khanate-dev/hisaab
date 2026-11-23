@@ -13,6 +13,7 @@ import {
 	type ReportPeriod,
 	reportPeriod,
 	spendingByCategory,
+	standingDate,
 	writeSavedCriteria,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
@@ -176,9 +177,10 @@ export default function Reports() {
 						wallets,
 						rates,
 						today,
+						timeZone: entryTimeZone(household),
 					})
 				: undefined,
-		[scope, wallets, rates, today, loans],
+		[scope, wallets, rates, today, loans, household],
 	);
 	const contactName = (contactId: string) =>
 		loans?.find((view) => view.contact?.id === contactId)?.contact?.name ??
@@ -323,15 +325,13 @@ export default function Reports() {
 			{ready && worth && state.report === "worth" && (
 				<NetWorthReport
 					comparison={settings.comparison}
+					partial={settings.members.length > 0}
 					monthStart={monthStart}
 					onDrillDown={(walletId) =>
 						show(
 							drillToBalances({
 								walletIds: walletId === undefined ? [] : [walletId],
-								until:
-									ready.period.last < ready.today
-										? ready.period.last
-										: ready.today,
+								until: standingDate(ready.period, ready.today),
 								members: settings.members,
 							}),
 						)
@@ -343,15 +343,11 @@ export default function Reports() {
 				<LoansSummaryReport
 					comparison={settings.comparison}
 					contactName={contactName}
-					onDrillDown={(contactIds) =>
+					onDrillDown={(loanIds) =>
 						show(
 							drillToLoans({
-								contactIds,
-								until:
-									ready.period.last < ready.today
-										? ready.period.last
-										: ready.today,
-								members: settings.members,
+								loanIds,
+								until: standingDate(ready.period, ready.today),
 							}),
 						)
 					}

@@ -83,7 +83,7 @@ The terms are defined in [`CONTEXT.md`](../CONTEXT.md). The load-bearing rules:
 - **Six reports:** Spending by category, Budget vs actual (with **Pace**), Income vs expense, Category trend, Net worth, Loans summary.
   - All have a by-member filter, Budget-month range presets, and comparisons vs the previous period and vs the 3-month average.
   - Every number drills down to its Entries.
-  - Reports exclude Balance adjustments and Pending Occurrences.
+  - Money-flow reports exclude Balance adjustments and Pending Occurrences. Net worth and the Loans summary are Balances, so they count Balance adjustments.
 - **My overview** is computed on the device across all of a user's households. Cross-household pairs cancel out.
 - **Seven notification triggers:** Recurring due, Auto-recorded, Budget threshold (80% and 100%), Loan due, Household activity digest, Membership, Monthly summary.
   - Preferences are per user × household × trigger.

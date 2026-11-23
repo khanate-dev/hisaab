@@ -38,6 +38,7 @@ const searchable: fc.Arbitrary<Searchable> = fc.record({
 	categoryIds: fc.subarray(["food", "groceries", "rent"]),
 	currencies: fc.subarray(["PKR", "USD"], { minLength: 1 }),
 	contactIds: fc.subarray(["k1", "k2"], { maxLength: 1 }),
+	loanIds: fc.subarray(["l1", "l2"], { maxLength: 1 }),
 	createdBy: fc.constantFrom("u1", "u2"),
 	occurredOn: fc.constantFrom(
 		"2026-09-30",
@@ -73,6 +74,7 @@ const filter: fc.Arbitrary<EntryFilter> = fc.record({
 	categoryIds: fc.subarray(["food", "groceries", "rent"]),
 	currencies: fc.subarray(["PKR", "USD"]),
 	contactIds: fc.subarray(["k1", "k2"]),
+	loanIds: fc.subarray(["l1", "l2"]),
 	memberIds: fc.subarray(["u1", "u2"]),
 	from: fc.constantFrom(null, "2026-10-01"),
 	to: fc.constantFrom(null, "2026-10-15"),
@@ -212,6 +214,7 @@ describe("matchesFilter", () => {
 					{ ...NO_FILTER, categoryIds: f.categoryIds },
 					{ ...NO_FILTER, currencies: f.currencies },
 					{ ...NO_FILTER, contactIds: f.contactIds },
+					{ ...NO_FILTER, loanIds: f.loanIds },
 					{ ...NO_FILTER, memberIds: f.memberIds },
 					{ ...NO_FILTER, from: f.from, to: f.to },
 				];

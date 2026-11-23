@@ -651,6 +651,7 @@ describe("loansSummary", () => {
 			currency: "PKR",
 			rates: [],
 			today: "2026-09-02",
+			timeZone: "Asia/Karachi",
 		});
 		expect(
 			summary.loans.map((l) => [l.loan.id, l.outstanding.toString()]),
@@ -669,6 +670,24 @@ describe("loansSummary", () => {
 		]).toEqual(["1300", "0"]);
 	});
 
+	it("dates a write-off in the household's timezone", () => {
+		const summary = (today: string) =>
+			loansSummary({
+				loans: [loan("l1", "lent", "2026-07-31T21:00:00Z")],
+				entries: [entry("a", "l1", "loan_principal", "-500", "2026-06-01")],
+				wallets: [{ id: "w1", currency: "PKR" }],
+				members: [],
+				period: periodEnding("2026-07", 1, 1),
+				startDay: 1,
+				currency: "PKR",
+				rates: [],
+				today,
+				timeZone: "Asia/Karachi",
+			});
+		// 21:00 UTC on July 31 is August 1 in Karachi: still owed at July's end.
+		expect(summary("2026-09-01").lent.toString()).toBe("500");
+	});
+
 	it("adds the Loans up to its totals, member by member", () => {
 		fc.assert(
 			fc.property(
@@ -680,6 +699,7 @@ describe("loansSummary", () => {
 						principal: fc.integer({ min: 1, max: 100_000 }),
 						repaid: fc.integer({ min: 0, max: 100_000 }),
 						by: fc.constantFrom("u1", "u2"),
+						repaidBy: fc.constantFrom("u1", "u2"),
 					}),
 					{ maxLength: 8 },
 				),
@@ -706,7 +726,7 @@ describe("loansSummary", () => {
 									String(-sign * Math.min(s.repaid, s.principal)),
 									"2026-08-02",
 								),
-								created_by: s.by,
+								created_by: s.repaidBy,
 							},
 						];
 					});
@@ -721,6 +741,7 @@ describe("loansSummary", () => {
 							currency: "PKR",
 							rates: [],
 							today: "2026-09-02",
+							timeZone: "Asia/Karachi",
 						});
 					const all = at([]);
 					expect(

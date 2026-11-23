@@ -27,7 +27,10 @@ export const NetWorthReport = <W extends Wallet>({
 	comparison,
 	monthStart,
 	onDrillDown,
+	partial,
 }: {
+	/** Counting only some members' Entries: each Wallet's Balance is only theirs. */
+	partial: boolean;
 	report: {
 		total: Money;
 		previous: Money;
@@ -66,6 +69,11 @@ export const NetWorthReport = <W extends Wallet>({
 				<Text variant="figure">{total}</Text>
 				<Text variant="muted">{versus}</Text>
 			</Pressable>
+			{partial && (
+				<Text variant="muted">
+					{t`Only the picked members' Entries count, so each Balance is what theirs came to.`}
+				</Text>
+			)}
 			{unconverted > 0 && (
 				<Text variant="muted">
 					{t`${plural(unconverted, { one: "# Wallet isn't", other: "# Wallets aren't" })} counted: no exchange rate is held for ${plural(unconverted, { one: "its currency", other: "their currencies" })} yet.`}

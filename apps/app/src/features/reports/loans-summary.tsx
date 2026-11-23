@@ -29,8 +29,8 @@ export const LoansSummaryReport = <L extends Loan>({
 	};
 	comparison: Comparison;
 	contactName: (contactId: string) => string;
-	/** Opens the Loan Entries: with these Contacts, or every Loan's of a direction. */
-	onDrillDown: (contactIds: string[]) => void;
+	/** Opens these Loans' principals and Repayments. */
+	onDrillDown: (loanIds: string[]) => void;
 }) => {
 	const { t } = useLingui();
 	const difference = useDifference();
@@ -63,9 +63,9 @@ export const LoansSummaryReport = <L extends Loan>({
 			{sides.map((side) => {
 				const amount = formatMoney(side.now);
 				const versus = difference(side.now, side.then);
-				const contacts = report.loans
+				const owing = report.loans
 					.filter((l) => l.loan.direction === side.key)
-					.map((l) => l.loan.contact_id);
+					.map((l) => l.loan.id);
 				return (
 					<View
 						className="gap-1"
@@ -77,8 +77,8 @@ export const LoansSummaryReport = <L extends Loan>({
 							accessibilityRole="button"
 							accessibilityValue={{ text: t`${amount}, ${versus}` }}
 							className="flex-row items-center justify-between gap-3"
-							disabled={contacts.length === 0}
-							onPress={() => onDrillDown(contacts)}
+							disabled={owing.length === 0}
+							onPress={() => onDrillDown(owing)}
 						>
 							<Text variant="label">{side.label}</Text>
 							<View className="items-end">
@@ -100,7 +100,7 @@ export const LoansSummaryReport = <L extends Loan>({
 											accessibilityValue={{ text: owed }}
 											className="flex-row justify-between border-b-2 border-border py-2 ps-3"
 											key={loan.id}
-											onPress={() => onDrillDown([loan.contact_id])}
+											onPress={() => onDrillDown([loan.id])}
 										>
 											<Text variant="muted">{name}</Text>
 											<Text variant="muted">{owed}</Text>

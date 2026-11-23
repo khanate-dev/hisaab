@@ -360,6 +360,7 @@ describe("NetWorthReport", () => {
 				comparison="previous"
 				monthStart={monthStart}
 				onDrillDown={onDrillDown}
+				partial={false}
 				report={netWorth({
 					wallets,
 					entries: [adjust("a", "w1", "5000"), adjust("b", "w2", "10")],
@@ -433,6 +434,7 @@ describe("LoansSummaryReport", () => {
 					currency: "PKR",
 					rates: [],
 					today: "2026-08-20",
+					timeZone: "Asia/Karachi",
 				})}
 			/>,
 		);
@@ -445,6 +447,6 @@ describe("LoansSummaryReport", () => {
 			text: pkr("250"),
 		});
 		await user.press(screen.getByRole("button", { name: "Ali" }));
-		expect(onDrillDown).toHaveBeenLastCalledWith(["k1"]);
+		expect(onDrillDown).toHaveBeenLastCalledWith(["l1"]);
 	});
 });
