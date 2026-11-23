@@ -7,14 +7,27 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
-#: src/features/reports/spending-by-category.tsx
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{actual} of {budget}"
+msgstr "{actual} of {budget}"
+
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{actual} of {budget}, {percent}%"
+msgstr "{actual} of {budget}, {percent}%"
+
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{actual} of {budget}, {percent}%, ahead of pace"
+msgstr "{actual} of {budget}, {percent}%, ahead of pace"
+
+#: src/features/reports/difference.ts
 msgid "{amount} less"
 msgstr "{amount} less"
 
-#: src/features/reports/spending-by-category.tsx
+#: src/features/reports/difference.ts
 msgid "{amount} more"
 msgstr "{amount} more"
 
+#: src/features/reports/income-vs-expense.tsx
 #: src/features/reports/spending-by-category.tsx
 msgid "{amount}, {versus}"
 msgstr "{amount}, {versus}"
@@ -92,6 +105,10 @@ msgstr "{label}: {amount}"
 msgid "{label}: {was} → {now}"
 msgstr "{label}: {was} → {now}"
 
+#: src/features/reports/income-vs-expense.tsx
+msgid "{left}, {leftVersus}"
+msgstr "{left}, {leftVersus}"
+
 #: src/features/loans/loan-list.tsx
 msgid "{lent}, {left} outstanding"
 msgstr "{lent}, {left} outstanding"
@@ -122,6 +139,10 @@ msgstr "{name} ({code})"
 msgid "{name} (you)"
 msgstr "{name} (you)"
 
+#: src/features/reports/income-vs-expense.tsx
+msgid "{name} in"
+msgstr "{name} in"
+
 #: src/features/notifications/inbox-list.tsx
 msgid "{name} is now {role} in {household}."
 msgstr "{name} is now {role} in {household}."
@@ -134,6 +155,10 @@ msgstr "{name} joined {household}."
 msgid "{name} left {household}."
 msgstr "{name} left {household}."
 
+#: src/features/reports/income-vs-expense.tsx
+msgid "{name} out"
+msgstr "{name} out"
+
 #: src/features/notifications/inbox-list.tsx
 msgid "{name} was removed from {household}."
 msgstr "{name} was removed from {household}."
@@ -141,6 +166,10 @@ msgstr "{name} was removed from {household}."
 #: src/features/households/household-list.tsx
 msgid "{name}, {role}"
 msgstr "{name}, {role}"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "{name}, came in"
+msgstr "{name}, came in"
 
 #: src/features/recurring/pending-list.tsx
 msgid "{name}, due {dueDate}"
@@ -157,6 +186,10 @@ msgstr "{name}, in {parentName}"
 #: src/features/categories/category-list.tsx
 msgid "{name}, under {parentName}"
 msgstr "{name}, under {parentName}"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "{name}, went out"
+msgstr "{name}, went out"
 
 #: src/features/budgets/budgets-tile.tsx
 msgid "{name}: {spent} of {of}"
@@ -193,6 +226,10 @@ msgstr "{parentName} › {categoryName} · {walletName}"
 msgid "{parentName} › {name}"
 msgstr "{parentName} › {name}"
 
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{percent}%"
+msgstr "{percent}%"
+
 #: src/features/budgets/budget-month.tsx
 msgid "{percent}% received"
 msgstr "{percent}% received"
@@ -200,6 +237,10 @@ msgstr "{percent}% received"
 #: src/features/budgets/budget-month.tsx
 msgid "{percent}% spent"
 msgstr "{percent}% spent"
+
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{percent}%, ahead of pace"
+msgstr "{percent}%, ahead of pace"
 
 #: src/features/reports/report-controls.tsx
 msgid "{range}, {comparison}"
@@ -245,6 +286,10 @@ msgstr "{shown} of {total} Entries"
 msgid "{shown}, {role}"
 msgstr "{shown}, {role}"
 
+#: src/features/reports/budget-vs-actual.tsx
+msgid "{status}, {versus}"
+msgstr "{status}, {versus}"
+
 #: src/features/invites/invite-list.tsx
 msgid "{summary}: {closed}"
 msgstr "{summary}: {closed}"
@@ -260,6 +305,10 @@ msgstr "{toCode} has no decimals."
 #: src/features/reports/spending-by-category.tsx
 msgid "{total}, {totalAgainst}"
 msgstr "{total}, {totalAgainst}"
+
+#: src/features/reports/category-trend.tsx
+msgid "{total}, {versus}"
+msgstr "{total}, {versus}"
 
 #: src/features/reports/spending-by-category.tsx
 msgid "{unpriced, plural, one {# Expense in another currency isn't} other {# Expenses in other currencies aren't}} counted yet: no exchange rate is held for {unpriced, plural, one {its date} other {their dates}}."
@@ -740,6 +789,10 @@ msgstr "Budget month starts on day {startDay}"
 msgid "Budget threshold"
 msgstr "Budget threshold"
 
+#: src/features/reports/labels.ts
+msgid "Budget vs actual"
+msgstr "Budget vs actual"
+
 #: src/app/(tabs)/budgets.tsx
 #: src/features/budgets/budget-month.tsx
 #: src/features/budgets/budgets-tile.tsx
@@ -758,6 +811,10 @@ msgstr "Budgets are in the household's Base currency, which its first Wallet set
 #: src/features/categories/labels.ts
 msgid "Bus"
 msgstr "Bus"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "Came in"
+msgstr "Came in"
 
 #: src/components/ui/confirm.tsx
 #: src/features/budgets/budget-form.tsx
@@ -800,6 +857,7 @@ msgstr "Categories"
 #: src/features/entries/quick-add-form.tsx
 #: src/features/import/import-wizard.tsx
 #: src/features/recurring/rule-form.tsx
+#: src/features/reports/category-trend.tsx
 msgid "Category"
 msgstr "Category"
 
@@ -810,6 +868,10 @@ msgstr "Category (optional)"
 #: src/features/import/import-wizard.tsx
 msgid "Category for {name} on {date}: {categoryName}"
 msgstr "Category for {name} on {date}: {categoryName}"
+
+#: src/features/reports/labels.ts
+msgid "Category trend"
+msgstr "Category trend"
 
 #: src/features/budgets/budget-month.tsx
 #: src/features/entries/base-amount.tsx
@@ -1053,6 +1115,10 @@ msgstr "day {day} of {days}, {percent}% received"
 msgid "day {day} of {days}, {percent}% spent"
 msgstr "day {day} of {days}, {percent}% spent"
 
+#: src/features/reports/budget-vs-actual.tsx
+msgid "Day {day} of {days}."
+msgstr "Day {day} of {days}."
+
 #: src/features/recurring/rule-form.tsx
 msgid "Day of the month"
 msgstr "Day of the month"
@@ -1219,6 +1285,10 @@ msgstr "Due {due}"
 #: src/features/recurring/pending-list.tsx
 msgid "Due {dueDate} · {howMuch}"
 msgstr "Due {dueDate} · {howMuch}"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "Each month, in and out"
+msgstr "Each month, in and out"
 
 #: src/features/entries/entry-form.tsx
 msgid "Earlier Entries like this"
@@ -1647,6 +1717,10 @@ msgstr "Includes its Subcategories"
 msgid "Income"
 msgstr "Income"
 
+#: src/features/reports/labels.ts
+msgid "Income vs expense"
+msgstr "Income vs expense"
+
 #: src/features/entries/entry-form.tsx
 #: src/features/loans/loan-form.tsx
 msgid "Into"
@@ -1826,6 +1900,10 @@ msgstr "Leave household"
 msgid "Leave it empty for a bill that varies: it's asked for when you confirm."
 msgstr "Leave it empty for a bill that varies: it's asked for when you confirm."
 
+#: src/features/reports/income-vs-expense.tsx
+msgid "Left over"
+msgstr "Left over"
+
 #: src/features/loans/labels.ts
 msgid "Lent"
 msgstr "Lent"
@@ -1964,6 +2042,10 @@ msgstr "Money out shows as positive"
 msgid "Month"
 msgstr "Month"
 
+#: src/features/reports/category-trend.tsx
+msgid "Month by month"
+msgstr "Month by month"
+
 #: src/features/recurring/labels.ts
 msgid "Monthly"
 msgstr "Monthly"
@@ -2085,6 +2167,10 @@ msgstr "No archived Categories in this list."
 #: src/features/attachments/attachment-list.tsx
 msgid "No Attachments yet."
 msgstr "No Attachments yet."
+
+#: src/features/reports/budget-vs-actual.tsx
+msgid "No Budgets in this period. Set some on the Budgets tab."
+msgstr "No Budgets in this period. Set some on the Budgets tab."
 
 #: src/features/budgets/budget-month.tsx
 msgid "No Budgets this month."
@@ -2384,6 +2470,10 @@ msgstr "Pick a Category"
 msgid "Pick a Category for {name} on {date}"
 msgstr "Pick a Category for {name} on {date}"
 
+#: src/features/reports/category-trend.tsx
+msgid "Pick a Category to follow."
+msgstr "Pick a Category to follow."
+
 #: src/features/budgets/budget-form.tsx
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/items-section.tsx
@@ -2552,6 +2642,10 @@ msgstr "Repeat every 1 to 24."
 #: src/features/recurring/rule-form.tsx
 msgid "Repeats"
 msgstr "Repeats"
+
+#: src/app/(tabs)/reports.tsx
+msgid "Report"
+msgstr "Report"
 
 #: src/app/(tabs)/reports.tsx
 #: src/features/shell/sections.ts
@@ -2755,9 +2849,20 @@ msgstr "Show more rows"
 msgid "Show older changes"
 msgstr "Show older changes"
 
+#: src/features/reports/category-trend.tsx
+#: src/features/reports/income-vs-expense.tsx
+msgid "Shows these Entries"
+msgstr "Shows these Entries"
+
+#: src/features/reports/budget-vs-actual.tsx
+#: src/features/reports/income-vs-expense.tsx
 #: src/features/reports/spending-by-category.tsx
 msgid "Shows these Expenses"
 msgstr "Shows these Expenses"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "Shows these Incomes"
+msgstr "Shows these Incomes"
 
 #: src/app/_layout.tsx
 #: src/features/auth/sign-in-form.tsx
@@ -2832,7 +2937,7 @@ msgstr "Something went wrong"
 msgid "Spending ahead of the month"
 msgstr "Spending ahead of the month"
 
-#: src/app/(tabs)/reports.tsx
+#: src/features/reports/labels.ts
 #: src/features/reports/spending-by-category.tsx
 msgid "Spending by category"
 msgstr "Spending by category"
@@ -3037,7 +3142,7 @@ msgstr "The Loan to {contact} is due today, in {household}."
 msgid "The Loan to {contact} is overdue, in {household}."
 msgstr "The Loan to {contact} is overdue, in {household}."
 
-#: src/features/reports/spending-by-category.tsx
+#: src/features/reports/difference.ts
 msgid "The same"
 msgstr "The same"
 
@@ -3188,6 +3293,7 @@ msgid "Today"
 msgstr "Today"
 
 #: src/features/entries/entry-form.tsx
+#: src/features/reports/category-trend.tsx
 msgid "Total"
 msgstr "Total"
 
@@ -3356,6 +3462,10 @@ msgstr "We emailed a code to {email}."
 #: src/features/recurring/schedule-text.ts
 msgid "Weekly"
 msgstr "Weekly"
+
+#: src/features/reports/income-vs-expense.tsx
+msgid "Went out"
+msgstr "Went out"
 
 #: src/app/(tabs)/entries.tsx
 msgid "What a report counted"

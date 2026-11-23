@@ -1,16 +1,20 @@
 import { baseValue } from "./base-amounts";
 import {
 	type BudgetMonth,
+	type BudgetOverride,
+	budgetFor,
 	budgetMonthOf,
 	budgetMonthRange,
 	type CountedEntry,
 	type CountedItem,
 	categoryTotals,
+	pace,
+	type StandingBudget,
 	shiftBudgetMonth,
 } from "./budgets";
 import type { CategoryLike } from "./categories";
-import { isFlowKind } from "./entries";
-import { addMoney, type Money, zeroMoney } from "./money";
+import { isFlowKind, magnitude } from "./entries";
+import { addMoney, type Money, negateMoney, zeroMoney } from "./money";
 import { type EntryFilter, NO_FILTER } from "./search";
 
 // Reports (spec §3.5; #50): computed on the device from synced Entries, in the household's Base currency (each Entry
@@ -219,3 +223,232 @@ export const drillDown = ({
 	from: period.first,
 	to: period.last,
 });
+
+/** Each Budget month of a period as a range of its own. */
+const monthsOf = (period: ReportPeriod, startDay: number) =>
+	period.months.map((month) => ({
+		month,
+		...budgetMonthRange(month, startDay),
+	}));
+
+/** How far through a period today is, in days: none before it, all of it after it (as Pace reads it). */
+const progress = (period: ReportPeriod, today: string) => {
+	const days =
+		Math.round(
+			(Date.parse(period.last) - Date.parse(period.first)) / 86_400_000,
+		) + 1;
+	if (today < period.first) return { day: 0, days };
+	if (today > period.last) return { day: days, days };
+	return {
+		day:
+			Math.round((Date.parse(today) - Date.parse(period.first)) / 86_400_000) +
+			1,
+		days,
+	};
+};
+
+/** One budgeted Expense Category over a period: its Budgets added up against what was spent, and its Pace. */
+export type BudgetVsActualLine<T extends CategoryLike> = {
+	category: T;
+	/** Each Budget month's Budget, added up. */
+	budget: Money;
+	/** Includes its Subcategories'. */
+	actual: Money;
+	previous: Money;
+	average: Money;
+	/** Whole percent of the Budget spent; null when it's zero. */
+	percentUsed: number | null;
+	/** More spent than the share of the period gone (Pace). */
+	ahead: boolean;
+};
+
+/**
+ * Budget vs actual (spec §3.5): every Expense Category with a Budget in any of the period's months, its Budgets added
+ * up against what was spent, with Pace through the period and both comparisons on what was spent.
+ */
+export const budgetVsActual = <T extends CategoryLike>({
+	entries,
+	items,
+	categories,
+	members,
+	period,
+	startDay,
+	currency,
+	standing,
+	overrides,
+	today,
+}: {
+	entries: readonly ReportEntry[];
+	items: readonly CountedItem[];
+	categories: readonly T[];
+	members: readonly string[];
+	period: ReportPeriod;
+	startDay: number;
+	currency: string;
+	standing: readonly StandingBudget[];
+	overrides: readonly BudgetOverride[];
+	today: string;
+}) => {
+	const spending = spendingByCategory({
+		entries,
+		items,
+		categories,
+		members,
+		period,
+		startDay,
+		currency,
+	});
+	const mine = byMembers(entries, members).filter((e) => e.kind === "expense");
+	const parentOf = new Map(categories.map((c) => [c.id, c.parent_id]));
+	const totals = (range: ReportPeriod) =>
+		categoryTotals(mine, items, parentOf, range, currency);
+	const now = totals(period);
+	const before = totals(previousPeriod(period, startDay));
+	const basis = totals(averageBasis(period, startDay));
+	const zero = zeroMoney(currency);
+	const { day, days } = progress(period, today);
+	const lines = categories
+		.filter((c) => c.kind === "expense")
+		.flatMap((category): BudgetVsActualLine<T>[] => {
+			const monthly = period.months.map((month) =>
+				budgetFor(category.id, month, standing, overrides, currency),
+			);
+			if (monthly.every((b) => b === null)) return [];
+			const budget = monthly.reduce<Money>(
+				(sum, b) => addMoney(sum, b ?? zero),
+				zero,
+			);
+			const actual = now.get(category.id) ?? zero;
+			const { percentUsed, ahead } = pace(actual, budget, day, days);
+			return [
+				{
+					category,
+					budget,
+					actual,
+					previous: before.get(category.id) ?? zero,
+					average: (basis.get(category.id) ?? zero)
+						.times(period.months.length)
+						.dividedInto(3),
+					percentUsed,
+					ahead,
+				},
+			];
+		});
+	return { period, currency, day, days, lines, unpriced: spending.unpriced };
+};
+
+/** What came in and went out in one Budget month. */
+export type FlowMonth = {
+	month: BudgetMonth;
+	income: Money;
+	expense: Money;
+	net: Money;
+};
+
+/** Expenses and Incomes over a range, each at its Base value; one without a Base amount yet counts nowhere. */
+const flows = (
+	entries: readonly ReportEntry[],
+	range: { first: string; last: string },
+	currency: string,
+) => {
+	let income = zeroMoney(currency);
+	let expense = zeroMoney(currency);
+	for (const entry of entries) {
+		if (entry.occurred_on < range.first || entry.occurred_on > range.last)
+			continue;
+		if (entry.kind !== "income" && entry.kind !== "expense") continue;
+		const value = baseValue(entry, currency);
+		if (value === null) continue;
+		if (entry.kind === "income") income = addMoney(income, magnitude(value));
+		else expense = addMoney(expense, magnitude(value));
+	}
+	return { income, expense, net: addMoney(income, negateMoney(expense)) };
+};
+
+/**
+ * Income vs expense (spec §3.5): each Budget month's Incomes and Expenses and what was left, the period's totals, and
+ * both comparisons on the totals.
+ */
+export const incomeVsExpense = ({
+	entries,
+	members,
+	period,
+	startDay,
+	currency,
+}: {
+	entries: readonly ReportEntry[];
+	members: readonly string[];
+	period: ReportPeriod;
+	startDay: number;
+	currency: string;
+}) => {
+	const mine = byMembers(entries, members);
+	const months: FlowMonth[] = monthsOf(period, startDay).map((range) => ({
+		month: range.month,
+		...flows(mine, range, currency),
+	}));
+	const total = flows(mine, period, currency);
+	const previous = flows(mine, previousPeriod(period, startDay), currency);
+	const basis = flows(mine, averageBasis(period, startDay), currency);
+	const scale = (m: Money) => m.times(period.months.length).dividedInto(3);
+	return {
+		period,
+		currency,
+		months,
+		total,
+		previous,
+		average: {
+			income: scale(basis.income),
+			expense: scale(basis.expense),
+			net: scale(basis.net),
+		},
+	};
+};
+
+/**
+ * Category trend (spec §3.5): one Category, Subcategories included, Budget month by Budget month over the period, with
+ * both comparisons on its total.
+ */
+export const categoryTrend = <T extends CategoryLike>({
+	category,
+	entries,
+	items,
+	categories,
+	members,
+	period,
+	startDay,
+	currency,
+}: {
+	category: T;
+	entries: readonly ReportEntry[];
+	items: readonly CountedItem[];
+	categories: readonly T[];
+	members: readonly string[];
+	period: ReportPeriod;
+	startDay: number;
+	currency: string;
+}) => {
+	const mine = byMembers(entries, members).filter(
+		(e) => e.kind === category.kind,
+	);
+	const parentOf = new Map(categories.map((c) => [c.id, c.parent_id]));
+	const zero = zeroMoney(currency);
+	const of = (range: { first: string; last: string }) =>
+		categoryTotals(mine, items, parentOf, range, currency).get(category.id) ??
+		zero;
+	const months = monthsOf(period, startDay).map((range) => ({
+		month: range.month,
+		amount: of(range),
+	}));
+	return {
+		period,
+		currency,
+		category,
+		months,
+		total: of(period),
+		previous: of(previousPeriod(period, startDay)),
+		average: of(averageBasis(period, startDay))
+			.times(period.months.length)
+			.dividedInto(3),
+	};
+};

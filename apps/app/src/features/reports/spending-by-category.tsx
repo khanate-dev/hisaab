@@ -1,10 +1,7 @@
 import {
-	addMoney,
 	type CategoryLike,
-	isNegative,
 	isZero,
 	type Money,
-	negateMoney,
 	type SpendingByCategory,
 } from "@hisaab/domain";
 import { plural } from "@lingui/core/macro";
@@ -17,20 +14,10 @@ import { Text } from "@/components/ui/text";
 import { formatMoney } from "@/lib/format";
 import { categoryColor } from "@/theme/tokens";
 
+import { useDifference } from "./difference";
 import type { Comparison } from "./labels";
 
 type Category = CategoryLike & { color: string };
-
-/** How a figure stands against what it's compared with, in words: "PKR 200 more", "PKR 50 less", "The same". */
-const useDifference = () => {
-	const { t } = useLingui();
-	return (now: Money, then: Money) => {
-		const gap = addMoney(now, negateMoney(then));
-		if (isZero(gap)) return t`The same`;
-		const amount = formatMoney(isNegative(gap) ? negateMoney(gap) : gap);
-		return isNegative(gap) ? t`${amount} less` : t`${amount} more`;
-	};
-};
 
 /**
  * Spending by category (spec §3.5): the period's total against what it's compared with, a donut of the top-level

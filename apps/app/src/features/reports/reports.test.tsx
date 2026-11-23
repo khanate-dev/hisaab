@@ -1,5 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+	budgetVsActual,
+	categoryTrend,
+	incomeVsExpense,
 	parseMoney,
 	periodEnding,
 	type ReportEntry,
@@ -8,7 +11,7 @@ import {
 import { PortalHost } from "@rn-primitives/portal";
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { formatMoney } from "@/lib/format";
+import { formatBudgetMonth, formatMoney } from "@/lib/format";
 import { makeCategory } from "@/test/categories";
 import { render } from "@/test/render";
 
@@ -17,6 +20,9 @@ import {
 	ReportControls,
 	type ReportSettings,
 } from "./report-controls";
+import { BudgetVsActualReport } from "./budget-vs-actual";
+import { CategoryTrendReport } from "./category-trend";
+import { IncomeVsExpenseReport } from "./income-vs-expense";
 import { SpendingByCategoryReport } from "./spending-by-category";
 
 const categories = [
@@ -193,5 +199,131 @@ describe("ReportControls", () => {
 		expect(onChange).toHaveBeenLastCalledWith(
 			expect.objectContaining({ members: ["u2"] }),
 		);
+	});
+});
+
+const august = periodEnding("2026-08", 1, 1);
+const monthStart = (month: string) => `${month}-01`;
+const scope = {
+	entries: [
+		expense("e1", "300", "snacks", "2026-08-10"),
+		expense("e2", "200", "food", "2026-08-11"),
+		expense("e3", "100", "fuel", "2026-08-12"),
+		{
+			...expense("e5", "1000", "food", "2026-08-01"),
+			kind: "income",
+			amount: "1000",
+			category_id: "salary",
+		},
+	],
+	items: [],
+	categories: [
+		...categories,
+		makeCategory("salary", "Salary", { kind: "income" }),
+	],
+	members: [],
+	period: august,
+	startDay: 1,
+	currency: "PKR",
+};
+
+describe("BudgetVsActualReport", () => {
+	it("shows each budgeted Category's spending against its Budget, ahead of pace or not, and drills down", async () => {
+		const onDrillDown = jest.fn();
+		const user = userEvent.setup();
+		await render(
+			<BudgetVsActualReport
+				comparison="previous"
+				onDrillDown={onDrillDown}
+				report={budgetVsActual({
+					...scope,
+					standing: [
+						{
+							category_id: "food",
+							valid_from: "2026-01",
+							amount: "600",
+							created_at: "a",
+						},
+						{
+							category_id: "fuel",
+							valid_from: "2026-01",
+							amount: "1000",
+							created_at: "a",
+						},
+					],
+					overrides: [],
+					today: "2026-08-10",
+				})}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: "Food" }),
+		).toHaveAccessibilityValue({
+			text: `${pkr("500")} of ${pkr("600")}, 83%, ahead of pace, ${pkr("500")} more`,
+		});
+		expect(
+			screen.getByRole("button", { name: "Fuel" }),
+		).toHaveAccessibilityValue({
+			text: `${pkr("100")} of ${pkr("1000")}, 10%, ${pkr("100")} more`,
+		});
+		await user.press(screen.getByRole("button", { name: "Fuel" }));
+		expect(onDrillDown).toHaveBeenCalledWith("fuel");
+	});
+});
+
+describe("IncomeVsExpenseReport", () => {
+	it("shows what came in, went out and was left, month by month, each opening its Entries", async () => {
+		const onDrillDown = jest.fn();
+		const user = userEvent.setup();
+		await render(
+			<IncomeVsExpenseReport
+				comparison="previous"
+				monthStart={monthStart}
+				onDrillDown={onDrillDown}
+				report={incomeVsExpense(scope)}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: "Came in" }),
+		).toHaveAccessibilityValue({
+			text: `${pkr("1000")}, ${pkr("1000")} more`,
+		});
+		expect(screen.getByLabelText("Left over")).toHaveAccessibilityValue({
+			text: `${pkr("400")}, ${pkr("400")} more`,
+		});
+		await user.press(screen.getByRole("button", { name: "Went out" }));
+		expect(onDrillDown).toHaveBeenLastCalledWith("expense");
+		const month = formatBudgetMonth("2026-08-01");
+		await user.press(screen.getByRole("button", { name: `${month}, came in` }));
+		expect(onDrillDown).toHaveBeenLastCalledWith("income", "2026-08");
+	});
+});
+
+describe("CategoryTrendReport", () => {
+	it("follows the Category picked, month by month, each month opening its Entries", async () => {
+		const onChoose = jest.fn();
+		const onDrillDown = jest.fn();
+		const user = userEvent.setup();
+		const food = categories[0];
+		if (!food) throw new Error("no food");
+		await render(
+			<CategoryTrendReport
+				choices={[food]}
+				chosen="food"
+				comparison="average"
+				monthStart={monthStart}
+				onChoose={onChoose}
+				onDrillDown={onDrillDown}
+				report={categoryTrend({ ...scope, category: food })}
+			/>,
+		);
+		expect(
+			screen.getByRole("button", { name: "Total" }),
+		).toHaveAccessibilityValue({
+			text: `${pkr("500")}, ${pkr("500")} more`,
+		});
+		const month = formatBudgetMonth("2026-08-01");
+		await user.press(screen.getByRole("button", { name: month }));
+		expect(onDrillDown).toHaveBeenCalledWith("food", "2026-08");
 	});
 });
