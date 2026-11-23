@@ -29,6 +29,7 @@ export const toExportEntry = (
 		view.entry.base_rate === null ? view.entry.amount : view.entry.base_amount,
 	toWallet: view.arrival?.wallet.name ?? null,
 	received: view.entry.to_amount,
+	toCurrency: view.arrival?.wallet.currency ?? null,
 	notes: view.entry.notes,
 	recordedBy: view.madeBy,
 	contact: words.contact,

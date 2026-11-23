@@ -105,19 +105,28 @@ export const TransferForm = ({
 	const from = walletOf(fromId);
 	const toHousehold = householdOf(toId);
 	const to = walletOf(toId) ?? toHousehold?.wallets.find((w) => w.id === toId);
-	const [amount, setAmount] = useState(
+	const [amount, setTypedAmount] = useState(
 		entry && from
 			? magnitude(parseMoney(entry.amount, from.currency)).toString()
 			: "",
 	);
-	const [occurredOn, setOccurredOn] = useState(entry?.occurred_on ?? today);
+	const [occurredOn, setTypedDate] = useState(entry?.occurred_on ?? today);
 	// What arrived, as the User typed it; null while it follows the amount at the date's rate.
 	const [received, setReceived] = useState<string | null>(
 		initialReceived ??
-			(entry?.to_amount != null && from && entry.to_wallet_id
-				? entry.to_amount
+			(entry?.to_amount != null && to
+				? magnitude(parseMoney(entry.to_amount, to.currency)).toString()
 				: null),
 	);
+	// What arrived was for this amount on this date: changing either prices it again at the rate.
+	const setAmount = (text: string) => {
+		setTypedAmount(text);
+		setReceived(null);
+	};
+	const setOccurredOn = (text: string) => {
+		setTypedDate(text);
+		setReceived(null);
+	};
 	const between =
 		from !== undefined && to !== undefined && from.currency !== to.currency;
 	const expected =
@@ -162,6 +171,14 @@ export const TransferForm = ({
 			: null;
 		if (!money || isNegative(money) || isZero(money))
 			return setError(t`Enter an amount more than zero, like 1500.`);
+		const fromCode = from.currency;
+		const fromDecimals = currencyDecimals(fromCode);
+		if ((typed.split(".")[1]?.length ?? 0) > fromDecimals)
+			return setError(
+				fromDecimals === 0
+					? t`${fromCode} has no decimals.`
+					: t`${fromCode} has at most ${fromDecimals} decimals.`,
+			);
 		const arrived = between ? shownReceived.trim() : typed;
 		const arrivedMoney = isDecimalAmount(arrived)
 			? parseMoney(arrived, to.currency)
@@ -228,7 +245,10 @@ export const TransferForm = ({
 			)}
 			{otherHouseholds.map((household) => {
 				const name = household.isPersonal ? t`Personal` : household.name;
-				const offered = household.wallets.filter((w) => w.archived_at === null);
+				// An edited cross-household transfer keeps its own To Wallet, even one archived since.
+				const offered = household.wallets.filter(
+					(w) => w.archived_at === null || w.id === initialToWalletId,
+				);
 				if (offered.length === 0) return null;
 				return (
 					<View
@@ -259,11 +279,13 @@ export const TransferForm = ({
 					hint={
 						received !== null
 							? t`What actually arrived.`
-							: expected === null
-								? t`No exchange rate held yet: enter what arrived.`
-								: expected.exact
-									? t`At the day's market rate; change it to what actually arrived.`
-									: t`At the nearest rate held; change it to what actually arrived.`
+							: rates === undefined
+								? t`What arrived in ${toCurrency}.`
+								: expected === null
+									? t`No exchange rate held yet: enter what arrived.`
+									: expected.exact
+										? t`At the day's market rate; change it to what actually arrived.`
+										: t`At the nearest rate held; change it to what actually arrived.`
 					}
 					inputMode="decimal"
 					label={t`Received (${toCurrency})`}

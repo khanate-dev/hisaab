@@ -63,6 +63,7 @@ describe("exportRows", () => {
 		baseAmount: "-3456.789",
 		toWallet: null,
 		received: null,
+		toCurrency: null,
 		notes: null,
 		recordedBy: "Ayesha",
 		contact: null,

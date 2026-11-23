@@ -126,6 +126,61 @@ describe("TransferForm", () => {
 			});
 			expect(screen.getByLabelText("Received (USD)")).toHaveDisplayValue("99");
 		});
+
+		it("keeps what arrived when saved untouched, and prices it again when the amount changes", async () => {
+			const { onSubmit, user } = await setup({
+				rates,
+				entry: makeEntry("e1", {
+					kind: "transfer",
+					category_id: null,
+					wallet_id: "w1",
+					to_wallet_id: "w3",
+					amount: "-28000",
+					to_amount: "99",
+				}),
+			});
+			await user.press(screen.getByRole("button", { name: "Save Transfer" }));
+			expect(onSubmit).toHaveBeenLastCalledWith(
+				expect.objectContaining({ amount: "28000", toAmount: "99" }),
+				{ from: "PKR", to: "USD" },
+				null,
+			);
+			await user.clear(screen.getByLabelText("Amount (PKR)"));
+			await user.type(screen.getByLabelText("Amount (PKR)"), "2800");
+			expect(screen.getByLabelText("Received (USD)")).toHaveDisplayValue("10");
+		});
+
+		it("drops a typed Received amount for another To Wallet, and arrives with what left in the same currency", async () => {
+			const { onSubmit, user } = await setup({ rates });
+			const toWallet = (name: string) =>
+				within(screen.getByLabelText("To Wallet")).getByRole("radio", { name });
+			await user.press(toWallet("Dollars (USD)"));
+			await user.type(screen.getByLabelText("Amount (PKR)"), "28000");
+			await user.clear(screen.getByLabelText("Received (USD)"));
+			await user.type(screen.getByLabelText("Received (USD)"), "90");
+			await user.press(toWallet("HBL"));
+			expect(screen.queryByLabelText("Received (USD)")).toBeNull();
+			await user.press(screen.getByRole("button", { name: "Save Transfer" }));
+			expect(onSubmit).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					toWalletId: "w2",
+					amount: "28000",
+					toAmount: "28000",
+				}),
+				{ from: "PKR", to: "PKR" },
+				null,
+			);
+		});
+	});
+
+	it("keeps the amount to its Wallet's currency's decimals", async () => {
+		const { onSubmit, user } = await setup();
+		await user.type(screen.getByLabelText("Amount (PKR)"), "10.555");
+		await user.press(screen.getByRole("button", { name: "Save Transfer" }));
+		expect(screen.getByRole("alert")).toHaveTextContent(
+			"PKR has at most 2 decimals.",
+		);
+		expect(onSubmit).not.toHaveBeenCalled();
 	});
 
 	it("never offers the From Wallet, or an archived one, to move money to", async () => {

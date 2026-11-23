@@ -42,6 +42,8 @@ export const EditHouseholdTransfer = ({
 	const wallets = useWalletRows(leaves?.household_id);
 	const targets = useTransferTargets(userId, leaves?.household_id);
 	const rates = useRates();
+	// The other household's Wallets, archived ones too: the half's own Wallet stays offered once archived.
+	const arrivalWallets = useWalletRows(arrives?.household_id);
 	if (halves === undefined) return null;
 	if (!leaves || !arrives || entry.created_by !== userId) {
 		return (
@@ -53,14 +55,21 @@ export const EditHouseholdTransfer = ({
 			</Text>
 		);
 	}
-	if (!from || !wallets || !targets) return null;
+	if (!from || !wallets || !targets || !arrivalWallets) return null;
+	const arrivedIn = arrivalWallets.find((w) => w.id === arrives.wallet_id);
 	// What arrived, in the other half's Wallet's currency.
-	const arrivedIn = targets
-		.flatMap((h) => h.wallets)
-		.find((w) => w.id === arrives.wallet_id)?.currency;
 	const received = arrivedIn
-		? magnitude(parseMoney(arrives.amount, arrivedIn)).toString()
+		? magnitude(parseMoney(arrives.amount, arrivedIn.currency)).toString()
 		: undefined;
+	const destination = targets
+		.filter((h) => h.householdId === arrives.household_id)
+		.map((h) => ({
+			...h,
+			wallets:
+				arrivedIn && !h.wallets.some((w) => w.id === arrivedIn.id)
+					? [...h.wallets, arrivedIn]
+					: h.wallets,
+		}));
 	return (
 		<TransferForm
 			baseCurrency={from.base_currency}
@@ -76,9 +85,7 @@ export const EditHouseholdTransfer = ({
 				onSaved();
 			}}
 			rates={rates}
-			otherHouseholds={targets.filter(
-				(h) => h.householdId === arrives.household_id,
-			)}
+			otherHouseholds={destination}
 			submitLabel={t`Save`}
 			timeZone={entryTimeZone(from)}
 			wallets={wallets}

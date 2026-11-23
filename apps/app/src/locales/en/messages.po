@@ -59,6 +59,14 @@ msgstr "{description} × {quantity}"
 msgid "{first} to {last}"
 msgstr "{first} to {last}"
 
+#: src/features/entries/transfer-form.tsx
+msgid "{fromCode} has at most {fromDecimals} decimals."
+msgstr "{fromCode} has at most {fromDecimals} decimals."
+
+#: src/features/entries/transfer-form.tsx
+msgid "{fromCode} has no decimals."
+msgstr "{fromCode} has no decimals."
+
 #: src/features/recurring/rule-list.tsx
 msgid "{how} · {mode} · {when}"
 msgstr "{how} · {mode} · {when}"
@@ -3231,6 +3239,10 @@ msgstr "Weekly"
 #: src/features/entries/transfer-form.tsx
 msgid "What actually arrived."
 msgstr "What actually arrived."
+
+#: src/features/entries/transfer-form.tsx
+msgid "What arrived in {toCurrency}."
+msgstr "What arrived in {toCurrency}."
 
 #: src/features/legal/privacy-policy.tsx
 msgid "What Hisaab keeps"
