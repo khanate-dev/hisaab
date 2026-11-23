@@ -137,6 +137,7 @@ msgstr "{name} · {amount}"
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
 #: src/features/entries/transfer-form.tsx
+#: src/features/loans/loan-form.tsx
 msgid "{name} ({code})"
 msgstr "{name} ({code})"
 
@@ -2258,6 +2259,10 @@ msgstr "Next {nextDate}"
 #: src/features/budgets/budget-month.tsx
 msgid "Next Budget month"
 msgstr "Next Budget month"
+
+#: src/features/loans/repayment-form.tsx
+msgid "No active Wallet is in {currency}, the Loan's currency. Add one, or bring an archived one back, to record a Repayment."
+msgstr "No active Wallet is in {currency}, the Loan's currency. Add one, or bring an archived one back, to record a Repayment."
 
 #: src/features/categories/category-list.tsx
 msgid "No archived Categories in this list."

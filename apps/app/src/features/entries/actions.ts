@@ -23,7 +23,45 @@ import { db } from "@/lib/powersync";
 
 import type { EntryDraft, TransferDraft } from "./types";
 
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+const NO_BASE = { base_amount: null, base_rate: null } as const;
+
+/**
+ * A signed amount's Base amount (ADR-0005) as this device prices it, market or estimated at the rates it holds: none
+ * for an amount in the household's Base currency (or before it has one). The server sets the market figure whenever it
+ * holds the date's rates, so this is what shows until then. Loans' Entries are priced so too (#119).
+ */
+export const pricedInBase = async (
+	tx: Transaction,
+	householdId: string,
+	amount: Money,
+	date: string,
+) => {
+	const baseCurrency = await baseCurrencyOf(tx, householdId);
+	if (!baseCurrency || baseCurrency === amount.currency) return NO_BASE;
+	const rates = await tx
+		.select({
+			on_date: exchangeRates.on_date,
+			currency: exchangeRates.currency,
+			per_usd: exchangeRates.per_usd,
+		})
+		.from(exchangeRates)
+		.where(inArray(exchangeRates.currency, [amount.currency, baseCurrency]));
+	const priced = baseAmountOf({ amount, baseCurrency, date, rates });
+	return {
+		base_amount: priced?.amount?.toString() ?? null,
+		base_rate: priced?.rate ?? null,
+	};
+};
+
+const baseCurrencyOf = async (tx: Transaction, householdId: string) => {
+	const [household] = await tx
+		.select({ baseCurrency: households.base_currency })
+		.from(households)
+		.where(eq(households.id, householdId));
+	return household?.baseCurrency ?? null;
+};
 
 /** The columns a draft sets: the amount signed by kind, in the Wallet's currency. */
 const columns = (draft: EntryDraft, currency: string) => ({
@@ -42,8 +80,7 @@ const columns = (draft: EntryDraft, currency: string) => ({
 
 /**
  * A draft's Base amount (ADR-0005), when its Wallet isn't in the household's Base currency: the User's own figure if
- * they edited it, else priced at the rates this device holds, market or estimated. The server sets the market figure
- * whenever it holds the date's rates, so this is what shows until then.
+ * they edited it, else priced on this device (`pricedInBase`).
  */
 const baseColumns = async (
 	tx: Transaction,
@@ -51,13 +88,8 @@ const baseColumns = async (
 	draft: EntryDraft,
 	currency: string,
 ) => {
-	const [household] = await tx
-		.select({ baseCurrency: households.base_currency })
-		.from(households)
-		.where(eq(households.id, householdId));
-	const baseCurrency = household?.baseCurrency;
-	if (!baseCurrency || baseCurrency === currency)
-		return { base_amount: null, base_rate: null };
+	const baseCurrency = await baseCurrencyOf(tx, householdId);
+	if (!baseCurrency || baseCurrency === currency) return NO_BASE;
 	if (draft.baseEdited)
 		return {
 			base_amount: signedAmount(
@@ -66,24 +98,12 @@ const baseColumns = async (
 			).toString(),
 			base_rate: "edited" as const,
 		};
-	const rates = await tx
-		.select({
-			on_date: exchangeRates.on_date,
-			currency: exchangeRates.currency,
-			per_usd: exchangeRates.per_usd,
-		})
-		.from(exchangeRates)
-		.where(inArray(exchangeRates.currency, [currency, baseCurrency]));
-	const priced = baseAmountOf({
-		amount: signedAmount(draft.kind, parseMoney(draft.amount, currency)),
-		baseCurrency,
-		date: draft.occurredOn,
-		rates,
-	});
-	return {
-		base_amount: priced?.amount?.toString() ?? null,
-		base_rate: priced?.rate ?? null,
-	};
+	return pricedInBase(
+		tx,
+		householdId,
+		signedAmount(draft.kind, parseMoney(draft.amount, currency)),
+		draft.occurredOn,
+	);
 };
 
 /**

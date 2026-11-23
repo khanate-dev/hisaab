@@ -69,6 +69,14 @@ export const RepaymentForm = ({
 
 	return (
 		<View className="gap-3 rounded-control border-2 border-border p-3">
+			{repayable.length === 0 && (
+				<Text
+					role="status"
+					variant="muted"
+				>
+					{t`No active Wallet is in ${currency}, the Loan's currency. Add one, or bring an archived one back, to record a Repayment.`}
+				</Text>
+			)}
 			<RadioGroup
 				label={lent ? t`Into Wallet` : t`From Wallet`}
 				onValueChange={setWalletId}

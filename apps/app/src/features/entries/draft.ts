@@ -22,8 +22,8 @@ export const entryWallets = (wallets: readonly WalletChoice[]) =>
 	wallets.filter((w) => w.archived_at === null);
 
 /**
- * The Wallets a Loan or Recurring rule can use: active ones in the household's Base currency, until those take other
- * currencies too (Loans: #119). Null before the household has a Base currency.
+ * Active Wallets in one currency: a Recurring rule's, in the household's Base currency, and a Repayment's, in its
+ * Loan's. Every active one when the currency is null (a household with no Base currency yet).
  */
 export const recordableWallets = (
 	wallets: readonly WalletChoice[],
