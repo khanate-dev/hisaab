@@ -63,6 +63,11 @@ streams:
         FROM attachments
         WHERE attachments.household_id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id())
 
+  # The User's own settings (#53), to their devices only.
+  user_settings:
+    auto_subscribe: true
+    query: SELECT user_settings.id, user_settings.display_currency, user_settings.created_at FROM user_settings WHERE user_settings.id = auth.user_id()
+
   # Each date's rates per USD (#44), for the currencies the User's households use: every Wallet's and every Base
   # currency. Reference data with no household of its own; RLS lets every signed-in User read all of it.
   exchange_rates:
@@ -74,6 +79,10 @@ streams:
       - SELECT exchange_rates.id, exchange_rates.on_date, exchange_rates.currency, exchange_rates.per_usd
         FROM exchange_rates
         WHERE exchange_rates.currency IN (SELECT households.base_currency FROM households WHERE households.id IN (SELECT memberships.household_id FROM memberships WHERE memberships.user_id = auth.user_id()))
+      # And the User's display currency, for My overview.
+      - SELECT exchange_rates.id, exchange_rates.on_date, exchange_rates.currency, exchange_rates.per_usd
+        FROM exchange_rates
+        WHERE exchange_rates.currency IN (SELECT user_settings.display_currency FROM user_settings WHERE user_settings.id = auth.user_id())
 
   # A household's Invites, to its Admins only: an Invite's token is the link itself.
   invites:

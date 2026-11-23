@@ -37,6 +37,7 @@ export const schema = new Schema({
 	notifications: toPowerSyncTable(tables.notifications),
 	notification_preferences: toPowerSyncTable(tables.notificationPreferences),
 	occurrences: toPowerSyncTable(tables.occurrences),
+	user_settings: toPowerSyncTable(tables.userSettings),
 	profiles: toPowerSyncTable(tables.profiles),
 	recurring_rules: toPowerSyncTable(tables.recurringRules),
 	recurring_rule_followers: toPowerSyncTable(tables.recurringRuleFollowers),

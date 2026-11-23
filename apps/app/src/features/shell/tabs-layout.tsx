@@ -7,27 +7,34 @@ import { useColors } from "@/theme/theme";
 
 import { useIsWide } from "./layout";
 import { type QuickAddContent, QuickAddProvider } from "./quick-add";
-import { SECTIONS, TAB_ORDER } from "./sections";
+import { HouseholdFirst } from "./household-first";
+import { OVERVIEW_HREF, SECTIONS, TAB_ORDER } from "./sections";
 import { Sidebar } from "./sidebar";
 import { TabBar } from "./tab-bar";
 import { TopBar } from "./top-bar";
 
 /** The app shell around the four sections: tabs and a top bar on phones; on wide web a sidebar holds all of it. */
 export const TabsLayout = ({ quickAdd }: { quickAdd: QuickAddContent }) => {
-	const { i18n } = useLingui();
+	const { t, i18n } = useLingui();
 	const wide = useIsWide();
 	const colors = useColors();
 	const navigation = useNavigation();
 	const pathname = usePathname();
 	const section = SECTIONS.find((s) => s.href === pathname);
-	const title = section ? i18n._(section.title) : undefined;
+	const title = section
+		? i18n._(section.title)
+		: pathname === OVERVIEW_HREF
+			? t`My overview`
+			: undefined;
 	// The shell's title is the back link's label on screens above it, so it names the section they were opened from.
 	useEffect(() => {
 		if (title !== undefined) navigation.setOptions({ title });
 	}, [navigation, title]);
 
 	return (
-		<QuickAddProvider content={quickAdd}>
+		<QuickAddProvider
+			content={(close) => <HouseholdFirst>{quickAdd(close)}</HouseholdFirst>}
+		>
 			<View className="flex-1 flex-row bg-bg">
 				{wide && <Sidebar />}
 				<View className="flex-1">

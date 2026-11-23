@@ -38,7 +38,10 @@ export const ReportControls = ({
 	settings,
 	members,
 	onChange,
+	months,
 }: {
+	/** What the months are, said under the range; a household's Budget months unless given. */
+	months?: string;
 	settings: ReportSettings;
 	members: readonly { userId: string; name: string }[];
 	onChange: (settings: ReportSettings) => void;
@@ -88,7 +91,7 @@ export const ReportControls = ({
 				{picking && (
 					<SheetContent>
 						<SheetTitle>{t`Range and comparison`}</SheetTitle>
-						<Text variant="muted">{t`In whole Budget months.`}</Text>
+						<Text variant="muted">{months ?? t`In whole Budget months.`}</Text>
 						<RadioGroup
 							label={t`Range`}
 							onValueChange={(preset) =>
