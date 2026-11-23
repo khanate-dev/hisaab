@@ -121,8 +121,6 @@ catalog:
   supabase: 2.120.0
   # Prod deploy (#30): Sync Streams to PowerSync Cloud, the EAS client config, the web app on Workers
   eas-cli: 24.13.0
-  # Migration linting in CI (#67): destructive DDL needs the contract label (ADR-0011)
-  squawk-cli: 2.72.0
   powersync: 0.10.2
   wrangler: 4.150.0
   typescript: 6.0.3
