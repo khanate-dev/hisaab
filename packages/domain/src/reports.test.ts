@@ -8,7 +8,10 @@ import { shiftCalendarDate } from "./dates";
 import { currencyDecimals, parseMoney, sumMoney } from "./money";
 import {
 	averageBasis,
+	budgetVsActual,
+	categoryTrend,
 	drillDown,
+	incomeVsExpense,
 	periodEnding,
 	previousPeriod,
 	REPORT_PRESETS,
@@ -293,6 +296,193 @@ describe("spendingByCategory", () => {
 						"PKR",
 					).toString(),
 				).toBe(figure);
+			}),
+		);
+	});
+});
+
+describe("incomeVsExpense", () => {
+	const period = periodEnding("2026-08", 3, 1);
+
+	it("adds its months up to its totals, net being what came in less what went out, member by member", () => {
+		fc.assert(
+			fc.property(entries, (list) => {
+				const report = (members: string[]) =>
+					incomeVsExpense({
+						entries: list,
+						members,
+						period,
+						startDay: 1,
+						currency: "PKR",
+					});
+				const all = report([]);
+				for (const key of ["income", "expense", "net"] as const)
+					expect(
+						sumMoney(
+							all.months.map((m) => m[key]),
+							"PKR",
+						).toString(),
+					).toBe(all.total[key].toString());
+				expect(
+					sumMoney([all.total.net, all.total.expense], "PKR").toString(),
+				).toBe(all.total.income.toString());
+				expect(
+					sumMoney(
+						[report(["u1"]).total.income, report(["u2", "u3"]).total.income],
+						"PKR",
+					).toString(),
+				).toBe(all.total.income.toString());
+				expect(all.total.expense.toString()).toBe(
+					spendingByCategory({
+						entries: list,
+						items: [],
+						categories,
+						members: [],
+						period,
+						startDay: 1,
+						currency: "PKR",
+					}).total.toString(),
+				);
+			}),
+		);
+	});
+});
+
+describe("categoryTrend", () => {
+	const period = periodEnding("2026-08", 4, 1);
+
+	it("adds its months up to what Spending by category shows for the Category", () => {
+		fc.assert(
+			fc.property(entries, fc.constantFrom("food", "fuel"), (list, id) => {
+				const category = categories.find((c) => c.id === id);
+				if (!category) throw new Error("no category");
+				const trend = categoryTrend({
+					category,
+					entries: list,
+					items: [],
+					categories,
+					members: [],
+					period,
+					startDay: 1,
+					currency: "PKR",
+				});
+				expect(
+					sumMoney(
+						trend.months.map((m) => m.amount),
+						"PKR",
+					).toString(),
+				).toBe(trend.total.toString());
+				const spending = spendingByCategory({
+					entries: list,
+					items: [],
+					categories,
+					members: [],
+					period,
+					startDay: 1,
+					currency: "PKR",
+				});
+				expect(trend.total.toString()).toBe(
+					spending.lines.find((l) => l.category.id === id)?.amount.toString() ??
+						"0",
+				);
+			}),
+		);
+	});
+});
+
+describe("budgetVsActual", () => {
+	const period = periodEnding("2026-08", 3, 1);
+	const standing = [
+		{
+			category_id: "food",
+			valid_from: "2026-01",
+			amount: "1000",
+			created_at: "a",
+		},
+		{
+			category_id: "fuel",
+			valid_from: "2026-08",
+			amount: "500",
+			created_at: "a",
+		},
+		{
+			category_id: "salary",
+			valid_from: "2026-07",
+			amount: "9000",
+			created_at: "a",
+		},
+	];
+	const categoriesWithIncome = categories;
+	const report = (list: ReportEntry[], today = "2026-08-15") =>
+		budgetVsActual({
+			entries: list,
+			items: [],
+			categories: categoriesWithIncome,
+			members: [],
+			period,
+			startDay: 1,
+			currency: "PKR",
+			standing,
+			overrides: [
+				{
+					category_id: "food",
+					month: "2026-07",
+					amount: "1500",
+					created_at: "b",
+				},
+			],
+			today,
+		});
+	const monthly = (list: ReportEntry[], id: string, months: string[]) =>
+		sumMoney(
+			months.map(
+				(month) =>
+					spendingByCategory({
+						entries: list,
+						items: [],
+						categories,
+						members: [],
+						period: periodEnding(month, 1, 1),
+						startDay: 1,
+						currency: "PKR",
+					}).lines.find((l) => l.category.id === id)?.amount ??
+					parseMoney("0", "PKR"),
+			),
+			"PKR",
+		);
+
+	it("counts each Category over the months it had a Budget only, Budgets added up, Expected income apart", () => {
+		fc.assert(
+			fc.property(entries, (list) => {
+				const view = report(list);
+				expect(
+					view.budgets.map((l) => [
+						l.category.id,
+						l.months,
+						l.budget.toString(),
+					]),
+				).toEqual([
+					["food", ["2026-06", "2026-07", "2026-08"], "3500"],
+					["fuel", ["2026-08"], "500"],
+				]);
+				expect(
+					view.expectedIncome.map((l) => [l.category.id, l.months]),
+				).toEqual([["salary", ["2026-07", "2026-08"]]]);
+				for (const line of view.budgets)
+					expect(line.actual.toString()).toBe(
+						monthly(list, line.category.id, line.months).toString(),
+					);
+			}),
+		);
+	});
+
+	it("is ahead of Pace, before its months, for anything spent, and after them only for more than the Budget", () => {
+		fc.assert(
+			fc.property(entries, (list) => {
+				for (const line of report(list, "2026-05-20").budgets)
+					expect(line.ahead).toBe(!line.actual.isZero());
+				for (const line of report(list, "2026-09-20").budgets)
+					expect(line.ahead).toBe(line.actual.compare(line.budget) > 0);
 			}),
 		);
 	});
