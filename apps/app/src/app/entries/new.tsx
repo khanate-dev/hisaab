@@ -5,8 +5,8 @@ import { Text } from "@/components/ui/text";
 import { createEntry, recordTransfer } from "@/features/entries/actions";
 import {
 	type DraftParams,
+	entryWallets,
 	paramsToDraft,
-	recordableWallets,
 } from "@/features/entries/draft";
 import { EntryForm } from "@/features/entries/entry-form";
 import { NeedsWallet } from "@/features/entries/needs-wallet";
@@ -44,10 +44,7 @@ export default function NewEntry() {
 			: t`New Expense`;
 	const timeZone = entryTimeZone(household);
 	const activeWallets = wallets.filter((w) => w.archived_at === null).length;
-	const transferable = recordableWallets(
-		wallets,
-		household.base_currency,
-	).length;
+	const transferable = entryWallets(wallets).length;
 
 	return (
 		<Screen title={title}>
@@ -70,6 +67,7 @@ export default function NewEntry() {
 							leaveTo("/entries");
 						}}
 						otherHouseholds={transferTargets}
+						rates={rates}
 						submitLabel={t`Save Transfer`}
 						timeZone={timeZone}
 						wallets={wallets}

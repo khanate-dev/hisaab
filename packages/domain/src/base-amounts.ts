@@ -35,6 +35,26 @@ export const rateFor = (
 };
 
 /**
+ * An amount in another currency at a date's rates per USD: the date's own (`exact`) when both are held, else the nearest
+ * held (`rateFor`); null when no rate at all is held for one of the two. What a Transfer between currencies is
+ * expected to bring in, before the User says what it really did.
+ */
+export const convertAt = (
+	amount: Money,
+	currency: string,
+	date: string,
+	rates: readonly RateRow[],
+): { amount: Money; exact: boolean } | null => {
+	const from = rateFor(rates, amount.currency, date);
+	const to = rateFor(rates, currency, date);
+	if (!from || !to) return null;
+	return {
+		amount: amount.converted(from.perUsd, to.perUsd, currency),
+		exact: from.exact && to.exact,
+	};
+};
+
+/**
  * An Entry's Base amount as a device can price it: null when its Wallet is in the Base currency (it needs none);
  * otherwise the amount at the date's market rate, or an estimate at the nearest rates held (an amount of null when no
  * rate at all is held for one of the two currencies, until sync brings one).
@@ -51,12 +71,11 @@ export const baseAmountOf = ({
 	rates: readonly RateRow[];
 }): { amount: Money | null; rate: "market" | "estimated" } | null => {
 	if (amount.currency === baseCurrency) return null;
-	const from = rateFor(rates, amount.currency, date);
-	const to = rateFor(rates, baseCurrency, date);
-	if (!from || !to) return { amount: null, rate: "estimated" };
+	const converted = convertAt(amount, baseCurrency, date, rates);
+	if (!converted) return { amount: null, rate: "estimated" };
 	return {
-		amount: amount.converted(from.perUsd, to.perUsd, baseCurrency),
-		rate: from.exact && to.exact ? "market" : "estimated",
+		amount: converted.amount,
+		rate: converted.exact ? "market" : "estimated",
 	};
 };
 

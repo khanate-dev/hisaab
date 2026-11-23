@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	baseAmountOf,
+	convertAt,
 	baseValue,
 	itemBaseShares,
 	type RateRow,
@@ -201,6 +202,41 @@ describe("baseValue", () => {
 				"PKR",
 			),
 		).toBe(null);
+	});
+});
+
+describe("convertAt", () => {
+	it("is what baseAmountOf prices, for any amounts and rates, and null without a rate for either currency", () => {
+		fc.assert(
+			fc.property(
+				decimal(2),
+				currency,
+				currency,
+				rate,
+				rate,
+				(text, from, to, a, b) => {
+					fc.pre(from !== to);
+					const held = [
+						{ on_date: "2026-11-01", currency: from, per_usd: a },
+						{ on_date: "2026-11-01", currency: to, per_usd: b },
+					];
+					const amount = parseMoney(text, from);
+					expect(
+						convertAt(amount, to, "2026-11-01", held)?.amount.toString(),
+					).toBe(
+						baseAmountOf({
+							amount,
+							baseCurrency: to,
+							date: "2026-11-01",
+							rates: held,
+						})?.amount?.toString(),
+					);
+					expect(convertAt(amount, to, "2026-11-01", held.slice(0, 1))).toBe(
+						null,
+					);
+				},
+			),
+		);
 	});
 });
 

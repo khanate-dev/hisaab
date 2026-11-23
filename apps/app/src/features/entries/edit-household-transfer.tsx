@@ -1,4 +1,4 @@
-import { isNegative, parseMoney } from "@hisaab/domain";
+import { isNegative, magnitude, parseMoney } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 
 import { Text } from "@/components/ui/text";
@@ -10,6 +10,7 @@ import { updateHouseholdTransfer } from "./actions";
 import { TransferForm } from "./transfer-form";
 import type { Entry } from "./types";
 import { useLinkedHalves } from "./use-entries";
+import { useRates } from "./use-rates";
 import { useTransferTargets } from "./use-transfer-targets";
 
 /**
@@ -40,6 +41,7 @@ export const EditHouseholdTransfer = ({
 	const from = useHousehold(leaves?.household_id);
 	const wallets = useWalletRows(leaves?.household_id);
 	const targets = useTransferTargets(userId, leaves?.household_id);
+	const rates = useRates();
 	if (halves === undefined) return null;
 	if (!leaves || !arrives || entry.created_by !== userId) {
 		return (
@@ -52,19 +54,28 @@ export const EditHouseholdTransfer = ({
 		);
 	}
 	if (!from || !wallets || !targets) return null;
+	// What arrived, in the other half's Wallet's currency.
+	const arrivedIn = targets
+		.flatMap((h) => h.wallets)
+		.find((w) => w.id === arrives.wallet_id)?.currency;
+	const received = arrivedIn
+		? magnitude(parseMoney(arrives.amount, arrivedIn)).toString()
+		: undefined;
 	return (
 		<TransferForm
 			baseCurrency={from.base_currency}
 			entry={leaves}
+			initialReceived={received}
 			initialToWalletId={arrives.wallet_id}
 			onSubmit={async (draft, currencies) => {
 				await updateHouseholdTransfer(
 					{ leaves: leaves.id, arrives: arrives.id },
 					draft,
-					currencies.from,
+					currencies,
 				);
 				onSaved();
 			}}
+			rates={rates}
 			otherHouseholds={targets.filter(
 				(h) => h.householdId === arrives.household_id,
 			)}

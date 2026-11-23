@@ -12,12 +12,14 @@ import { draftToParams } from "./draft";
 import { NeedsWallet } from "./needs-wallet";
 import { QuickAddForm } from "./quick-add-form";
 import { TransferForm } from "./transfer-form";
+import { useRates } from "./use-rates";
 import { useEntryData } from "./use-entry-data";
 
 /** Quick-add's content, for the household on screen; `onDone` closes the sheet or dialog. */
 export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 	const { t } = useLingui();
 	const data = useEntryData();
+	const rates = useRates();
 	// The segment's Transfer swaps the sheet's content to the Transfer form: one sheet, From, To and amount (spec §4.3).
 	const [transferring, setTransferring] = useState(false);
 
@@ -65,6 +67,7 @@ export const QuickAdd = ({ onDone }: { onDone: () => void }) => {
 							onDone();
 						}}
 						otherHouseholds={transferTargets}
+						rates={rates}
 						submitLabel={t`Save Transfer`}
 						timeZone={timeZone}
 						wallets={wallets}

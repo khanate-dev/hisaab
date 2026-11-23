@@ -89,6 +89,7 @@ msgstr "{name} · {amount}"
 
 #: src/features/entries/entry-form.tsx
 #: src/features/entries/quick-add-form.tsx
+#: src/features/entries/transfer-form.tsx
 msgid "{name} ({code})"
 msgstr "{name} ({code})"
 
@@ -218,6 +219,14 @@ msgstr "{shown}, {role}"
 #: src/features/invites/invite-list.tsx
 msgid "{summary}: {closed}"
 msgstr "{summary}: {closed}"
+
+#: src/features/entries/transfer-form.tsx
+msgid "{toCode} has at most {decimals} decimals."
+msgstr "{toCode} has at most {decimals} decimals."
+
+#: src/features/entries/transfer-form.tsx
+msgid "{toCode} has no decimals."
+msgstr "{toCode} has no decimals."
 
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} received"
@@ -571,6 +580,14 @@ msgstr "Ask for Face ID, a fingerprint or the device passcode to open Hisaab her
 msgid "At {day}'s market rate."
 msgstr "At {day}'s market rate."
 
+#: src/features/entries/transfer-form.tsx
+msgid "At the day's market rate; change it to what actually arrived."
+msgstr "At the day's market rate; change it to what actually arrived."
+
+#: src/features/entries/transfer-form.tsx
+msgid "At the nearest rate held; change it to what actually arrived."
+msgstr "At the nearest rate held; change it to what actually arrived."
+
 #: src/features/attachments/attachment-list.tsx
 msgid "Attachments"
 msgstr "Attachments"
@@ -645,10 +662,6 @@ msgstr "Be told when it's due, or when it records an Entry, as its maker is."
 #: src/features/wallets/balance.tsx
 msgid "Below zero"
 msgstr "Below zero"
-
-#: src/features/entries/transfer-form.tsx
-msgid "Between households, a Transfer stays in one currency for now."
-msgstr "Between households, a Transfer stays in one currency for now."
 
 #: src/features/loans/labels.ts
 msgid "Borrowed"
@@ -1280,6 +1293,10 @@ msgstr "Enter the start as YYYY-MM-DD, like {today}."
 #: src/features/entries/entry-form.tsx
 msgid "Enter the time as HH:MM, like 18:30, or leave it empty."
 msgstr "Enter the time as HH:MM, like 18:30, or leave it empty."
+
+#: src/features/entries/transfer-form.tsx
+msgid "Enter what arrived, more than zero."
+msgstr "Enter what arrived, more than zero."
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "Enter what the Wallet really holds, like 1500 or -250."
@@ -2025,6 +2042,10 @@ msgstr "No Entries match."
 msgid "No Entries yet."
 msgstr "No Entries yet."
 
+#: src/features/entries/transfer-form.tsx
+msgid "No exchange rate held yet: enter what arrived."
+msgstr "No exchange rate held yet: enter what arrived."
+
 #: src/features/entries/base-amount.tsx
 msgid "No exchange rate yet: it's priced once one arrives."
 msgstr "No exchange rate yet: it's priced once one arrives."
@@ -2364,6 +2385,10 @@ msgstr "Rate estimated: corrected once that day's rate arrives."
 #: src/features/entries/entry-detail.tsx
 msgid "Received"
 msgstr "Received"
+
+#: src/features/entries/transfer-form.tsx
+msgid "Received ({toCurrency})"
+msgstr "Received ({toCurrency})"
 
 #: src/app/(tabs)/index.tsx
 msgid "Recent Entries"
@@ -3202,6 +3227,10 @@ msgstr "We emailed a code to {email}."
 #: src/features/recurring/schedule-text.ts
 msgid "Weekly"
 msgstr "Weekly"
+
+#: src/features/entries/transfer-form.tsx
+msgid "What actually arrived."
+msgstr "What actually arrived."
 
 #: src/features/legal/privacy-policy.tsx
 msgid "What Hisaab keeps"
