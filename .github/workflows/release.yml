@@ -1,0 +1,169 @@
+# Native release (ADR-0011; #66): run by hand from main. It never gets ahead of the backend: `deploy` must have
+# succeeded for this commit or a later one. The fingerprint decides the path:
+# - nothing native changed since the newest store builds → an OTA update to `preview`, smoke-tested from the
+#   checklist (docs/release-smoke.md) in the `prod-release` Environment, then that same update republished to
+#   `production`;
+# - anything native changed → store builds for both platforms, submitted (Play staged, iOS phased).
+# Either way the version is tagged. Every update's message starts with its contract stamp, `[contract N]`, which the
+# deploy gate's raise check reads (tooling/release/contract-ready.ts).
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version goes up
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Check and pick the path
+    if: github.ref == 'refs/heads/main' && vars.PROD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: prod
+    outputs:
+      path: ${{ steps.path.outputs.path }}
+      version: ${{ steps.version.outputs.version }}
+      stamp: ${{ steps.version.outputs.stamp }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # Native never runs ahead of the backend: some successful deploy must contain this commit.
+      - name: Deployed already
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for sha in $(gh run list --repo "$REPO" --workflow deploy.yml --status success --limit 30 --json headSha --jq '.[].headSha'); do
+            if git merge-base --is-ancestor "$GITHUB_SHA" "$sha" 2>/dev/null; then
+              echo "Deployed in $sha."
+              exit 0
+            fi
+          done
+          echo "::error::deploy hasn't succeeded for $GITHUB_SHA or a later commit yet; release after it does."
+          exit 1
+      - id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          echo "version=$(node tooling/release/release.ts next "$BUMP" $(git tag --list 'v*'))" >> "$GITHUB_OUTPUT"
+          echo "stamp=$(node tooling/release/release.ts stamp)" >> "$GITHUB_OUTPUT"
+      # With `runtimeVersion: { policy: "fingerprint" }` the runtime is the fingerprint: an update reaches only store
+      # builds on the same one.
+      - id: path
+        working-directory: apps/app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          pnpm exec expo-updates runtimeversion:resolve --platform android > "$RUNNER_TEMP/android.json"
+          pnpm exec expo-updates runtimeversion:resolve --platform ios > "$RUNNER_TEMP/ios.json"
+          pnpm exec eas build:list --channel production --distribution store --status finished --platform all \
+            --limit 20 --json --non-interactive > "$RUNNER_TEMP/builds.json"
+          path=$(node ../../tooling/release/release.ts path "$RUNNER_TEMP/android.json" "$RUNNER_TEMP/ios.json" "$RUNNER_TEMP/builds.json")
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          echo "Release path: $path"
+
+  # Fingerprint matches: an update to `preview`, which the internal builds and TestFlight listen on.
+  preview:
+    name: OTA to preview
+    needs: plan
+    if: needs.plan.outputs.path == 'ota'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: prod
+    outputs:
+      group: ${{ steps.publish.outputs.group }}
+    defaults:
+      run:
+        working-directory: apps/app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - id: publish
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          MESSAGE: ${{ needs.plan.outputs.stamp }} v${{ needs.plan.outputs.version }}
+        run: |
+          pnpm exec eas update --channel preview --environment production --message "$MESSAGE" \
+            --non-interactive --json > "$RUNNER_TEMP/update.json"
+          echo "group=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")" >> "$GITHUB_OUTPUT"
+
+  # The smoke checklist is ticked against that exact update before the `prod-release` reviewer approves; the tested
+  # update is the one that ships, its stamp passed on.
+  production:
+    name: Republish to production
+    needs: [plan, preview]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: prod-release
+    defaults:
+      run:
+        working-directory: apps/app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GROUP: ${{ needs.preview.outputs.group }}
+          MESSAGE: ${{ needs.plan.outputs.stamp }} v${{ needs.plan.outputs.version }}
+        run: |
+          pnpm exec eas update:republish --group "$GROUP" --destination-channel production --message "$MESSAGE" \
+            --non-interactive
+
+  # Fingerprint differs: store builds at the new version (build numbers are EAS's, remote), submitted to both stores.
+  store:
+    name: Store builds and submit
+    needs: plan
+    if: needs.plan.outputs.path == 'store'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: prod
+    defaults:
+      run:
+        working-directory: apps/app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Version
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: jq --arg v "$VERSION" '.expo.version = $v' app.json > app.json.next && mv app.json.next app.json
+      - env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: pnpm exec eas build --profile production --platform all --auto-submit --non-interactive --wait
+
+  tag:
+    name: Tag the version
+    needs: [plan, production, store]
+    if: >-
+      always() && needs.plan.result == 'success' &&
+      (needs.production.result == 'success' || needs.store.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - env:
+          VERSION: v${{ needs.plan.outputs.version }}
+        run: |
+          git tag "$VERSION" "$GITHUB_SHA"
+          git push origin "$VERSION"

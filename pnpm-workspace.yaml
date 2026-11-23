@@ -40,6 +40,7 @@ catalog:
   expo-linking: 57.0.13
   expo-localization: 57.0.2
   expo-router: 57.0.29
+  expo-updates: 57.0.26
   expo-status-bar: 57.0.1
   # Attachments (#55): picking, shrinking and keeping files on the device; SDK 57's bundled versions
   expo-document-picker: 57.0.3

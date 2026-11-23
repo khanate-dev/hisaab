@@ -27,7 +27,7 @@ The only place `deploy`, `keepalive`, `nightly` (and later `release`) get secret
 | `KEEPALIVE_EMAIL`, `KEEPALIVE_PASSWORD` | The keep-alive User: an ordinary account with only its own empty Personal household, signed in by password | `keepalive` | Auth → Users → the User → reset password; replace here |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token: Workers Scripts Edit, Workers Routes Edit and DNS Edit on `khanate.pk` | `deploy` (web) | My Profile → API Tokens → Roll |
 | `CLOUDFLARE_ACCOUNT_ID` | The account id (not secret) | `deploy` (web) | Never changes |
-| `EXPO_TOKEN` | Access token of an Expo robot user | `deploy` (`eas env:pull`; in `prod-contract`, the contract raise check) | Expo → Robot users; replace in both Environments |
+| `EXPO_TOKEN` | Access token of an Expo robot user | `deploy` (`eas env:pull`; in `prod-contract`, the contract raise check); `release` (in `prod`, and in `prod-release` to republish to `production`) | Expo → Robot users; replace in all three Environments |
 | `RESEND_SMTP_PASSWORD` | A Resend API key, sending access, `mail.hisaab.khanate.pk` only | `deploy` (`config push`, Auth SMTP; → Edge Function secrets as `RESEND_API_KEY`) | Resend → API Keys; replace, re-run `deploy` |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push keypair (`npx web-push generate-vapid-keys`) | `deploy` → Edge Function secrets | Rotating drops every web push subscription; also update `EXPO_PUBLIC_VAPID_PUBLIC_KEY` in EAS |
 | `VAPID_SUBJECT` | `mailto:support@hisaab.khanate.pk` | `deploy` → Edge Function secrets | — |
