@@ -30,4 +30,5 @@ export * from "./rates";
 export * from "./recurring";
 export * from "./reports";
 export * from "./search";
+export * from "./summary-email";
 export * from "./upcasters";

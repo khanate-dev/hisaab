@@ -1,6 +1,7 @@
-// Event notifications (spec §3.5; issue #9's table; #62): Recurring due, Auto-recorded, Budget threshold and Loan due,
-// decided once a day at 09:00 household time from what the database gathers (`notification_facts`), then raised once
-// each by their dedupe key (`raise_notifications`). The payloads carry names only, never an amount, as push text is
+// Event notifications (spec §3.5; issue #9's table; #62, #63): Recurring due, Auto-recorded, Budget threshold, Loan due
+// and the Monthly summary, decided once a day at 09:00 household time, and the Household activity digest at 20:00,
+// from what the database gathers (`notification_facts`, `summary_facts`, `digest_facts`), then raised once each by
+// their dedupe key (`raise_notifications`). The payloads carry names and counts only, never an amount, as push text is
 // made from them (`pushMessage`), and the inbox reads them (`readEventPayload`, in ./notifications).
 // No imports: the raise-notifications Edge Function loads this file in Deno.
 
@@ -45,7 +46,34 @@ export type HouseholdFacts = {
 };
 
 export type EventTrigger =
-	"recurring_due" | "auto_recorded" | "budget_threshold" | "loan_due";
+	| "recurring_due"
+	| "auto_recorded"
+	| "budget_threshold"
+	| "loan_due"
+	| "household_activity"
+	| "monthly_summary";
+
+/** One household at its 20:00 (#63), as `digest_facts` gathers it. */
+export type DigestFacts = {
+	householdId: string;
+	householdName: string;
+	/** Its own today, YYYY-MM-DD. */
+	today: string;
+	/** Who turned the Household activity digest on there (it's off by default). */
+	optedIn: string[];
+	/** Who changed something over the day before, and how many times (changes made together once). */
+	changes: { actorId: string; actorName: string; count: number }[];
+};
+
+/** One household at 09:00 on a Budget month's first day (#63), as `summary_facts` gathers it. */
+export type SummaryFacts = {
+	householdId: string;
+	householdName: string;
+	/** The Budget month just gone, YYYY-MM. */
+	month: string;
+	/** Everyone in it, Viewers included. */
+	members: string[];
+};
 
 /** A Notification to raise: to one User, once only by its dedupe key. */
 export type RaisedNotification = {
@@ -189,21 +217,82 @@ export const scheduledNotifications = (
 	return raised;
 };
 
+/**
+ * The Household activity digest (issue #9's table): at 20:00, to each Member who opted in, what the others changed
+ * over the day, by whom; nothing when they changed nothing. Counts and names only.
+ */
+export const activityDigests = (facts: DigestFacts): RaisedNotification[] =>
+	facts.optedIn.flatMap((userId) => {
+		const others = facts.changes.filter(
+			(c) => c.actorId !== userId && c.count > 0,
+		);
+		const changes = others.reduce((n, c) => n + c.count, 0);
+		if (changes === 0) return [];
+		return [
+			{
+				householdId: facts.householdId,
+				userId,
+				trigger: "household_activity" as const,
+				payload: JSON.stringify({
+					householdName: facts.householdName,
+					date: facts.today,
+					changes,
+					// Most active first.
+					people: others
+						.toSorted(
+							(a, b) =>
+								b.count - a.count || a.actorName.localeCompare(b.actorName),
+						)
+						.map((c) => c.actorName),
+				}),
+				dedupeKey: `household_activity/${facts.householdId}/${facts.today}`,
+			},
+		];
+	});
+
+/** The Monthly summary (issue #9's table): at the start of each Budget month, about the one gone, to everyone. */
+export const monthlySummaries = (facts: SummaryFacts): RaisedNotification[] =>
+	facts.members.map((userId) => ({
+		householdId: facts.householdId,
+		userId,
+		trigger: "monthly_summary" as const,
+		payload: JSON.stringify({
+			householdName: facts.householdName,
+			month: facts.month,
+		}),
+		dedupeKey: `monthly_summary/${facts.householdId}/${facts.month}`,
+	}));
+
 /** What raising needs from the database, as the service role. */
 export type RaiseAdapters = {
 	/** Each household where it's 09:00 at `asOf`. */
 	facts: (asOf: string) => Promise<HouseholdFacts[]>;
+	/** Each household where it's 20:00 at `asOf`. */
+	digestFacts: (asOf: string) => Promise<DigestFacts[]>;
+	/** Each household at 09:00 on a Budget month's first day at `asOf`. */
+	summaryFacts: (asOf: string) => Promise<SummaryFacts[]>;
 	/** Raises them, each once only; answers with how many were new. */
 	raise: (notifications: RaisedNotification[]) => Promise<number>;
 };
 
-/** Raises what's due in every household at its 09:00. Answers with how many were new. */
+/**
+ * Raises what's due in every household: its events and Monthly summary at 09:00, its digest at 20:00. Answers with how
+ * many were new.
+ */
 export const raiseScheduledNotifications = async (
 	adapters: RaiseAdapters,
 	asOf: Date,
 ) => {
-	const raised = (await adapters.facts(asOf.toISOString())).flatMap(
-		scheduledNotifications,
-	);
+	const at = asOf.toISOString();
+	const [events, digests, summaries] = await Promise.all([
+		adapters.facts(at),
+		adapters.digestFacts(at),
+		adapters.summaryFacts(at),
+	]);
+	const raised = [
+		...events.flatMap(scheduledNotifications),
+		...digests.flatMap(activityDigests),
+		...summaries.flatMap(monthlySummaries),
+	];
 	return raised.length > 0 ? adapters.raise(raised) : 0;
 };

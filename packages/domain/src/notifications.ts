@@ -141,6 +141,22 @@ export type EventPayload =
 			direction: "lent" | "borrowed";
 			dueOn: string;
 			when: "soon" | "today" | "overdue";
+	  }
+	| {
+			trigger: "household_activity";
+			householdName: string;
+			/** The household's day, YYYY-MM-DD. */
+			date: string;
+			/** How many changes the others made (changes made together once). */
+			changes: number;
+			/** Who made them, most active first. */
+			people: string[];
+	  }
+	| {
+			trigger: "monthly_summary";
+			householdName: string;
+			/** The Budget month it's about, YYYY-MM. */
+			month: string;
 	  };
 
 const LOAN_WHEN: readonly string[] = ["soon", "today", "overdue"];
@@ -221,9 +237,60 @@ export const readEventPayload = (
 					}
 				: null;
 		}
+		case "household_activity": {
+			const date = text("date");
+			const { changes, people } = p;
+			return date !== null &&
+				typeof changes === "number" &&
+				Number.isInteger(changes) &&
+				changes > 0 &&
+				Array.isArray(people) &&
+				people.every((name) => typeof name === "string")
+				? {
+						trigger,
+						householdName,
+						date,
+						changes,
+						people: people as string[],
+					}
+				: null;
+		}
+		case "monthly_summary": {
+			const month = text("month");
+			return month !== null && /^\d{4}-\d{2}$/.test(month)
+				? { trigger, householdName, month }
+				: null;
+		}
 		default:
 			return null;
 	}
+};
+
+const MONTH_NAMES = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
+
+/** A Budget month by name, as English push and email have it: "2026-10" is "October 2026". */
+export const monthName = (month: string) =>
+	`${MONTH_NAMES[Number(month.slice(5, 7)) - 1] ?? month} ${month.slice(0, 4)}`;
+
+/** People named in a sentence: "Bilal", "Bilal and Sara", "Bilal, Sara and 2 others". */
+export const namePeople = (people: readonly string[]) => {
+	if (people.length <= 1) return people[0] ?? "Someone";
+	if (people.length === 2) return `${people[0]} and ${people[1]}`;
+	const rest = people.length - 2;
+	return `${people[0]}, ${people[1]} and ${rest === 1 ? "1 other" : `${rest} others`}`;
 };
 
 export const DELIVERY_CHANNELS = ["expo", "webpush", "email"] as const;
@@ -455,7 +522,8 @@ export class DispatchForbidden extends Error {}
  */
 export const handleDispatchRequest = async (
 	adaptersFor: (key: string) => DispatchAdapters,
-	senders: Senders,
+	/** The senders, or made from the caller's key, for one that reads the database too (the summary's email). */
+	senders: Senders | ((key: string) => Senders),
 	request: Request,
 	fetchReceipts?: ReceiptFetcher,
 ): Promise<Response> => {
@@ -470,7 +538,7 @@ export const handleDispatchRequest = async (
 			status: "ok",
 			settled: await dispatchDeliveries(
 				adaptersFor(key),
-				senders,
+				typeof senders === "function" ? senders(key) : senders,
 				fetchReceipts,
 			),
 		});
@@ -560,6 +628,10 @@ const eventBody = (event: EventPayload) => {
 				overdue: `${loan} is overdue, in ${where}.`,
 			}[event.when];
 		}
+		case "household_activity":
+			return `${namePeople(event.people)} made ${event.changes === 1 ? "1 change" : `${event.changes} changes`} in ${where} today.`;
+		case "monthly_summary":
+			return `How ${monthName(event.month)} went in ${where}.`;
 	}
 };
 
