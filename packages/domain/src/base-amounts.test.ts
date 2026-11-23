@@ -1,4 +1,7 @@
-import DecimalBase from "decimal.js";
+import Decimal from "decimal.js";
+
+// Exact enough for any product the generators make (decimal.js defaults to 20 significant digits).
+const DecimalBase = Decimal.clone({ precision: 80 });
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
