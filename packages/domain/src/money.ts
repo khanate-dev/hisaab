@@ -91,6 +91,21 @@ export class Money {
 		return new Money(this.#amount.times(factor), this.currency);
 	}
 
+	/** An n-th of this (an average over n), rounded half away from zero to the currency's minor units. */
+	dividedInto(count: number) {
+		if (!Number.isInteger(count) || count < 1)
+			throw new Error(`Not a count: ${count}`);
+		return new Money(
+			this.#amount
+				.dividedBy(count)
+				.toDecimalPlaces(
+					currencyDecimals(this.currency),
+					Decimal.ROUND_HALF_UP,
+				),
+			this.currency,
+		);
+	}
+
 	/** How much of `whole` this is, as a whole percentage (rounded half up): for showing Pace, never for sums. */
 	percentOf(whole: Money) {
 		if (whole.currency !== this.currency) {

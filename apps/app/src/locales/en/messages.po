@@ -7,6 +7,18 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/reports/spending-by-category.tsx
+msgid "{amount} less"
+msgstr "{amount} less"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "{amount} more"
+msgstr "{amount} more"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "{amount}, {versus}"
+msgstr "{amount}, {versus}"
+
 #: src/features/entries/base-amount.tsx
 msgid "{baseCurrency} has at most {decimals} decimals."
 msgstr "{baseCurrency} has at most {decimals} decimals."
@@ -70,6 +82,11 @@ msgstr "{fromCode} has no decimals."
 #: src/features/recurring/rule-list.tsx
 msgid "{how} · {mode} · {when}"
 msgstr "{how} · {mode} · {when}"
+
+#: src/components/charts/bar-chart.tsx
+#: src/components/charts/donut-chart.tsx
+msgid "{label}: {amount}"
+msgstr "{label}: {amount}"
 
 #: src/features/activity/activity-list.tsx
 msgid "{label}: {was} → {now}"
@@ -184,6 +201,10 @@ msgstr "{percent}% received"
 msgid "{percent}% spent"
 msgstr "{percent}% spent"
 
+#: src/features/reports/report-controls.tsx
+msgid "{range}, {comparison}"
+msgstr "{range}, {comparison}"
+
 #: src/features/import/import-wizard.tsx
 msgid "{readCount} rows read; {unreadable} can't be, and are left out."
 msgstr "{readCount} rows read; {unreadable} can't be, and are left out."
@@ -236,6 +257,14 @@ msgstr "{toCode} has at most {decimals} decimals."
 msgid "{toCode} has no decimals."
 msgstr "{toCode} has no decimals."
 
+#: src/features/reports/spending-by-category.tsx
+msgid "{total}, {totalAgainst}"
+msgstr "{total}, {totalAgainst}"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "{unpriced, plural, one {# Expense in another currency isn't} other {# Expenses in other currencies aren't}} counted yet: no exchange rate is held for {unpriced, plural, one {its date} other {their dates}}."
+msgstr "{unpriced, plural, one {# Expense in another currency isn't} other {# Expenses in other currencies aren't}} counted yet: no exchange rate is held for {unpriced, plural, one {its date} other {their dates}}."
+
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} received"
 msgstr "{used} of {budget} received"
@@ -283,6 +312,10 @@ msgstr "1 recurring Entry waits for you to confirm it."
 #: src/features/import/import-wizard.tsx
 msgid "1 row still needs a Category."
 msgstr "1 row still needs a Category."
+
+#: src/features/reports/spending-by-category.tsx
+msgid "3-month avg."
+msgstr "3-month avg."
 
 #: src/features/activity/activity-list.tsx
 msgid "a Budget"
@@ -803,6 +836,10 @@ msgstr "Change the total"
 msgid "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 msgstr "Changes reach what's still to come or Pending; Entries already recorded stay as they are."
 
+#: src/features/reports/report-controls.tsx
+msgid "Changes the range and what it's compared with"
+msgstr "Changes the range and what it's compared with"
+
 #: src/features/account/delete-account-flow.tsx
 msgid "Check again"
 msgstr "Check again"
@@ -864,6 +901,10 @@ msgstr "Colour"
 #: src/features/import/import-wizard.tsx
 msgid "Column {number}"
 msgstr "Column {number}"
+
+#: src/features/reports/report-controls.tsx
+msgid "Compare"
+msgstr "Compare"
 
 #: src/features/account/delete-account-flow.tsx
 msgid "Confirm"
@@ -1593,6 +1634,10 @@ msgstr "In credit"
 msgid "In the household's timezone, {timeZone}."
 msgstr "In the household's timezone, {timeZone}."
 
+#: src/features/reports/report-controls.tsx
+msgid "In whole Budget months."
+msgstr "In whole Budget months."
+
 #: src/features/budgets/budget-month.tsx
 msgid "Includes its Subcategories"
 msgstr "Includes its Subcategories"
@@ -1737,13 +1782,29 @@ msgstr "Keep the quantity to 40 characters or fewer."
 msgid "Kind"
 msgstr "Kind"
 
+#: src/features/reports/labels.ts
+msgid "Last 12 months"
+msgstr "Last 12 months"
+
 #: src/features/search/entry-search.tsx
 msgid "Last 3 Budget months"
 msgstr "Last 3 Budget months"
 
+#: src/features/reports/labels.ts
+msgid "Last 3 months"
+msgstr "Last 3 months"
+
+#: src/features/reports/labels.ts
+msgid "Last 6 months"
+msgstr "Last 6 months"
+
 #: src/features/search/entry-search.tsx
 msgid "Last Budget month"
 msgstr "Last Budget month"
+
+#: src/features/reports/labels.ts
+msgid "Last month"
+msgstr "Last month"
 
 #: src/features/legal/privacy-policy.tsx
 msgid "Last updated 28 October 2026"
@@ -2062,6 +2123,10 @@ msgstr "No exchange rate yet: it's priced once one arrives."
 msgid "No Expected income this month."
 msgstr "No Expected income this month."
 
+#: src/features/reports/spending-by-category.tsx
+msgid "No Expenses in this period."
+msgstr "No Expenses in this period."
+
 #: src/features/invites/invite-list.tsx
 msgid "No Invites yet."
 msgstr "No Invites yet."
@@ -2350,6 +2415,7 @@ msgid "Plane"
 msgstr "Plane"
 
 #: src/features/budgets/budget-month.tsx
+#: src/features/reports/spending-by-category.tsx
 msgid "Previous"
 msgstr "Previous"
 
@@ -2385,6 +2451,14 @@ msgstr "Quantity"
 msgid "Questions or requests about your data: {SUPPORT_EMAIL}."
 msgstr "Questions or requests about your data: {SUPPORT_EMAIL}."
 
+#: src/features/reports/report-controls.tsx
+msgid "Range"
+msgstr "Range"
+
+#: src/features/reports/report-controls.tsx
+msgid "Range and comparison"
+msgstr "Range and comparison"
+
 #: src/features/entries/base-amount.tsx
 msgid "Rate estimated: corrected once that day's rate arrives."
 msgstr "Rate estimated: corrected once that day's rate arrives."
@@ -2407,6 +2481,7 @@ msgid "Record Repayment"
 msgstr "Record Repayment"
 
 #: src/features/entries/entry-detail.tsx
+#: src/features/reports/report-controls.tsx
 #: src/features/search/entry-search.tsx
 msgid "Recorded by"
 msgstr "Recorded by"
@@ -2484,8 +2559,8 @@ msgid "Reports"
 msgstr "Reports"
 
 #: src/app/(tabs)/reports.tsx
-msgid "Reports arrive once there are Entries to report on."
-msgstr "Reports arrive once there are Entries to report on."
+msgid "Reports are in the household's Base currency, which its first Wallet sets."
+msgstr "Reports are in the household's Base currency, which its first Wallet sets."
 
 #: src/features/entries/items-section.tsx
 #: src/features/entries/labels.ts
@@ -2668,6 +2743,10 @@ msgstr "Show archived Categories"
 msgid "Show archived Wallets"
 msgstr "Show archived Wallets"
 
+#: src/app/(tabs)/entries.tsx
+msgid "Show every Entry"
+msgstr "Show every Entry"
+
 #: src/features/import/import-wizard.tsx
 msgid "Show more rows"
 msgstr "Show more rows"
@@ -2675,6 +2754,10 @@ msgstr "Show more rows"
 #: src/app/activity.tsx
 msgid "Show older changes"
 msgstr "Show older changes"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "Shows these Expenses"
+msgstr "Shows these Expenses"
 
 #: src/app/_layout.tsx
 #: src/features/auth/sign-in-form.tsx
@@ -2715,6 +2798,10 @@ msgstr "Snooze"
 msgid "Snooze {name} due {dueDate}"
 msgstr "Snooze {name} due {dueDate}"
 
+#: src/features/reports/spending-by-category.tsx
+msgid "So far: the period runs past today."
+msgstr "So far: the period runs past today."
+
 #: src/features/entries/entry-list.tsx
 #: src/features/loans/loan-detail.tsx
 #: src/features/loans/loan-list.tsx
@@ -2722,6 +2809,7 @@ msgid "someone"
 msgstr "someone"
 
 #: src/app/(tabs)/entries.tsx
+#: src/app/(tabs)/reports.tsx
 #: src/features/activity/activity-list.tsx
 #: src/features/members/member-list.tsx
 #: src/features/notifications/inbox-list.tsx
@@ -2743,6 +2831,11 @@ msgstr "Something went wrong"
 #: src/features/budgets/budget-month.tsx
 msgid "Spending ahead of the month"
 msgstr "Spending ahead of the month"
+
+#: src/app/(tabs)/reports.tsx
+#: src/features/reports/spending-by-category.tsx
+msgid "Spending by category"
+msgstr "Spending by category"
 
 #: src/features/recurring/rule-form.tsx
 msgid "Starts"
@@ -2944,6 +3037,10 @@ msgstr "The Loan to {contact} is due today, in {household}."
 msgid "The Loan to {contact} is overdue, in {household}."
 msgstr "The Loan to {contact} is overdue, in {household}."
 
+#: src/features/reports/spending-by-category.tsx
+msgid "The same"
+msgstr "The same"
+
 #: src/features/device/this-device.tsx
 msgid "The unlock didn't pass, so the app lock stays off."
 msgstr "The unlock didn't pass, so the app lock stays off."
@@ -3012,6 +3109,14 @@ msgstr "This is how the people you share a household with will see you."
 #: src/app/loans/[id].tsx
 msgid "This Loan isn't here. It may have been deleted, or not synced yet."
 msgstr "This Loan isn't here. It may have been deleted, or not synced yet."
+
+#: src/features/reports/labels.ts
+msgid "This month"
+msgstr "This month"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "This period"
+msgstr "This period"
 
 #: src/features/wallets/adjust-balance.tsx
 msgid "This records an adjustment of {shownGap}. It isn't spending or income, so budgets and reports leave it out."
@@ -3085,6 +3190,14 @@ msgstr "Today"
 #: src/features/entries/entry-form.tsx
 msgid "Total"
 msgstr "Total"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "Total spent"
+msgstr "Total spent"
+
+#: src/features/reports/spending-by-category.tsx
+msgid "Total spent, compared"
+msgstr "Total spent, compared"
 
 #: src/features/entries/labels.ts
 msgid "Transfer"
@@ -3201,6 +3314,14 @@ msgstr "Viewers see Entries but don't record them."
 msgid "Violet"
 msgstr "Violet"
 
+#: src/features/reports/labels.ts
+msgid "vs the 3-month average"
+msgstr "vs the 3-month average"
+
+#: src/features/reports/labels.ts
+msgid "vs the previous period"
+msgstr "vs the previous period"
+
 #: src/app/_layout.tsx
 #: src/app/wallets/[id]/index.tsx
 #: src/features/activity/fields.ts
@@ -3235,6 +3356,10 @@ msgstr "We emailed a code to {email}."
 #: src/features/recurring/schedule-text.ts
 msgid "Weekly"
 msgstr "Weekly"
+
+#: src/app/(tabs)/entries.tsx
+msgid "What a report counted"
+msgstr "What a report counted"
 
 #: src/features/entries/transfer-form.tsx
 msgid "What actually arrived."
@@ -3275,6 +3400,10 @@ msgstr "Who helps run it"
 #: src/features/legal/privacy-policy.tsx
 msgid "Who sees it"
 msgstr "Who sees it"
+
+#: src/app/(tabs)/entries.tsx
+msgid "Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount."
+msgstr "Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount."
 
 #: src/features/search/entry-search.tsx
 msgid "Words, or amounts like 2500 or >2000."

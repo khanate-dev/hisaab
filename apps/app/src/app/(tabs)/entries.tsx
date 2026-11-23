@@ -9,7 +9,7 @@ import {
 	readSavedCriteria,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 
@@ -42,11 +42,14 @@ const SearchableEntries = ({
 	userId,
 	today,
 	startDay,
+	initial,
 }: {
 	householdId: string;
 	userId: string;
 	today: string;
 	startDay: number;
+	/** Where it starts filtered: a report's drill-down (spec §3.5). */
+	initial: EntryFilter;
 }) => {
 	const { t, i18n } = useLingui();
 	const views = useEntryViews(householdId);
@@ -58,7 +61,7 @@ const SearchableEntries = ({
 	const isAdmin = useMembership(householdId, userId)?.role === "admin";
 	const [exportProblem, setExportProblem] = useState<string | null>(null);
 	const title = useEntryTitle();
-	const [filter, setFilter] = useState<EntryFilter>(NO_FILTER);
+	const [filter, setFilter] = useState<EntryFilter>(initial);
 
 	const parentOf = useMemo(
 		() => new Map((categories ?? []).map((c) => [c.id, c.parent_id])),
@@ -226,6 +229,17 @@ export default function Entries() {
 	const userId = useSignedInUserId();
 	const household = useCurrentHousehold(userId);
 	const canWrite = useCanWrite(household?.id, userId) === true;
+	// A report's figure opens the Entries it counts: `filter` holds them as a Saved filter's criteria do.
+	const params = useLocalSearchParams<{
+		filter?: string;
+		household?: string;
+		drilled?: string;
+	}>();
+	// Only for the household it was made in: another one's Categories and members would match nothing.
+	const drilled =
+		params.filter && params.household === household?.id
+			? params.filter
+			: undefined;
 
 	return (
 		<Screen title={t`Entries`}>
@@ -248,10 +262,34 @@ export default function Entries() {
 					</Button>
 				</View>
 			)}
+			{drilled !== undefined && (
+				<View
+					className="gap-2 rounded-control border-2 border-border p-3"
+					role="status"
+				>
+					<Text variant="label">{t`What a report counted`}</Text>
+					<Text variant="muted">
+						{t`Whole Entries are listed: an itemized Expense counts in the report only for its Items in that Category, and one in another currency only once it has a Base amount.`}
+					</Text>
+					<Button
+						onPress={() =>
+							router.setParams({
+								filter: undefined,
+								household: undefined,
+								drilled: undefined,
+							})
+						}
+						variant="secondary"
+					>
+						{t`Show every Entry`}
+					</Button>
+				</View>
+			)}
 			{household && (
 				<SearchableEntries
 					householdId={household.id}
-					key={household.id}
+					initial={drilled ? readSavedCriteria(drilled) : NO_FILTER}
+					key={`${household.id} ${drilled ? (params.drilled ?? "") : ""}`}
 					startDay={household.budget_month_start_day}
 					today={todayIn(entryTimeZone(household))}
 					userId={userId}

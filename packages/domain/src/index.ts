@@ -27,5 +27,6 @@ export * from "./notification-triggers";
 export * from "./notifications";
 export * from "./rates";
 export * from "./recurring";
+export * from "./reports";
 export * from "./search";
 export * from "./upcasters";
