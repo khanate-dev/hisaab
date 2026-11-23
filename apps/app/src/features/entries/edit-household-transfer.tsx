@@ -1,4 +1,4 @@
-import { isNegative, parseMoney } from "@hisaab/domain";
+import { isNegative, magnitude, parseMoney } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
 
 import { Text } from "@/components/ui/text";
@@ -10,6 +10,7 @@ import { updateHouseholdTransfer } from "./actions";
 import { TransferForm } from "./transfer-form";
 import type { Entry } from "./types";
 import { useLinkedHalves } from "./use-entries";
+import { useRates } from "./use-rates";
 import { useTransferTargets } from "./use-transfer-targets";
 
 /**
@@ -40,6 +41,9 @@ export const EditHouseholdTransfer = ({
 	const from = useHousehold(leaves?.household_id);
 	const wallets = useWalletRows(leaves?.household_id);
 	const targets = useTransferTargets(userId, leaves?.household_id);
+	const rates = useRates();
+	// The other household's Wallets, archived ones too: the half's own Wallet stays offered once archived.
+	const arrivalWallets = useWalletRows(arrives?.household_id);
 	if (halves === undefined) return null;
 	if (!leaves || !arrives || entry.created_by !== userId) {
 		return (
@@ -51,23 +55,37 @@ export const EditHouseholdTransfer = ({
 			</Text>
 		);
 	}
-	if (!from || !wallets || !targets) return null;
+	if (!from || !wallets || !targets || !arrivalWallets) return null;
+	const arrivedIn = arrivalWallets.find((w) => w.id === arrives.wallet_id);
+	// What arrived, in the other half's Wallet's currency.
+	const received = arrivedIn
+		? magnitude(parseMoney(arrives.amount, arrivedIn.currency)).toString()
+		: undefined;
+	const destination = targets
+		.filter((h) => h.householdId === arrives.household_id)
+		.map((h) => ({
+			...h,
+			wallets:
+				arrivedIn && !h.wallets.some((w) => w.id === arrivedIn.id)
+					? [...h.wallets, arrivedIn]
+					: h.wallets,
+		}));
 	return (
 		<TransferForm
 			baseCurrency={from.base_currency}
 			entry={leaves}
+			initialReceived={received}
 			initialToWalletId={arrives.wallet_id}
 			onSubmit={async (draft, currencies) => {
 				await updateHouseholdTransfer(
 					{ leaves: leaves.id, arrives: arrives.id },
 					draft,
-					currencies.from,
+					currencies,
 				);
 				onSaved();
 			}}
-			otherHouseholds={targets.filter(
-				(h) => h.householdId === arrives.household_id,
-			)}
+			rates={rates}
+			otherHouseholds={destination}
 			submitLabel={t`Save`}
 			timeZone={entryTimeZone(from)}
 			wallets={wallets}

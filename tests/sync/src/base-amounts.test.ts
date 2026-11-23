@@ -207,6 +207,63 @@ describe("Base amounts", () => {
 		});
 	});
 
+	it("let a cross-household transfer's halves hold different amounts, each in its own Wallet's currency (#46)", async () => {
+		const here = await household();
+		const there = uuidv7();
+		const away = uuidv7();
+		await must(
+			admin
+				.from("households")
+				.insert({ id: there, name: "Abroad", base_currency: FOREIGN }),
+		);
+		await must(
+			admin.from("memberships").insert({
+				id: uuidv7(),
+				household_id: there,
+				user_id: here.owner.id,
+				role: "admin",
+			}),
+		);
+		await must(
+			admin.from("wallets").insert({
+				id: away,
+				household_id: there,
+				name: "Away",
+				type: "cash",
+				currency: FOREIGN,
+			}),
+		);
+		const api = userClient(here.owner);
+		const link = uuidv7();
+		const half = (household_id: string, wallet_id: string, amount: string) => ({
+			id: uuidv7(),
+			household_id,
+			wallet_id,
+			kind: "household_transfer",
+			amount,
+			link_id: link,
+			occurred_on: "2015-03-01",
+			created_by: here.owner.id,
+		});
+		const leaves = half(here.id, here.wallets.base, "-10");
+		const arrives = half(there, away, "53.05");
+		await must(api.from("entries").insert([leaves, arrives]));
+		await must(
+			api.from("entries").update({ amount: "60" }).eq("id", arrives.id),
+		);
+		const rows = (await must(
+			admin
+				.from("entries")
+				.select("id, amount::text, base_rate")
+				.eq("link_id", link)
+				.order("amount"),
+		)) as { id: string; amount: string; base_rate: string | null }[];
+		expect(rows).toEqual([
+			{ id: leaves.id, amount: "-10", base_rate: null },
+			{ id: arrives.id, amount: "60", base_rate: null },
+		]);
+	});
+
 	it("come out of the server as a device prices them, for any amounts, dates and rates", async () => {
 		const h = await household();
 		const rate = fc

@@ -305,10 +305,19 @@ export const recordBalanceAdjustment = async (
 	);
 };
 
-/** What a cross-household transfer's halves share: when, what for and how much (each signed for its own Wallet). */
-const householdTransferColumns = (draft: TransferDraft, currency: string) => {
-	const { leaves, arrives } = householdTransferHalves(
-		parseMoney(draft.amount, currency),
+/**
+ * What a cross-household transfer's halves share (when, what for) and what each holds: what left, in the From Wallet's
+ * currency, and what arrived, in the To Wallet's, each signed for its own Wallet. Between currencies the two differ.
+ */
+const householdTransferColumns = (
+	draft: TransferDraft,
+	currencies: { from: string; to: string },
+) => {
+	const { leaves } = householdTransferHalves(
+		parseMoney(draft.amount, currencies.from),
+	);
+	const { arrives } = householdTransferHalves(
+		parseMoney(draft.toAmount, currencies.to),
 	);
 	const shared = {
 		kind: "household_transfer" as const,
@@ -332,17 +341,17 @@ const householdTransferColumns = (draft: TransferDraft, currency: string) => {
 
 /**
  * A cross-household transfer (ADR-0003): two linked, mirrored Entries made in one action, money leaving the From
- * Wallet in this household and arriving in the To Wallet in the other. Same currency on both sides until #46.
+ * Wallet in this household and arriving in the To Wallet in the other, each in its own Wallet's currency.
  */
 export const createHouseholdTransfer = async (
 	households: { from: string; to: string },
 	userId: string,
 	draft: TransferDraft,
-	currency: string,
+	currencies: { from: string; to: string },
 ) => {
 	const linkId = newId();
 	const createdAt = nowIso();
-	const { from, to } = householdTransferColumns(draft, currency);
+	const { from, to } = householdTransferColumns(draft, currencies);
 	const id = newId();
 	await db.transaction(async (tx) => {
 		await tx.insert(entries).values([
@@ -371,9 +380,9 @@ export const createHouseholdTransfer = async (
 export const updateHouseholdTransfer = async (
 	halves: { leaves: string; arrives: string },
 	draft: TransferDraft,
-	currency: string,
+	currencies: { from: string; to: string },
 ) => {
-	const { from, to } = householdTransferColumns(draft, currency);
+	const { from, to } = householdTransferColumns(draft, currencies);
 	await db.transaction(async (tx) => {
 		await tx
 			.update(entries)
@@ -400,5 +409,5 @@ export const recordTransfer = (
 				{ from: householdId, to: toHouseholdId },
 				userId,
 				draft,
-				currencies.from,
+				currencies,
 			);

@@ -69,6 +69,7 @@ export default function EditEntry() {
 						await updateTransfer(entry.id, draft, currencies);
 						leaveTo(`/entries/${entry.id}`);
 					}}
+					rates={rates}
 					submitLabel={t`Save`}
 					timeZone={timeZone}
 					wallets={wallets}

@@ -21,7 +21,7 @@ export type TransferTarget = {
 
 /**
  * The User's other households they record in (not as a Viewer), with the Wallets a cross-household transfer can
- * arrive in: active ones in that household's Base currency (until #45). Undefined while loading.
+ * arrive in: its active ones, in any currency. Undefined while loading.
  */
 export const useTransferTargets = (
 	userId: string,
@@ -45,7 +45,6 @@ export const useTransferTargets = (
 						wallets,
 						and(
 							eq(wallets.household_id, households.id),
-							eq(wallets.currency, households.base_currency),
 							isNull(wallets.archived_at),
 						),
 					)
