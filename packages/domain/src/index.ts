@@ -5,6 +5,7 @@ export * from "./attachment-purge";
 export * from "./attachments";
 export * from "./balance-history";
 export * from "./balances";
+export * from "./base-amounts";
 export * from "./budgets";
 export * from "./categories";
 export * from "./contract-version";

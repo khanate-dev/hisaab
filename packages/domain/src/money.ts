@@ -106,6 +106,43 @@ export class Money {
 			.toNumber();
 	}
 
+	/**
+	 * This amount in another currency, from each one's rate per USD (decimal text): this × to ÷ from, rounded half away
+	 * from zero to the target's minor units. Postgres's `private.converted` rounds the same way (tests/sync).
+	 */
+	converted(fromPerUsd: string, toPerUsd: string, currency: string) {
+		const from = new Decimal(fromPerUsd);
+		const to = new Decimal(toPerUsd);
+		if (!(from.gt(0) && to.gt(0)))
+			throw new Error(`Rates must be positive: ${fromPerUsd}, ${toPerUsd}`);
+		return new Money(
+			this.#amount
+				.times(to)
+				.dividedBy(from)
+				.toDecimalPlaces(currencyDecimals(currency), Decimal.ROUND_HALF_UP),
+			currency,
+		);
+	}
+
+	/**
+	 * The part of `of` that this is of `whole`: of × this ÷ whole, rounded half away from zero to `of`'s minor units (an
+	 * Item's share of its Expense's Base amount). This and `whole` share a currency, which `of` needn't.
+	 */
+	portion(whole: Money, of: Money) {
+		if (whole.currency !== this.currency)
+			throw new Error(
+				`Can't compare ${this.currency} and ${whole.currency}: convert the currency first`,
+			);
+		if (whole.#amount.isZero()) return Money.zero(of.currency);
+		return new Money(
+			of.#amount
+				.times(this.#amount)
+				.dividedBy(whole.#amount)
+				.toDecimalPlaces(currencyDecimals(of.currency), Decimal.ROUND_HALF_UP),
+			of.currency,
+		);
+	}
+
 	/** The canonical text form: what Postgres and the local database store. Negative zero prints as "0". */
 	toString() {
 		return this.#amount.isZero() ? "0" : this.#amount.toFixed();
