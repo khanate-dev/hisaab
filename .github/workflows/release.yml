@@ -1,11 +1,13 @@
 # Native release (ADR-0011; #66): run by hand from main. It never gets ahead of the backend: `deploy` must have
-# succeeded for this commit or a later one. The fingerprint decides the path:
-# - nothing native changed since the newest store builds → an OTA update to `preview`, smoke-tested from the
-#   checklist (docs/release-smoke.md) in the `prod-release` Environment, then that same update republished to
-#   `production`;
-# - anything native changed → store builds for both platforms, submitted (Play staged, iOS phased).
+# succeeded for this commit or a later one. The fingerprint (the runtime) decides the path:
+# - nothing native changed since the newest store builds → an OTA update to `preview`, which the internal builds
+#   (Android APK, TestFlight) listen on; once it passes the smoke checklist (docs/release-smoke.md) the `prod-release`
+#   reviewer approves, and that same update is republished to `production`;
+# - anything native changed → new internal builds on `preview` first (APK, TestFlight); once they pass the checklist
+#   and `prod-release` approves, store builds at the new version, submitted (Play staged, iOS phased), and a stamped
+#   update on `production` for their runtime.
 # Either way the version is tagged. Every update's message starts with its contract stamp, `[contract N]`, which the
-# deploy gate's raise check reads (tooling/release/contract-ready.ts).
+# deploy gate's raise check reads (tooling/release/contract-ready.ts), so every live runtime carries one.
 name: release
 
 on:
@@ -18,7 +20,7 @@ on:
         default: patch
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -56,14 +58,19 @@ jobs:
           done
           echo "::error::deploy hasn't succeeded for $GITHUB_SHA or a later commit yet; release after it does."
           exit 1
+      - name: App Store Connect app id
+        env:
+          ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+        run: |
+          [[ $ASC_APP_ID =~ ^[0-9]+$ ]] || { echo "::error::Set the repo variable ASC_APP_ID (docs/infra.md §6)."; exit 1; }
       - id: version
         env:
           BUMP: ${{ inputs.bump }}
         run: |
           echo "version=$(node tooling/release/release.ts next "$BUMP" $(git tag --list 'v*'))" >> "$GITHUB_OUTPUT"
           echo "stamp=$(node tooling/release/release.ts stamp)" >> "$GITHUB_OUTPUT"
-      # With `runtimeVersion: { policy: "fingerprint" }` the runtime is the fingerprint: an update reaches only store
-      # builds on the same one.
+      # With `runtimeVersion: { policy: "fingerprint" }` the runtime is the fingerprint (the version left out, in
+      # fingerprint.config.js): an update reaches only builds on the same one.
       - id: path
         working-directory: apps/app
         env:
@@ -77,8 +84,8 @@ jobs:
           echo "path=$path" >> "$GITHUB_OUTPUT"
           echo "Release path: $path"
 
-  # Fingerprint matches: an update to `preview`, which the internal builds and TestFlight listen on.
-  preview:
+  # Fingerprint matches: an update to `preview`, one group per platform (their runtimes differ).
+  preview-update:
     name: OTA to preview
     needs: plan
     if: needs.plan.outputs.path == 'ota'
@@ -86,7 +93,7 @@ jobs:
     timeout-minutes: 30
     environment: prod
     outputs:
-      group: ${{ steps.publish.outputs.group }}
+      groups: ${{ steps.publish.outputs.groups }}
     defaults:
       run:
         working-directory: apps/app
@@ -102,13 +109,13 @@ jobs:
         run: |
           pnpm exec eas update --channel preview --environment production --message "$MESSAGE" \
             --non-interactive --json > "$RUNNER_TEMP/update.json"
-          echo "group=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")" >> "$GITHUB_OUTPUT"
+          echo "groups=$(jq -r '[.[].group] | unique | join(" ")' "$RUNNER_TEMP/update.json")" >> "$GITHUB_OUTPUT"
 
   # The smoke checklist is ticked against that exact update before the `prod-release` reviewer approves; the tested
   # update is the one that ships, its stamp passed on.
-  production:
+  production-update:
     name: Republish to production
-    needs: [plan, preview]
+    needs: [plan, preview-update]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: prod-release
@@ -122,19 +129,21 @@ jobs:
       - uses: ./.github/actions/setup
       - env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          GROUP: ${{ needs.preview.outputs.group }}
+          GROUPS: ${{ needs.preview-update.outputs.groups }}
           MESSAGE: ${{ needs.plan.outputs.stamp }} v${{ needs.plan.outputs.version }}
         run: |
-          pnpm exec eas update:republish --group "$GROUP" --destination-channel production --message "$MESSAGE" \
-            --non-interactive
+          for group in $GROUPS; do
+            pnpm exec eas update:republish --group "$group" --destination-channel production --message "$MESSAGE" \
+              --non-interactive
+          done
 
-  # Fingerprint differs: store builds at the new version (build numbers are EAS's, remote), submitted to both stores.
-  store:
-    name: Store builds and submit
+  # Fingerprint differs: internal builds on `preview` at the new runtime first (an APK, and TestFlight), to smoke-test.
+  preview-builds:
+    name: Internal builds
     needs: plan
     if: needs.plan.outputs.path == 'store'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     environment: prod
     defaults:
       run:
@@ -144,22 +153,61 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: Version
+      - name: Version and App Store Connect app
         env:
           VERSION: ${{ needs.plan.outputs.version }}
-        run: jq --arg v "$VERSION" '.expo.version = $v' app.json > app.json.next && mv app.json.next app.json
+          ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+        run: |
+          jq --arg v "$VERSION" '.expo.version = $v' app.json > app.json.next && mv app.json.next app.json
+          jq --arg id "$ASC_APP_ID" '.submit.preview.ios.ascAppId = $id | .submit.production.ios.ascAppId = $id' eas.json \
+            > eas.json.next && mv eas.json.next eas.json
       - env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: pnpm exec eas build --profile production --platform all --auto-submit --non-interactive --wait
+        run: |
+          pnpm exec eas build --profile preview --platform android --non-interactive --wait
+          pnpm exec eas build --profile preview --platform ios --auto-submit --non-interactive --wait
+
+  # Once the internal builds pass the checklist: store builds at the new version (build numbers are EAS's), submitted to
+  # both stores, then a stamped update on `production` for their runtime, so a contract raise finds it covered.
+  store:
+    name: Store builds and submit
+    needs: [plan, preview-builds]
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment: prod-release
+    defaults:
+      run:
+        working-directory: apps/app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Version and App Store Connect app
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+          ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+        run: |
+          jq --arg v "$VERSION" '.expo.version = $v' app.json > app.json.next && mv app.json.next app.json
+          jq --arg id "$ASC_APP_ID" '.submit.preview.ios.ascAppId = $id | .submit.production.ios.ascAppId = $id' eas.json \
+            > eas.json.next && mv eas.json.next eas.json
+      - env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          MESSAGE: ${{ needs.plan.outputs.stamp }} v${{ needs.plan.outputs.version }}
+        run: |
+          pnpm exec eas build --profile production --platform all --auto-submit --non-interactive --wait
+          pnpm exec eas update --channel production --environment production --message "$MESSAGE" --non-interactive
 
   tag:
     name: Tag the version
-    needs: [plan, production, store]
+    needs: [plan, production-update, store]
     if: >-
       always() && needs.plan.result == 'success' &&
-      (needs.production.result == 'success' || needs.store.result == 'success')
+      (needs.production-update.result == 'success' || needs.store.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - env:

@@ -4,8 +4,13 @@ Tick this for every native release (ADR-0010, ADR-0011), on a physical Android d
 TestFlight, both against prod. It covers what the automated suite knowingly leaves out: native sync transport, real
 push and email, and the device features.
 
-- **An OTA update:** run it on internal builds listening on `preview`, before approving `prod-release`.
-- **A store build:** run it on the internal track and TestFlight builds, before raising the rollout.
+Both paths are tested on the internal builds, which listen on `preview` (an Android APK and a TestFlight build), before
+the `prod-release` approval:
+
+- **An OTA update:** `release` has published it to `preview`; run the checklist on the internal builds already
+  installed.
+- **New store builds:** `release` has made new internal builds at the new runtime; install them (the APK from the
+  build page, TestFlight's newest) and run the checklist on those.
 
 Copy the list into the release's notes (or the run's summary) and tick it there.
 
@@ -34,7 +39,7 @@ Copy the list into the release's notes (or the run's summary) and tick it there.
 - [ ] An Invite link opens the app (not the browser) and joins the household.
 - [ ] Dark mode follows the system setting.
 
-## Store builds only
+## After approving store builds
 
-- [ ] The version shown in Me & household matches the release tag.
-- [ ] Android: Play shows the staged rollout at 10%; iOS: the phased release is on.
+- [ ] The Play Console and App Store Connect show the new version (the release tag) submitted.
+- [ ] Android: Play shows the staged rollout at 10%; iOS: the phased release is on once it's approved.

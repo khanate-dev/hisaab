@@ -72,7 +72,8 @@ day per User). A date that fails is tried again hourly, 5 times at most.
    and FCM v1 service account; the iOS distribution certificate, provisioning profile and APNs key; a Google Play
    service account key with release access, for `eas submit`; and an App Store Connect API key.
 5. Create the store listings: the app in App Store Connect (bundle id `pk.khanate.hisaab`) and in the Play Console
-   (package `pk.khanate.hisaab`). Play takes the very first AAB only by hand: run `eas build --profile production
+   (package `pk.khanate.hisaab`). Put the App Store Connect app's numeric id (App Information → Apple ID) in the repo
+   variable `ASC_APP_ID`: `release` submits to TestFlight and the App Store with it, and refuses to run without it. Play takes the very first AAB only by hand: run `eas build --profile production
    --platform android` once and upload it in the Play Console; `release` submits every one after.
 6. In App Store Connect, turn on **Phased Release for Automatic Updates** for each version (`eas submit` can't);
    Play's staged rollout (10% first) is in `eas.json`. Raise either to 100% in its console once the version looks

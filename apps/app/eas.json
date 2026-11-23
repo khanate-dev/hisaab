@@ -12,9 +12,13 @@
 		"preview": {
 			"extends": "base",
 			"channel": "preview",
-			"distribution": "internal",
+			"autoIncrement": true,
 			"android": {
+				"distribution": "internal",
 				"buildType": "apk"
+			},
+			"ios": {
+				"distribution": "store"
 			}
 		},
 		"production": {
@@ -25,6 +29,9 @@
 		}
 	},
 	"submit": {
+		"preview": {
+			"ios": {}
+		},
 		"production": {
 			"android": {
 				"track": "production",
