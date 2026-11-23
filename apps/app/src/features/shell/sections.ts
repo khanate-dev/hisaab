@@ -33,11 +33,16 @@ export const SECTIONS = [
 /** The placeholder route under the centre ＋; pressing it opens quick-add instead. */
 export const ADD_ROUTE = "add";
 
+/** My overview (#53): a screen among the tabs, under the shell, but not a tab of its own. */
+export const OVERVIEW_ROUTE = "overview";
+export const OVERVIEW_HREF = "/overview";
+
 /** Phone tab order: Home · Entries · ＋ · Budgets · Reports (Navigation ticket, #17); the ＋ sits after two sections. */
 export const TAB_ORDER = [
 	...SECTIONS.slice(0, 2).map((section) => section.route),
 	ADD_ROUTE,
 	...SECTIONS.slice(2).map((section) => section.route),
+	OVERVIEW_ROUTE,
 ];
 
 /** On wide web the top bar's destinations join the sidebar, after the sections. */

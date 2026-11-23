@@ -53,6 +53,14 @@ export const seedHouseholds = async () => {
 		})),
 	);
 	if (profiles.error) throw profiles.error;
+	// Every User picks a display currency for My overview (#53).
+	const settings = await admin.from("user_settings").insert(
+		Object.values(users).map((user) => ({
+			id: user.id,
+			display_currency: "USD",
+		})),
+	);
+	if (settings.error) throw settings.error;
 	await seedWallets([
 		...personal.data.map((row) => ({
 			household: row.id,

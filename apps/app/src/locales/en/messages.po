@@ -324,6 +324,10 @@ msgstr "{total}, {totalAgainst}"
 msgid "{total}, {versus}"
 msgstr "{total}, {versus}"
 
+#: src/features/overview/my-overview.tsx
+msgid "{unconverted, plural, one {# household isn't} other {# households aren't}} fully counted: no exchange rate is held for some of its currencies yet."
+msgstr "{unconverted, plural, one {# household isn't} other {# households aren't}} fully counted: no exchange rate is held for some of its currencies yet."
+
 #: src/features/reports/net-worth.tsx
 msgid "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
 msgstr "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
@@ -335,6 +339,10 @@ msgstr "{used} of {budget} received"
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} spent"
 msgstr "{used} of {budget} spent"
+
+#: src/features/overview/my-overview.tsx
+msgid "{value}, {versus}"
+msgstr "{value}, {versus}"
 
 #: src/features/entries/entry-list.tsx
 msgid "{walletName} → {toName}"
@@ -565,6 +573,11 @@ msgstr "All Categories"
 msgid "All Entries"
 msgstr "All Entries"
 
+#: src/features/households/household-list.tsx
+#: src/features/shell/household-pill.tsx
+msgid "All households"
+msgstr "All households"
+
 #: src/app/(tabs)/index.tsx
 msgid "All Wallets"
 msgstr "All Wallets"
@@ -636,6 +649,10 @@ msgstr "App lock"
 #: src/features/device/device-settings.tsx
 msgid "Appearance"
 msgstr "Appearance"
+
+#: src/features/overview/my-overview.tsx
+msgid "approx. {amount}"
+msgstr "approx. {amount}"
 
 #: src/features/categories/category-actions.tsx
 #: src/features/contacts/contact-list.tsx
@@ -839,6 +856,7 @@ msgstr "Budgets are in the household's Base currency, which its first Wallet set
 msgid "Bus"
 msgstr "Bus"
 
+#: src/features/overview/my-overview.tsx
 #: src/features/reports/income-vs-expense.tsx
 msgid "Came in"
 msgstr "Came in"
@@ -1483,6 +1501,14 @@ msgstr "Every {interval} years"
 msgid "Every change to the household's data. Nobody can edit it."
 msgstr "Every change to the household's data. Nobody can edit it."
 
+#: src/app/(tabs)/reports.tsx
+msgid "Every household you belong to, together"
+msgstr "Every household you belong to, together"
+
+#: src/app/(tabs)/overview.tsx
+msgid "Every household you belong to, together. Only you see this."
+msgstr "Every household you belong to, together. Only you see this."
+
 #: src/features/members/household-exit.tsx
 msgid "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
 msgstr "Every Wallet, Entry, Loan and Category in it goes, and its Activity log, for every Member. This can't be undone."
@@ -1722,6 +1748,10 @@ msgstr "Imported 1 Entry into {walletName}."
 msgid "in"
 msgstr "in"
 
+#: src/app/(tabs)/overview.tsx
+msgid "In calendar months."
+msgstr "In calendar months."
+
 #: src/features/wallets/balance.tsx
 msgid "In credit"
 msgstr "In credit"
@@ -1928,6 +1958,7 @@ msgstr "Leave household"
 msgid "Leave it empty for a bill that varies: it's asked for when you confirm."
 msgstr "Leave it empty for a bill that varies: it's asked for when you confirm."
 
+#: src/features/overview/my-overview.tsx
 #: src/features/reports/income-vs-expense.tsx
 msgid "Left over"
 msgstr "Left over"
@@ -2090,6 +2121,16 @@ msgstr "Monthly on day {day}"
 msgid "Monthly summary"
 msgstr "Monthly summary"
 
+#: src/app/(tabs)/overview.tsx
+#: src/app/(tabs)/reports.tsx
+#: src/features/shell/tabs-layout.tsx
+msgid "My overview"
+msgstr "My overview"
+
+#: src/features/households/household-list.tsx
+msgid "My overview: only you see it"
+msgstr "My overview: only you see it"
+
 #: src/features/activity/fields.ts
 #: src/features/categories/category-form.tsx
 #: src/features/households/household-form.tsx
@@ -2107,10 +2148,15 @@ msgstr "Name it in 1 to 60 characters."
 msgid "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
 msgstr "Name the Contact, in {CONTACT_NAME_MAX} characters or fewer."
 
+#: src/features/overview/my-overview.tsx
 #: src/features/reports/labels.ts
 #: src/features/reports/net-worth.tsx
 msgid "Net worth"
 msgstr "Net worth"
+
+#: src/features/overview/my-overview.tsx
+msgid "Net worth at each month's end"
+msgstr "Net worth at each month's end"
 
 #: src/features/notifications/inbox-list.tsx
 msgid "New · {when}"
@@ -2463,6 +2509,10 @@ msgstr "Orange"
 #: src/features/entries/labels.ts
 msgid "Other {categoryName}"
 msgstr "Other {categoryName}"
+
+#: src/features/overview/my-overview.tsx
+msgid "Other currencies are converted at the latest rates, so these figures are approximate."
+msgstr "Other currencies are converted at the latest rates, so these figures are approximate."
 
 #: src/features/import/import-wizard.tsx
 msgid "out"
@@ -2901,6 +2951,14 @@ msgstr "Show more rows"
 #: src/app/activity.tsx
 msgid "Show older changes"
 msgstr "Show older changes"
+
+#: src/app/(tabs)/overview.tsx
+msgid "Shown in"
+msgstr "Shown in"
+
+#: src/features/households/household-list.tsx
+msgid "Shows My overview"
+msgstr "Shows My overview"
 
 #: src/features/reports/category-trend.tsx
 #: src/features/reports/income-vs-expense.tsx
@@ -3530,6 +3588,7 @@ msgstr "We emailed a code to {email}."
 msgid "Weekly"
 msgstr "Weekly"
 
+#: src/features/overview/my-overview.tsx
 #: src/features/reports/income-vs-expense.tsx
 msgid "Went out"
 msgstr "Went out"
@@ -3565,6 +3624,10 @@ msgstr "What's your name?"
 #: src/features/recurring/rule-form.tsx
 msgid "When it's due"
 msgstr "When it's due"
+
+#: src/features/shell/household-first.tsx
+msgid "Which household is it for?"
+msgstr "Which household is it for?"
 
 #: src/features/loans/loan-form.tsx
 msgid "Which way"
@@ -3690,6 +3753,10 @@ msgstr "Your inbox gets every Notification from {householdName}. Choose which al
 #: src/features/onboarding/name-form.tsx
 msgid "Your name"
 msgstr "Your name"
+
+#: src/app/(tabs)/overview.tsx
+msgid "Your overview appears once one of your households has a Wallet."
+msgstr "Your overview appears once one of your households has a Wallet."
 
 #: src/features/legal/privacy-policy.tsx
 msgid "Your settings and saved filters, the Activity log of changes in each household, and the push addresses of the devices you turn notifications on for."

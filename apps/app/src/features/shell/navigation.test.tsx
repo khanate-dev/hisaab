@@ -28,6 +28,7 @@ jest.mock("@/features/notifications/use-notifications", () => ({
 }));
 jest.mock("@/lib/session", () => ({
 	useSession: () => ({ user: { id: "u1" } }),
+	useSignedInUserId: () => "u1",
 }));
 
 const width = { current: 390 };
@@ -57,6 +58,7 @@ const renderShell = async () => {
 			"(tabs)/add": stub("Add"),
 			"(tabs)/budgets": stub("Budgets"),
 			"(tabs)/reports": stub("Reports"),
+			"(tabs)/overview": stub("My overview"),
 			me: stub("Me & household"),
 			inbox: stub("Inbox"),
 		},
@@ -108,6 +110,29 @@ describe("phone navigation", () => {
 
 		await user.press(screen.getByRole("button", { name: "Notifications" }));
 		expect(pathname()).toBe("/inbox");
+	});
+
+	it("shows My overview from the switcher's All households row, then ＋ asks which household first", async () => {
+		width.current = 390;
+		const { user, pathname } = await renderShell();
+
+		await user.press(
+			screen.getByRole("button", { name: "Switch household: Personal" }),
+		);
+		await user.press(
+			await screen.findByRole("button", { name: "All households" }),
+		);
+		expect(pathname()).toBe("/overview");
+		expect(
+			screen.getByRole("button", { name: "Switch household: All households" }),
+		).toBeOnTheScreen();
+
+		await user.press(screen.getByRole("button", { name: "New entry" }));
+		expect(
+			await screen.findByText("Which household is it for?"),
+		).toBeOnTheScreen();
+		await user.press(screen.getByRole("button", { name: "Personal" }));
+		expect(await screen.findByText("Quick-add")).toBeOnTheScreen();
 	});
 
 	it("opens Me & household from the avatar", async () => {

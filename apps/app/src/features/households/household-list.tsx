@@ -21,10 +21,17 @@ type Props = {
 	currentId: string | undefined;
 	/** Switches to a household. */
 	onPick: (householdId: string) => void;
+	/** The switcher's "All households" row, for My overview (#53); left out when not given. */
+	all?: { current: boolean; onPick: () => void };
 };
 
 /** The switcher sheet's households, each with the User's Role there; picking one switches to it. */
-export const HouseholdList = ({ households, currentId, onPick }: Props) => {
+export const HouseholdList = ({
+	households,
+	currentId,
+	onPick,
+	all,
+}: Props) => {
 	const { t, i18n } = useLingui();
 	if (households.length === 0) {
 		return (
@@ -42,6 +49,20 @@ export const HouseholdList = ({ households, currentId, onPick }: Props) => {
 			className="gap-3"
 			role="list"
 		>
+			{all && (
+				<View role="listitem">
+					<Card
+						accessibilityHint={t`Shows My overview`}
+						accessibilityLabel={t`All households`}
+						accessibilityState={{ selected: all.current }}
+						onPress={all.onPick}
+					>
+						<Text variant="title">{t`All households`}</Text>
+						<Text variant="muted">{t`My overview: only you see it`}</Text>
+						{all.current && <Text variant="muted">{t`On screen now`}</Text>}
+					</Card>
+				</View>
+			)}
 			{ordered(households).map((household) => {
 				const name = household.isPersonal ? t`Personal` : household.name;
 				const role = i18n._(ROLE_LABELS[household.role]);

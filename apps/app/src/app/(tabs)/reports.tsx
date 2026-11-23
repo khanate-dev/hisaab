@@ -20,6 +20,7 @@ import { useLingui } from "@lingui/react/macro";
 import { router } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Text } from "@/components/ui/text";
 import { useBudgetRows } from "@/features/budgets/use-budgets";
@@ -43,6 +44,7 @@ import {
 } from "@/features/reports/report-controls";
 import { SpendingByCategoryReport } from "@/features/reports/spending-by-category";
 import { Screen } from "@/features/shell/screen";
+import { OVERVIEW_HREF } from "@/features/shell/sections";
 import { useWalletRows } from "@/features/wallets/use-wallets";
 import { entryTimeZone, todayIn } from "@/lib/dates";
 import { useSignedInUserId } from "@/lib/session";
@@ -260,6 +262,13 @@ export default function Reports() {
 
 	return (
 		<Screen title={t`Reports`}>
+			<Button
+				accessibilityHint={t`Every household you belong to, together`}
+				onPress={() => router.navigate(OVERVIEW_HREF)}
+				variant="secondary"
+			>
+				{t`My overview`}
+			</Button>
 			<RadioGroup
 				label={t`Report`}
 				onValueChange={(report) => update({ report: report as Report })}

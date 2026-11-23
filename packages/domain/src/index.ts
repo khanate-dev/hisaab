@@ -25,6 +25,7 @@ export * from "./money";
 export * from "./notification-preferences";
 export * from "./notification-triggers";
 export * from "./notifications";
+export * from "./overview";
 export * from "./rates";
 export * from "./recurring";
 export * from "./reports";

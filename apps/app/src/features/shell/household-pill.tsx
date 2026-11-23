@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -18,6 +18,8 @@ import { useHouseholds } from "@/features/households/use-households";
 import { useSession } from "@/lib/session";
 import { isPersonalHousehold } from "@/features/households/is-personal";
 
+import { OVERVIEW_HREF } from "./sections";
+
 /** The household pill: shows the household on screen and opens the switcher sheet. */
 export const HouseholdPill = () => {
 	const { t } = useLingui();
@@ -25,8 +27,11 @@ export const HouseholdPill = () => {
 	const households = useHouseholds(userId);
 	const current = useCurrentHousehold(userId);
 	const [open, setOpen] = useState(false);
-	const name =
-		current === undefined || isPersonalHousehold(current, userId)
+	// My overview is every household's: the pill says so while it's on screen.
+	const overview = usePathname() === OVERVIEW_HREF;
+	const name = overview
+		? t`All households`
+		: current === undefined || isPersonalHousehold(current, userId)
 			? t`Personal`
 			: current.name;
 
@@ -47,11 +52,20 @@ export const HouseholdPill = () => {
 			<SheetContent>
 				<SheetTitle>{t`Households`}</SheetTitle>
 				<HouseholdList
-					currentId={current?.id}
+					all={{
+						current: overview,
+						onPick: () => {
+							setOpen(false);
+							router.navigate(OVERVIEW_HREF);
+						},
+					}}
+					currentId={overview ? undefined : current?.id}
 					households={households}
 					onPick={(id) => {
 						setOpen(false);
 						void setCurrentHousehold(id);
+						// Picking a household leaves My overview for that household's Home.
+						if (overview) router.navigate("/");
 					}}
 				/>
 				<View className="flex-row flex-wrap gap-3">

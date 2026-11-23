@@ -360,6 +360,15 @@ export const appConfig = sqliteTable("app_config", {
 	min_contract_version: integer("min_contract_version").notNull(),
 });
 
+/** The User's own settings (#53), one row whose id is theirs: the display currency My overview is in. */
+export const userSettings = sqliteTable("user_settings", {
+	id: text("id").primaryKey(),
+	display_currency: text("display_currency"),
+	created_at: text("created_at").notNull(),
+	_metadata: contractStamp(),
+	_deleted: deleteFlag(),
+});
+
 // Read-only on the device: each date's rates per USD (#44), for the currencies of the User's households. per_usd is
 // numeric in Postgres and arrives as text; the cross rate is decimal math in packages/domain, never a float.
 export const exchangeRates = sqliteTable("exchange_rates", {
