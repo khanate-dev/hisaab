@@ -13,7 +13,7 @@ export const CONTRACT_LABEL = "contract";
 
 /**
  * The Squawk run by `pnpm dlx`, at least two weeks old as the catalog's are. It stays out of the workspace because adding
- * a dependency under pnpm 12 currently re-resolves the lockfile into duplicate peer copies (see its issue).
+ * a dependency under pnpm 12 currently re-resolves the lockfile into duplicate peer copies (#115).
  */
 const SQUAWK = "squawk-cli@2.72.0";
 
