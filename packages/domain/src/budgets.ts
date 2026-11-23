@@ -4,6 +4,7 @@
 
 import { type CategoryLike, categoryTree } from "./categories";
 import { shiftCalendarDate } from "./dates";
+import { type BaseRate, baseValue, itemBaseShares } from "./base-amounts";
 import { isFlowKind, magnitude } from "./entries";
 import {
 	addMoney,
@@ -124,20 +125,28 @@ export const isOverridden = (
 export type CountedEntry = {
 	id: string;
 	kind: string;
+	/** In the Wallet's currency. */
 	amount: string;
 	category_id: string | null;
 	occurred_on: string;
+	/** Set for an Entry in another currency than the Base one (`baseValue`); absent or null for a Base-currency one. */
+	base_amount?: string | null;
+	base_rate?: BaseRate | null;
 };
 export type CountedItem = {
+	id?: string;
 	entry_id: string;
 	amount: string;
 	category_id: string;
+	/** The Items' order, which splits a Base amount across them (`itemBaseShares`); ties go by id, as in SQL. */
+	position?: number;
 };
 
 /**
  * What each Category spent (or received) over a range of dates, both included: Expenses and Incomes only, never a
  * Balance adjustment or a Transfer. An itemized Expense counts each Item against the Item's own Category. A parent's
- * total includes its Subcategories'. In the Base currency (until Base amounts, #45, every Entry is in it).
+ * total includes its Subcategories'. In the Base currency: an Entry in another currency counts its Base amount, split
+ * across its Items in proportion, and not at all while it has none yet (ADR-0005).
  */
 export const categoryTotals = (
 	entries: readonly CountedEntry[],
@@ -165,12 +174,25 @@ export const categoryTotals = (
 			entry.occurred_on > range.last
 		)
 			continue;
+		const base = baseValue(entry, currency);
+		if (base === null) continue;
 		const own = itemsOf.get(entry.id);
-		if (own && own.length > 0)
-			for (const item of own)
-				add(item.category_id, magnitude(parseMoney(item.amount, currency)));
-		else if (entry.category_id !== null)
-			add(entry.category_id, magnitude(parseMoney(entry.amount, currency)));
+		if (own && own.length > 0) {
+			const ordered = own.toSorted(
+				(a, b) =>
+					(a.position ?? 0) - (b.position ?? 0) ||
+					(a.id ?? "").localeCompare(b.id ?? ""),
+			);
+			// The Items are in the Wallet's currency; any currency code does for splitting, as only their ratio counts.
+			const shares = itemBaseShares(
+				ordered,
+				parseMoney(entry.amount, currency),
+				base,
+			);
+			for (const [i, item] of ordered.entries())
+				add(item.category_id, magnitude(shares[i] ?? zeroMoney(currency)));
+		} else if (entry.category_id !== null)
+			add(entry.category_id, magnitude(base));
 	}
 	return totals;
 };
@@ -259,7 +281,7 @@ export const budgetMonthView = <T extends CategoryLike>({
 	month: BudgetMonth;
 	today: string;
 	startDay: number;
-	/** The Base currency: Budgets, and every Expense and Income until Base amounts (#45), are in it. */
+	/** The Base currency: Budgets are in it, and each Expense and Income counts in it (its Base value). */
 	currency: string;
 	categories: readonly T[];
 	standing: readonly StandingBudget[];

@@ -19,6 +19,8 @@ export const makeEntry = (
 	occurred_time: null,
 	description: null,
 	notes: null,
+	base_amount: null,
+	base_rate: null,
 	created_by: "u1",
 	created_at: "2026-10-20T10:00:00.000Z",
 	_metadata: null,

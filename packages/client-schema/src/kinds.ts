@@ -19,6 +19,9 @@ export const ENTRY_KINDS = [
 ] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
 
+/** How a Base amount came about: the domain's, so its rules and the `entries.base_rate` check agree. */
+export { BASE_RATES, type BaseRate } from "@hisaab/domain";
+
 /** The two Category lists (CONTEXT.md). Mirrors the `categories.kind` check. */
 export const CATEGORY_KINDS = ["expense", "income"] as const;
 export type CategoryKind = (typeof CATEGORY_KINDS)[number];

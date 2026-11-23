@@ -1,6 +1,7 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import {
+	BASE_RATES,
 	CATEGORY_KINDS,
 	ENTRY_KINDS,
 	LOAN_DIRECTIONS,
@@ -320,6 +321,13 @@ export const entries = sqliteTable("entries", {
 	category_id: text("category_id"),
 	description: text("description"),
 	notes: text("notes"),
+	/**
+	 * In a Wallet not in the Base currency: the value in the Base currency, signed like amount, exact decimal text
+	 * (ADR-0005). The server sets the market figure; null for a Base-currency Entry, or until any rate is held.
+	 */
+	base_amount: text("base_amount"),
+	/** How the Base amount came about (`BaseRate`): market, estimated or edited; null for a Base-currency Entry. */
+	base_rate: text("base_rate", { enum: BASE_RATES }),
 	created_by: text("created_by").notNull(),
 	created_at: text("created_at").notNull(),
 	_metadata: contractStamp(),
