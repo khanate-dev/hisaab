@@ -1,0 +1,94 @@
+# Nightly (ADR-0011): the off-site backup of prod to R2, and the big fast-check fuzz run of the domain.
+name: nightly
+
+on:
+  schedule:
+    - cron: "43 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Database and Attachments to R2
+    # PROD_ENABLED (a repo variable) is set once the prod setup in docs/infra.md is done.
+    if: vars.PROD_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Dump the database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: tooling/backup/db-dump.sh "$RUNNER_TEMP/backup/db"
+      # A full copy of the Attachment files each night, through Storage's S3 API (path-style, as Supabase needs).
+      - name: Copy the Attachment files
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.SUPABASE_S3_REGION }}
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          SUPABASE_S3_ENDPOINT: ${{ secrets.SUPABASE_S3_ENDPOINT }}
+        run: |
+          aws configure set default.s3.addressing_style path
+          aws s3 sync --only-show-errors --endpoint-url "$SUPABASE_S3_ENDPOINT" \
+            s3://attachments "$RUNNER_TEMP/backup/attachments"
+      # Kept 30 days by the bucket's lifecycle rule, as the privacy policy says.
+      - name: Upload
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: tooling/backup/to-r2.sh "$RUNNER_TEMP/backup" "nightly/$(date -u +%Y-%m-%d)"
+
+  fuzz:
+    name: Domain properties, 10,000 runs each
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # A fresh seed each night, logged, so a failure replays exactly (packages/domain/vitest.setup.ts).
+      - name: Seed
+        id: seed
+        run: |
+          # fast-check takes a 32-bit integer.
+          seed=$((RANDOM * 32768 + RANDOM))
+          echo "seed=$seed" >> "$GITHUB_OUTPUT"
+          echo "fast-check seed: $seed"
+      - name: Fuzz
+        id: fuzz
+        env:
+          FC_NUM_RUNS: 10000
+          FC_SEED: ${{ steps.seed.outputs.seed }}
+        run: pnpm exec vitest run --project domain --testTimeout=1200000
+      - name: Open an issue
+        if: failure() && steps.fuzz.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SEED: ${{ steps.seed.outputs.seed }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Nightly fuzz run failed"
+          body=$(printf '%s\n\n%s\n\n```sh\n%s\n```\n' \
+            "The nightly fast-check run failed: $RUN" \
+            "Seed $SEED. To replay it:" \
+            "FC_NUM_RUNS=10000 FC_SEED=$SEED pnpm exec vitest run --project domain --testTimeout=1200000")
+          open=$(gh issue list --repo "$REPO" --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [[ -n $open ]]; then
+            gh issue comment "$open" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$title" --body "$body"
+          fi

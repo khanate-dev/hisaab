@@ -24,7 +24,8 @@ env:
 
 jobs:
   # A commit from a `contract`-labelled PR (destructive DDL, a contract-version raise) migrates in `prod-contract`,
-  # whose required reviewer first confirms the store builds are approved and at 100% (ADR-0011).
+  # whose required reviewer first confirms the store builds are approved and at 100% (ADR-0011). A raise of
+  # min_contract_version always does, label or not, and first needs its update on every live runtime.
   gate:
     name: Pick the Environment
     # PROD_ENABLED (a repo variable) is set once the prod setup in docs/infra.md is done; until then nothing runs.
@@ -36,14 +37,25 @@ jobs:
     timeout-minutes: 5
     outputs:
       environment: ${{ steps.pick.outputs.environment }}
+      raise: ${{ steps.pick.outputs.raise }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SHA }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
       - id: pick
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           contract=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[].labels[].name] | index("contract") != null')
-          echo "environment=$([[ $contract == true ]] && echo prod-contract || echo prod)" >> "$GITHUB_OUTPUT"
+          raise=$(node tooling/migrations/contract-check.ts raise "$SHA^1" "$SHA")
+          echo "raise=$raise" >> "$GITHUB_OUTPUT"
+          echo "environment=$([[ $contract == true || -n $raise ]] && echo prod-contract || echo prod)" >> "$GITHUB_OUTPUT"
 
   snapshot:
     name: pg_dump snapshot to R2
@@ -62,25 +74,14 @@ jobs:
       - name: Dump
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          out="$RUNNER_TEMP/snapshot"
-          mkdir -p "$out"
-          pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f "$out/roles.sql"
-          pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" -f "$out/schema.sql"
-          pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f "$out/data.sql"
-          gzip "$out"/*.sql
+        run: tooling/backup/db-dump.sh "$RUNNER_TEMP/snapshot"
       - name: Upload
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-          # R2 rejects the checksums newer AWS CLIs add by default.
-          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
-        run: |
-          aws s3 cp --recursive --endpoint-url "$R2_ENDPOINT" \
-            "$RUNNER_TEMP/snapshot" "s3://$R2_BUCKET/deploys/$(date -u +%Y-%m-%dT%H%M%SZ)-$SHA/"
+        run: tooling/backup/to-r2.sh "$RUNNER_TEMP/snapshot" "deploys/$(date -u +%Y-%m-%dT%H%M%SZ)-$SHA"
 
   database:
     name: Migrations, config, secrets, Edge Functions
@@ -98,6 +99,19 @@ jobs:
           ref: ${{ env.SHA }}
           persist-credentials: false
       - uses: ./.github/actions/setup
+      # A raise strands any installed build below it that has no update to move to: every runtime the production store
+      # builds run needs a `[contract N]` update on the production channel first (tooling/release/contract-ready.ts).
+      - name: Contract raise has its updates
+        if: needs.gate.outputs.raise != ''
+        working-directory: apps/app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          RAISE: ${{ needs.gate.outputs.raise }}
+        run: |
+          pnpm exec eas build:list --channel production --distribution store --status finished --platform all \
+            --limit 100 --json --non-interactive > "$RUNNER_TEMP/builds.json"
+          pnpm exec eas update:list --branch production --limit 100 --json --non-interactive > "$RUNNER_TEMP/updates.json"
+          node ../../tooling/release/contract-ready.ts "$RAISE" "$RUNNER_TEMP/builds.json" "$RUNNER_TEMP/updates.json"
       # The prod overrides (supabase/remotes/prod.toml) apply only under the literal ref. The config loader also wants
       # signing_keys.json, which is local-only and never pushed, so an empty one stands in.
       - name: Prod config

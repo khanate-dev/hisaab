@@ -3,6 +3,8 @@ name: ci
 
 on:
   pull_request:
+    # Labelling or unlabelling re-runs the contract check.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
@@ -31,6 +33,26 @@ jobs:
           pnpm --filter @hisaab/app i18n:extract
           pnpm --filter @hisaab/app i18n:compile
           test -z "$(git status --porcelain -- apps/app/src/locales)" || { git status --porcelain -- apps/app/src/locales; exit 1; }
+
+  # ADR-0009/0011: a new migration that's a contract change (Squawk's destructive rules, a DROP, SET NOT NULL, a retype,
+  # a min_contract_version raise) needs the `contract` label; a merged migration is never edited. Squawk's other advice
+  # shows as warnings on the PR.
+  contract:
+    name: Contract changes are labelled
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Check the new migrations
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tooling/migrations/contract-check.ts check "$BASE"
 
   backend:
     name: Migrations, pgTAP, sync harness, Edge Functions

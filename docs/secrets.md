@@ -13,19 +13,21 @@ The only place `deploy`, `keepalive` (and later `release` and `nightly`) get sec
 | `SUPABASE_ACCESS_TOKEN` | Supabase personal access token | `deploy` (link, push, deploy, api-keys) | Account → Access Tokens; replace, re-run `deploy` |
 | `SUPABASE_PROJECT_REF` | The prod project's ref (not secret, kept with the rest) | `deploy` | Never changes |
 | `SUPABASE_DB_PASSWORD` | The `postgres` password | `deploy` (`db push`) | Database settings → reset password; update this and `SUPABASE_DB_URL` |
-| `SUPABASE_DB_URL` | Session pooler connection string, password included | `deploy` (snapshot, Vault) | With the password above |
+| `SUPABASE_DB_URL` | Session pooler connection string, password included | `deploy` (snapshot, Vault), `nightly` (backup) | With the password above |
+| `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY` | A Storage S3 access key | `nightly` (copies the Attachment files) | Storage → S3 Connection → Access keys; make a new one, replace both, revoke the old |
+| `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION` | Storage's S3 endpoint and region, as Storage → S3 Connection shows them | `nightly` | Never change |
 | `SUPABASE_URL` | `https://<ref>.supabase.co` | `keepalive` | Never changes |
 | `SUPABASE_PUBLISHABLE_KEY` | The publishable key (public; kept here for one source) | `keepalive` | Settings → API Keys |
-| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | R2 API token, Object Read & Write, on the backup bucket only | `deploy` (snapshot) | R2 → Manage API tokens; replace both |
-| `R2_ENDPOINT` | `https://<account id>.r2.cloudflarestorage.com` | `deploy` | Never changes |
-| `R2_BUCKET` | The backup bucket's name | `deploy` | Never changes |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | R2 API token, Object Read & Write, on the backup bucket only | `deploy` (snapshot), `nightly` | R2 → Manage API tokens; replace both |
+| `R2_ENDPOINT` | `https://<account id>.r2.cloudflarestorage.com` | `deploy`, `nightly` | Never changes |
+| `R2_BUCKET` | The backup bucket's name | `deploy`, `nightly` | Never changes |
 | `POWERSYNC_ADMIN_TOKEN` | PowerSync personal access token | `deploy` (sync config) | Dashboard → Account → Access tokens |
 | `POWERSYNC_INSTANCE_ID` | The prod instance's id | `deploy` | Never changes |
 | `POWERSYNC_URL` | The instance's URL | `keepalive` | Never changes |
 | `KEEPALIVE_EMAIL`, `KEEPALIVE_PASSWORD` | The keep-alive User: an ordinary account with only its own empty Personal household, signed in by password | `keepalive` | Auth → Users → the User → reset password; replace here |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token: Workers Scripts Edit, Workers Routes Edit and DNS Edit on `khanate.pk` | `deploy` (web) | My Profile → API Tokens → Roll |
 | `CLOUDFLARE_ACCOUNT_ID` | The account id (not secret) | `deploy` (web) | Never changes |
-| `EXPO_TOKEN` | Access token of an Expo robot user | `deploy` (`eas env:pull`) | Expo → Robot users; replace |
+| `EXPO_TOKEN` | Access token of an Expo robot user | `deploy` (`eas env:pull`; in `prod-contract`, the contract raise check) | Expo → Robot users; replace in both Environments |
 | `RESEND_SMTP_PASSWORD` | A Resend API key, sending access, `mail.hisaab.khanate.pk` only | `deploy` (`config push`, Auth SMTP) | Resend → API Keys; replace, re-run `deploy` |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push keypair (`npx web-push generate-vapid-keys`) | `deploy` → Edge Function secrets | Rotating drops every web push subscription; also update `EXPO_PUBLIC_VAPID_PUBLIC_KEY` in EAS |
 | `VAPID_SUBJECT` | `mailto:support@hisaab.khanate.pk` | `deploy` → Edge Function secrets | — |
