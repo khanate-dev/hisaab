@@ -13,7 +13,9 @@ language sql stable security definer
 set search_path = ''
 as $$
 	with here as (
+		-- From yesterday's 20:00 to today's, each in the household's own time (a DST day is 23 or 25 hours).
 		select h.id, h.name, (as_of at time zone h.timezone)::date as today,
+			((as_of at time zone h.timezone)::date - 1 + time '20:00') at time zone h.timezone as since,
 			((as_of at time zone h.timezone)::date + time '20:00') at time zone h.timezone as until
 		from public.households h
 		where h.timezone is not null and extract(hour from (as_of at time zone h.timezone)) >= 20
@@ -39,7 +41,7 @@ as $$
 				select l.actor_id, count(distinct l.transaction_id)::integer as count
 				from public.activity_log l
 				where l.household_id = here.id and l.actor_id is not null
-					and l.synced_at >= here.until - interval '1 day' and l.synced_at < here.until
+					and l.synced_at >= here.since and l.synced_at < here.until
 				group by l.actor_id
 			) as a
 			left join public.profiles pr on pr.id = a.actor_id
@@ -101,8 +103,10 @@ create trigger deliver_by_email after insert on public.notifications
 	for each row execute function private.deliver_by_email();
 
 -- What a Monthly summary's email says: the Budget month's Incomes and Expenses in the Base currency (each Entry's Base
--- amount where it has one), what was left, and the five top-level Categories it spent most on (an itemized Expense's
--- Items each against their own Category, a Subcategory's under its parent, a share of a Base amount in proportion).
+-- amount where it has one; one in another currency still waiting for its rate isn't counted, as in the reports), what
+-- was left, and the five top-level Categories it spent most on (an itemized Expense's Items each against their own
+-- Category, a Subcategory's under its parent, its Base amount shared in proportion with the last Item taking what
+-- rounding leaves, as `itemBaseShares` does).
 -- Null when the Notification isn't a summary or the household has no Base currency yet. The service role's only.
 create function public.monthly_summary_figures(notification uuid) returns jsonb
 language sql stable security definer
@@ -120,17 +124,30 @@ as $$
 	), bounds as (
 		select span.*, ((first + interval '1 month')::date - 1) as last from span
 	), flows as (
-		select e.id, e.kind, e.amount, coalesce(e.base_amount, e.amount) as base, e.category_id
+		select e.id, e.kind, e.amount, case when e.base_rate is null then e.amount else e.base_amount end as base,
+			e.category_id
 		from public.entries e, bounds b
 		where e.household_id = b.household_id and e.kind in ('expense', 'income')
 			and e.occurred_on between b.first and b.last
+			and (e.base_rate is null or e.base_amount is not null)
 	), spent as (
 		-- An Expense's Items, each its share of the Base amount; an Expense without Items, whole.
-		select i.category_id,
-			case when f.amount = 0 then 0 else round(abs(i.amount) * abs(f.base) / abs(f.amount), (select decimals from bounds)) end
-				as amount
-		from flows f join public.entry_items i on i.entry_id = f.id
-		where f.kind = 'expense'
+		select shares.category_id,
+			case when shares.last then abs(shares.base) - coalesce(shares.before, 0) else shares.share end as amount
+		from (
+			select i.category_id, f.base,
+				row_number() over (partition by f.id order by i.position desc) = 1 as last,
+				sum(shares.share) over (partition by f.id order by i.position rows between unbounded preceding and 1 preceding)
+					as before,
+				shares.share
+			from flows f
+			join public.entry_items i on i.entry_id = f.id
+			cross join lateral (
+				select case when f.amount = 0 then 0
+					else round(abs(i.amount) * abs(f.base) / abs(f.amount), (select decimals from bounds)) end as share
+			) as shares
+			where f.kind = 'expense'
+		) as shares
 		union all
 		select f.category_id, abs(f.base) from flows f
 		where f.kind = 'expense' and f.category_id is not null

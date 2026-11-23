@@ -95,6 +95,25 @@ insert into public.entry_items (id, household_id, entry_id, position, descriptio
 	 0, 'Paint', 70, '00000000-0000-7000-8000-000000006604'),
 	('00000000-0000-7000-8000-000000006642', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-000000006633',
 	 1, 'Petrol', 80, '00000000-0000-7000-8000-000000006603');
+-- In Dollars: an itemized USD 1.00 at 100.01 PKR (100.01 Base), its Items' shares 33.00, 33.00 and, taking what
+-- rounding leaves, 34.01; and EUR 5, no rate for which is held at all yet, so not counted.
+insert into public.exchange_rates (on_date, currency, per_usd) values
+	('2026-10-07', 'USD', 1), ('2026-10-07', 'PKR', 100.01);
+insert into public.wallets (id, household_id, name, type, currency) values
+	('00000000-0000-7000-8000-0000000066c2', '00000000-0000-7000-8000-0000000066f1', 'Dollars', 'cash', 'USD'),
+	('00000000-0000-7000-8000-0000000066c3', '00000000-0000-7000-8000-0000000066f1', 'Euros', 'cash', 'EUR');
+insert into public.entries (id, household_id, wallet_id, kind, amount, category_id, occurred_on, created_by) values
+	('00000000-0000-7000-8000-000000006636', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-0000000066c2',
+	 'expense', -1, '00000000-0000-7000-8000-000000006604', '2026-10-07', '00000000-0000-4000-8000-0000000066a1'),
+	('00000000-0000-7000-8000-000000006637', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-0000000066c3',
+	 'expense', -5, '00000000-0000-7000-8000-000000006603', '2026-10-31', '00000000-0000-4000-8000-0000000066a1');
+insert into public.entry_items (id, household_id, entry_id, position, description, amount, category_id) values
+	('00000000-0000-7000-8000-000000006643', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-000000006636',
+	 0, 'Tea', 0.33, '00000000-0000-7000-8000-000000006601'),
+	('00000000-0000-7000-8000-000000006644', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-000000006636',
+	 1, 'Oil', 0.33, '00000000-0000-7000-8000-000000006603'),
+	('00000000-0000-7000-8000-000000006645', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-7000-8000-000000006636',
+	 2, 'Nails', 0.34, '00000000-0000-7000-8000-000000006604');
 
 insert into public.notifications (id, household_id, user_id, trigger, payload, dedupe_key) values
 	('00000000-0000-7000-8000-000000006651', '00000000-0000-7000-8000-0000000066f1', '00000000-0000-4000-8000-0000000066a1',
@@ -110,17 +129,17 @@ select results_eq(
 select is(
 	public.monthly_summary_figures('00000000-0000-7000-8000-000000006651') - 'categories',
 	jsonb_build_object('householdName', 'Family', 'month', '2026-10', 'first', '2026-10-01', 'last', '2026-10-31',
-		'currency', 'PKR', 'decimals', 2, 'income', '1000', 'expense', '470', 'net', '530'),
-	'the month''s Incomes and Expenses, exact, and what was left'
+		'currency', 'PKR', 'decimals', 2, 'income', '1000', 'expense', '570.01', 'net', '429.99'),
+	'the month''s Incomes and Expenses, exact, by Base amount, one still waiting for its rate left out'
 );
 select is(
 	public.monthly_summary_figures('00000000-0000-7000-8000-000000006651') -> 'categories',
 	jsonb_build_array(
-		jsonb_build_object('name', 'T Food', 'amount', '300'),
-		jsonb_build_object('name', 'T Fuel', 'amount', '100'),
-		jsonb_build_object('name', 'T Home', 'amount', '70')
+		jsonb_build_object('name', 'T Food', 'amount', '333'),
+		jsonb_build_object('name', 'T Fuel', 'amount', '133'),
+		jsonb_build_object('name', 'T Home', 'amount', '104.01')
 	),
-	'what it spent most on, Subcategories under their parent and Items each against their own'
+	'what it spent most on, Subcategories under their parent, Items each against their own, the last taking the remainder'
 );
 
 set local role authenticated;

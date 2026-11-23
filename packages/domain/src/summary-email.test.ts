@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import {
 	type EmailMessage,
 	emailAmount,
+	EMAIL_GAP_MS,
 	emailOutcome,
+	pacedEmails,
 	sendSummaryEmail,
 	type SummaryFigures,
 	summaryEmail,
@@ -81,21 +83,26 @@ describe("summaryEmail", () => {
 describe("sendSummaryEmail", () => {
 	const send = (status: number, found = true) => {
 		const sent: EmailMessage[] = [];
+		const keys: string[] = [];
 		const outcome = sendSummaryEmail(
 			{
 				figures: async () => (found ? figures() : null),
-				send: async (message) => {
+				send: async (message, key) => {
 					sent.push(message);
+					keys.push(key);
 					return status >= 400 ? { status, error: "nope" } : { status };
 				},
 			},
-			{ notificationId: "n1", target: "ayesha@example.com" },
+			{ id: "d1", notificationId: "n1", target: "ayesha@example.com" },
 		);
-		return { outcome, sent };
+		return { outcome, sent, keys };
 	};
 
-	it("sends the summary to its address", async () => {
-		const { outcome, sent } = send(200);
+	it("sends the summary to its address, keyed by its delivery so a retry never sends it twice", async () => {
+		const { outcome, sent, keys } = send(200);
+		await outcome;
+		expect(keys).toEqual(["monthly-summary/d1"]);
+		expect(send(200).keys).toEqual([]);
 		expect(await outcome).toEqual({ status: "sent" });
 		expect(sent.map((m) => [m.to, m.subject])).toEqual([
 			["ayesha@example.com", "October 2026 in Family"],
@@ -116,5 +123,30 @@ describe("sendSummaryEmail", () => {
 
 	it("reads a provider's answer by its status", () => {
 		expect(emailOutcome(202)).toEqual({ status: "sent" });
+	});
+});
+
+describe("pacedEmails", () => {
+	it("sends one at a time with a gap between, and a throw fails only its own", async () => {
+		const events: string[] = [];
+		const sender = pacedEmails(
+			async (d: string) => {
+				events.push(`send ${d}`);
+				if (d === "b") throw new Error("down");
+				return { status: "sent" as const };
+			},
+			async (ms) => {
+				events.push(`wait ${ms}`);
+			},
+		);
+		const outcomes = await sender.send(["a", "b", "c"]);
+		expect(events).toEqual([
+			"send a",
+			`wait ${EMAIL_GAP_MS}`,
+			"send b",
+			`wait ${EMAIL_GAP_MS}`,
+			"send c",
+		]);
+		expect(outcomes.map((o) => o.status)).toEqual(["sent", "failed", "sent"]);
 	});
 });

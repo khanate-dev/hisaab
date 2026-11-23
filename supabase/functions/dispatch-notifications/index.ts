@@ -20,6 +20,7 @@ import {
 } from "../../../packages/domain/src/notifications.ts";
 import {
 	type EmailAdapters,
+	pacedEmails,
 	sendSummaryEmail,
 	type SummaryFigures,
 } from "../../../packages/domain/src/summary-email.ts";
@@ -208,9 +209,8 @@ const REPLY_TO = "support@hisaab.khanate.pk";
  * The Monthly summary's email through Resend (`RESEND_API_KEY` in the Edge Function's secrets), its figures read with
  * the caller's key. Without the key it waits and retries.
  */
-const emailFor =
-	(key: string): Sender =>
-	async (delivery) => {
+const emailFor = (key: string): BatchSender =>
+	pacedEmails(async (delivery: ClaimedDelivery) => {
 		const resendKey = Deno.env.get("RESEND_API_KEY");
 		if (!resendKey)
 			return { status: "failed", error: "Email isn't set up yet" };
@@ -232,12 +232,13 @@ const emailFor =
 					throw new Error(`PostgREST answered ${response.status}`);
 				return (await response.json()) as SummaryFigures | null;
 			},
-			send: async (message) => {
+			send: async (message, idempotencyKey) => {
 				const response = await fetch("https://api.resend.com/emails", {
 					method: "POST",
 					headers: {
 						Authorization: `Bearer ${resendKey}`,
 						"content-type": "application/json",
+						"Idempotency-Key": idempotencyKey,
 					},
 					body: JSON.stringify({ from: FROM, reply_to: REPLY_TO, ...message }),
 				});
@@ -247,7 +248,7 @@ const emailFor =
 			},
 		};
 		return sendSummaryEmail(adapters, delivery);
-	};
+	});
 
 Deno.serve((request) =>
 	handleDispatchRequest(

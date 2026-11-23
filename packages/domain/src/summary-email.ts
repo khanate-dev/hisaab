@@ -143,21 +143,55 @@ export const emailOutcome = (status: number, error = ""): Outcome => {
 export type EmailAdapters = {
 	/** Null when there are none: not a summary, or the household has no Base currency yet. */
 	figures: (notificationId: string) => Promise<SummaryFigures | null>;
-	/** Answers with the provider's HTTP status, and its error text when it refused. */
-	send: (message: EmailMessage) => Promise<{ status: number; error?: string }>;
+	/**
+	 * Answers with the provider's HTTP status, and its error text when it refused. The key is the same on every try of
+	 * one delivery, so a send that went through but whose answer was lost isn't sent twice.
+	 */
+	send: (
+		message: EmailMessage,
+		idempotencyKey: string,
+	) => Promise<{ status: number; error?: string }>;
 };
 
 /** Sends one Monthly summary email delivery: dead when there's nothing to say, else as the provider answered. */
 export const sendSummaryEmail = async (
 	adapters: EmailAdapters,
-	delivery: { notificationId: string; target: string },
+	delivery: { id: string; notificationId: string; target: string },
 ): Promise<Outcome> => {
 	const figures = await adapters.figures(delivery.notificationId);
 	if (figures === null)
 		return { status: "dead", error: "No Monthly summary figures for it" };
-	const { status, error } = await adapters.send({
-		to: delivery.target,
-		...summaryEmail(figures),
-	});
+	const { status, error } = await adapters.send(
+		{ to: delivery.target, ...summaryEmail(figures) },
+		`monthly-summary/${delivery.id}`,
+	);
 	return emailOutcome(status, error);
 };
+
+/** How long between two emails: Resend takes about two requests a second, and Auth's codes share the key. */
+export const EMAIL_GAP_MS = 600;
+
+/**
+ * Emails one at a time with a gap between, the whole claimed batch in one go (the dispatcher claims 100 at most), so a
+ * 09:00 when many summaries fall due doesn't run into the provider's rate limit.
+ */
+export const pacedEmails = <D>(
+	send: (delivery: D) => Promise<Outcome>,
+	sleep: (ms: number) => Promise<void> = (ms) =>
+		new Promise((resolve) => setTimeout(resolve, ms)),
+) => ({
+	size: 100,
+	send: async (deliveries: D[]): Promise<Outcome[]> => {
+		const outcomes: Outcome[] = [];
+		for (const delivery of deliveries) {
+			if (outcomes.length > 0) await sleep(EMAIL_GAP_MS);
+			outcomes.push(
+				await send(delivery).catch((error: unknown): Outcome => ({
+					status: "failed",
+					error: String(error),
+				})),
+			);
+		}
+		return outcomes;
+	},
+});
