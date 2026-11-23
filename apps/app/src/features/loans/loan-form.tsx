@@ -60,7 +60,9 @@ export const LoanForm = ({
 	/** A Wallet not in the Base currency names its currency too: "Dollars (USD)". */
 	const walletLabel = (w: WalletChoice) => {
 		const { name, currency: code } = w;
-		return code === baseCurrency ? name : t`${name} (${code})`;
+		return baseCurrency === null || code === baseCurrency
+			? name
+			: t`${name} (${code})`;
 	};
 	const [direction, setDirection] = useState<LoanDirection>(DEFAULT_DIRECTION);
 	const [contactId, setContactId] = useState(active[0]?.id ?? NEW_CONTACT);

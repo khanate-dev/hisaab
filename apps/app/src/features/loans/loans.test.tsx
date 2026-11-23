@@ -240,6 +240,16 @@ describe("LoanDetail", () => {
 		});
 	});
 
+	it("says why there's no Wallet to repay into when none is in the Loan's currency", async () => {
+		const { user } = await setup({
+			view: view({ currency: "EUR", outstanding: parseMoney("70", "EUR") }),
+		});
+		await user.press(screen.getByRole("button", { name: "Record Repayment" }));
+		expect(screen.getByRole("status")).toHaveTextContent(
+			/No active Wallet is in EUR/,
+		);
+	});
+
 	it("writes off what's left only after confirming", async () => {
 		const { onWriteOff, user } = await setup();
 		await user.press(screen.getByRole("button", { name: "Write off" }));

@@ -7,6 +7,8 @@ import {
 	stampedDelete,
 } from "@hisaab/client-schema";
 import { loanEntryAmount, parseMoney } from "@hisaab/domain";
+
+import { pricedInBase } from "@/features/entries/actions";
 import { eq } from "drizzle-orm";
 
 import { nowIso } from "@/lib/dates";
@@ -35,7 +37,7 @@ const signed = (
 	kind: typeof PRINCIPAL | typeof REPAYMENT,
 	amount: string,
 	currency: string,
-) => loanEntryAmount(direction, kind, parseMoney(amount, currency)).toString();
+) => loanEntryAmount(direction, kind, parseMoney(amount, currency));
 
 /** The Loan, its principal Entry and, if new, its Contact, in one local transaction. */
 export const createLoan = async (
@@ -69,13 +71,16 @@ export const createLoan = async (
 				created_at: createdAt,
 			}),
 		);
+		const amount = signed(draft.direction, PRINCIPAL, draft.amount, currency);
 		await tx.insert(entries).values(
 			stamped({
 				id: newId(),
 				household_id: householdId,
 				wallet_id: draft.walletId,
 				kind: PRINCIPAL,
-				amount: signed(draft.direction, PRINCIPAL, draft.amount, currency),
+				amount: amount.toString(),
+				// A Loan in another currency than the Base one has a Base amount too (#119).
+				...(await pricedInBase(tx, householdId, amount, draft.occurredOn)),
 				loan_id: loanId,
 				occurred_on: draft.occurredOn,
 				created_by: userId,
@@ -94,19 +99,28 @@ export const recordRepayment = async (
 	repayment: { walletId: string; amount: string; occurredOn: string },
 	currency: string,
 ) => {
-	await db.insert(entries).values(
-		stamped({
-			id: newId(),
-			household_id: householdId,
-			wallet_id: repayment.walletId,
-			kind: REPAYMENT,
-			amount: signed(loan.direction, REPAYMENT, repayment.amount, currency),
-			loan_id: loan.id,
-			occurred_on: repayment.occurredOn,
-			created_by: userId,
-			created_at: nowIso(),
-		}),
-	);
+	await db.transaction(async (tx) => {
+		const amount = signed(
+			loan.direction,
+			REPAYMENT,
+			repayment.amount,
+			currency,
+		);
+		await tx.insert(entries).values(
+			stamped({
+				id: newId(),
+				household_id: householdId,
+				wallet_id: repayment.walletId,
+				kind: REPAYMENT,
+				amount: amount.toString(),
+				...(await pricedInBase(tx, householdId, amount, repayment.occurredOn)),
+				loan_id: loan.id,
+				occurred_on: repayment.occurredOn,
+				created_by: userId,
+				created_at: nowIso(),
+			}),
+		);
+	});
 };
 
 /** Settles a Loan by writing off what's left, or takes that back. */
@@ -140,11 +154,27 @@ export const updateLoan = async (
 			.update(loans)
 			.set(stamped({ due_on: changes.dueOn, notes: changes.notes }))
 			.where(eq(loans.id, loan.id));
+		const [principal] = await tx
+			.select({
+				householdId: entries.household_id,
+				occurredOn: entries.occurred_on,
+			})
+			.from(entries)
+			.where(eq(entries.id, principalId));
+		if (!principal) return;
+		const amount = signed(loan.direction, PRINCIPAL, changes.amount, currency);
 		await tx
 			.update(entries)
 			.set(
 				stamped({
-					amount: signed(loan.direction, PRINCIPAL, changes.amount, currency),
+					amount: amount.toString(),
+					// Repriced with it, so an old figure never shows for the new amount.
+					...(await pricedInBase(
+						tx,
+						principal.householdId,
+						amount,
+						principal.occurredOn,
+					)),
 				}),
 			)
 			.where(eq(entries.id, principalId));

@@ -2244,6 +2244,10 @@ msgstr "Next {nextDate}"
 msgid "Next Budget month"
 msgstr "Next Budget month"
 
+#: src/features/loans/repayment-form.tsx
+msgid "No active Wallet is in {currency}, the Loan's currency. Add one, or bring an archived one back, to record a Repayment."
+msgstr "No active Wallet is in {currency}, the Loan's currency. Add one, or bring an archived one back, to record a Repayment."
+
 #: src/features/categories/category-list.tsx
 msgid "No archived Categories in this list."
 msgstr "No archived Categories in this list."

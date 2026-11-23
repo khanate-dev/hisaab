@@ -23,7 +23,7 @@ export const entryWallets = (wallets: readonly WalletChoice[]) =>
 
 /**
  * Active Wallets in one currency: a Recurring rule's, in the household's Base currency, and a Repayment's, in its
- * Loan's. Null before the household has a Base currency.
+ * Loan's. Every active one when the currency is null (a household with no Base currency yet).
  */
 export const recordableWallets = (
 	wallets: readonly WalletChoice[],
