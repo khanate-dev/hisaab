@@ -9,7 +9,7 @@ import {
 	readSavedCriteria,
 } from "@hisaab/domain";
 import { useLingui } from "@lingui/react/macro";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 
@@ -42,11 +42,14 @@ const SearchableEntries = ({
 	userId,
 	today,
 	startDay,
+	initial,
 }: {
 	householdId: string;
 	userId: string;
 	today: string;
 	startDay: number;
+	/** Where it starts filtered: a report's drill-down (spec §3.5). */
+	initial: EntryFilter;
 }) => {
 	const { t, i18n } = useLingui();
 	const views = useEntryViews(householdId);
@@ -58,7 +61,7 @@ const SearchableEntries = ({
 	const isAdmin = useMembership(householdId, userId)?.role === "admin";
 	const [exportProblem, setExportProblem] = useState<string | null>(null);
 	const title = useEntryTitle();
-	const [filter, setFilter] = useState<EntryFilter>(NO_FILTER);
+	const [filter, setFilter] = useState<EntryFilter>(initial);
 
 	const parentOf = useMemo(
 		() => new Map((categories ?? []).map((c) => [c.id, c.parent_id])),
@@ -226,6 +229,8 @@ export default function Entries() {
 	const userId = useSignedInUserId();
 	const household = useCurrentHousehold(userId);
 	const canWrite = useCanWrite(household?.id, userId) === true;
+	// A report's figure opens the Entries it counts: `filter` holds them as a Saved filter's criteria do.
+	const { filter: drilled } = useLocalSearchParams<{ filter?: string }>();
 
 	return (
 		<Screen title={t`Entries`}>
@@ -251,7 +256,8 @@ export default function Entries() {
 			{household && (
 				<SearchableEntries
 					householdId={household.id}
-					key={household.id}
+					initial={drilled ? readSavedCriteria(drilled) : NO_FILTER}
+					key={`${household.id} ${drilled ?? ""}`}
 					startDay={household.budget_month_start_day}
 					today={todayIn(entryTimeZone(household))}
 					userId={userId}
