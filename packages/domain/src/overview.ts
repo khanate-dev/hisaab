@@ -52,7 +52,8 @@ export const myOverview = ({
 		expense: add(a.expense, b.expense),
 		net: add(a.net, b.net),
 	});
-	let unconverted = 0;
+	// Households with something left out for want of a rate, each counted once.
+	const leftOut = new Set<string>();
 
 	const worths = households.map((household) =>
 		netWorth({
@@ -66,7 +67,10 @@ export const myOverview = ({
 			today,
 		}),
 	);
-	unconverted += worths.reduce((n, worth) => n + worth.unconverted, 0);
+	worths.forEach((worth, i) => {
+		const household = households[i];
+		if (worth.unconverted > 0 && household) leftOut.add(household.id);
+	});
 
 	// Each household's flow is in its Base currency; the lot converts to the display one at the latest rates.
 	const flowsIn = households.flatMap((household) => {
@@ -90,8 +94,11 @@ export const myOverview = ({
 		};
 		const total = flow(report.total);
 		if (total === null) {
-			if (!report.total.income.isZero() || !report.total.expense.isZero())
-				unconverted += 1;
+			// No rate for its Base currency: its flow is left out of the totals and the comparisons alike.
+			const moved = [report.total, report.previous, report.average].some(
+				(f) => !f.income.isZero() || !f.expense.isZero(),
+			);
+			if (moved) leftOut.add(household.id);
 			return [];
 		}
 		return [
@@ -111,12 +118,19 @@ export const myOverview = ({
 	return {
 		period,
 		currency,
-		/** Some Wallet is in another currency: the figures are converted, so approximate. */
+		/** Some Wallet with Entries is in another currency: the figures are converted, so approximate. */
 		approximate: households.some((household) =>
-			household.wallets.some((wallet) => wallet.currency !== currency),
+			household.wallets.some(
+				(wallet) =>
+					wallet.currency !== currency &&
+					household.entries.some(
+						(entry) =>
+							entry.wallet_id === wallet.id || entry.to_wallet_id === wallet.id,
+					),
+			),
 		),
-		/** Wallets and households left out for want of a rate. */
-		unconverted,
+		/** Households with a Wallet or flow left out for want of a rate. */
+		unconverted: leftOut.size,
 		/** Entries the households' reports couldn't price yet. */
 		unpriced: flowsIn.reduce((n, f) => n + f.unpriced, 0),
 		worth: {

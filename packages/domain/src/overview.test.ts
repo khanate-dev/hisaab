@@ -197,7 +197,43 @@ describe("myOverview", () => {
 		expect(overview.approximate).toBe(true);
 		expect(overview.worth.total.toString()).toBe("200");
 		expect(overview.flow.total.income.toString()).toBe("200");
-		// EUR has no rate: its Wallet and its household's flow are left out.
-		expect(overview.unconverted).toBe(2);
+		// EUR has no rate: its Wallet and its flow are left out, one household counted once.
+		expect(overview.unconverted).toBe(1);
+	});
+
+	it("nets a Cross-household transfer between currencies out of Net worth at the latest rates, and out of the flow", () => {
+		const half = (id: string, wallet: string, amount: string) => ({
+			id,
+			kind: "household_transfer",
+			amount,
+			category_id: null,
+			occurred_on: "2026-10-05",
+			created_by: "u1",
+			wallet_id: wallet,
+		});
+		const overview = myOverview({
+			households: [
+				{
+					id: "h1",
+					baseCurrency: "USD",
+					wallets: [{ id: "usd", currency: "USD" }],
+					entries: [half("out", "usd", "-100")],
+				},
+				{
+					id: "h2",
+					baseCurrency: "PKR",
+					wallets: [{ id: "pkr", currency: "PKR" }],
+					entries: [half("in", "pkr", "28000")],
+				},
+			],
+			currency: "USD",
+			period,
+			rates,
+			today: TODAY,
+		});
+		expect(overview.worth.total.toString()).toBe("0");
+		expect(overview.flow.total.income.toString()).toBe("0");
+		expect(overview.flow.total.expense.toString()).toBe("0");
+		expect(overview.approximate).toBe(true);
 	});
 });

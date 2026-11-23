@@ -105,7 +105,7 @@ export const MyOverview = ({
 			)}
 			{unconverted > 0 && (
 				<Text variant="muted">
-					{t`${plural(unconverted, { one: "# Wallet or household isn't", other: "# Wallets or households aren't" })} counted: no exchange rate is held for its currency yet.`}
+					{t`${plural(unconverted, { one: "# household isn't", other: "# households aren't" })} fully counted: no exchange rate is held for some of its currencies yet.`}
 				</Text>
 			)}
 			<UnpricedNote count={overview.unpriced} />

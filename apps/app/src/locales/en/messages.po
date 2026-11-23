@@ -324,13 +324,13 @@ msgstr "{total}, {totalAgainst}"
 msgid "{total}, {versus}"
 msgstr "{total}, {versus}"
 
+#: src/features/overview/my-overview.tsx
+msgid "{unconverted, plural, one {# household isn't} other {# households aren't}} fully counted: no exchange rate is held for some of its currencies yet."
+msgstr "{unconverted, plural, one {# household isn't} other {# households aren't}} fully counted: no exchange rate is held for some of its currencies yet."
+
 #: src/features/reports/net-worth.tsx
 msgid "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
 msgstr "{unconverted, plural, one {# Wallet isn't} other {# Wallets aren't}} counted: no exchange rate is held for {unconverted, plural, one {its currency} other {their currencies}} yet."
-
-#: src/features/overview/my-overview.tsx
-msgid "{unconverted, plural, one {# Wallet or household isn't} other {# Wallets or households aren't}} counted: no exchange rate is held for its currency yet."
-msgstr "{unconverted, plural, one {# Wallet or household isn't} other {# Wallets or households aren't}} counted: no exchange rate is held for its currency yet."
 
 #: src/features/budgets/budget-month.tsx
 msgid "{used} of {budget} received"

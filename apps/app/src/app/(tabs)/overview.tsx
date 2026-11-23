@@ -44,11 +44,14 @@ export default function Overview() {
 		[mine],
 	);
 	// Until they pick one: their Personal household's Base currency, else any household's.
+	// Not until the pick is read, so another currency doesn't flash first.
 	const currency =
-		picked ??
-		mine?.find((h) => h.isPersonal && h.baseCurrency)?.baseCurrency ??
-		mine?.find((h) => h.baseCurrency)?.baseCurrency ??
-		choices[0];
+		picked === undefined
+			? undefined
+			: (picked ??
+				mine?.find((h) => h.isPersonal && h.baseCurrency)?.baseCurrency ??
+				mine?.find((h) => h.baseCurrency)?.baseCurrency ??
+				choices[0]);
 	const overview = useMemo(
 		() =>
 			mine && rates && currency
@@ -63,7 +66,7 @@ export default function Overview() {
 		[mine, rates, currency, settings.preset, today],
 	);
 
-	if (mine && !currency)
+	if (mine && picked !== undefined && !currency)
 		return (
 			<Screen title={t`My overview`}>
 				<Text
