@@ -5,8 +5,9 @@
 
 /** Of OXR's 1,000 requests a month, the most this ever spends, leaving room for fetching by hand. */
 export const MONTHLY_FETCHES = 900;
-/** How long a failed date waits before it's tried again. */
+/** How long a failed date waits before it's tried again, and how many tries it gets in all. */
 export const RETRY_AFTER_MS = 60 * 60_000;
+export const MAX_TRIES = 5;
 /** Today's rates are fetched from 01:00 UTC, when OXR's latest is already today's. */
 export const TODAY_FROM_HOUR_UTC = 1;
 /** The most dates one run fetches. */
@@ -16,32 +17,38 @@ export const FETCHES_PER_RUN = 10;
 export type RateFacts = {
 	todayHeld: boolean;
 	todayLastAttemptAt: string | null;
+	todayAttempts: number;
 	/** Past dates devices asked for, oldest request first. */
-	requested: { date: string; lastAttemptAt: string | null }[];
+	requested: { date: string; lastAttemptAt: string | null; attempts: number }[];
 	fetchesThisMonth: number;
 };
 
 /** The UTC date of a moment, as YYYY-MM-DD. */
 export const utcDate = (at: Date) => at.toISOString().slice(0, 10);
 
-const waited = (lastAttemptAt: string | null, now: Date) =>
-	lastAttemptAt === null ||
-	now.getTime() - Date.parse(lastAttemptAt) >= RETRY_AFTER_MS;
+/** Whether a date may be tried now: it has tries left, and its last one was over an hour ago. */
+const triable = (lastAttemptAt: string | null, attempts: number, now: Date) =>
+	attempts < MAX_TRIES &&
+	(lastAttemptAt === null ||
+		now.getTime() - Date.parse(lastAttemptAt) >= RETRY_AFTER_MS);
 
 /**
  * The dates to fetch now: today first once it's due, then the dates asked for, oldest request first. None tried in the
- * last hour, never more than a run's worth, and never past the month's quota.
+ * last hour or {@link MAX_TRIES} times already (a date OXR keeps refusing can't spend the quota), never more than a
+ * run's worth, and never past the month's quota.
  */
 export const pickRateDates = (facts: RateFacts, now: Date): string[] => {
 	const today = utcDate(now);
 	const due = [
 		...(!facts.todayHeld &&
 		now.getUTCHours() >= TODAY_FROM_HOUR_UTC &&
-		waited(facts.todayLastAttemptAt, now)
+		triable(facts.todayLastAttemptAt, facts.todayAttempts, now)
 			? [today]
 			: []),
 		...facts.requested
-			.filter((r) => r.date < today && waited(r.lastAttemptAt, now))
+			.filter(
+				(r) => r.date < today && triable(r.lastAttemptAt, r.attempts, now),
+			)
 			.map((r) => r.date),
 	];
 	const left = Math.max(0, MONTHLY_FETCHES - facts.fetchesThisMonth);
@@ -62,7 +69,10 @@ export const readOxrRates = (body: string): Record<string, string> => {
 		body,
 		(_key, value, context?: { source?: string }) => {
 			if (typeof value !== "number") return value;
-			const box = { text: context?.source ?? String(value) };
+			// Without the source text the rate would go through a float: refuse rather than store a rounded one.
+			if (context?.source === undefined)
+				throw new Error("JSON.parse gives no source text on this runtime");
+			const box = { text: context.source };
 			numbers.add(box);
 			return box;
 		},
@@ -99,20 +109,27 @@ export type RateAdapters = {
 	recordFetch: (date: string) => Promise<void>;
 	/** OXR's response body: `latest` for today, `historical/<date>` for a past date. */
 	fetchRates: (date: string, latest: boolean) => Promise<string>;
-	store: (date: string, rates: Record<string, string>) => Promise<number>;
+	store: (date: string, rates: Record<string, string>) => Promise<void>;
 };
 
-/** Fetches and stores what's due; a failed date is reported and left for its retry, never stopping the others. */
+/**
+ * Fetches and stores what's due; a failed date is reported and left for its retry, never stopping the others. Every
+ * date is recorded before any is fetched, so a run that overlaps this one sees them as just tried.
+ */
 export const fetchExchangeRates = async (adapters: RateAdapters, now: Date) => {
 	const today = utcDate(now);
 	const fetched: string[] = [];
 	const failed: { date: string; reason: string }[] = [];
-	for (const date of pickRateDates(await adapters.facts(), now)) {
-		await adapters.recordFetch(date);
+	const due = pickRateDates(await adapters.facts(), now);
+	for (const date of due) await adapters.recordFetch(date);
+	for (const date of due) {
 		try {
 			const rates = readOxrRates(
 				await adapters.fetchRates(date, date === today),
 			);
+			// Storing nothing would mark the date's ask fulfilled with no rate to show for it.
+			if (Object.keys(rates).length === 0)
+				throw new Error("OXR gave no usable rates");
 			await adapters.store(date, rates);
 			fetched.push(date);
 		} catch (error) {

@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { connectClient } from "./powersync";
 import { seedHouseholds } from "./seed";
-import { type SignedInUser, userClient } from "./users";
+import { adminClient, type SignedInUser, userClient } from "./users";
 
 // ADR-0001 amendment: every row a Sync Stream sends a User must also be readable by them under RLS.
 const SYNCED_TABLES = [
@@ -52,11 +52,21 @@ describe("RLS ⊇ Sync Streams", () => {
 			const user: SignedInUser = seed.users[name];
 			const device = await connectClient(user);
 			const api = userClient(user);
+			const admin = adminClient();
 
 			for (const table of SYNCED_TABLES) {
 				const synced = await syncedIds(device, table);
-				const readable = await api.from(table).select("id");
+				// Only the synced ids are read back, so a big table never comes back cut short.
+				const readable = await api.from(table).select("id").in("id", synced);
 				if (readable.error) throw readable.error;
+				const readableIds = readable.data.map((row) => row.id);
+				// A row another test deleted since it synced isn't hidden by RLS: it's gone for everyone.
+				const unread = synced.filter((id) => !readableIds.includes(id));
+				const stillThere =
+					unread.length === 0
+						? []
+						: ((await admin.from(table).select("id").in("id", unread)).data ??
+							[]);
 
 				// dave is in no shared household, so nothing has notified him and nobody's left one of his.
 				if (!(
@@ -64,9 +74,7 @@ describe("RLS ⊇ Sync Streams", () => {
 					name === "dave"
 				))
 					expect(synced.length, `${table} synced something`).toBeGreaterThan(0);
-				expect(readable.data.map((row) => row.id)).toEqual(
-					expect.arrayContaining(synced),
-				);
+				expect(stillThere, `${table} rows RLS hides`).toEqual([]);
 			}
 		},
 	);

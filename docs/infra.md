@@ -55,7 +55,8 @@ In Resend, add the domain `mail.hisaab.khanate.pk` and make an API key limited t
 ## 5. Open Exchange Rates
 
 Sign up for the free plan (USD base, 1,000 requests a month) and copy the App ID into `OXR_APP_ID`. The fetcher spends
-at most 900 a month: today's rates once a day, and the past dates devices ask for.
+at most 900 a month, retries included: today's rates once a day, and the past dates devices ask for (at most 31 a
+day per User). A date that fails is tried again hourly, 5 times at most.
 
 ## 6. Expo
 

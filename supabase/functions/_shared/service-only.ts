@@ -28,3 +28,27 @@ export const serviceOnly =
 			throw error;
 		}
 	};
+
+/**
+ * A PostgREST RPC caller with the caller's own key: the database refuses anyone but the service role (`Forbidden`). A
+ * function returning void answers 204 with no body, which comes back as null.
+ */
+export const rpcAs =
+	(url: string, key: string) => async (name: string, args: unknown) => {
+		const response = await fetch(`${url}/rest/v1/rpc/${name}`, {
+			method: "POST",
+			headers: {
+				apikey: key,
+				Authorization: `Bearer ${key}`,
+				"content-type": "application/json",
+			},
+			body: JSON.stringify(args),
+		});
+		if (refused(response.status)) throw new Forbidden();
+		if (!response.ok)
+			throw new Error(
+				`PostgREST rpc/${name} answered ${response.status}: ${await response.text()}`,
+			);
+		const body = await response.text();
+		return body ? (JSON.parse(body) as unknown) : null;
+	};

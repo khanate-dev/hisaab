@@ -6,29 +6,13 @@ import {
 	type RaiseAdapters,
 	raiseScheduledNotifications,
 } from "../../../packages/domain/src/notification-triggers.ts";
-import { Forbidden, refused, serviceOnly } from "../_shared/service-only.ts";
+import { rpcAs, serviceOnly } from "../_shared/service-only.ts";
 
 const url = Deno.env.get("SUPABASE_URL");
 if (!url) throw new Error("SUPABASE_URL must be set");
 
 const adaptersFor = (key: string): RaiseAdapters => {
-	const rpc = async (name: string, args: unknown) => {
-		const response = await fetch(`${url}/rest/v1/rpc/${name}`, {
-			method: "POST",
-			headers: {
-				apikey: key,
-				Authorization: `Bearer ${key}`,
-				"content-type": "application/json",
-			},
-			body: JSON.stringify(args),
-		});
-		if (refused(response.status)) throw new Forbidden();
-		if (!response.ok)
-			throw new Error(
-				`PostgREST rpc/${name} answered ${response.status}: ${await response.text()}`,
-			);
-		return response.json();
-	};
+	const rpc = rpcAs(url, key);
 	return {
 		facts: async (asOf) =>
 			(await rpc("notification_facts", { as_of: asOf })) as HouseholdFacts[],
