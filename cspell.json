@@ -55,6 +55,7 @@
 		"fkey",
 		"getenv",
 		"Grotesk",
+		"hashtext",
 		"Hazelcast",
 		"healthcheck",
 		"Hisaab",
@@ -122,6 +123,7 @@
 		"tinybase",
 		"todolist",
 		"triplit",
+		"trunc",
 		"Turso",
 		"unlocalized",
 		"upcaster",
@@ -133,7 +135,8 @@
 		"webp",
 		"webpush",
 		"workerd",
-		"worklets"
+		"worklets",
+		"xact"
 	],
 	"ignoreRegExpList": ["sb_(?:publishable|secret)_[\\w-]+"]
 }

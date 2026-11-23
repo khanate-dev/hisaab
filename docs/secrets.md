@@ -29,17 +29,19 @@ The only place `deploy`, `keepalive` (and later `release` and `nightly`) get sec
 | `RESEND_SMTP_PASSWORD` | A Resend API key, sending access, `mail.hisaab.khanate.pk` only | `deploy` (`config push`, Auth SMTP) | Resend → API Keys; replace, re-run `deploy` |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push keypair (`npx web-push generate-vapid-keys`) | `deploy` → Edge Function secrets | Rotating drops every web push subscription; also update `EXPO_PUBLIC_VAPID_PUBLIC_KEY` in EAS |
 | `VAPID_SUBJECT` | `mailto:support@hisaab.khanate.pk` | `deploy` → Edge Function secrets | — |
+| `OXR_APP_ID` | Open Exchange Rates App ID (free plan) | `deploy` → Edge Function secrets | the Open Exchange Rates dashboard → App IDs → regenerate; replace, re-run `deploy` |
 
 ## Supabase
 
 | Name | Where | Used by | Rotate |
 |---|---|---|---|
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Edge Function secrets | `dispatch-notifications` | Set by `deploy` from GitHub; rotate there |
+| `OXR_APP_ID` | Edge Function secrets | `fetch-exchange-rates` | Set by `deploy` from GitHub; rotate there |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Injected by Supabase | Edge Functions | Never copied anywhere |
-| `project_url`, `service_role_key` | Vault | pg_cron → `dispatch-notifications`, `raise-notifications`, `purge-attachments` | Written by `deploy` from the project's first `sb_secret_` key; rotating that key in Settings → API Keys and re-running `deploy` updates it |
+| `project_url`, `service_role_key` | Vault | pg_cron → `dispatch-notifications`, `raise-notifications`, `purge-attachments`, `fetch-exchange-rates` | Written by `deploy` from the project's first `sb_secret_` key; rotating that key in Settings → API Keys and re-running `deploy` updates it |
 | JWT signing key (ES256) | Auth → JWT Keys | Auth; PowerSync verifies through the JWKS | Rotate in the dashboard: add a standby key, then rotate; the JWKS serves both meanwhile |
 
-Later issues add `RESEND_API_KEY`, `OXR_APP_ID` and `EXPO_PUSH_ACCESS_TOKEN` to the Edge Function secrets, set the same
+Later issues add `RESEND_API_KEY` and `EXPO_PUSH_ACCESS_TOKEN` to the Edge Function secrets, set the same
 way.
 
 ## PowerSync Cloud

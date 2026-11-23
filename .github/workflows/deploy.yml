@@ -117,10 +117,11 @@ jobs:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          OXR_APP_ID: ${{ secrets.OXR_APP_ID }}
         run: |
           file="$RUNNER_TEMP/functions.env"
-          printf 'VAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\nVAPID_SUBJECT=%s\n' \
-            "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" "$VAPID_SUBJECT" > "$file"
+          printf 'VAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\nVAPID_SUBJECT=%s\nOXR_APP_ID=%s\n' \
+            "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" "$VAPID_SUBJECT" "$OXR_APP_ID" > "$file"
           pnpm exec supabase secrets set --env-file "$file"
           rm "$file"
       - run: pnpm exec supabase functions deploy --use-api

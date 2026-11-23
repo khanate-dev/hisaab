@@ -447,3 +447,7 @@ verify_jwt = false
 # Called by pg_cron with the service role's key, like dispatch-notifications.
 [functions.raise-notifications]
 verify_jwt = false
+
+# Called by pg_cron with the service role's key, like dispatch-notifications.
+[functions.fetch-exchange-rates]
+verify_jwt = false

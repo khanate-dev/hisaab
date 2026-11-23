@@ -27,6 +27,7 @@ export const schema = new Schema({
 	contacts: toPowerSyncTable(tables.contacts),
 	entries: toPowerSyncTable(tables.entries),
 	entry_items: toPowerSyncTable(tables.entryItems),
+	exchange_rates: toPowerSyncTable(tables.exchangeRates),
 	former_members: toPowerSyncTable(tables.formerMembers),
 	households: toPowerSyncTable(tables.households),
 	import_mappings: toPowerSyncTable(tables.importMappings),
